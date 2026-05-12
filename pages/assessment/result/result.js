@@ -8,6 +8,7 @@ const { ALL_PATH_DETAILS } = require('../../../data/solution-library');
 const templates = require('../../../data/templates');
 const { saveProcessLine } = require('../../../utils/storage');
 const { getCompatibility, validateBestMatch, getPersonaName } = require('../../../data/persona-path-compat');
+const tracker = require('../../../utils/tracker');
 
 Page({
   data: {
@@ -90,6 +91,17 @@ Page({
       compatWarning,
       compatWarningOk
     });
+
+    // 追踪：评估完成
+    if (enriched.length > 0) {
+      tracker.track('assessment_completed', {
+        persona: persona,
+        personaName: personaName,
+        topMatches: enriched.slice(0, 3).map(function(m) {
+          return { path: m.path, name: m.name, score: m.matchScore, confidence: m.confidence };
+        })
+      });
+    }
   },
 
   toggleExpand(e) {
@@ -110,6 +122,18 @@ Page({
     app.globalData.solutionRecommendation = this.data.matches;
     wx.setStorageSync(constants.STORAGE_KEYS.ACTIVE_PROCESS_ID, path);
     wx.setStorageSync('__solution_recommendation__', this.data.matches);
+
+    // 追踪：评估结果路径选择
+    tracker.track('path_selected', {
+      pathType: path,
+      pathLabel: match ? match.name : path,
+      source: 'assessment',
+      persona: this.data.persona,
+      personaLabel: this.data.personaName,
+      matchScore: match ? match.matchScore : 0,
+      matchConfidence: match ? match.confidence : '',
+      rank: match ? match.rank : 0
+    });
 
     const template = templates.processTemplates.find(t => t.id === path);
     if (!template) {

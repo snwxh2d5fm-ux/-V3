@@ -318,31 +318,45 @@ Page({
 
   /** 刷新身份分类槽位（按当前 identityOwner 过滤） */
   refreshIdentitySlots() {
-    const { identityOwner, allDocuments } = this.data;
-    const baseCategories = this._baseSlotCategories;
+    var identityOwner = this.data.identityOwner;
+    var allDocuments = this.data.allDocuments;
+    var baseCategories = this._baseSlotCategories;
     if (!baseCategories || baseCategories.length === 0) return;
 
-    const updated = baseCategories.map(cat => {
+    var updated = baseCategories.map(function(cat) {
       if (cat.categoryKey !== 'identities' && cat.categoryKey !== 'identity') return cat;
 
-      const docs = allDocuments.filter(d => (d.ownerType || 'self') === identityOwner);
-      const updatedSlots = cat.slots.map(slot => {
-        const matchingDocs = docs.filter(d => {
+      var docs = allDocuments.filter(function(d) { return (d.ownerType || 'self') === identityOwner; });
+      var updatedSlots = cat.slots.map(function(slot) {
+        var matchingDocs = docs.filter(function(d) {
+          // 1) 精确 slotKey 匹配
           if (d.slotKey && d.slotKey === slot.slotKey) return true;
-          if (d.docType && slot.slotKey && d.docType === slot.slotKey) return true;
+          // 2) type 匹配 slotKey（OCR识别或分类推导的 docType）
+          if (d.type && slot.slotKey && d.type === slot.slotKey) return true;
           return false;
         });
-        const filled = matchingDocs.length > 0;
+        var filled = matchingDocs.length > 0;
         return {
-          ...slot,
+          slotKey: slot.slotKey,
+          docName: slot.docName,
+          docIcon: slot.docIcon,
+          requirement: slot.requirement,
+          description: slot.description,
+          maxCount: slot.maxCount,
           fillStatus: filled ? 'filled' : 'empty',
           uploadedDocs: matchingDocs.slice(0, slot.maxCount === -1 ? matchingDocs.length : (slot.maxCount || 1)),
           uploadedCount: matchingDocs.length
         };
       });
 
-      const filledCount = updatedSlots.filter(s => s.fillStatus === 'filled').length;
-      return { ...cat, slots: updatedSlots, categoryProgress: { filled: filledCount, total: cat.slots.length } };
+      var filledCount = updatedSlots.filter(function(s) { return s.fillStatus === 'filled'; }).length;
+      return {
+        categoryKey: cat.categoryKey,
+        categoryName: cat.categoryName,
+        categoryIcon: cat.categoryIcon,
+        slots: updatedSlots,
+        categoryProgress: { filled: filledCount, total: cat.slots.length }
+      };
     });
 
     this.setData({ slotCategories: updated });

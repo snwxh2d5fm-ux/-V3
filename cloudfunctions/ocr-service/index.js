@@ -364,13 +364,13 @@ function extractName(text) {
 function extractDates(text) {
   var fields = [];
   // 有效期起
-  var from = text.match(/(?:签发日期|Valid From|Issue Date|簽發日期)[：:]?\s*(\d{4}[-/]\d{1,2}[-/]\d{1,2})/);
+  var from = text.match(/(?:签发日期|Valid From|Issue Date|簽發日期)[：:\s]*(\d{4}[-/]\d{1,2}[-/]\d{1,2})/);
   if (from) fields.push({ label: '有效期起', value: from[1] });
   // 有效期至
-  var to = text.match(/(?:有效期限|Valid To|Expiry|至|有效期至)[：:]?\s*(\d{4}[-/]\d{1,2}[-/]\d{1,2})/);
+  var to = text.match(/(?:有效期限|Valid To|Expiry|至|有效期至)[：:\s]*(\d{4}[-/]\d{1,2}[-/]\d{1,2})/);
   if (to) fields.push({ label: '有效期至', value: to[1] });
   // 出生日期
-  var birth = text.match(/(?:出生日期|Birth Date|生日)[：:]?\s*(\d{4}[-/]\d{1,2}[-/]\d{1,2})/);
+  var birth = text.match(/(?:出生日期|Birth Date|生日)[：:\s]*(\d{4}[-/]\d{1,2}[-/]\d{1,2})/);
   if (birth) fields.push({ label: '出生日期', value: birth[1] });
   // 中文格式日期
   if (!birth) {
@@ -398,7 +398,7 @@ function extractHkId(text, fields) {
   if (id) fields.push({ label: '香港身份证号', value: id[0] });
   var perm = text.match(/(永久|PERMANENT|\*\*\*)/i);
   if (perm) fields.push({ label: '永居标识', value: '已确认' });
-  var sym = text.match(/符号[：:]\s*([A-Z*]{1,3})/);
+  var sym = text.match(/符号[：:\s]+([A-Z*]{1,3})/);
   if (sym) fields.push({ label: '符号', value: sym[1] });
 }
 
@@ -410,7 +410,7 @@ function extractHkPermit(text, fields) {
 function extractPassport(text, fields) {
   var pp = text.match(/[A-Z]\d{7,9}/);
   if (pp) fields.push({ label: '护照号', value: pp[0] });
-  var nation = text.match(/(?:国籍|Nationality)[：:]\s*([A-Z\u4e00-\u9fff]+)/i);
+  var nation = text.match(/(?:国籍|Nationality)[：:\s]+([A-Z\u4e00-\u9fff]+)/i);
   if (nation) fields.push({ label: '国籍', value: nation[1] });
 }
 
@@ -420,9 +420,9 @@ function extractDegree(text, fields) {
   else if (/学士|本科|Bachelor|B\.S|B\.A/.test(text)) fields.push({ label: '学位', value: '学士' });
   var uni = text.match(/([\u4e00-\u9fff]{2,}(?:大学|學院|学院|University|College|Institute)[\u4e00-\u9fffA-Za-z\s]*)/);
   if (uni) fields.push({ label: '毕业院校', value: uni[1].trim() });
-  var major = text.match(/(?:专业|主修|Major)[：:]\s*(.+?)(?:$|\n)/);
+  var major = text.match(/(?:专业|主修|Major)[：:\s]+(.+?)(?:$|\n)/);
   if (major) fields.push({ label: '专业', value: major[1].trim() });
-  var grad = text.match(/(?:毕业日期|Graduation Date)[：:]?\s*(\d{4}[-/]\d{1,2})/);
+  var grad = text.match(/(?:毕业日期|Graduation Date)[：:\s]*(\d{4}[-/]\d{1,2})/);
   if (grad) fields.push({ label: '毕业日期', value: grad[1] });
 }
 
@@ -447,9 +447,9 @@ function extractBank(text, fields) {
 }
 
 function extractWork(text, fields) {
-  var company = text.match(/(?:公司|单位|Company|Employer)[：:]\s*(.+?)(?:$|\n)/i);
+  var company = text.match(/(?:公司|单位|Company|Employer)[：:\s]+(.+?)(?:$|\n)/i);
   if (company) fields.push({ label: '公司', value: company[1].trim() });
-  var position = text.match(/(?:职位|职务|Position|Title)[：:]\s*(.+?)(?:$|\n)/i);
+  var position = text.match(/(?:职位|职务|Position|Title)[：:\s]+(.+?)(?:$|\n)/i);
   if (position) fields.push({ label: '职位', value: position[1].trim() });
 }
 

@@ -56,6 +56,9 @@ exports.main = async (event, context) => {
       case 'checkSubscription':  return await checkSubscription(openid);
       case 'getSubscriptions':   return await getSubscriptions(openid);
       case 'cancelSubscription': return await cancelSubscription(openid, event);
+      case 'createInvoice':      return await createInvoice(openid, event);
+      case 'getInvoices':        return await getInvoices(openid, event);
+      case 'getInvoiceDetail':   return await getInvoiceDetail(openid, event);
       default:
         return { code: 400, msg: '无效操作' };
     }
@@ -525,55 +528,62 @@ async function cancelSubscription(openid, event) {
   return { code: 0, msg: '订阅已取消，到期后不再续费' };
 }
 
-// ==================== 内部函数 ====================
+// ==================== 发票管理 ====================
 
-async function activateMembership(openid, order) {
-  let level = 'basic';
-  try {
-    const planResult = await db.collection('membership_plans')
-      .where({ planId: order.planId }).get();
-    if (planResult.data.length > 0) level = planResult.data[0].level || 'basic';
-  } catch (e) { console.error('[payment] 查询方案等级失败:', e); }
+/**
+ * 创建发票申请
+ * @param {string} openid
+ * @param {object} event — { orderId, invoiceType: 'personal'|'company', title, taxNumber, email, address, phone, bankInfo }
+ */
+async function createInvoice(openid, event) {
+  var orderId = event.orderId;
+  var invoiceType = event.invoiceType || 'personal';
+  var title = event.title || '';
+  var taxNumber = event.taxNumber || '';
+  var email = event.email || '';
+  var address = event.address || '';
+  var phone = event.phone || '';
+  var bankInfo = event.bankInfo || '';
 
-  const now = new Date();
-  const duration = order.period === 'monthly' ? 30 : 365;
-  const expireAt = new Date(now.getTime() + duration * 86400000);
+  if (!orderId) return { code: 400, msg: '缺少 orderId' };
 
-  const existingSubs = await db.collection('subscription_records')
-    .where({ _openid: openid, status: 'active' }).get();
+  // 验证订单归属 + 状态
+  var orderResult = await db.collection('orders').where({ _id: orderId, _openid: openid }).get();
+  if (orderResult.data.length === 0) return { code: 404, msg: '订单不存在' };
+  var order = orderResult.data[0];
+  if (order.status !== 'completed') return { code: 400, msg: '仅已支付订单可申请发票' };
 
-  if (existingSubs.data.length > 0) {
-    const sub = existingSubs.data[0];
-    const currentExpire = new Date(sub.expireAt);
-    const newExpire = currentExpire > now
-      ? new Date(currentExpire.getTime() + duration * 86400000) : expireAt;
-    await db.collection('subscription_records').doc(sub._id).update({
-      data: { planId: order.planId, level, expireAt: newExpire.toISOString(),
-        renewedAt: db.serverDate(), updatedAt: db.serverDate() }
-    });
+  // 检查是否已有发票申请
+  var existing = await db.collection('invoices').where({ orderId: orderId, _openid: openid }).get();
+  if (existing.data.length > 0) return { code: 400, msg: '该订单已申请过发票', data: { invoiceId: existing.data[0]._id } };
+
+  // 企业发票必填税号
+  if (invoiceType === 'company') {
+    if (!title) return { code: 400, msg: '企业发票必须填写公司名称' };
+    if (!taxNumber) return { code: 400, msg: '企业发票必须填写税号' };
   } else {
-    await db.collection('subscription_records').add({
-      data: { _openid: openid, planId: order.planId, level,
-        orderId: order._id || null, status: 'active',
-        startedAt: db.serverDate(), expireAt: expireAt.toISOString(),
-        autoRenew: false, createdAt: db.serverDate(), updatedAt: db.serverDate() }
-    });
+    title = title || '个人';
   }
 
-  await db.collection('users').where({ _openid: openid }).update({
-    data: { membershipLevel: level, membershipExpireAt: expireAt.toISOString(),
-      isLocked: false, updatedAt: db.serverDate() }
-  });
+  var invoiceData = {
+    _openid: openid,
+    orderId: orderId,
+    orderAmount: order.amount,
+    orderAmountYuan: order.amountYuan,
+    productName: order.productName,
+    invoiceType: invoiceType,
+    title: title,
+    taxNumber: taxNumber,
+    email: email,
+    address: address,
+    phone: phone,
+    bankInfo: bankInfo,
+    status: 'pending',
+    createdAt: db.serverDate(),
+    updatedAt: db.serverDate()
+  };
 
-  const orderDocId = order._id || order.orderId;
-  if (orderDocId) {
-    await db.collection('orders').doc(orderDocId)
-      .update({ data: { subscriptionActivated: true } });
-  }
+  var addResult = await db.collection('invoices').add({ data: invoiceData });
+  var invoiceId = addResult._id;
 
-  await db.collection('audit_logs').add({
-    data: { _openid: openid, action: 'subscription_activated',
-      detail: { planId: order.planId, level, orderId: order._id },
-      createdAt: db.serverDate() }
-  });
-}
+  await db.collec

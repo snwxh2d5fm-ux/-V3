@@ -168,42 +168,57 @@ function matchTemplate(status, path, mode) {
  * @returns {Array} 含 fillStatus 的分类+槽位
  */
 function computeSlotStates(template, uploadedDocs) {
-  return template.categories.map(cat => {
-    const slots = cat.slots.map(slot => {
-      const uploaded = uploadedDocs.filter(d => 
-        d.slotKey === slot.slotKey || 
-        d.docType === slot.slotKey ||
-        (d.category === cat.categoryKey && d.name && d.name.includes(slot.docName.slice(0, 2)))
-      );
-      const count = uploaded.length;
-      let fillStatus = 'empty';
+  return template.categories.map(function(cat) {
+    var slots = cat.slots.map(function(slot) {
+      var uploaded = uploadedDocs.filter(function(d) {
+        // 1) 精确 slotKey 匹配（从卡槽点击添加的）
+        if (d.slotKey && slot.slotKey && d.slotKey === slot.slotKey) return true;
+        // 2) docType 匹配 slotKey（OCR识别或分类推导的 docType）
+        if (d.type && slot.slotKey && d.type === slot.slotKey) return true;
+        // 3) 分类+名称模糊匹配（兜底：同分类下doc名含槽位名前2字）
+        if (d.category && cat.categoryKey && d.category === cat.categoryKey &&
+            d.name && slot.docName && d.name.indexOf(slot.docName.slice(0, 2)) >= 0) return true;
+        // 4) 分类完全匹配 + 槽位无 slotKey 上下文的宽松兜底
+        if (d.category && cat.categoryKey && d.category === cat.categoryKey &&
+            (!slot.slotKey || slot.slotKey === '')) return true;
+        return false;
+      });
+      var count = uploaded.length;
+      var fillStatus = 'empty';
       if (count >= slot.maxCount && slot.maxCount > 0) fillStatus = 'filled';
       else if (count > 0) fillStatus = 'partial';
-      
+
       // 检查过期
-      const hasExpiring = uploaded.some(d => {
+      var hasExpiring = uploaded.some(function(d) {
         if (!d.validTo) return false;
-        const days = Math.ceil((new Date(d.validTo) - new Date()) / 86400000);
+        var days = Math.ceil((new Date(d.validTo) - new Date()) / 86400000);
         return days >= 0 && days < 90;
       });
       if (hasExpiring && fillStatus === 'filled') fillStatus = 'expiring_soon';
-      if (uploaded.some(d => d.expired)) fillStatus = 'expired';
+      if (uploaded.some(function(d) { return d.expired; })) fillStatus = 'expired';
 
       return {
-        ...slot,
-        fillStatus,
+        slotKey: slot.slotKey,
+        docName: slot.docName,
+        docIcon: slot.docIcon,
+        requirement: slot.requirement,
+        description: slot.description,
+        maxCount: slot.maxCount,
+        fillStatus: fillStatus,
         uploadedDocs: uploaded,
         uploadedCount: count
       };
     });
 
-    const required = slots.filter(s => s.requirement === 'required');
-    const filled = required.filter(s => s.fillStatus === 'filled').length;
-    
+    var required = slots.filter(function(s) { return s.requirement === 'required'; });
+    var filled = required.filter(function(s) { return s.fillStatus === 'filled'; }).length;
+
     return {
-      ...cat,
-      slots,
-      categoryProgress: { filled, total: required.length }
+      categoryKey: cat.categoryKey,
+      categoryName: cat.categoryName,
+      categoryIcon: cat.categoryIcon,
+      slots: slots,
+      categoryProgress: { filled: filled, total: required.length }
     };
   });
 }

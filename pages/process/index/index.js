@@ -3,6 +3,7 @@ const app = getApp();
 const constants = require('../../../data/constants');
 const templates = require('../../../data/templates.js');
 const { getAllProcessLines, getProcessLine, saveProcessLine } = require('../../../utils/storage');
+const tracker = require('../../../utils/tracker');
 
 Page({
   data: {
@@ -277,6 +278,15 @@ Page({
     app.globalData.activeProcessId = processLine.id;
     app.globalData.activeProcess = processLine;
     wx.setStorageSync('__active_process_id__', processLine.id);
+
+    // 追踪：流程创建
+    tracker.track('process_created', {
+      pathType: template.pathType || templateId,
+      pathLabel: template.name,
+      source: processLine.source || 'manual',
+      riskLevel: template.riskLevel,
+      totalCycle: template.totalCycle
+    });
 
     this.setData({ showTemplateSelect: false });
     wx.showToast({ title: '流程已创建', icon: 'success' });

@@ -70,6 +70,12 @@ Page({
     if (options.ownerType) {
       this.setData({ ownerType: options.ownerType });
     }
+    // 捕获卡槽上下文，用于保存时写回 slotKey 以匹配卡槽
+    if (options.slotKey) {
+      this._slotKey = options.slotKey;
+      this._slotDocName = options.docName ? decodeURIComponent(options.docName) : '';
+      this._slotGuideId = options.guideId || '';
+    }
     this.setData({ privacyMode: app.getPrivacyMode() });
   },
 
@@ -244,7 +250,9 @@ Page({
         '签发机关': 'issuingAuthority', '地址': 'address',
         '学位': 'degree', '毕业院校': 'school', '专业': 'major',
         '毕业日期': 'graduationDate', '公司': 'company', '职位': 'position',
-        '收入': 'income', '签证类型': 'visaType', '许可编号': 'permitNumber'
+        '收入': 'income', '签证类型': 'visaType', '许可编号': 'permitNumber',
+        // 银行流水/资产类
+        '银行名称': 'bankName', '账户持有人': 'accountHolder', '账号': 'accountNumber'
       };
 
       fieldsArray.forEach(function(f) {
@@ -275,7 +283,8 @@ Page({
         issuingAuthority: '签发机关', address: '地址', degree: '学位',
         school: '毕业院校', major: '专业', graduationDate: '毕业日期',
         company: '公司', position: '职位', income: '收入',
-        visaType: '签证类型', permitNumber: '许可编号'
+        visaType: '签证类型', permitNumber: '许可编号',
+        bankName: '银行名称', accountHolder: '账户持有人', accountNumber: '账号'
       };
 
       var fieldList = Object.keys(ocrFields).map(function(key) {
@@ -465,13 +474,13 @@ Page({
     this.setData({ saving: true });
 
     // 生成证件ID
-    const docId = 'DOC_' + Date.now() + '_' + Math.random().toString(36).slice(2, 6);
+    var docId = 'DOC_' + Date.now() + '_' + Math.random().toString(36).slice(2, 6);
 
     // 选中的分类信息
-    const categoryInfo = this.data.categories.find(c => c.value === docCategory) || {};
+    var categoryInfo = this.data.categories.find(function(c) { return c.value === docCategory; }) || {};
 
     // 保存图片到本地文件系统
-    let filePath = imagePath;
+    var filePath = imagePath;
     if (imagePath) {
       try {
         filePath = await saveFile(imagePath, docId, docCategory);
@@ -483,17 +492,30 @@ Page({
     }
 
     // 构建证件元数据
-    const name = ocrFields.name || manualForm.name || categoryInfo.label + '证件';
-    const docNumber = ocrFields.idNumber || ocrFields.passportNumber ||
+    var name = ocrFields.name || manualForm.name || categoryInfo.label + '证件';
+    var docNumber = ocrFields.idNumber || ocrFields.passportNumber ||
                       ocrFields.hkIdNumber || manualForm.docNumber || '';
-    const now = new Date().toISOString();
+    var now = new Date().toISOString();
 
-    const doc = {
+    // 推导 docType：OCR 模式用识别结果，人工模式从分类推导
+    var effectiveDocType = docType;
+    if (effectiveDocType === 'unknown' && docCategory) {
+      // 人工录入场景：从分类映射到基础 docType，确保卡槽匹配
+      var categoryTypeMap = {
+        identity: 'id_card', education: 'degree', work: 'work_proof',
+        assets: 'bank_statement', approved: 'approval_notice',
+        renewal: 'visa', permanent: 'visa'
+      };
+      effectiveDocType = categoryTypeMap[docCategory] || 'unknown';
+    }
+
+    var doc = {
       id: docId,
       name: name,
-      type: docType,
+      type: effectiveDocType,
       category: docCategory,
       categoryLabel: categoryInfo.label || docCategory,
+      slotKey: this._slotKey || '',
       ownerType: this.data.ownerType,
       ownerName: this.data.ownerType === 'child' ? this.data.ownerName : '',
       docNumber: docNumber,
@@ -518,7 +540,7 @@ Page({
 
     this.setData({ saving: false });
     wx.showToast({ title: '保存成功 ✅', icon: 'success', duration: 1500 });
-    setTimeout(() => wx.navigateBack(), 1000);
+    setTimeout(function() { wx.navigateBack(); }, 1000);
   },
 
   /** 计算有效期状态 */
