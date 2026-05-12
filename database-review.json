@@ -1,0 +1,317 @@
+{
+  "report": {
+    "title": "住港伴V2 CloudBase数据库设计审查报告",
+    "version": "1.0.0",
+    "reviewedAt": "2026-05-09",
+    "projectPath": "/Users/chillment/Downloads/港动人生/住港伴V2-开发中",
+    "overallScore": {
+      "score": 48,
+      "maxScore": 100,
+      "grade": "D",
+      "summary": "数据库设计存在多项严重问题，包括集合名称不一致、索引缺失、无事务支持、无安全规则配置等，当前状态不适合生产环境部署。"
+    }
+  },
+
+  "collections": {
+    "total": 26,
+    "identified": [
+      { "name": "users", "type": "用户数据", "readBy": ["user-auth", "document-manager", "process-manager", "free-trial-monitor", "payment", "reminder-engine"], "writtenBy": ["user-auth", "document-manager", "process-manager", "free-trial-monitor", "payment", "reminder-engine"] },
+      { "name": "user_documents", "type": "用户数据", "readBy": ["document-manager", "process-manager", "reminder-engine"], "writtenBy": ["document-manager"] },
+      { "name": "user_processes", "type": "用户数据", "readBy": ["process-manager", "document-manager"], "writtenBy": ["process-manager"] },
+      { "name": "user_reminders", "type": "用户数据", "readBy": ["reminder-engine", "free-trial-monitor"], "writtenBy": ["document-manager", "reminder-engine", "free-trial-monitor"] },
+      { "name": "audit_logs", "type": "审计日志", "readBy": [], "writtenBy": ["user-auth", "process-manager", "document-manager", "free-trial-monitor", "payment"] },
+      { "name": "milestone_records", "type": "流程数据", "readBy": [], "writtenBy": ["document-manager", "process-manager"] },
+      { "name": "process_templates", "type": "配置数据", "readBy": ["process-manager", "match-engine", "guide-service"], "writtenBy": ["db-seed"] },
+      { "name": "material_standards", "type": "配置数据", "readBy": ["match-engine", "guide-service"], "writtenBy": ["db-seed"] },
+      { "name": "reminder_rules", "type": "配置数据", "readBy": ["reminder-engine"], "writtenBy": ["db-seed"] },
+      { "name": "guide_items", "type": "配置数据", "readBy": ["guide-service"], "writtenBy": ["db-seed"] },
+      { "name": "content_rules", "type": "配置数据", "readBy": ["content-clean", "policy-monitor"], "writtenBy": ["content-clean", "db-seed"] },
+      { "name": "archiving_rules", "type": "配置数据", "readBy": ["document-manager"], "writtenBy": ["db-seed"] },
+      { "name": "policy_sources", "type": "配置数据", "readBy": ["policy-monitor"], "writtenBy": ["policy-monitor", "db-seed"] },
+      { "name": "policy_snapshots", "type": "政策数据", "readBy": ["policy-monitor"], "writtenBy": ["policy-monitor"] },
+      { "name": "policy_updates", "type": "政策数据", "readBy": ["policy-monitor"], "writtenBy": ["policy-monitor"] },
+      { "name": "membership_plans", "type": "配置数据", "readBy": ["payment"], "writtenBy": ["db-seed"] },
+      { "name": "products", "type": "配置数据", "readBy": ["payment"], "writtenBy": ["db-seed"] },
+      { "name": "orders", "type": "支付数据", "readBy": ["payment"], "writtenBy": ["payment"] },
+      { "name": "subscription_records", "type": "支付数据", "readBy": ["payment"], "writtenBy": ["payment"] },
+      { "name": "sms_codes", "type": "临时数据", "readBy": ["user-auth"], "writtenBy": ["user-auth"] },
+      { "name": "simulated_accounts", "type": "测试数据", "readBy": [], "writtenBy": ["db-seed"] },
+      { "name": "solution_results", "type": "分析数据", "readBy": [], "writtenBy": ["solution-engine"] },
+      { "name": "backups", "type": "备份数据", "readBy": [], "writtenBy": ["db-admin"] },
+      { "name": "documents", "type": "僵尸集合(命名不一致)", "readBy": ["db-admin"], "writtenBy": ["db-admin"] },
+      { "name": "reminders", "type": "僵尸集合(命名不一致)", "readBy": ["db-admin"], "writtenBy": ["db-admin"] },
+      { "name": "processes", "type": "僵尸集合(命名不一致)", "readBy": ["db-admin"], "writtenBy": ["db-admin"] }
+    ],
+    "orphanCollections": ["documents", "reminders", "processes"],
+    "explanation": "db-admin使用'documents'/'reminders'/'processes'命名，而其他云函数均使用'user_documents'/'user_reminders'/'user_processes'命名。这导致db-admin的stats、sync、pullAll、backup功能全部失效——查询的是空集合/不存在的集合。"
+  },
+
+  "issues": [
+    {
+      "id": "DB-001",
+      "severity": "CRITICAL",
+      "category": "集合设计",
+      "title": "集合命名不一致 —— db-admin与其他云函数使用不同的集合名",
+      "description": "db-admin/index.js使用`db.collection('documents')`、`db.collection('reminders')`、`db.collection('processes')`，但其余所有云函数(包括db-seed种子数据)使用`user_documents`、`user_reminders`、`user_processes`。",
+      "affectedFiles": [
+        "cloudfunctions/db-admin/index.js",
+        "cloudfunctions/document-manager/index.js",
+        "cloudfunctions/process-manager/index.js",
+        "cloudfunctions/reminder-engine/index.js"
+      ],
+      "impact": "db-admin的stats统计、sync数据同步、pullAll全量拉取、createBackup备份功能全部失效——查询的是不存在的集合。用户数据同步功能完全不可用。",
+      "recommendation": "统一db-admin中的集合名称为`user_documents`、`user_reminders`、`user_processes`。"
+    },
+    {
+      "id": "DB-002",
+      "severity": "CRITICAL",
+      "category": "配置",
+      "title": "cloudbaserc.json中functionRoot指向错误路径",
+      "description": "cloudbaserc.json中`functionRoot`配置为`./functions`，但实际云函数目录是`./cloudfunctions`。cloudbaserc.json也未配置任何functions列表、安全规则、数据库索引。",
+      "affectedFiles": ["cloudbaserc.json"],
+      "impact": "CloudBase CLI部署时会找不到云函数目录。无安全规则意味着依赖服务端过滤，但权限体系不完整。",
+      "recommendation": "修正functionRoot为`./cloudfunctions`，补充functions列表、安全规则配置、索引定义。"
+    },
+    {
+      "id": "DB-003",
+      "severity": "CRITICAL",
+      "category": "索引策略",
+      "title": "关键查询字段完全无索引定义",
+      "description": "全项目未在任何地方定义数据库索引(cloudbaserc.json中无索引配置，代码中无db.createIndex调用)。以下高频查询字段需要索引支持：",
+      "missingIndexes": [
+        "users: [_openid], [phoneHash], [deviceIdHash], [membershipLevel, isLocked], [freeTrialEndAt]",
+        "user_documents: [_openid, docStatus], [_openid, docType], [_openid, mode], [archiveBatch], [_openid, isMilestone]",
+        "user_processes: [_openid, status], [_openid, templateId, status], [_id, _openid]",
+        "user_reminders: [_openid, status], [_openid, deadlineDate], [status, alertDates], [_openid, sourceDocId], [_openid, decisionPoint]",
+        "sms_codes: [phoneNumber, expiresAt, used]",
+        "orders: [_openid, createdAt]",
+        "subscription_records: [_openid, status]",
+        "policy_updates: [publishedAt], [category]",
+        "audit_logs: [_openid, createdAt]"
+      ],
+      "affectedFiles": ["cloudbaserc.json", "所有云函数"],
+      "impact": "在用户量增长后，所有基于_openid之外条件(如status、deadlineDate、docType)的查询将触发全表扫描。free-trial-monitor每日扫描users集合时尤其危险——没有[membershipLevel, freeTrialEndAt]复合索引将导致O(n)扫描。",
+      "recommendation": "在cloudbaserc.json中添加索引定义，或在上线前通过CloudBase控制台创建上述复合索引。优先创建users和user_reminders的高频查询索引。"
+    },
+    {
+      "id": "DB-004",
+      "severity": "HIGH",
+      "category": "数据一致性",
+      "title": "零事务使用 —— 涉及多集合写操作无原子性保障",
+      "description": "全项目未使用CloudBase事务API(`db.startTransaction()`)或`Promise.all`并发优化。以下关键操作存在数据不一致风险：",
+      "riskyOperations": [
+        "payment._activateMembership: 同时写subscription_records和users表，若第二步失败则订阅记录已创建但用户等级未更新",
+        "process-manager.startProcess: 创建user_processes后更新users.processCount，若第二步失败则计数不准确",
+        "document-manager.createDoc: 创建user_documents后更新users.docCount，计数可能偏差异常",
+        "free-trial-monitor.dailyCheck: 锁定用户+写audit_logs，若审计日志写入失败将丢失锁定审计记录",
+        "payment.handleCallback: 更新orders状态后调用_activateMembership，若激活失败订单已标记完成但会员未激活"
+      ],
+      "affectedFiles": [
+        "cloudfunctions/payment/index.js",
+        "cloudfunctions/process-manager/index.js",
+        "cloudfunctions/document-manager/index.js",
+        "cloudfunctions/free-trial-monitor/index.js"
+      ],
+      "impact": "用户计数偏差、支付完成后会员未激活、审计日志丢失。虽然CloudBase NoSQL事务支持有限(单记录原子操作)，但关键业务逻辑需要至少使用顺序错误处理+补偿机制。",
+      "recommendation": "对于支付相关操作，使用CloudBase事务API包裹多集合写入。对于计数更新，考虑使用定期校准脚本替代实时计数器，或使用聚合查询实时计算。"
+    },
+    {
+      "id": "DB-005",
+      "severity": "HIGH",
+      "category": "查询模式效率",
+      "title": "N+1查询问题 —— triggerArchive循环内逐条查询",
+      "description": "document-manager的triggerArchive函数中，对每个material ID都执行一次独立的`db.collection('user_documents').where({_id: mId}).get()`查询(line 306-337)。当流程涉及大量材料时，将产生N+1次数据库往返。",
+      "affectedFiles": ["cloudfunctions/document-manager/index.js (line 306-337)"],
+      "impact": "当流程包含20+份材料时，归档操作将产生20+次数据库查询，显著增加响应延迟和数据库读取压力。",
+      "recommendation": "使用`db.collection('user_documents').where({_id: _.in([...materialIds])}).get()`一次性批量查询所有材料。"
+    },
+    {
+      "id": "DB-006",
+      "severity": "HIGH",
+      "category": "数据冗余",
+      "title": "users表中的计数器字段存在不一致风险",
+      "description": "users集合维护了docCount、reminderCount、processCount三个计数器，通过`_.inc()`原子操作更新。但任何时候都可以通过聚合查询user_documents/user_reminders/user_processes获取准确计数。这种冗余计数器一旦因异常(如云函数超时/部分失败)而偏离实际值，没有校准机制。",
+      "affectedFiles": [
+        "cloudfunctions/document-manager/index.js (line 118, 173)",
+        "cloudfunctions/process-manager/index.js (line 147)",
+        "cloudfunctions/reminder-engine/index.js (line 141)",
+        "cloudfunctions/user-auth/index.js (line 130-147)"
+      ],
+      "impact": "前端展示的证件数/提醒数/流程数可能不准确，影响用户体验。",
+      "recommendation": "方案A: 移除冗余计数器，前端通过独立查询获取计数。方案B: 保留计数器但添加定期校准云函数(定时任务)对比计数器与实际记录数。"
+    },
+    {
+      "id": "DB-007",
+      "severity": "HIGH",
+      "category": "数据模式",
+      "title": "种子数据字段结构与运行时查询模式不匹配",
+      "description": "多处种子数据的字段结构与云函数运行时期望的查询字段不一致：",
+      "mismatches": [
+        {
+          "collection": "reminder_rules",
+          "seedFields": ["eventName", "deadlineOffsetDays", "alertBeforeDays", "pathType", "phase"],
+          "expectedByEngine": ["trigger.pathType", "trigger.phase", "trigger.event", "reminders[]数组", "confidence"],
+          "file": "db-seed/index.js vs reminder-engine/index.js (line 47-56, 61-86)"
+        },
+        {
+          "collection": "archiving_rules",
+          "seedFields": ["ruleId", "pathType", "stageName", "triggerEvent", "archiveTitle", "deletableWhenArchived"],
+          "expectedByEngine": ["materialType", "archiveStatus", "isCoreOriginal", "deletable"],
+          "file": "db-seed/index.js (line 302-322) vs document-manager/index.js (line 298-316)"
+        }
+      ],
+      "impact": "reminder-engine的generateFromEvent无法正确匹配提醒规则(查询trigger.pathType但种子数据用pathType顶级字段)。document-manager的triggerArchive通过ruleMap[materialType]查找规则但archiving_rules种子数据没有materialType字段——归档规则匹配将全部失败。",
+      "recommendation": "统一种子数据字段与云函数查询字段。对reminder_rules采取重大重构，使种子数据结构与engine读取结构一致。"
+    },
+    {
+      "id": "DB-008",
+      "severity": "MEDIUM",
+      "category": "安全规则",
+      "title": "无安全规则配置 —— 完全依赖服务端_openid过滤",
+      "description": "cloudbaserc.json中无任何安全规则(permission)配置。所有集合权限依赖云函数中手动添加`_openid`条件过滤。user-auth使用了adminDb(绕过_openid自动注入)但没有相应的管理员权限检查。db-admin的backup/sync等管理操作无用户身份验证。",
+      "affectedFiles": ["cloudbaserc.json", "cloudfunctions/db-admin/index.js", "cloudfunctions/user-auth/index.js"],
+      "impact": "若未来有小程序端直接调用数据库(绕过云函数)，将无权限保护。db-admin的管理操作可被任何认证用户调用。",
+      "recommendation": "在cloudbaserc.json中添加安全规则，限制小程序端直接数据库访问。为db-admin添加管理员_openid白名单校验。"
+    },
+    {
+      "id": "DB-009",
+      "severity": "MEDIUM",
+      "category": "分页策略",
+      "title": "批量扫描操作无分页限制",
+      "description": "以下定时任务查询使用limit(500)但无分页游标，当匹配记录超过500条时丢失数据：",
+      "paginationIssues": [
+        "free-trial-monitor.dailyCheck: 扫描到期用户限制500条(line 44)，超过500个到期用户时部分用户不会被锁定",
+        "reminder-engine.scanExpiringToday: 扫描到期提醒限制500条(line 197)，超过500条时丢失提醒",
+        "document-manager.listDocs: 使用offset分页而非游标分页(line 194-207)，大数据量下offset分页性能差"
+      ],
+      "affectedFiles": [
+        "cloudfunctions/free-trial-monitor/index.js",
+        "cloudfunctions/reminder-engine/index.js",
+        "cloudfunctions/document-manager/index.js"
+      ],
+      "impact": "规模化运营后，定时任务可能遗漏到期用户和提醒。offset分页在数据量大时性能下降严重。",
+      "recommendation": "使用游标(cursor)分页替代offset分页。定时任务通过循环+游标确保扫描全部匹配记录。"
+    },
+    {
+      "id": "DB-010",
+      "severity": "MEDIUM",
+      "category": "读写分离",
+      "title": "无读写分离策略",
+      "description": "所有云函数共用同一个`cloud.database()`实例，读写操作未分离。CloudBase NoSQL不支持原生读写分离，但可以通过以下策略缓解：读操作使用从库(CloudBase不支持)/缓存层(timeout 5min的内存缓存)，写操作使用主库。当前仅content-clean、policy-monitor、match-engine使用了内存缓存(5-10min TTL)，其他云函数每次请求都直连数据库。",
+      "affectedFiles": ["所有云函数"],
+      "impact": "高并发场景下数据库读取压力大，可能触发CloudBase限流。",
+      "recommendation": "为高频读取的配置集合(process_templates、material_standards、guide_items、reminder_rules)添加统一的缓存层。"
+    },
+    {
+      "id": "DB-011",
+      "severity": "LOW",
+      "category": "数据规范化",
+      "title": "user_documents.ocrResult嵌套结构冗余",
+      "description": "user_documents集合存储了完整的OCR识别结果(含rawText在各云函数间传递)，但OCR原始文本不应存储在证件记录中。document-manager.createDoc存储ocrResult但未存储rawText，而ocr-service返回rawText。当前设计合理但嵌套层级较深。",
+      "affectedFiles": ["cloudfunctions/document-manager/index.js", "cloudfunctions/ocr-service/index.js"],
+      "impact": "轻微。当前设计基本合理，ocrResult嵌套字段明确。",
+      "recommendation": "保持现状。若未来OCR数据量大，可考虑将OCR详细结果分离到独立集合。"
+    },
+    {
+      "id": "DB-012",
+      "severity": "LOW",
+      "category": "数据一致性",
+      "title": "软删除策略不一致",
+      "description": "users使用deletedAt标记软删除(line 528)，user_documents使用docStatus='deleted'+deletedAt标记软删除(line 170-171)。sms_codes使用used标记。策略不统一。",
+      "affectedFiles": [
+        "cloudfunctions/user-auth/index.js",
+        "cloudfunctions/document-manager/index.js"
+      ],
+      "impact": "轻微。不同集合的业务语义不同，但建议统一软删除模式。",
+      "recommendation": "统一使用`deletedAt`字段标记软删除，布尔字段`isDeleted`作为辅助加速查询。"
+    }
+  ],
+
+  "categoryScores": {
+    "集合表设计": {
+      "score": 45,
+      "maxScore": 100,
+      "comment": "集合划分基本合理(用户/流程/文档/支付/审计等分离)，但存在命名不一致的致命缺陷(db-admin使用不同集合名)，且归档规则和提醒规则的结构与运行时查询不匹配。"
+    },
+    "索引策略": {
+      "score": 10,
+      "maxScore": 100,
+      "comment": "零索引定义。高频查询字段如_openid+status、deadlineDate、freeTrialEndAt等无任何索引支持。定时扫描操作无索引时将全表扫描。"
+    },
+    "数据冗余和规范化": {
+      "score": 55,
+      "maxScore": 100,
+      "comment": "users表中的计数冗余字段存在不一致风险且无校准机制。user_documents嵌套OCR结果结构合理。种子数据与运行时模型不一致是需要重构的结构问题。"
+    },
+    "安全规则": {
+      "score": 20,
+      "maxScore": 100,
+      "comment": "无安全规则配置。依赖服务端_openid过滤但db-admin无管理员校验。user-auth的adminDb访问无额外权限控制。"
+    },
+    "查询模式效率": {
+      "score": 40,
+      "maxScore": 100,
+      "comment": "存在N+1查询(triggerArchive循环查询)、无分页游标的大批量操作、无统一缓存层。部分云函数使用了内存缓存但策略不统一。"
+    },
+    "数据一致性": {
+      "score": 25,
+      "maxScore": 100,
+      "comment": "零事务使用。支付回调+会员激活、流程创建+计数更新等关键多集合写操作无原子性保障。计数器冗余字段无校准机制。"
+    },
+    "读写分离策略": {
+      "score": 30,
+      "maxScore": 100,
+      "comment": "无读写分离。3个云函数使用了简单内存缓存(5-10min TTL)，其余均直连数据库。"
+    }
+  },
+
+  "summary": {
+    "totalIssues": 12,
+    "bySeverity": {
+      "CRITICAL": 3,
+      "HIGH": 4,
+      "MEDIUM": 3,
+      "LOW": 2
+    },
+    "blockersForProduction": [
+      "DB-001: 集合命名不一致导致db-admin功能完全失效",
+      "DB-002: cloudbaserc.json配置错误",
+      "DB-003: 零索引定义",
+      "DB-007: 种子数据字段结构与引擎查询不匹配"
+    ],
+    "topRecommendations": [
+      "1. 统一db-admin中的集合名称为user_documents/user_reminders/user_processes",
+      "2. 修正cloudbaserc.json中的functionRoot路径并补充索引和安全规则配置",
+      "3. 为高频查询字段创建复合索引(优先users和user_reminders)",
+      "4. 重构reminder_rules和archiving_rules种子数据以匹配运行时查询模式",
+      "5. 为支付相关操作引入事务或补偿机制确保数据一致性",
+      "6. triggerArchive使用批量查询替代N+1循环查询",
+      "7. 为定时扫描任务添加游标分页防止数据遗漏"
+    ],
+    "migrationRisks": "由于当前为开发阶段，数据量小，修复成本低。但需注意：修正db-admin集合名后，需确保cloudbase环境中已存在对应集合(通过db-seed或控制台创建)。索引创建需在CloudBase控制台手动操作或通过cloudbaserc.json部署。"
+  },
+
+  "cloudFunctionsAnalyzed": {
+    "total": 17,
+    "withDbAccess": 13,
+    "list": [
+      { "name": "user-auth", "collections": ["users", "audit_logs", "sms_codes"], "dbCalls": 10 },
+      { "name": "document-manager", "collections": ["user_documents", "users", "user_processes", "archiving_rules", "milestone_records", "user_reminders", "audit_logs"], "dbCalls": 20 },
+      { "name": "process-manager", "collections": ["process_templates", "user_processes", "users", "user_documents", "milestone_records", "audit_logs"], "dbCalls": 25 },
+      { "name": "reminder-engine", "collections": ["reminder_rules", "user_documents", "user_reminders", "users"], "dbCalls": 20 },
+      { "name": "payment", "collections": ["products", "membership_plans", "orders", "subscription_records", "users", "audit_logs"], "dbCalls": 27 },
+      { "name": "free-trial-monitor", "collections": ["users", "audit_logs", "user_reminders"], "dbCalls": 9 },
+      { "name": "policy-monitor", "collections": ["policy_sources", "policy_snapshots", "policy_updates", "content_rules"], "dbCalls": 10 },
+      { "name": "content-clean", "collections": ["content_rules"], "dbCalls": 6 },
+      { "name": "match-engine", "collections": ["process_templates", "material_standards"], "dbCalls": 4 },
+      { "name": "guide-service", "collections": ["guide_items", "process_templates", "material_standards", "policy_snapshots"], "dbCalls": 11 },
+      { "name": "solution-engine", "collections": ["solution_results"], "dbCalls": 1 },
+      { "name": "db-admin", "collections": ["documents", "reminders", "processes", "backups"], "dbCalls": 14 },
+      { "name": "db-seed", "collections": ["policy_sources", "content_rules", "reminder_rules", "archiving_rules", "guide_items", "material_standards", "process_templates", "membership_plans", "products", "simulated_accounts"], "dbCalls": 2 },
+      { "name": "ai-assess", "collections": [], "dbCalls": 0 },
+      { "name": "ai-chat", "collections": [], "dbCalls": 0 },
+      { "name": "ai-doc-gen", "collections": [], "dbCalls": 0 },
+      { "name": "ocr-service", "collections": [], "dbCalls": 0 }
+    ]
+  }
+}

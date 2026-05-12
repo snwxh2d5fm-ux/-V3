@@ -1,0 +1,361 @@
+/**
+ * 住港伴 v4.1 — 提醒器主页 (Tab3)
+ * PRD v3.1: 时间线视图+列表视图切换，提醒卡片(标题/日期/类型标签/置信度/状态颜色)
+ * 来源：OCR日期识别 + 粘贴文本 + 规则引擎
+ * 免费：首条流程线；付费：100+规则链式
+ */
+const app = getApp();
+const { getAllReminders, saveReminders, saveReminder, updateReminder } = require('../../../utils/storage');
+const { getCountdown, formatDate } = require('../../../utils/date-parser');
+const constants = require('../../../data/constants');
+
+Page({
+  data: {
+    // PRD v4: 7阶段流程指示器
+    stageSteps: [
+      { id: 'evaluation', label: '资格评估', status: 'active' },
+      { id: 'preparation', label: '材料准备', status: 'pending' },
+      { id: 'submission', label: '线上申请', status: 'pending' },
+      { id: 'waiting', label: '等待获批', status: 'pending' },
+      { id: 'activation', label: '获批激活', status: 'pending' },
+      { id: 'settlement', label: '抵港生活', status: 'pending' },
+      { id: 'pr', label: '永居', status: 'pending' }
+    ],
+    stageProgress: 14,
+    // 视图模式
+    viewMode: 'timeline',    // 'timeline' | 'list'
+
+    // 提醒数据
+    allReminders: [],        // 全部提醒
+    activeReminders: [],     // 活跃提醒(未完成)
+    completedReminders: [],  // 已完成
+    chainGroups: [],         // 规则链分组(时间线用)
+
+    // 筛选
+    filterStatus: 'all',     // 'all' | 'active' | 'completed'
+    filterType: 'all',       // 'all' | 'rule_engine' | 'ocr' | 'manual'
+
+    // 统计数据
+    stats: {
+      total: 0,
+      active: 0,
+      completed: 0,
+      urgent: 0               // 紧急(3天内)
+    },
+
+    // 会员
+    membershipLevel: 'free',
+    isPro: false,             // 付费会员标识
+    freeLimitReached: false,
+
+    loading: true,
+    showAddMenu: false        // 底部添加菜单
+  },
+
+  onLoad() {
+    this.refreshMembership();
+  },
+
+  onShow() {
+    this.loadReminders();
+    this.refreshMembership();
+  },
+
+  onPullDownRefresh() {
+    this.loadReminders().then(() => wx.stopPullDownRefresh());
+  },
+
+  // ========== 会员状态 ==========
+  refreshMembership() {
+    const level = app.globalData.membershipLevel || 'free';
+    const isPro = level !== 'free';
+    this.setData({ membershipLevel: level, isPro });
+  },
+
+  // ========== 数据加载 ==========
+  async loadReminders() {
+    this.setData({ loading: true });
+
+    let reminders = getAllReminders();
+
+    // 云端同步
+    if (app.globalData.cloudReady && app.globalData.isLoggedIn) {
+      try {
+        const res = await wx.cloud.callFunction({
+          name: 'reminder-engine',
+          data: { action: 'list' }
+        });
+        if (res.result && res.result.reminders) {
+          const map = new Map();
+          reminders.forEach(r => map.set(r.id, r));
+          res.result.reminders.forEach(r => {
+            if (!map.has(r.id) || (r.updatedAt > (map.get(r.id).updatedAt || 0))) {
+              map.set(r.id, r);
+            }
+          });
+          reminders = Array.from(map.values());
+          saveReminders(reminders);
+        }
+      } catch (e) {
+        console.log('[提醒器] 云端同步失败，使用本地数据');
+      }
+    }
+
+    // 格式化
+    const now = Date.now();
+    const formatted = reminders.map(r => this.formatReminder(r));
+
+    // 分类
+    const activeReminders = formatted
+      .filter(r => r.status !== 'completed' && r.status !== 'ignored')
+      .sort((a, b) => new Date(a.deadline) - new Date(b.deadline));
+
+    const completedReminders = formatted
+      .filter(r => r.status === 'completed')
+      .sort((a, b) => new Date(b.completedAt || 0) - new Date(a.completedAt || 0));
+
+    // 时间线: 按规则链分组
+    const chainGroups = this.buildChainGroups(activeReminders);
+
+    // 统计
+    const stats = {
+      total: formatted.length,
+      active: activeReminders.length,
+      completed: completedReminders.length,
+      urgent: activeReminders.filter(r => r.countdownDays > 0 && r.countdownDays <= 3).length
+    };
+
+    // 免费用户限制
+    const freeLimitReached = !this.data.isPro && stats.active >= constants.FREE_LIMITS.MAX_PROCESS_LINES;
+
+    this.setData({
+      allReminders: formatted,
+      activeReminders,
+      completedReminders,
+      chainGroups,
+      stats,
+      freeLimitReached,
+      loading: false
+    });
+  },
+
+  // ========== 格式化提醒 ==========
+  formatReminder(r) {
+    const countdown = getCountdown(r.deadline);
+    const priority = this.calcPriority(r.deadline, r.status);
+    const confidenceInfo = constants.CONFIDENCE_LEVELS[r.confidence] || constants.CONFIDENCE_LEVELS.B;
+
+    // 类型标签
+    const typeLabels = {
+      rule_engine: { text: '规则引擎', cls: 'tag-info' },
+      ocr: { text: 'OCR识别', cls: 'tag-warning' },
+      manual: { text: '手动添加', cls: 'tag-muted' }
+    };
+    const typeInfo = typeLabels[r.type] || typeLabels.manual;
+
+    // 状态颜色类
+    const statusClsMap = {
+      active: priority === 'urgent' ? 'card--urgent' : priority === 'warning' ? 'card--warning' : 'card--success',
+      completed: '',
+      deferred: 'card--highlight',
+      ignored: ''
+    };
+
+    return {
+      ...r,
+      countdownDays: countdown.days,
+      countdownDisplay: countdown.display,
+      countdownIsPast: countdown.isPast,
+      countdownIsToday: countdown.isToday,
+      priority,
+      priorityLabel: priority === 'urgent' ? '🔴 紧急' : priority === 'warning' ? '🟡 注意' : '🟢 正常',
+      priorityCls: priority === 'urgent' ? 'tag-danger' : priority === 'warning' ? 'tag-warning' : 'tag-success',
+      statusCls: statusClsMap[r.status] || '',
+      confidenceLabel: confidenceInfo.label,
+      confidenceColor: confidenceInfo.color,
+      confidenceBg: confidenceInfo.bg,
+      typeLabel: typeInfo.text,
+      typeCls: typeInfo.cls,
+      deadlineFormatted: formatDate(r.deadline, 'CN'),
+      isLinkedToDoc: (r.linkedDocIds && r.linkedDocIds.length > 0)
+    };
+  },
+
+  // ========== 计算优先级 ==========
+  calcPriority(deadline, status) {
+    if (status === 'completed' || status === 'ignored') return 'normal';
+    const now = Date.now();
+    const target = new Date(deadline).getTime();
+    const daysLeft = Math.ceil((target - now) / 86400000);
+    if (daysLeft <= 3) return 'urgent';
+    if (daysLeft <= 7) return 'warning';
+    return 'normal';
+  },
+
+  // ========== 规则链分组 ==========
+  buildChainGroups(reminders) {
+    const groups = [];
+
+    // 有链ID的提醒分组
+    const chainMap = new Map();
+    const ungrouped = [];
+
+    reminders.forEach(r => {
+      if (r.chainId) {
+        if (!chainMap.has(r.chainId)) {
+          chainMap.set(r.chainId, {
+            chainId: r.chainId,
+            chainLabel: r.chainLabel || this.getChainLabel(r.chainId),
+            items: [],
+            progress: 0
+          });
+        }
+        chainMap.get(r.chainId).items.push(r);
+      } else {
+        ungrouped.push(r);
+      }
+    });
+
+    // 计算每组进度
+    chainMap.forEach(group => {
+      group.items.sort((a, b) => (a.chainOrder || 0) - (b.chainOrder || 0));
+      const completed = group.items.filter(i => i.status === 'completed').length;
+      group.progress = Math.round((completed / group.items.length) * 100);
+    });
+
+    // 合并: 链分组在前, 独立提醒在后
+    groups.push(...chainMap.values());
+    if (ungrouped.length > 0) {
+      groups.push({ chainId: null, chainLabel: '独立提醒', items: ungrouped, progress: 0 });
+    }
+
+    return groups;
+  },
+
+  getChainLabel(chainId) {
+    const map = {
+      'R_APPROVAL_001': '获批后流程',
+      'R_VISA_ACTIVATE_001': '签证激活流程',
+      'R_HKID_001': '身份证办理',
+      'R_RENEWAL_PREP_001': '续签准备',
+      'R_TAX_001': '税务提醒',
+      'R_PR_001': '永居冲刺',
+      'R_MPF_001': '强积金检查',
+      'R_PERMIT_EXPIRY_001': '通行证到期'
+    };
+    return map[chainId] || '规则链';
+  },
+
+  // ========== 视图切换 ==========
+  switchView(e) {
+    const mode = e.currentTarget.dataset.mode;
+    this.setData({ viewMode: mode });
+  },
+
+  // ========== 筛选 ==========
+  onFilterStatus(e) {
+    const status = e.currentTarget.dataset.status;
+    this.setData({ filterStatus: status });
+  },
+
+  onFilterType(e) {
+    const type = e.currentTarget.dataset.type;
+    this.setData({ filterType: type });
+  },
+
+  // ========== 获取筛选后的提醒 ==========
+  getFilteredReminders() {
+    let list = this.data.activeReminders;
+    if (this.data.filterStatus === 'completed') {
+      list = this.data.completedReminders;
+    }
+    if (this.data.filterType !== 'all') {
+      list = list.filter(r => r.type === this.data.filterType);
+    }
+    return list;
+  },
+
+  // ========== 导航 ==========
+  viewReminder(e) {
+    const id = e.currentTarget.dataset.id;
+    wx.navigateTo({ url: `/pages/reminders/detail/detail?id=${id}` });
+  },
+
+  viewChain(e) {
+    const chainId = e.currentTarget.dataset.chainId;
+    wx.navigateTo({ url: `/pages/reminders/detail/detail?chainId=${chainId}` });
+  },
+
+  // ========== 快捷操作 ==========
+  async markComplete(e) {
+    const id = e.currentTarget.dataset.id;
+    wx.showLoading({ title: '更新中...' });
+    try {
+      updateReminder(id, {
+        status: 'completed',
+        completedAt: new Date().toISOString(),
+        updatedAt: new Date().toISOString()
+      });
+      // 同步云端
+      if (app.globalData.cloudReady) {
+        await wx.cloud.callFunction({
+          name: 'reminder-engine',
+          data: { action: 'complete', reminderId: id }
+        }).catch(() => {});
+      }
+      wx.hideLoading();
+      wx.showToast({ title: '已标记完成', icon: 'success' });
+      this.loadReminders();
+    } catch (e) {
+      wx.hideLoading();
+      wx.showToast({ title: '操作失败', icon: 'none' });
+    }
+  },
+
+  // ========== 底部添加菜单 ==========
+  toggleAddMenu() {
+    this.setData({ showAddMenu: !this.data.showAddMenu });
+  },
+
+  navigateToOCR() {
+    this.setData({ showAddMenu: false });
+    wx.navigateTo({ url: '/pages/reminders/detail/detail?action=ocr' });
+  },
+
+  navigateToPaste() {
+    this.setData({ showAddMenu: false });
+    wx.navigateTo({ url: '/pages/reminders/detail/detail?action=paste' });
+  },
+
+  navigateToManual() {
+    this.setData({ showAddMenu: false });
+    wx.navigateTo({ url: '/pages/reminders/detail/detail?action=add' });
+  },
+
+  navigateToRuleEngine() {
+    if (this.data.freeLimitReached) {
+      wx.showModal({
+        title: '免费用户限制',
+        content: '免费用户仅支持首条规则链。开通专业会员可解锁全部100+规则链式提醒。',
+        confirmText: '了解会员',
+        cancelText: '取消',
+        success: (res) => {
+          if (res.confirm) wx.navigateTo({ url: '/pages/membership/index/index' });
+        }
+      });
+      return;
+    }
+    this.setData({ showAddMenu: false });
+    wx.navigateTo({ url: '/pages/reminders/detail/detail?action=rule' });
+  },
+
+  // ========== 详情页入口（原list页已合并至detail） ==========
+  navigateToList() {
+    wx.navigateTo({ url: '/pages/reminders/detail/detail' });
+  },
+
+  // ========== 升级会员 ==========
+  viewPremium() {
+    wx.navigateTo({ url: '/pages/membership/index/index' });
+  }
+});

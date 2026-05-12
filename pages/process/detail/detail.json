@@ -1,0 +1,7 @@
+{
+  "usingComponents": {
+    "progress-bar": "/components/progress-bar/progress-bar",
+    "milestone-lock": "/components/milestone-lock/milestone-lock"
+  },
+  "navigationBarTitleText": "流程详情"
+}

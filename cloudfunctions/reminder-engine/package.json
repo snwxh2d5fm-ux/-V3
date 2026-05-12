@@ -1,0 +1,7 @@
+{
+  "name": "reminder-engine",
+  "version": "1.0.0",
+  "description": "住港伴 — 提醒规则引擎：事件匹配、链式提醒、到期扫描",
+  "main": "index.js",
+  "dependencies": { "wx-server-sdk": "latest" }
+}

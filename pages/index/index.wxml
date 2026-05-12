@@ -1,0 +1,298 @@
+<!-- 住港伴 v4.1 — 流程控中枢页面 (PRD v3.1 4阶段框架) -->
+<view class="container">
+  <!-- 顶部状态栏 -->
+  <view class="page-header">
+    <view class="header-left">
+      <text class="header-title">流程控</text>
+      <text class="header-sub">{{greeting}}</text>
+      <text wx:if="{{selectedPathName}}" class="header-path">{{selectedPathName}} [{{selectedPath === 'qmas' ? 'A' : 'B'}}]</text>
+    </view>
+    <privacy-toggle />
+  </view>
+
+  <!-- 隐私保护条 -->
+  <view class="privacy-bar" bindtap="navigateToPrivacy">
+    <text>🔒 隐私保护中 · 已保护 {{privacyDays}} 天</text>
+  </view>
+
+  <!-- ===== 标签切换 ===== -->
+  <view class="hub-tabs">
+    <view class="hub-tab {{activeTab === 'process' ? 'active' : ''}}" bindtap="switchTab" data-tab="process">
+      <text class="hub-tab-icon">📊</text>
+      <text class="hub-tab-label">流程看板</text>
+    </view>
+    <view class="hub-tab {{activeTab === 'playbook' ? 'active' : ''}}" bindtap="switchTab" data-tab="playbook">
+      <text class="hub-tab-icon">📖</text>
+      <text class="hub-tab-label">攻略书</text>
+    </view>
+    <view class="hub-tab {{activeTab === 'precheck' ? 'active' : ''}}" bindtap="switchTab" data-tab="precheck">
+      <text class="hub-tab-icon">🔍</text>
+      <text class="hub-tab-label">效率宝</text>
+    </view>
+  </view>
+
+  <!-- ==================== 流程看板 ==================== -->
+  <view class="tab-content" wx:if="{{activeTab === 'process'}}">
+
+    <!-- 活跃流程卡片 (7阶段流程指示器: 资格评估→材料准备→线上申请→等待获批→获批激活→抵港生活→永居) -->
+    <view class="card process-hero" wx:if="{{activeProcess}}">
+      <view class="hero-label">当前流程 · 7阶段</view>
+      <view class="hero-title">{{activeProcess.name}}</view>
+      <!-- 7阶段流程指示器（页面UI层：细颗粒度用户步骤，区别于数据层的4阶段生命周期框架） -->
+      <view class="steps steps-7">
+        <block wx:for="{{processPhases}}" wx:key="name">
+          <view class="step {{item.status}}">
+            <view class="step-circle">
+              <text wx:if="{{item.status === 'done'}}">✓</text>
+              <text wx:else>{{item.icon}}</text>
+            </view>
+            <text class="step-name">{{item.name}}</text>
+            <view class="step-line" wx:if="{{index < processPhases.length - 1}}"></view>
+          </view>
+        </block>
+      </view>
+      <view class="hero-footer">
+        <text class="hero-stage">当前阶段: {{processPhases[currentPhaseIndex].name}} · 已完成 {{materialProgress}}%</text>
+      </view>
+    </view>
+
+    <!-- 决策节点 (V5新增) -->
+    <view class="card dp-card" wx:if="{{activeProcess && decisionPoints.length > 0}}">
+      <view class="card-title">🔀 关键决策节点</view>
+      <view class="dp-list">
+        <view class="dp-item" wx:for="{{decisionPoints}}" wx:key="name">
+          <text class="dp-icon">{{item.icon}}</text>
+          <text class="dp-name">{{item.name}}</text>
+        </view>
+      </view>
+    </view>
+
+    <!-- 无活跃流程 -->
+    <!-- skipped：暂不选择身份 → 引导补选 -->
+    <view class="card hero-empty hero-skip" wx:if="{{!activeProcess && userStatus === 'skipped'}}">
+      <text class="hero-empty-icon">🔒</text>
+      <text class="hero-empty-title">请先选择身份状态</text>
+      <text class="hero-empty-desc">选择身份后解锁流程控、证件夹卡槽和提醒器。当前可自由浏览攻略书和上传证件。</text>
+      <button class="btn btn-primary btn-lg" bindtap="goSelectIdentity">去选择身份</button>
+    </view>
+
+    <!-- 「未申请」用户：资格评估入口 -->
+    <view class="card hero-empty" wx:if="{{!activeProcess && userStatus === 'unapplied'}}">
+      <text class="hero-empty-icon">🎯</text>
+      <text class="hero-empty-title">开始资格评估</text>
+      <text class="hero-empty-desc">回答15个问题，AI将根据优才/高才通/专才/CIES等12条路径为你匹配最佳方案</text>
+      <button class="btn btn-primary btn-lg" bindtap="startAssessment">进入资格评估</button>
+    </view>
+
+    <!-- 其他状态：选择流程路径 -->
+    <view class="card hero-empty" wx:if="{{!activeProcess && userStatus !== 'unapplied'}}">
+      <text class="hero-empty-icon">🚀</text>
+      <text class="hero-empty-title">开启身份规划之旅</text>
+      <text class="hero-empty-desc">选择适合你的路径(12条可选)，系统将为你定制专属4阶段流程看板</text>
+      <button class="btn btn-primary btn-lg" bindtap="startNewProcess">选择流程路径</button>
+    </view>
+
+    <!-- 当前步骤材料清单 -->
+    <view class="card" wx:if="{{activeProcess && currentStepMaterials.length > 0}}">
+      <view class="card-title">📍 当前步骤材料</view>
+      <text class="card-subtitle">所需材料 ({{currentStepMaterials.length}} 项)</text>
+
+      <view class="material-list">
+        <view class="material-item" wx:for="{{currentStepMaterials}}" wx:key="name">
+          <text class="material-status">
+            <text wx:if="{{item.ready}}">✅</text>
+            <text wx:elif="{{item.warning}}">⚠️</text>
+            <text wx:else>❌</text>
+          </text>
+          <text class="material-name">{{item.name}}</text>
+          <text wx:if="{{item.confidence}}" class="material-confidence">[{{item.confidence}}]</text>
+          <text class="material-action" wx:if="{{!item.ready}}" bindtap="navigateToDocuments">去准备 →</text>
+          <text class="material-action done" wx:else>查看</text>
+        </view>
+      </view>
+
+      <view class="material-progress">
+        <text class="progress-label">材料完整度 {{materialProgress}}%</text>
+        <view class="progress">
+          <view class="progress-fill {{materialProgress >= 80 ? 'green' : materialProgress >= 50 ? 'orange' : 'red'}}"
+                style="width: {{materialProgress}}%"></view>
+        </view>
+      </view>
+    </view>
+
+    <!-- 快捷操作 -->
+    <view class="quick-row">
+      <button class="btn btn-outline flex-1" bindtap="navigateToAddDocument">📷 添加证件</button>
+      <button class="btn btn-outline flex-1" bindtap="navigateToDocuments">📦 组合材料</button>
+    </view>
+
+    <!-- 里程碑 -->
+    <view class="card milestone-card" wx:if="{{activeProcess}}">
+      <view class="card-title">📷 已完成递交？上传回执</view>
+      <text class="card-subtitle">上传递交回执/确认邮件截图，自动解锁下一阶段</text>
+      <button class="btn btn-primary btn-lg" bindtap="openMilestoneModal">📷 上传递交回执</button>
+      <view class="milestone-divider"></view>
+      <text class="milestone-hint">💡 如果已获批，可直接上传获批通知书</text>
+      <button class="btn btn-outline btn-lg btn-green-outline" bindtap="openArchiveFlow">🎉 上传获批通知书</button>
+    </view>
+
+    <!-- 未解锁阶段 -->
+    <view class="lock-section" wx:if="{{activeProcess}}">
+      <text class="lock-icon">🔒</text>
+      <text class="lock-title">等待审批</text>
+      <text class="lock-desc">向入境处正式递交申请材料后等待结果</text>
+      <text class="lock-condition">解锁条件：上传递交回执/确认邮件</text>
+    </view>
+    <view class="lock-section" wx:if="{{activeProcess}}">
+      <text class="lock-icon">🔒</text>
+      <text class="lock-title">获批</text>
+      <text class="lock-desc">收到原则性获批通知书</text>
+      <text class="lock-condition">解锁条件：上传获批通知书</text>
+    </view>
+
+    <!-- 帮助 -->
+    <view class="card help-card">
+      <text class="card-title">🆘 遇到问题？</text>
+      <text class="help-line">入境处热线：2824 6111</text>
+      <text class="help-note">尊享会员可直接联系顾问</text>
+    </view>
+  </view>
+
+  <!-- ==================== 攻略书 ==================== -->
+  <view class="tab-content" wx:if="{{activeTab === 'playbook'}}">
+    <!-- 搜索 -->
+    <view class="search-bar">
+      <text class="search-bar-icon">🔍</text>
+      <input class="search-bar-input" placeholder="搜索攻略、指引、政策..." />
+    </view>
+
+    <!-- 为你推荐(V5: 置信度标注) -->
+    <view class="section-header">💡 为你推荐</view>
+    <view class="card guide-rec-card" wx:for="{{recommendedGuides}}" wx:key="id"
+          bindtap="navigateToGuide" data-id="{{item.id}}">
+      <view class="guide-rec-header">
+        <text class="guide-rec-icon">{{item.icon}}</text>
+        <view class="guide-rec-info">
+          <text class="guide-rec-title">{{item.title}}</text>
+          <text class="guide-rec-desc">{{item.desc}}</text>
+        </view>
+        <text class="guide-rec-tag">{{item.tag}}</text>
+      </view>
+    </view>
+
+    <!-- 分类入口 (V5: 12路径) -->
+    <view class="section-header">📂 攻略分类</view>
+    <view class="grid-2">
+      <view class="grid-item" wx:for="{{guideCategories}}" wx:key="id"
+            bindtap="navigateToGuideCategory" data-category="{{item.id}}">
+        <text class="grid-item-icon">{{item.icon}}</text>
+        <text class="grid-item-title">{{item.title}}</text>
+        <text class="grid-item-desc">{{item.count}} 篇 · {{item.desc}}</text>
+      </view>
+    </view>
+
+    <!-- 政策动态 (V5: 含受影响路径) -->
+    <view class="section-header">📰 最新政策</view>
+    <view class="policy-card {{item.level}}" wx:for="{{policyUpdates}}" wx:key="id"
+          bindtap="navigateToPolicy" data-id="{{item.id}}">
+      <text class="policy-date">{{item.date}}</text>
+      <text class="policy-title">
+        <text wx:if="{{item.level === 'urgent'}}">🔴 </text>
+        <text wx:elif="{{item.level === 'important'}}">🟡 </text>
+        {{item.title}}
+      </text>
+      <text class="policy-impact">{{item.impact}}</text>
+    </view>
+  </view>
+
+  <!-- ==================== 效率宝 ==================== -->
+  <view class="tab-content" wx:if="{{activeTab === 'precheck'}}">
+    <view class="card precheck-intro">
+      <text class="precheck-icon">🔍</text>
+      <text class="precheck-title">材料预审 v4.1</text>
+      <text class="precheck-desc">V5升级: 增加法律条文引用校验 + 绝对化语言检测 + 政策版本检查</text>
+    </view>
+
+    <view class="card" wx:if="{{precheckStatus === 'ready'}}">
+      <view class="card-title">📊 预审状态</view>
+      <view class="card-row">
+        <text class="card-row-label">已存材料</text>
+        <text class="card-row-value">14 份</text>
+      </view>
+      <view class="card-row">
+        <text class="card-row-label">可预审流程</text>
+        <text class="card-row-value">3 个</text>
+      </view>
+      <button class="btn btn-primary btn-lg" bindtap="navigateToPrecheck">开始材料预审</button>
+    </view>
+
+    <view class="card" wx:if="{{precheckStatus === 'insufficient'}}">
+      <text class="precheck-insufficient-icon">📭</text>
+      <text class="precheck-insufficient-title">材料不足</text>
+      <text class="precheck-insufficient-desc">请先在证件夹中添加至少4份材料，再进行预审</text>
+      <button class="btn btn-primary btn-block" bindtap="navigateToAddDocument">去添加证件</button>
+    </view>
+
+    <!-- V5新能力说明 -->
+    <view class="card">
+      <view class="card-title">✅ V5增强预审能力</view>
+      <view class="feature-list">
+        <text class="feature-item">📋 材料完整性检查 — 对照流程所需清单</text>
+        <text class="feature-item">🔗 内容一致性检查 — 跨文档信息比对</text>
+        <text class="feature-item">📐 格式合规检查 — 盖章、签字、日期</text>
+        <text class="feature-item">⚖️ 法律条文引用校验 — Cap.115编号正确性(P0)</text>
+        <text class="feature-item">📝 绝对化语言检测 — "保证/100%"等表述</text>
+        <text class="feature-item">🔄 政策版本检查 — 过时政策引用检测</text>
+      </view>
+    </view>
+
+    <view class="card privacy-notice">
+      <text class="privacy-notice-icon">🛡</text>
+      <text class="privacy-notice-text">此预审使用脱敏数据完成，你的原始文件不会被上传</text>
+    </view>
+  </view>
+
+  <!-- ===== 里程碑上传弹窗 ===== -->
+  <view class="modal-overlay" wx:if="{{showMilestoneModal}}" bindtap="closeMilestoneModal">
+    <view class="modal-sheet" catchtap="noop">
+      <view class="modal-handle"></view>
+      <view class="modal-title">上传递交凭证</view>
+      <view class="modal-body">
+        <view class="upload-option" bindtap="uploadMilestoneProof">
+          <text class="upload-option-icon">📷</text>
+          <text class="upload-option-label">拍照上传</text>
+        </view>
+        <view class="upload-option" bindtap="uploadMilestoneProof">
+          <text class="upload-option-icon">🖼</text>
+          <text class="upload-option-label">从相册选择</text>
+        </view>
+        <view class="upload-option" bindtap="uploadMilestoneProof">
+          <text class="upload-option-icon">💬</text>
+          <text class="upload-option-label">从微信聊天记录</text>
+        </view>
+      </view>
+      <button class="btn btn-ghost btn-block" bindtap="closeMilestoneModal">取消</button>
+    </view>
+  </view>
+
+  <!-- ===== 归档确认弹窗 ===== -->
+  <view class="modal-overlay" wx:if="{{showArchiveModal}}" bindtap="closeArchiveModal">
+    <view class="modal-sheet" catchtap="noop">
+      <view class="modal-handle"></view>
+      <view class="archive-confirm">
+        <text class="archive-confirm-icon">🎉</text>
+        <text class="archive-confirm-title">确认获批？</text>
+        <text class="archive-confirm-desc">确认后将自动归档申请材料并切换至续签模式</text>
+        <view class="archive-confirm-btns">
+          <button class="btn btn-primary btn-lg" bindtap="confirmArchive">确认归档</button>
+          <button class="btn btn-ghost btn-lg" bindtap="closeArchiveModal">稍后处理</button>
+        </view>
+      </view>
+    </view>
+  </view>
+
+  <!-- 悬浮AI住港伴专员 -->
+  <floating-ai visible="{{true}}" />
+
+  <view class="safe-bottom"></view>
+</view>

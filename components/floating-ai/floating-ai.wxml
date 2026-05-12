@@ -1,0 +1,93 @@
+<!-- 住港伴 v4 — 悬浮AI住港伴专员 -->
+<view class="floating-ai" wx:if="{{visible}}">
+
+  <!-- 悬浮按钮 -->
+  <view class="float-btn {{panelOpen ? 'hidden' : ''}}" bindtap="togglePanel">
+    <image class="float-btn-img" src="/images/ai-avatar.png" mode="aspectFill" aria-label="AI住港伴专员"></image>
+    <view class="float-btn-dot"></view>
+  </view>
+
+  <!-- AI 对话面板 -->
+  <view class="ai-panel {{panelOpen ? 'open' : ''}}">
+    <!-- 面板头部 -->
+    <view class="panel-header">
+      <view class="panel-header-left">
+        <image class="panel-avatar-img" src="/images/ai-avatar.png" mode="aspectFill" aria-label="AI住港伴专员"></image>
+        <view class="panel-title-area">
+          <text class="panel-title">住港伴AI专员</text>
+          <text class="panel-subtitle">DeepSeek · 在线</text>
+        </view>
+      </view>
+      <view class="panel-header-right">
+        <text class="panel-btn" bindtap="clearConversation">🗑</text>
+        <text class="panel-btn" bindtap="closePanel">✕</text>
+      </view>
+    </view>
+
+    <!-- 消息列表 -->
+    <scroll-view class="panel-body" scroll-y enhanced show-scrollbar="{{false}}"
+                 scroll-into-view="{{scrollToView}}" scroll-with-animation>
+      <view class="msg-list">
+        <view class="msg-item {{item.role}}" wx:for="{{messages}}" wx:key="timestamp" id="msg-{{index}}">
+          <!-- 助手头像 -->
+          <view class="msg-avatar" wx:if="{{item.role === 'assistant'}}"><image class="msg-avatar-img" src="/images/ai-avatar.png" mode="aspectFill" aria-label="AI住港伴专员"></image></view>
+          <!-- 消息气泡 -->
+          <view class="msg-bubble {{item.role}}">
+            <text class="msg-text">{{item.content}}</text>
+            <!-- 快捷回复按钮 -->
+            <view class="msg-quick-replies" wx:if="{{item.quickReplies && item.quickReplies.length > 0}}">
+              <text class="qr-btn" wx:for="{{item.quickReplies}}" wx:for-item="qr" wx:key="id"
+                    bindtap="onQuickReply" data-text="{{qr.text}}" data-action="{{qr.action}}">{{qr.text}}</text>
+            </view>
+          </view>
+          <!-- 用户头像 -->
+          <view class="msg-avatar msg-avatar-user" wx:if="{{item.role === 'user'}}">👤</view>
+        </view>
+
+        <!-- 加载动画 -->
+        <view class="msg-item assistant" wx:if="{{loading}}">
+          <view class="msg-avatar"><image class="msg-avatar-img" src="/images/ai-avatar.png" mode="aspectFill" aria-label="AI住港伴专员"></image></view>
+          <view class="msg-bubble assistant loading-bubble">
+            <view class="typing-dots">
+              <view class="dot"></view>
+              <view class="dot"></view>
+              <view class="dot"></view>
+            </view>
+          </view>
+        </view>
+      </view>
+    </scroll-view>
+
+    <!-- 路径评估引导条（pathTestMode） -->
+    <view class="path-test-banner" wx:if="{{pathTestMode && messages.length <= 1 && !loading}}">
+      <text class="path-test-icon">🗺️</text>
+      <view class="path-test-info">
+        <text class="path-test-title">不清楚哪种路径适合您？</text>
+        <text class="path-test-desc">2分钟为您免费测试一下</text>
+      </view>
+      <text class="path-test-go" bindtap="onQuickEntry" data-mode="pathTest">开始 →</text>
+    </view>
+
+    <!-- 快捷入口（消息为空时） -->
+    <view class="quick-entries" wx:if="{{messages.length <= 1 && !loading}}">
+      <view class="qe-item" wx:for="{{quickEntries}}" wx:key="id"
+            bindtap="onQuickEntry" data-mode="{{item.mode}}">
+        <text class="qe-icon">{{item.icon}}</text>
+        <text class="qe-label">{{item.label}}</text>
+      </view>
+    </view>
+
+    <!-- 底部输入栏 -->
+    <view class="panel-footer">
+      <view class="input-wrapper">
+        <input class="chat-input" placeholder="输入你的问题..." value="{{inputValue}}"
+               bindinput="onInput" bindconfirm="sendMessage" confirm-type="send"
+               adjust-position="{{true}}" maxlength="500" />
+        <text class="send-btn {{inputValue ? 'active' : 'disabled'}}" bindtap="onSendTap">发送</text>
+      </view>
+    </view>
+  </view>
+
+  <!-- 遮罩 -->
+  <view class="ai-mask {{panelOpen ? 'open' : ''}}" bindtap="closePanel"></view>
+</view>

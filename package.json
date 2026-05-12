@@ -1,0 +1,40 @@
+{
+  "name": "zhugangban-v3",
+  "version": "3.0.0",
+  "description": "住港伴 — 香港身份规划 AI 伴侣 · 微信小程序",
+  "private": true,
+  "scripts": {
+    "test": "jest --verbose",
+    "test:watch": "jest --watch",
+    "test:coverage": "jest --coverage",
+    "verify": "bash scripts/verify.sh",
+    "verify:baseline": "bash scripts/verify.sh --baseline",
+    "verify:diff": "bash scripts/verify.sh --diff"
+  },
+  "jest": {
+    "testEnvironment": "node",
+    "testMatch": [
+      "**/__tests__/**/*.test.js",
+      "**/tests/**/*.test.js"
+    ],
+    "collectCoverageFrom": [
+      "pages/**/*.js",
+      "cloudfunctions/**/*.js",
+      "data/**/*.js",
+      "utils/**/*.js",
+      "!**/node_modules/**",
+      "!**/__tests__/**"
+    ],
+    "coverageThreshold": {
+      "global": {
+        "branches": 0,
+        "functions": 0,
+        "lines": 0,
+        "statements": 0
+      }
+    }
+  },
+  "devDependencies": {
+    "jest": "^29.0.0"
+  }
+}

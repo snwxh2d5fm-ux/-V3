@@ -1,0 +1,34 @@
+<view class="container">
+  <view class="page-header">
+    <text class="page-header__title">信息栏</text>
+    <text class="page-header__subtitle">打破信息差——政策秒级同步 + 用户视角解读</text>
+  </view>
+  <view class="card" wx:for="{{updates}}" wx:key="id">
+    <view class="update-header">
+      <text class="tag tag--info">{{item.tag}}</text>
+      <text class="update-date">{{item.date}}</text>
+    </view>
+    <text class="update-title">{{item.title}}</text>
+    <text class="update-summary">{{item.summary}}</text>
+    <view class="update-footer">
+      <text class="update-source">来源：{{item.source}}</text>
+      <text class="update-affected">影响：{{item.affected}}</text>
+    </view>
+  </view>
+  <view class="card">
+    <text class="card__title">用户视角解读</text>
+    <text class="disclaimer-text">以下解读来自用户视角，仅供参考，不构成法律建议</text>
+  </view>
+  <view class="card card--outlined" wx:for="{{interpretations}}" wx:key="id">
+    <view class="interp-header">
+      <text class="interp-user">{{item.user}} · {{item.path}}</text>
+    </view>
+    <text class="interp-text">{{item.text}}</text>
+    <view class="interp-actions">
+      <text class="interp-action">👍 {{item.likes}}</text>
+      <text class="interp-action">🆘 求助</text>
+    </view>
+  </view>
+
+  <floating-ai visible="{{true}}" />
+</view>

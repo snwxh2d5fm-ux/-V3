@@ -1,0 +1,52 @@
+<!-- pages/playbook/index/index.wxml -->
+<view class="page">
+  <!-- 搜索栏 -->
+  <view class="search-bar">
+    <view class="search-input-wrap">
+      <text class="search-icon">🔍</text>
+      <input class="search-input" placeholder="搜索攻略..." value="{{searchKeyword}}" bindinput="onSearchInput" bindconfirm="onSearch" focus="{{searchFocus}}"/>
+      <text class="search-clear" wx:if="{{searchKeyword}}" bindtap="onSearchClear">✕</text>
+    </view>
+  </view>
+
+  <!-- 分类标签 -->
+  <scroll-view class="category-bar" scroll-x="true">
+    <view class="category-item {{activeCategory === item.key ? 'active' : ''}}" wx:for="{{categories}}" wx:key="key" data-key="{{item.key}}" bindtap="switchCategory">
+      <text>{{item.icon}} {{item.name}}</text>
+    </view>
+  </scroll-view>
+
+  <!-- 攻略列表 -->
+  <view class="guide-list" wx:if="{{guides.length}}">
+    <view class="guide-card" wx:for="{{guides}}" wx:key="id" data-id="{{item.id}}" bindtap="onGuideTap">
+      <view class="card-header">
+        <view class="domain-tag {{item.knowledge_domain}}">{{item.knowledge_domain}}</view>
+        <text class="card-title">{{item.title}}</text>
+      </view>
+      <text class="card-summary">{{item.summary}}</text>
+      <view class="card-footer">
+        <text class="topic-tag" wx:for="{{item.topics.slice(0,2)}}" wx:for-item="t" wx:key="*this">{{t}}</text>
+        <view class="useful-btn {{item.userVoted ? 'voted' : ''}}" catchtap="onUsefulTap" data-id="{{item.id}}">
+          <text>👍 {{item.usefulCount || 0}}</text>
+        </view>
+      </view>
+    </view>
+  </view>
+
+  <!-- 加载更多 -->
+  <view class="load-more" wx:if="{{loading}}">
+    <text>加载中...</text>
+  </view>
+  <view class="no-more" wx:elif="{{!hasMore && guides.length}}">
+    <text>— 已加载全部 —</text>
+  </view>
+
+  <!-- 空状态 -->
+  <view class="empty" wx:if="{{!guides.length && !loading}}">
+    <text class="empty-icon">📭</text>
+    <text>暂无相关攻略</text>
+    <text class="empty-hint">试试其他分类或关键词</text>
+  </view>
+
+  <floating-ai visible="{{true}}" />
+</view>

@@ -1,0 +1,105 @@
+<!-- pages/membership/index — 会员方案页 -->
+<view class="page">
+
+  <!-- 加载中 -->
+  <view class="loading-wrap" wx:if="{{loading}}">
+    <view class="spinner"></view>
+    <text class="loading-text">加载方案中...</text>
+  </view>
+
+  <!-- 当前会员状态 -->
+  <view class="status-bar" wx:if="{{statusLoaded}}">
+    <view class="status-left">
+      <text class="status-label">当前会员</text>
+      <text class="status-level {{currentLevel}}">{{currentLevel === 'free' ? '免费会员' : currentLevel === 'basic' ? '基础会员' : currentLevel === 'pro' ? '专业会员' : currentLevel === 'premium' ? '尊享会员' : '免费试用'}}</text>
+    </view>
+    <view class="status-right" wx:if="{{isLocked}}">
+      <text class="lock-badge">🔒 已锁定</text>
+    </view>
+  </view>
+
+  <!-- 周期切换 -->
+  <view class="period-switch" wx:if="{{!loading}}">
+    <view class="period-option {{selectedPeriod === 'monthly' ? 'active' : ''}}" bindtap="switchPeriod" data-period="monthly">
+      <text>月付</text>
+    </view>
+    <view class="period-option {{selectedPeriod === 'yearly' ? 'active' : ''}}" bindtap="switchPeriod" data-period="yearly">
+      <text>年付</text>
+      <text class="save-tag">省20%</text>
+    </view>
+  </view>
+
+  <!-- 方案卡片 -->
+  <view class="plans-grid" wx:if="{{!loading}}">
+    <view
+      wx:for="{{plans}}"
+      wx:key="planId"
+      class="plan-card {{item.highlighted ? 'highlighted' : ''}} {{currentLevel === item.level ? 'current' : ''}}"
+    >
+
+      <!-- 推荐标签 -->
+      <view class="plan-badge" wx:if="{{item.badge}}">
+        <text>{{item.badge}}</text>
+      </view>
+
+      <!-- 方案名 -->
+      <view class="plan-header">
+        <text class="plan-name">{{item.planName}}</text>
+        <text class="plan-level-tag {{item.level}}">{{item.level === 'basic' ? '基础' : item.level === 'pro' ? '专业' : '尊享'}}</text>
+      </view>
+
+      <!-- 价格 -->
+      <view class="plan-price">
+        <text class="price-symbol">¥</text>
+        <text class="price-value" wx:if="{{selectedPeriod === 'yearly'}}">{{item.priceYearlyYuan}}</text>
+        <text class="price-value" wx:else>{{item.priceMonthlyYuan}}</text>
+        <text class="price-unit">/{{selectedPeriod === 'yearly' ? '年' : '月'}}</text>
+      </view>
+
+      <!-- 月付时显示年付对比 -->
+      <view class="plan-price-compare" wx:if="{{selectedPeriod === 'monthly'}}">
+        <text>年付仅 ¥{{item.priceYearlyYuan}}（省{{item.savingsPercent}}%）</text>
+      </view>
+
+      <!-- 权益列表 -->
+      <view class="plan-features">
+        <view class="feature-item" wx:for="{{item.features}}" wx:key="*this" wx:for-item="feat">
+          <text class="feature-check">✓</text>
+          <text class="feature-text">{{feat}}</text>
+        </view>
+      </view>
+
+      <!-- 订阅按钮 -->
+      <button
+        class="subscribe-btn {{item.highlighted ? 'primary' : 'outline'}}"
+        wx:if="{{currentLevel !== item.level}}"
+        bindtap="selectPlan"
+        data-plan-id="{{item.planId}}"
+        data-level="{{item.level}}"
+        loading="{{paying && selectedPlanId === item.planId}}"
+        disabled="{{paying}}"
+      >
+        {{paying && selectedPlanId === item.planId ? '支付中...' : '立即订阅'}}
+      </button>
+
+      <view class="subscribe-btn current-btn" wx:else>
+        <text>当前方案</text>
+      </view>
+    </view>
+  </view>
+
+  <!-- 支付结果弹窗 -->
+  <view class="result-overlay" wx:if="{{showResult}}" bindtap="hideResult" role="dialog" aria-modal="true" aria-label="{{resultSuccess ? '订阅成功' : '支付未完成'}}">
+    <view class="result-modal" catchtap="">
+      <text class="result-icon">{{resultSuccess ? '🎉' : '😞'}}</text>
+      <text class="result-title">{{resultSuccess ? '订阅成功' : '支付未完成'}}</text>
+      <text class="result-msg">{{resultMsg}}</text>
+      <button class="result-btn" bindtap="hideResult">
+        {{resultSuccess ? '开始使用' : '重新选择'}}
+      </button>
+    </view>
+  </view>
+
+
+  <floating-ai visible="{{true}}" />
+</view>

@@ -1,0 +1,6 @@
+{
+  "usingComponents": {
+    "floating-ai": "/components/floating-ai/floating-ai"
+  },
+  "navigationBarTitleText": "我的"
+}

@@ -1,0 +1,9 @@
+<view class="checklist-comp">
+  <view class="cl-item {{item.checked ? 'checked' : ''}}" wx:for="{{items}}" wx:key="id" data-index="{{index}}" bindtap="onToggle">
+    <view class="cl-check">{{item.checked ? '✓' : '○'}}</view>
+    <view class="cl-content">
+      <text class="cl-name">{{item.name}}</text>
+      <text class="cl-detail" wx:if="{{item.detail}}">{{item.detail}}</text>
+    </view>
+  </view>
+</view>

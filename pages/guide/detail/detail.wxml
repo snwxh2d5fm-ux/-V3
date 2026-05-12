@@ -1,0 +1,46 @@
+<!-- 住港伴 v4 — 攻略书详情页 -->
+<view class="container" wx:if="{{guide}}">
+  <view class="page-header">
+    <view style="flex:1">
+      <text style="font-size:var(--font-lg);font-weight:700;color:#FFF;display:block">{{guide.title}}</text>
+      <text style="font-size:var(--font-xs);opacity:0.75;display:block;margin-top:4rpx">📎 来源：{{guide.source}} · 更新 {{guide.lastUpdated}}</text>
+    </view>
+  </view>
+
+  <!-- 6层折叠 -->
+  <view class="collapse-list">
+    <view wx:for="{{layers}}" wx:key="id">
+      <view class="collapse-header {{item.open ? 'open' : ''}}" bindtap="toggleLayer" data-id="{{item.id}}">
+        <text>{{item.open ? '▼' : '▶'}} {{item.title}}</text>
+        <text class="arrow">▼</text>
+      </view>
+      <view class="collapse-body {{item.open ? 'open' : ''}}">
+        <text style="white-space:pre-wrap;font-size:var(--font-sm);line-height:2">{{item.content}}</text>
+        <text wx:if="{{item.id === 2}}" style="display:block;margin-top:16rpx;color:var(--blue)" bindtap="viewDocuments">从证件夹中查看我的材料 →</text>
+      </view>
+    </view>
+  </view>
+
+  <!-- 全部展开/折叠 -->
+  <view style="text-align:center;padding:12rpx">
+    <text style="font-size:var(--font-sm);color:var(--blue)" bindtap="toggleAll">
+      {{allOpen ? '全部折叠 ▲' : '全部展开 ▼'}}
+    </text>
+  </view>
+
+  <!-- 重要提醒 -->
+  <view wx:if="{{guide.importantNotice}}" class="card" style="background:var(--orange-light);border:1rpx solid var(--orange)">
+    <text style="font-size:var(--font-sm);color:var(--orange)">{{guide.importantNotice}}</text>
+  </view>
+
+  <!-- 反馈 -->
+  <view style="text-align:center;padding:28rpx;font-size:var(--font-sm);color:var(--gray-500)">
+    此指引有帮助吗？
+    <text style="color:var(--blue);margin:0 16rpx" bindtap="addHelpful">👍 {{helpfulCount}}</text>
+    <text style="color:var(--gray-400)">👎</text>
+  </view>
+
+  <view class="safe-bottom"></view>
+
+  <floating-ai visible="{{true}}" />
+</view>

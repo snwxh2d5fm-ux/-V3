@@ -1,0 +1,42 @@
+<!-- ux-skeleton 骨架屏 -->
+<view class="skeleton-container" aria-label="正在加载" role="status">
+  <!-- card 模式：卡片骨架 -->
+  <block wx:if="{{mode === 'card'}}">
+    <view class="sk-card {{animated ? 'sk-animated' : ''}}" wx:for="{{items}}" wx:key="key">
+      <view class="sk-card__img sk-shimmer"></view>
+      <view class="sk-card__body">
+        <view class="sk-card__title sk-shimmer"></view>
+        <view class="sk-card__line sk-shimmer"></view>
+        <view class="sk-card__line sk-card__line--short sk-shimmer"></view>
+      </view>
+    </view>
+  </block>
+
+  <!-- list 模式：行项骨架 -->
+  <block wx:elif="{{mode === 'list'}}">
+    <view class="sk-list {{animated ? 'sk-animated' : ''}}" wx:for="{{items}}" wx:key="key">
+      <view class="sk-list__avatar sk-shimmer"></view>
+      <view class="sk-list__body">
+        <view class="sk-list__title sk-shimmer"></view>
+        <view class="sk-list__sub sk-shimmer"></view>
+      </view>
+    </view>
+  </block>
+
+  <!-- grid 模式：双列网格骨架 -->
+  <block wx:elif="{{mode === 'grid'}}">
+    <view class="sk-grid">
+      <view class="sk-grid__item {{animated ? 'sk-animated' : ''}}" wx:for="{{items}}" wx:key="key">
+        <view class="sk-grid__icon sk-shimmer"></view>
+        <view class="sk-grid__title sk-shimmer"></view>
+      </view>
+    </view>
+  </block>
+
+  <!-- text 模式：文本段落骨架 -->
+  <block wx:elif="{{mode === 'text'}}">
+    <view class="sk-text {{animated ? 'sk-animated' : ''}}">
+      <view class="sk-text__line sk-text__line--w80 sk-shimmer" wx:for="{{items}}" wx:key="key"></view>
+    </view>
+  </block>
+</view>

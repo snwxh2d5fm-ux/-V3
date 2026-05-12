@@ -1,0 +1,10 @@
+{
+  "name": "ocr-service",
+  "version": "5.0.0",
+  "description": "tesseract.js OCR + 反滥用 (v5: 新增 action='ocr')",
+  "main": "index.js",
+  "dependencies": {
+    "wx-server-sdk": "latest",
+    "tesseract.js": "^5.1.0"
+  }
+}

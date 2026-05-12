@@ -1,0 +1,149 @@
+<view class="container">
+  <!-- 顶部进度条 -->
+  <view class="progress-area">
+    <view class="progress-bar">
+      <view class="progress-fill" style="width: {{progress}}%"></view>
+    </view>
+    <view class="progress-info">
+      <text class="progress-text">{{currentIndex + 1}} / {{totalQuestions}}</text>
+      <text class="progress-pct">{{progress}}%</text>
+    </view>
+  </view>
+
+  <scroll-view class="question-scroll" scroll-y enhanced show-scrollbar="{{false}}">
+  <!-- 题目卡片 -->
+  <view class="question-area {{animating ? (direction === 'forward' ? 'slide-out-left' : 'slide-out-right') : 'slide-in'}}">
+    <view class="question-header">
+      <text class="question-number">Q{{currentIndex + 1}}</text>
+      <text class="question-text">{{questions[currentIndex].question}}</text>
+      <!-- 学历双维度提示 -->
+      <view class="question-note" wx:if="{{questions[currentIndex].note}}">
+        <text class="note-icon">⚠️</text>
+        <text class="note-text">{{questions[currentIndex].note}}</text>
+      </view>
+    </view>
+
+    <!-- 单选题 -->
+    <view class="options-list" wx:if="{{questions[currentIndex].type !== 'multiSelect'}}">
+      <view
+        class="option-item {{selectedOption === index ? 'selected' : ''}}"
+        wx:for="{{questions[currentIndex].options}}"
+        wx:key="index"
+        data-index="{{index}}"
+        bindtap="selectOption"
+      >
+        <view class="option-radio {{selectedOption === index ? 'checked' : ''}}">
+          <text wx:if="{{selectedOption === index}}">✓</text>
+        </view>
+        <text class="option-label">{{item}}</text>
+      </view>
+    </view>
+
+    <!-- 多选题 -->
+    <view class="options-list" wx:if="{{questions[currentIndex].type === 'multiSelect'}}">
+      <view class="multi-hint">可多选</view>
+      <view
+        class="option-item {{multiSelected[index] ? 'selected' : ''}}"
+        wx:for="{{questions[currentIndex].options}}"
+        wx:key="index"
+        data-index="{{index}}"
+        bindtap="selectOption"
+      >
+        <view class="option-checkbox {{multiSelected[index] ? 'checked' : ''}}">
+          <text wx:if="{{multiSelected[index]}}">✓</text>
+        </view>
+        <text class="option-label">{{item}}</text>
+      </view>
+    </view>
+
+    <!-- 参考面板：标准 + 出处 + 案例 -->
+    <view class="ref-panel">
+      <view class="ref-row">
+        <text class="ref-icon">📋</text>
+        <view class="ref-body">
+          <text class="ref-label">标准</text>
+          <view class="ref-criteria-lines">
+            <text class="ref-criteria-line" wx:for="{{questions[currentIndex].criteriaLines}}" wx:key="*this">{{item}}</text>
+          </view>
+        </view>
+      </view>
+      <view class="ref-row">
+        <text class="ref-icon">📜</text>
+        <view class="ref-body">
+          <text class="ref-label">出处</text>
+          <text class="ref-text ref-text--source">{{questions[currentIndex].source}}</text>
+        </view>
+      </view>
+      <view class="ref-row" wx:if="{{questions[currentIndex].examples.length > 0}}">
+        <text class="ref-icon">💡</text>
+        <view class="ref-body">
+          <text class="ref-label">案例参考</text>
+          <view class="ref-examples">
+            <text class="ref-example" wx:for="{{questions[currentIndex].examples}}" wx:key="*this">{{item}}</text>
+          </view>
+        </view>
+      </view>
+    </view>
+  </view>
+
+  <!-- 合资格大学参考面板（仅 school 题目） -->
+  <view class="uni-ref-panel" wx:if="{{questions[currentIndex].id === 'school' && questions[currentIndex].qualifyingList}}">
+    <view class="uni-ref-header">
+      <text class="uni-ref-title">🏫 合资格大学清单（共 {{questions[currentIndex].qualifyingList.total}} 所）</text>
+    </view>
+    <view class="uni-ref-section">
+      <text class="uni-ref-section-title">内地（约 22 所）</text>
+      <view class="uni-tags">
+        <text class="uni-tag" wx:for="{{questions[currentIndex].qualifyingList.mainland}}" wx:key="*this">{{item}}</text>
+      </view>
+    </view>
+    <view class="uni-ref-section">
+      <text class="uni-ref-section-title">香港（7 所）</text>
+      <view class="uni-tags">
+        <text class="uni-tag uni-tag--hk" wx:for="{{questions[currentIndex].qualifyingList.hk}}" wx:key="*this">{{item}}</text>
+      </view>
+    </view>
+    <view class="uni-ref-footer">
+      <text class="uni-ref-note">📌 以上为部分院校示例。完整名单及更新请查阅入境处官网。</text>
+    </view>
+  </view>
+  </scroll-view>
+
+  <!-- 底部导航 -->
+  <view class="nav-area">
+    <button class="btn btn--outline" bindtap="goPrev" disabled="{{!canGoBack}}">
+      ← 上一题
+    </button>
+
+    <button
+      wx:if="{{currentIndex < totalQuestions - 1}}"
+      class="btn btn--primary"
+      bindtap="goNext"
+      disabled="{{!canGoForward}}"
+    >
+      下一题 →
+    </button>
+
+    <button
+      wx:if="{{currentIndex >= totalQuestions - 1}}"
+      class="btn btn--primary btn--lg"
+      bindtap="goNext"
+      disabled="{{!canGoForward || submitting}}"
+      loading="{{submitting}}"
+    >
+      {{submitting ? '分析中...' : '查看评估结果'}}
+    </button>
+  </view>
+
+  <!-- 错误提示 -->
+  <view class="error-toast" wx:if="{{error}}">
+    <text>{{error}}</text>
+  </view>
+
+  <!-- 跳过按钮 -->
+  <view class="skip-area" wx:if="{{currentIndex < totalQuestions - 1}}">
+    <text class="skip-link" bindtap="goNext">跳过此题 ›</text>
+  </view>
+
+  <floating-ai visible="{{true}}" />
+</view>

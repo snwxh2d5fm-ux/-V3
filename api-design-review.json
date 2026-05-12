@@ -1,0 +1,414 @@
+{
+  "report_meta": {
+    "title": "住港伴V2 API设计审查报告",
+    "version": "1.0",
+    "review_date": "2026-05-09",
+    "reviewer": "API设计专家 (Hermes Agent)",
+    "scope": "17个CloudBase云函数 + 1个前端API封装模块",
+    "files_analyzed": [
+      "utils/api.js",
+      "cloudfunctions/user-auth/index.js",
+      "cloudfunctions/ai-chat/index.js",
+      "cloudfunctions/ai-assess/index.js",
+      "cloudfunctions/ai-assess/scoring.js",
+      "cloudfunctions/ai-doc-gen/index.js",
+      "cloudfunctions/solution-engine/index.js",
+      "cloudfunctions/process-manager/index.js",
+      "cloudfunctions/reminder-engine/index.js",
+      "cloudfunctions/guide-service/index.js",
+      "cloudfunctions/match-engine/index.js",
+      "cloudfunctions/payment/index.js",
+      "cloudfunctions/document-manager/index.js",
+      "cloudfunctions/ocr-service/index.js",
+      "cloudfunctions/policy-monitor/index.js",
+      "cloudfunctions/content-clean/index.js",
+      "cloudfunctions/db-admin/index.js",
+      "cloudfunctions/db-seed/index.js",
+      "cloudfunctions/free-trial-monitor/index.js"
+    ]
+  },
+
+  "overall_score": {
+    "total": 100,
+    "score": 48,
+    "grade": "D",
+    "summary": "API设计存在严重的一致性问题。成功码分裂为0和200两派,错误消息字段名在msg和message间摇摆,分页机制仅2个函数实现,无API版本策略,无限流机制。后端云函数整体设计优于前端API封装层,但两套调用范式(REST/CloudFunction)互不协调构成架构债务。"
+  },
+
+  "dimensions": [
+    {
+      "id": "D1",
+      "name": "云函数接口设计一致性",
+      "score": 35,
+      "max_score": 100,
+      "findings": [
+        {
+          "severity": "P0",
+          "category": "成功码不一致",
+          "detail": "17个云函数中,12个使用 code:0 表示成功(user-auth, solution-engine, process-manager, reminder-engine, guide-service, match-engine, payment, document-manager, ocr-service, policy-monitor, content-clean, db-seed, free-trial-monitor), 4个使用 code:200 (ai-chat, ai-assess, ai-doc-gen, db-admin)。前端utils/api.js中REST调用以statusCode===200判成功,云函数调用直接取result,无统一成功码校验。",
+          "affected_functions": ["ai-chat", "ai-assess", "ai-doc-gen", "db-admin"],
+          "recommendation": "强制统一为 code:0 表示成功, [400-599] 表示各类错误。在utils/api.js中增加云函数返回码统一校验层。"
+        },
+        {
+          "severity": "P0",
+          "category": "错误消息字段名不一致",
+          "detail": "user-auth/solution-engine/process-manager等使用 msg; ai-chat/ai-assess/ai-doc-gen/db-admin使用 message。前端错误处理代码无法用一个字段名统一提取错误信息。",
+          "affected_functions": ["ai-chat", "ai-assess", "ai-doc-gen", "db-admin"],
+          "recommendation": "统一为 msg 字段。如需保留 message,在响应中同时返回两者或在前端层做兼容映射。"
+        },
+        {
+          "severity": "P1",
+          "category": "异常错误信息泄露风险",
+          "detail": "多数云函数在catch块中返回 error: err.message,直接将内部异常信息暴露给客户端。reminder-engine、solution-engine、policy-monitor等均为如此。",
+          "affected_functions": ["reminder-engine", "solution-engine", "policy-monitor", "content-clean", "process-manager", "payment", "document-manager", "ocr-service"],
+          "recommendation": "生产环境应隐藏内部异常详情,仅返回通用错误消息。err.message仅记录到云函数日志。"
+        },
+        {
+          "severity": "P1",
+          "category": "action路由模式不一致",
+          "detail": "user-auth有12个action,process-manager有12个,reminder-engine有13个。都采用 switch(action) 模式,但某些函数默认action为空时行为各异:policy-monitor默认执行runPolicyCheck,free-trial-monitor默认dailyCheck,user-auth返回400。",
+          "affected_functions": ["policy-monitor", "free-trial-monitor", "user-auth", "db-admin"],
+          "recommendation": "统一要求action必填,缺少时返回 code:400 msg:'缺少action参数'。"
+        },
+        {
+          "severity": "P2",
+          "category": "db-admin使用遗留集合名",
+          "detail": "db-admin的stats/pullAll/backup操作使用 documents/reminders/processes 集合,但其他云函数统一使用 user_documents/user_reminders/user_processes。该函数可能已废弃或为旧版本残留。",
+          "affected_functions": ["db-admin"],
+          "recommendation": "确认db-admin是否仍在使用。若已废弃,应删除或标记为deprecated;若仍需用,更新集合名。"
+        }
+      ]
+    },
+    {
+      "id": "D2",
+      "name": "请求/响应格式规范",
+      "score": 40,
+      "max_score": 100,
+      "findings": [
+        {
+          "severity": "P0",
+          "category": "双套调用范式并存",
+          "detail": "前端utils/api.js同时使用两种调用方式:(1) wx.request → RESTful API (BASE=https://api.zhugangban.com/v1); (2) wx.cloud.callFunction → 云函数直调。REST调用使用Bearer token认证和自定义Header,云函数调用无认证层(依赖微信SDK自动注入_openid)。两种范式无统一错误处理、无统一超时、无统一重试。",
+          "affected_files": ["utils/api.js"],
+          "recommendation": "两种范式择一标准化。若选REST,所有云函数应通过API网关暴露为HTTP端点;若选CloudFunction,废弃REST BASE配置,全部走wx.cloud.callFunction。中间方案:在utils/api.js中建立统一适配层,对外暴露一致接口。"
+        },
+        {
+          "severity": "P1",
+          "category": "响应结构不统一",
+          "detail": "user-auth的login返回在顶层混入 token/userInfo/userStatus/membershipLevel 等字段,而data中又嵌套一份。其他函数严格遵循 { code, msg, data } 三层结构。",
+          "affected_functions": ["user-auth"],
+          "recommendation": "user-auth的login应统一为 { code:0, data: { token, userInfo, userStatus, membershipLevel, ... } },移除顶层额外字段。"
+        },
+        {
+          "severity": "P2",
+          "category": "部分函数data直接返回数组而非对象",
+          "detail": "guide-service的listNodes/searchGuides在data中直接返回数组;reminder-engine的getDecisionReminders也直接返回数组。标准模式应为 { items: [...], total: N }。",
+          "affected_functions": ["guide-service", "reminder-engine", "policy-monitor"],
+          "recommendation": "统一data为对象格式,数组数据放在 items 字段中,附加 total/count 元信息。"
+        },
+        {
+          "severity": "P2",
+          "category": "入参校验覆盖不完整",
+          "detail": "ai-chat校验message非空,ai-assess校验answers非空,ai-doc-gen校验docType/userLabels/extraInfo。但solution-engine的match仅做if (!profile)的简单检查,未校验profile内部字段;process-manager的多个action仅校验主参数,未校验子字段类型。",
+          "affected_functions": ["solution-engine", "process-manager", "match-engine"],
+          "recommendation": "建立统一的入参校验schema,每个action明确定义必填和可选参数及其类型。"
+        }
+      ]
+    },
+    {
+      "id": "D3",
+      "name": "错误码一致性",
+      "score": 50,
+      "max_score": 100,
+      "findings": [
+        {
+          "severity": "P1",
+          "category": "成功码分裂",
+          "detail": "如前所述,code:0 vs code:200。这是最严重的API契约不一致。",
+          "recommendation": "统一为 code:0。"
+        },
+        {
+          "severity": "P1",
+          "category": "HTTP状态码混入业务码",
+          "detail": "部分云函数将HTTP语义码(401/403/404/409/423/429)直接用作业务code,如user-auth和process-manager。但ai-chat/ai-assess仅使用400/500。db-admin甚至使用了200作为成功码。",
+          "affected_functions": ["user-auth", "process-manager", "db-admin"],
+          "recommendation": "可以保留HTTP语义码作为业务code,但需在17个函数间保持一致。建议code取值规范:0=成功, 400=参数错误, 401=未认证, 403=无权限/已锁定, 404=资源不存在, 409=冲突/重复, 422=业务规则拒绝, 423=资源锁定, 429=频率限制, 500=服务异常。"
+        },
+        {
+          "severity": "P2",
+          "category": "OCR服务使用自定义错误码",
+          "detail": "ocr-service使用1001(OCR识别失败)和1002(未识别到文字)两个自定义码,与整个系统的错误码体系脱节。",
+          "affected_functions": ["ocr-service"],
+          "recommendation": "将OCR特有错误归入标准错误码范围,或在code之外增加subCode字段。"
+        },
+        {
+          "severity": "P3",
+          "category": "缺少403/429的统一处理",
+          "detail": "前端utils/api.js中REST调用的错误处理仅判断statusCode===200,云函数调用的错误在各自catch中硬编码返回 { code:500, message:'...' }。前端无全局错误码拦截器(如统一处理401跳登录、429显示限流提示)。",
+          "affected_files": ["utils/api.js"],
+          "recommendation": "在utils/api.js中建立全局错误码拦截中间件,对code=401跳登录,code=403提示无权限,code=429等待重试。"
+        }
+      ]
+    },
+    {
+      "id": "D4",
+      "name": "分页/排序/过滤支持",
+      "score": 20,
+      "max_score": 100,
+      "findings": [
+        {
+          "severity": "P1",
+          "category": "分页机制严重缺失",
+          "detail": "17个云函数中,仅 document-manager.listDocs 支持 limit+offset 分页, payment.getOrders 支持 limit(上限50), policy-monitor.getRecentUpdates 支持 limit。其余所有函数的列表查询(queryAll/无分页)均一次性返回全量数据,包括 reminder-engine.listActive, process-manager.getMyProcesses, match-engine.getDocTypeMap 等。",
+          "affected_functions": ["reminder-engine", "process-manager", "match-engine", "guide-service", "policy-monitor", "content-clean", "solution-engine", "payment", "free-trial-monitor"],
+          "recommendation": "所有列表类action强制实现分页,统一参数: { page:1, pageSize:20 } 或 { limit:20, offset:0 },统一响应: { items:[], total:N, page:1, pageSize:20, totalPages:N }。云函数内部 limit 上限设为100。"
+        },
+        {
+          "severity": "P1",
+          "category": "排序不可配置",
+          "detail": "排序字段和方向全部硬编码在各云函数内部,如 .orderBy('createdAt','desc')。前端无法指定排序策略。",
+          "affected_functions": ["document-manager", "process-manager", "reminder-engine", "payment", "policy-monitor"],
+          "recommendation": "暴露 sortBy 和 sortOrder 参数,通过白名单限制可排序字段防止注入。"
+        },
+        {
+          "severity": "P2",
+          "category": "过滤仅通过action区分",
+          "detail": "过滤逻辑完全依赖action路由。如 reminder-engine 用 listActive/listByDate/getByProcess/getTimeline 四个不同action区分过滤维度,而非统一的 filter 参数。",
+          "affected_functions": ["reminder-engine", "guide-service", "document-manager"],
+          "recommendation": "采用统一 filter 对象参数,如 { status:'pending', deadlineBefore:'2026-06-01', keyword:'签证' },各action负责解析和校验允许的过滤字段。"
+        },
+        {
+          "severity": "P3",
+          "category": "搜索功能无分页",
+          "detail": "document-manager.searchDocs limit(20) 硬编码, guide-service.searchGuides limit(20) 硬编码,无翻页能力。",
+          "affected_functions": ["document-manager", "guide-service"],
+          "recommendation": "搜索接口同样支持分页参数。"
+        }
+      ]
+    },
+    {
+      "id": "D5",
+      "name": "API版本策略",
+      "score": 10,
+      "max_score": 100,
+      "findings": [
+        {
+          "severity": "P0",
+          "category": "无API版本策略",
+          "detail": "整个项目没有任何API版本管理机制。云函数无版本号、无版本路由、无兼容性检查。utils/api.js中设置 X-Engine-Version:4.1.0 仅作用于REST调用,且后端是否解析该Header未知。",
+          "affected_files": ["全部云函数", "utils/api.js"],
+          "recommendation": "方案A:云函数名追加版本后缀(如 user-auth-v1)。方案B:在 action 中嵌入版本(如 action:'v2/login')。方案C:在 event 中要求 version 字段。推荐方案A,部署简单,新旧版本可并存。"
+        },
+        {
+          "severity": "P2",
+          "category": "版本感知不一致",
+          "detail": "ai-assess的 event.version 字段指定为'v5'但未实际使用。solution-engine的 process_templates 中有 version 字段。OCR结果中有 engineVersion:'1.0.0'。但这些版本号互不关联,无全局版本策略。",
+          "recommendation": "建立全局版本注册表,所有版本号统一管理。"
+        }
+      ]
+    },
+    {
+      "id": "D6",
+      "name": "限流/配额设计",
+      "score": 30,
+      "max_score": 100,
+      "findings": [
+        {
+          "severity": "P1",
+          "category": "AI调用无限流",
+          "detail": "ai-chat和ai-doc-gen直接调用DeepSeek API,无任何用户级别或全局级别的频率限制。恶意用户可无限消耗API配额。ai-assess调用不涉及外部API但同样无限频。",
+          "affected_functions": ["ai-chat", "ai-doc-gen", "ai-assess"],
+          "recommendation": "为AI类云函数实现基于_openid的令牌桶限流。免费试用用户:5次/天;付费用户:50次/天。记录调用次数到users集合,每次调用前检查。"
+        },
+        {
+          "severity": "P2",
+          "category": "仅少数场景有限流",
+          "detail": "user-auth的短信验证码有60秒频率限制(使用sms_codes集合),里程碑验证有3次失败后24小时锁定。这两个是现有代码中仅有的限流机制。",
+          "positive_points": ["短信验证码频率限制设计合理", "里程碑锁定的冷却机制设计合理"]
+        },
+        {
+          "severity": "P2",
+          "category": "免费试用配额管理简陋",
+          "detail": "free-trial-monitor仅做到期锁定(FL-01)和到期前提醒(FL-02),未追踪试用期间的功能使用量。用户注册即获180天无限使用,无可控配额。",
+          "affected_functions": ["free-trial-monitor", "user-auth"],
+          "recommendation": "为免费试用用户设置功能配额上限:评估3次、文档生成2份、AI对话20次。超额后提示升级。"
+        },
+        {
+          "severity": "P3",
+          "category": "无全局限流中间件",
+          "detail": "所有云函数均无请求级限流。建议在关键云函数(user-auth的login, ai-chat)增加基于IP或_openid的QPS限制(如5次/秒)。",
+          "recommendation": "可使用CloudBase的云函数并发限制,或在函数入口处通过数据库计数器实现简易限流。"
+        }
+      ]
+    },
+    {
+      "id": "D7",
+      "name": "接口文档完整性",
+      "score": 30,
+      "max_score": 100,
+      "findings": [
+        {
+          "severity": "P1",
+          "category": "无集中式API文档",
+          "detail": "不存在OpenAPI/Swagger规范文件、无Markdown API文档、无Postman Collection。API规格仅通过源代码注释和PRD描述隐式存在。",
+          "affected_files": ["全部"],
+          "recommendation": "产出至少一份 api-spec.yaml (OpenAPI 3.0) 或维护一个 api-reference.md,列出所有action、入参出参、错误码。"
+        },
+        {
+          "severity": "P2",
+          "category": "JSDoc覆盖率不均",
+          "detail": "ai-chat/ai-assess/ai-doc-gen有详细的JSDoc注释(含输入输出类型描述);solution-engine/user-auth有函数级注释;但process-manager/reminder-engine的多数内部函数无文档;db-admin几乎无注释。",
+          "affected_functions": ["db-admin", "process-manager", "reminder-engine"],
+          "recommendation": "最低要求:每个action处理函数必须有JSDoc注释,标注@param和@returns。"
+        },
+        {
+          "severity": "P2",
+          "category": "无错误码目录",
+          "detail": "各云函数的错误码分散在代码中,无集中定义。如403在user-auth和process-manager含义不同(账户锁定 vs 材料不可删)。",
+          "recommendation": "建立 errors.js 共享模块,导出标准错误码常量及其含义。所有云函数引用统一错误码。"
+        }
+      ]
+    },
+    {
+      "id": "D8",
+      "name": "向后兼容性",
+      "score": 15,
+      "max_score": 100,
+      "findings": [
+        {
+          "severity": "P0",
+          "category": "无版本化部署能力",
+          "detail": "云函数直接覆盖部署,旧版本消失。一旦修改入参/出参结构,所有客户端立即受影响,没有灰度或共存期。",
+          "recommendation": "为每个云函数创建版本化副本(如 user-auth-v1, user-auth-v2),通过app.js中的环境配置控制调用版本。"
+        },
+        {
+          "severity": "P1",
+          "category": "前端fallback模式不充分",
+          "detail": "matchSolutionPath有双保险逻辑(solution-engine→match-engine fallback),但其他关键函数(sendChatMessage, submitAssessment, generateDocument)仅返回硬编码错误对象,未尝试降级。",
+          "affected_functions": ["solution-engine / match-engine 的 fallback"],
+          "recommendation": "为AI类函数增加降级策略:DeepSeek不可用时从缓存中返回类似问题的历史回答。"
+        },
+        {
+          "severity": "P2",
+          "category": "数据库迁移无策略",
+          "detail": "db-seed使用_upsert模式(按keyField去重),但集合schema变更(如新增字段、重命名字段)没有迁移脚本。process_templates的version字段存在但无使用场景。",
+          "recommendation": "为process_templates增加schema_version字段,代码中做版本感知的兼容处理(如旧版本缺少某字段时给默认值)。"
+        },
+        {
+          "severity": "P3",
+          "category": "前端兼容性处理不足",
+          "detail": "utils/api.js中仅matchSolutionPath有fallback,其他函数均无。一旦云函数修改返回结构,前端会直接崩溃。",
+          "affected_files": ["utils/api.js"],
+          "recommendation": "所有api.js中的函数增加结构性校验,对缺失字段给默认值,对未知字段忽略。"
+        }
+      ]
+    }
+  ],
+
+  "architecture_issues": [
+    {
+      "id": "ARCH-01",
+      "title": "双API范式债务",
+      "severity": "P0",
+      "description": "前端utils/api.js同时依赖外部REST API和CloudBase云函数,两套体系在认证、错误处理、超时、重试等方面完全独立。这种分裂增加了前端复杂度,使统一错误拦截和全局状态管理几乎不可能。",
+      "recommendation": "短期:在utils/api.js中建立一个ApiClient类,统一封装request()和callFunction(),对外暴露一致的Promise接口。长期:择一范式。"
+    },
+    {
+      "id": "ARCH-02",
+      "title": "db-admin云函数疑似僵尸代码",
+      "severity": "P1",
+      "description": "db-admin使用documents/reminders/processes(无user_前缀)等旧集合名,与其他云函数不一致。其stats/sync/pullAll/backup功能可能已无实际调用方。",
+      "recommendation": "排查db-admin的调用来源。若确实废弃,从cloudfunctions目录移除或标记为deprecated。"
+    },
+    {
+      "id": "ARCH-03",
+      "title": "process-manager与match-engine功能重叠",
+      "severity": "P2",
+      "description": "process-manager的getChecklist和match-engine的match/getChecklist都提供材料匹配功能,实现逻辑部分重复(都查询process_templates和material_standards)。",
+      "recommendation": "明确分工:process-manager负责流程实例级别的材料状态, match-engine负责模板级别的材料类型映射。消除重复查询。"
+    }
+  ],
+
+  "positive_findings": [
+    {
+      "id": "POS-01",
+      "detail": "action路由模式(/switch(action))在16个云函数中一致使用,入口参数结构统一为 { action, ...params }。这是良好的设计惯例。"
+    },
+    {
+      "id": "POS-02",
+      "detail": "user-auth云的手机号处理采用SHA-256+盐哈希,不存明文;同时设计去重检测和同设备多注册告警,隐私和安全意识较好。"
+    },
+    {
+      "id": "POS-03",
+      "detail": "guide-service的五级置信度标注系统(A/B/C/D/E)设计优秀,且E级隐藏内容、D级展示警告横幅。validateGuideContent的P0级法律条文修正也体现了领域专业性。"
+    },
+    {
+      "id": "POS-04",
+      "detail": "reminder-engine和content-clean都使用了内存缓存(_cacheExpiry + TTL),降低数据库读取频率。缓存刷新机制(refreshCache)有管理入口。"
+    },
+    {
+      "id": "POS-05",
+      "detail": "document-manager的createDoc设计了OCR结果结构化存储、到期提醒自动触发、核心原件标记(不可删)等完整生命周期管理。"
+    },
+    {
+      "id": "POS-06",
+      "detail": "solution-engine的路径匹配和对比功能提供了完整的数据结构(PATH_PROFILES包含风险等级、周期、通过率、要求、备注),信息密度高。"
+    }
+  ],
+
+  "priority_action_items": [
+    {
+      "priority": "P0-立即修复",
+      "items": [
+        "统一所有云函数成功码为 code:0",
+        "统一错误消息字段名为 msg",
+        "决策并执行单一API范式(REST vs CloudFunction)",
+        "为所有AI类云函数增加用户级别频率限制",
+        "建立API版本策略并实施"
+      ]
+    },
+    {
+      "priority": "P1-本迭代修复",
+      "items": [
+        "所有云函数移除 catch 中的 error: err.message 暴露",
+        "所有 list 类 action 实现统一分页(limit+offset)",
+        "建立集中式错误码常量模块",
+        "产出 api-spec.yaml 或 api-reference.md",
+        "user-auth login 响应结构标准化(移除顶层冗余字段)"
+      ]
+    },
+    {
+      "priority": "P2-下迭代修复",
+      "items": [
+        "暴露排序参数 sortBy/sortOrder",
+        "统一过滤参数为 filter 对象",
+        "清理db-admin遗留代码或更新集合名",
+        "为免费试用用户设置功能使用配额",
+        "建立全局错误码前端拦截器"
+      ]
+    }
+  ],
+
+  "cloud_function_matrix": {
+    "headers": ["云函数", "成功码", "错误字段", "action数", "分页支持", "限流机制", "版本感知", "JSDoc质量"],
+    "rows": [
+      { "fn": "user-auth", "successCode": 0, "errorField": "msg", "actionCount": 12, "pagination": "无", "rateLimit": "SMS 60s / 里程碑3次锁24h", "version": "无", "docs": "中" },
+      { "fn": "ai-chat", "successCode": 200, "errorField": "message", "actionCount": 1, "pagination": "无", "rateLimit": "无", "version": "无", "docs": "好" },
+      { "fn": "ai-assess", "successCode": 200, "errorField": "message", "actionCount": 1, "pagination": "无", "rateLimit": "无", "version": "event.version='v5'(未使用)", "docs": "好" },
+      { "fn": "ai-doc-gen", "successCode": 200, "errorField": "message", "actionCount": 1, "pagination": "无", "rateLimit": "无", "version": "无", "docs": "好" },
+      { "fn": "solution-engine", "successCode": 0, "errorField": "msg", "actionCount": 4, "pagination": "无", "rateLimit": "无", "version": "无", "docs": "中" },
+      { "fn": "process-manager", "successCode": 0, "errorField": "msg", "actionCount": 12, "pagination": "无", "rateLimit": "里程碑3次失败锁24h", "version": "无", "docs": "中" },
+      { "fn": "reminder-engine", "successCode": 0, "errorField": "msg", "actionCount": 13, "pagination": "无", "rateLimit": "无", "version": "无", "docs": "差" },
+      { "fn": "guide-service", "successCode": 0, "errorField": "msg", "actionCount": 10, "pagination": "无", "rateLimit": "无", "version": "policyStamp检查", "docs": "中" },
+      { "fn": "match-engine", "successCode": 0, "errorField": "msg", "actionCount": 4, "pagination": "无", "rateLimit": "无", "version": "无", "docs": "中" },
+      { "fn": "payment", "successCode": 0, "errorField": "msg", "actionCount": 8, "pagination": "limit(最大50)", "rateLimit": "无", "version": "无", "docs": "中" },
+      { "fn": "document-manager", "successCode": 0, "errorField": "msg", "actionCount": 11, "pagination": "limit+offset(最大100)", "rateLimit": "无", "version": "无", "docs": "好" },
+      { "fn": "ocr-service", "successCode": 0, "errorField": "msg", "actionCount": 2, "pagination": "无", "rateLimit": "无", "version": "engineVersion", "docs": "中" },
+      { "fn": "policy-monitor", "successCode": 0, "errorField": "msg", "actionCount": 6, "pagination": "limit(最大50)", "rateLimit": "无", "version": "无", "docs": "中" },
+      { "fn": "content-clean", "successCode": 0, "errorField": "msg", "actionCount": 5, "pagination": "无", "rateLimit": "无", "version": "无", "docs": "中" },
+      { "fn": "db-admin", "successCode": 200, "errorField": "message", "actionCount": 5, "pagination": "无", "rateLimit": "无", "version": "无", "docs": "差" },
+      { "fn": "db-seed", "successCode": 0, "errorField": "msg", "actionCount": 1, "pagination": "不适用", "rateLimit": "不适用", "version": "不适用", "docs": "中" },
+      { "fn": "free-trial-monitor", "successCode": 0, "errorField": "msg", "actionCount": 3, "pagination": "无", "rateLimit": "无", "version": "无", "docs": "中" }
+    ]
+  }
+}

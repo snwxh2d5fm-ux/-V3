@@ -1,0 +1,32 @@
+{
+  "envId": "cloudbase-d1g17tgt7cc199a60",
+  "functionRoot": "./cloudfunctions",
+  "functions": [
+    { "name": "user-auth", "timeout": 30 },
+    { "name": "ai-chat", "timeout": 30 },
+    { "name": "ai-assess", "timeout": 30 },
+    { "name": "ai-doc-gen", "timeout": 30 },
+    { "name": "process-manager", "timeout": 30 },
+    { "name": "reminder-engine", "timeout": 30 },
+    { "name": "document-manager", "timeout": 30 },
+    { "name": "match-engine", "timeout": 30 },
+    { "name": "policy-monitor", "timeout": 30 },
+    { "name": "guide-service", "timeout": 30 },
+    { "name": "payment", "timeout": 30 },
+    { "name": "ocr-service", "timeout": 30 },
+    { "name": "db-admin", "timeout": 30 },
+    { "name": "solution-engine", "timeout": 30 },
+    { "name": "content-clean", "timeout": 30 },
+    { "name": "free-trial-monitor", "timeout": 30 },
+    { "name": "db-seed", "timeout": 60 },
+    { "name": "knowledge-import", "timeout": 60 }
+  ],
+  "ai": {
+    "defaultAgent": "codebuddy",
+    "agents": {
+      "codebuddy": {
+        "type": "custom"
+      }
+    }
+  }
+}

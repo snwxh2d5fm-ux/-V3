@@ -1,0 +1,758 @@
+/**
+ * ocr-service — tesseract.js OCR + 反滥用 (v6)
+ * v6: 本地语言包，零联网依赖，彻底根治 SSL access denied
+ */
+const cloud = require('wx-server-sdk');
+const path = require('path');
+const Tesseract = require('tesseract.js');
+
+cloud.init({ env: cloud.DYNAMIC_CURRENT_ENV });
+const db = cloud.database();
+const _ = db.command;
+
+const OCR_LANG = 'chi_sim+eng';
+// 语言包本地路径 — 杜绝 CDN 联网
+const TESSDATA_PATH = path.join(__dirname, 'tessdata');
+
+// ========== 反滥用配置 ==========
+const ABUSE_RULES = {
+  maxPerDay: 20,
+  minIntervalSec: 5,
+  cooldownAfterFailures: 5,
+  cooldownMinutes: 10,
+  minTextLength: 10
+};
+
+exports.main = async (event) => {
+  const { action, docType, fileID, selectedPath, lang } = event;
+  const wxContext = cloud.getWXContext();
+  const openid = wxContext.OPENID;
+
+  try {
+    switch (action) {
+      case 'verify':
+        return await verify(docType, fileID, selectedPath, openid);
+      case 'ocr':
+        return await ocrAction(fileID, openid, lang);
+      case 'dryrun':
+        return dryRun(event.text || '');
+      case 'recognizeDates':
+        return await recognizeDates(fileID, openid);
+      default:
+        return { code: 400, msg: '无效操作' };
+    }
+  } catch (err) {
+    console.error('[ocr]', err);
+    return { code: 500, msg: 'OCR 服务异常' };
+  }
+};
+
+// ========== v6 核心: 本地 OCR，不联网 ==========
+
+async function doLocalOCR(buffer, lang) {
+  var worker = await Tesseract.createWorker(lang, 1, {
+    langPath: TESSDATA_PATH,
+    logger: function(m) {
+      if (m.status === 'recognizing text') {
+        console.log('OCR:', Math.round(m.progress * 100) + '%');
+      }
+    }
+  });
+  try {
+    var result = await worker.recognize(buffer);
+    return result.data;
+  } finally {
+    await worker.terminate();
+  }
+}
+
+// ========== v5 新增: action='ocr' — 证件添加页通用OCR ==========
+
+async function ocrAction(fileID, openid, overrideLang) {
+  if (!fileID) return { code: 400, msg: '缺少文件' };
+
+  // === 反滥用检查 ===
+  var abuseCheck = await checkAbuse(openid);
+  if (!abuseCheck.allowed) {
+    return { code: 429, msg: abuseCheck.reason };
+  }
+
+  var startTime = Date.now();
+  var useLang = overrideLang || OCR_LANG;  // 支持调用方指定语言，加速测试
+
+  // 下载文件
+  var buffer;
+  try {
+    var res = await cloud.downloadFile({ fileID });
+    buffer = res.fileContent;
+  } catch (e) {
+    console.error('[ocr] 下载失败:', e);
+    return { code: 500, msg: '图片下载失败' };
+  }
+
+  // 图片质量检查
+  if (buffer.length < 5000) {
+    return { code: 400, msg: '图片过小，请拍摄清晰照片' };
+  }
+  if (buffer.length > 10 * 1024 * 1024) {
+    return { code: 400, msg: '图片过大' };
+  }
+
+  // 立即删除云存储临时文件
+  try { await cloud.deleteFile({ fileList: [fileID] }); } catch (e) {}
+
+  // OCR 识别
+  var text = '';
+  try {
+    var t0 = Date.now();
+    console.log('[ocr-action] starting local OCR with lang:', useLang, 'path:', TESSDATA_PATH);
+    var data = await doLocalOCR(buffer, useLang);
+    text = data.text || '';
+    console.log('OCR took', Date.now() - t0, 'ms, text length:', text.length);
+  } catch (e) {
+    console.error('[ocr] tesseract 失败:', e.message, e.stack);
+    return { code: 0, data: { rawText: '', docType: 'unknown', confidence: 0, fields: [], ocrError: 'OCR引擎加载失败: ' + (e.message || '未知错误') + '。请尝试手动录入证件信息。' } };
+  }
+
+  var textLen = (text || '').trim().length;
+
+  // 识别文档类型
+  var docTypeInfo = identifyDocType(text);
+  var docType = docTypeInfo.docType;
+
+  // 提取字段
+  var fields = extractAllFields(docType, text);
+
+  // 计算置信度
+  var confidence = calcConfidence(docTypeInfo, fields, textLen);
+
+  // 审计日志
+  await logOCRGeneric(openid, docType, textLen, confidence, Date.now() - startTime);
+
+  return {
+    code: 0,
+    data: {
+      rawText: text,
+      docType: docType,
+      confidence: confidence,
+      fields: fields
+    }
+  };
+}
+
+// ========== dryrun — 跳过 tesseract，验证所有处理函数 ==========
+
+function dryRun(text) {
+  try {
+    if (!text || text.trim().length < 5) {
+      return { code: 400, msg: '文本太短，至少5个字符' };
+    }
+
+    var textLen = text.trim().length;
+    var docTypeInfo = identifyDocType(text);
+    var fields = extractAllFields(docTypeInfo.docType, text);
+    var confidence = calcConfidence(docTypeInfo, fields, textLen);
+
+    return {
+      code: 0,
+      data: {
+        rawText: text,
+        docType: docTypeInfo.docType,
+        docTypeConfidence: docTypeInfo.confidence,
+        confidence: confidence,
+        fields: fields,
+        fieldCount: fields.length,
+        textLength: textLen,
+        summary: 'dryrun completed — all processing functions verified'
+      }
+    };
+  } catch (e) {
+    return { code: 500, msg: 'dryrun error: ' + (e.message || String(e)) };
+  }
+}
+
+// ========== recognizeDates — 提醒器日期识别 ==========
+
+async function recognizeDates(fileID, openid) {
+  if (!fileID) return { code: 400, msg: '缺少文件' };
+
+  // 反滥用
+  var abuseCheck = await checkAbuse(openid);
+  if (!abuseCheck.allowed) return { code: 429, msg: abuseCheck.reason };
+
+  var startTime = Date.now();
+
+  // 下载文件
+  var buffer;
+  try {
+    var res = await cloud.downloadFile({ fileID });
+    buffer = res.fileContent;
+  } catch (e) {
+    return { code: 500, msg: '图片下载失败' };
+  }
+
+  if (buffer.length < 5000) return { code: 400, msg: '图片过小' };
+  if (buffer.length > 10 * 1024 * 1024) return { code: 400, msg: '图片过大' };
+
+  // 立即删除
+  try { await cloud.deleteFile({ fileList: [fileID] }); } catch (e) {}
+
+  // OCR
+  var text = '';
+  try {
+    var data = await doLocalOCR(buffer, 'chi_sim+eng');
+    text = data.text || '';
+  } catch (e) {
+    console.error('[recognizeDates] OCR 失败:', e.message);
+    return { code: 0, data: { dates: [], message: 'OCR 识别失败' } };
+  }
+
+  // 提取所有日期
+  var dates = extractAllDates(text);
+
+  // 审计日志
+  await logOCRGeneric(openid, 'reminder_date', (text || '').trim().length, dates.length > 0 ? 0.8 : 0.2, Date.now() - startTime);
+
+  if (dates.length === 0) {
+    return { code: 0, data: { dates: [], message: '未能识别到有效日期', rawText: text } };
+  }
+
+  return {
+    code: 0,
+    data: {
+      dates: dates,
+      message: '识别到 ' + dates.length + ' 个日期',
+      rawText: text
+    }
+  };
+}
+
+// 从OCR文本提取所有日期
+function extractAllDates(text) {
+  var dates = [];
+  var seen = {};
+
+  // 中文日期: 2025年12月31日
+  var re1 = /(\d{4})\s*年\s*(\d{1,2})\s*月\s*(\d{1,2})\s*日/g;
+  var m;
+  while ((m = re1.exec(text)) !== null) {
+    var d = m[1] + '-' + m[2].padStart(2, '0') + '-' + m[3].padStart(2, '0');
+    if (!seen[d]) {
+      seen[d] = true;
+      // 提取上下文标签
+      var ctx = getDateContext(text, m.index, 15);
+      dates.push({ date: d, label: ctx || '日期', raw: m[0] });
+    }
+  }
+
+  // ISO日期: 2025-12-31
+  var re2 = /(\d{4})[-/](\d{1,2})[-/](\d{1,2})/g;
+  var now = new Date();
+  while ((m = re2.exec(text)) !== null) {
+    var y = parseInt(m[1]), mo = parseInt(m[2]), day = parseInt(m[3]);
+    if (y < 1990 || y > 2050) continue;
+    var d2 = m[1] + '-' + m[2].padStart(2, '0') + '-' + m[3].padStart(2, '0');
+    if (!seen[d2]) {
+      seen[d2] = true;
+      var ctx2 = getDateContext(text, m.index, 15);
+      var isPast = new Date(d2) < now;
+      dates.push({ date: d2, label: (isPast ? '历史' : '') + (ctx2 || '日期'), raw: m[0], past: isPast });
+    }
+  }
+
+  // 中文简写: 2025年12月
+  var re3 = /(\d{4})\s*年\s*(\d{1,2})\s*月(?!\s*\d)/g;
+  while ((m = re3.exec(text)) !== null) {
+    var d3 = m[1] + '-' + m[2].padStart(2, '0') + '-01';
+    if (!seen[d3]) {
+      seen[d3] = true;
+      dates.push({ date: d3, label: '截止日期', raw: m[0], approximate: true });
+    }
+  }
+
+  return dates;
+}
+
+// 提取日期上下文标签（前置关键词）
+function getDateContext(text, pos, window) {
+  var start = Math.max(0, pos - window);
+  var before = text.substring(start, pos).trim();
+  var keywords = [
+    ['有效期至', '有效期至'], ['有效期', '有效期'], ['截止', '截止日期'],
+    ['到期', '到期日'], ['签发日期', '签发日期'], ['出生日期', '出生日期'],
+    ['递交日期', '递交日期'], ['审批日期', '审批日期'],
+    ['申请日期', '申请日期'], ['发证日期', '发证日期'],
+  ];
+  for (var i = 0; i < keywords.length; i++) {
+    if (before.indexOf(keywords[i][0]) !== -1) return keywords[i][1];
+  }
+  return '关键日期';
+}
+
+// ========== 文档类型识别 ==========
+
+function identifyDocType(text) {
+  if (/身份证|居民身份|公民身份/.test(text))          return { docType: 'id_card', confidence: 0.95 };
+  if (/港澳通行证|往来港澳|往來港澳/.test(text))        return { docType: 'hk_permit', confidence: 0.95 };
+  if (/PASSPORT|护照|護照|Passport/.test(text))       return { docType: 'passport', confidence: 0.95 };
+  if (/HONG KONG.*IDENTITY|香港.*身份證|香港.*身份证/.test(text)) return { docType: 'hk_id', confidence: 0.95 };
+  if (/学位|学士|碩士|博士|Bachelor|Master|Doctor/.test(text))  return { docType: 'degree', confidence: 0.85 };
+  if (/獲批|批准|原則上批准|原則性批准|Approval|批准函/.test(text)) return { docType: 'approval_letter', confidence: 0.85 };
+  if (/銀行|Bank|流水|Statement|账户|帳戶/.test(text))  return { docType: 'bank_statement', confidence: 0.80 };
+  if (/簽證|签证|visa|VISA|逗留|居留/.test(text))      return { docType: 'visa', confidence: 0.75 };
+  if (/工作证明|在職證明|工作證明|推薦信|推荐信/.test(text)) return { docType: 'work_proof', confidence: 0.75 };
+  return { docType: 'unknown', confidence: 0 };
+}
+
+// ========== 字段提取（通用版，覆盖所有证件类型） ==========
+
+function extractAllFields(docType, text) {
+  var fields = [];
+
+  // 通用字段: 姓名
+  var name = extractName(text);
+  if (name) fields.push({ label: '姓名', value: name });
+
+  // 通用字段: 日期
+  var dates = extractDates(text);
+  dates.forEach(function(d) { fields.push(d); });
+
+  switch (docType) {
+    case 'id_card':
+      extractIdCard(text, fields);
+      break;
+    case 'hk_id':
+      extractHkId(text, fields);
+      break;
+    case 'hk_permit':
+      extractHkPermit(text, fields);
+      break;
+    case 'passport':
+      extractPassport(text, fields);
+      break;
+    case 'degree':
+      extractDegree(text, fields);
+      break;
+    case 'approval_letter':
+      extractApproval(text, fields);
+      break;
+    case 'bank_statement':
+      extractBank(text, fields);
+      break;
+    case 'work_proof':
+      extractWork(text, fields);
+      break;
+    case 'visa':
+      extractVisa(text, fields);
+      break;
+    default:
+      extractGeneric(text, fields);
+      break;
+  }
+
+  return fields;
+}
+
+function extractName(text) {
+  var m = text.match(/姓名[：:\s]+([\u4e00-\u9fff]{2,4})/);
+  if (m) return m[1];
+  m = text.match(/Name[：:\s]+([A-Z][a-z]+\s+[A-Z][a-z]+)/i);
+  if (m) return m[1];
+  return null;
+}
+
+function extractDates(text) {
+  var fields = [];
+  // 有效期起
+  var from = text.match(/(?:签发日期|Valid From|Issue Date|簽發日期)[：:]?\s*(\d{4}[-/]\d{1,2}[-/]\d{1,2})/);
+  if (from) fields.push({ label: '有效期起', value: from[1] });
+  // 有效期至
+  var to = text.match(/(?:有效期限|Valid To|Expiry|至|有效期至)[：:]?\s*(\d{4}[-/]\d{1,2}[-/]\d{1,2})/);
+  if (to) fields.push({ label: '有效期至', value: to[1] });
+  // 出生日期
+  var birth = text.match(/(?:出生日期|Birth Date|生日)[：:]?\s*(\d{4}[-/]\d{1,2}[-/]\d{1,2})/);
+  if (birth) fields.push({ label: '出生日期', value: birth[1] });
+  // 中文格式日期
+  if (!birth) {
+    var cm = text.match(/(\d{4})\s*年\s*(\d{1,2})\s*月\s*(\d{1,2})\s*日/);
+    if (cm) fields.push({ label: '出生日期', value: cm[1] + '-' + cm[2].padStart(2, '0') + '-' + cm[3].padStart(2, '0') });
+  }
+  return fields;
+}
+
+function extractIdCard(text, fields) {
+  var id = text.match(/\d{17}[\dXx]/);
+  if (id) fields.push({ label: '证件号码', value: id[0].toUpperCase() });
+  var gender = text.match(/(?:性別|性别)[：:\s]+(男|女)/);
+  if (gender) fields.push({ label: '性别', value: gender[1] });
+  var addr = text.match(/(?:住址|地址)[：:\s]+(.+?)(?:$|\n|签发|有效|公民)/);
+  if (addr && addr[1]) fields.push({ label: '地址', value: addr[1].trim() });
+  var auth = text.match(/(?:签发机关|簽發機關)[：:\s]+(.+?)(?:$|\n)/);
+  if (auth && auth[1]) fields.push({ label: '签发机关', value: auth[1].trim() });
+  var nation = text.match(/民族[：:\s]+(.+?)(?:$|\n)/);
+  if (nation && nation[1]) fields.push({ label: '民族', value: nation[1].trim() });
+}
+
+function extractHkId(text, fields) {
+  var id = text.match(/[A-Z]\d{6}\([0-9A]\)/);
+  if (id) fields.push({ label: '香港身份证号', value: id[0] });
+  var perm = text.match(/(永久|PERMANENT|\*\*\*)/i);
+  if (perm) fields.push({ label: '永居标识', value: '已确认' });
+  var sym = text.match(/符号[：:]\s*([A-Z*]{1,3})/);
+  if (sym) fields.push({ label: '符号', value: sym[1] });
+}
+
+function extractHkPermit(text, fields) {
+  var id = text.match(/[A-Z]\d{7,9}/);
+  if (id) fields.push({ label: '证件号码', value: id[0] });
+}
+
+function extractPassport(text, fields) {
+  var pp = text.match(/[A-Z]\d{7,9}/);
+  if (pp) fields.push({ label: '护照号', value: pp[0] });
+  var nation = text.match(/(?:国籍|Nationality)[：:]\s*([A-Z\u4e00-\u9fff]+)/i);
+  if (nation) fields.push({ label: '国籍', value: nation[1] });
+}
+
+function extractDegree(text, fields) {
+  if (/博士|Doctor|Ph\.D/.test(text)) fields.push({ label: '学位', value: '博士' });
+  else if (/硕士|Master|M\.S|M\.A/.test(text)) fields.push({ label: '学位', value: '硕士' });
+  else if (/学士|本科|Bachelor|B\.S|B\.A/.test(text)) fields.push({ label: '学位', value: '学士' });
+  var uni = text.match(/([\u4e00-\u9fff]{2,}(?:大学|學院|学院|University|College|Institute)[\u4e00-\u9fffA-Za-z\s]*)/);
+  if (uni) fields.push({ label: '毕业院校', value: uni[1].trim() });
+  var major = text.match(/(?:专业|主修|Major)[：:]\s*(.+?)(?:$|\n)/);
+  if (major) fields.push({ label: '专业', value: major[1].trim() });
+  var grad = text.match(/(?:毕业日期|Graduation Date)[：:]?\s*(\d{4}[-/]\d{1,2})/);
+  if (grad) fields.push({ label: '毕业日期', value: grad[1] });
+}
+
+function extractApproval(text, fields) {
+  var ref = text.match(/[A-Z]{2,4}[-\s]?\d{6,10}/);
+  if (ref) fields.push({ label: '申请编号', value: ref[0] });
+  var cat = text.match(/(優才|高才通|專才|IANG|受養人|投資移民|科技人才|优才|高才|专才)/);
+  if (cat) {
+    var m = { '優才': '优才', '專才': '专才', '受養人': '受养人' };
+    fields.push({ label: '签证类型', value: m[cat[0]] || cat[0] });
+  }
+}
+
+function extractBank(text, fields) {
+  var bank = text.match(/(?:汇丰|HSBC|中银|BOC|渣打|Standard Chartered|恒生|Hang Seng|东亚|BEA|工银|ICBC|招商|CMB)/);
+  if (bank) fields.push({ label: '银行名称', value: bank[0] });
+  // 修复: [：:\s]+ 兼容空格分隔(OCR常见输出格式), 捕获组用 .+? 非贪婪+换行边界防污染
+  var holder = text.match(/(?:账户持有人|Account Holder|戶名)[：:\s]+(.+?)(?:$|\n)/);
+  if (holder && holder[1]) fields.push({ label: '账户持有人', value: holder[1].trim() });
+  var acc = text.match(/(?:账号|Account No\.?|戶口號碼)[：:\s]+(\d[\d\s\-]+?)(?:$|\n|\s{2,})/);
+  if (acc && acc[1]) fields.push({ label: '账号', value: acc[1].trim() });
+}
+
+function extractWork(text, fields) {
+  var company = text.match(/(?:公司|单位|Company|Employer)[：:]\s*(.+?)(?:$|\n)/i);
+  if (company) fields.push({ label: '公司', value: company[1].trim() });
+  var position = text.match(/(?:职位|职务|Position|Title)[：:]\s*(.+?)(?:$|\n)/i);
+  if (position) fields.push({ label: '职位', value: position[1].trim() });
+}
+
+function extractVisa(text, fields) {
+  if (/優才|Quality Migrant/.test(text)) fields.push({ label: '签证类型', value: 'QMAS' });
+  else if (/高才|Top Talent/.test(text)) fields.push({ label: '签证类型', value: 'TTPS' });
+  else if (/專才|ASMTP/.test(text)) fields.push({ label: '签证类型', value: 'ASMTP' });
+  else if (/IANG|非本地畢業/.test(text)) fields.push({ label: '签证类型', value: 'IANG' });
+  else if (/學生|学生/.test(text)) fields.push({ label: '签证类型', value: '学生签证' });
+}
+
+function extractGeneric(text, fields) {
+  // 从任意文本中尝试提取常见字段
+  var id18 = text.match(/\d{17}[\dXx]/);
+  if (id18) fields.push({ label: '证件号码', value: id18[0].toUpperCase() });
+  var hkid = text.match(/[A-Z]\d{6}\([0-9A]\)/);
+  if (hkid) fields.push({ label: '香港身份证号', value: hkid[0] });
+  var pp = text.match(/[A-Z]\d{7,9}/);
+  if (pp && !id18) fields.push({ label: '护照号', value: pp[0] });
+}
+
+// ========== 置信度计算 ==========
+
+function calcConfidence(docTypeInfo, fields, textLen) {
+  // 基础分: 类型识别置信度
+  var score = docTypeInfo.confidence * 0.4;
+
+  // 字段分: 有字段就加分
+  if (fields.length >= 3) score += 0.35;
+  else if (fields.length >= 1) score += 0.2;
+
+  // 文本量分: 文字越多越可信
+  if (textLen >= 50) score += 0.25;
+  else if (textLen >= 20) score += 0.15;
+  else if (textLen >= 10) score += 0.05;
+
+  return Math.min(Math.round(score * 100) / 100, 0.99);
+}
+
+// ========== 审计日志（通用版） ==========
+
+async function logOCRGeneric(openid, docType, textLen, confidence, durationMs) {
+  if (!openid) return;
+  try {
+    await db.collection('ocr_audit').add({
+      data: {
+        _openid: openid,
+        docType: docType || '',
+        selectedPath: '',
+        matched: confidence >= 0.5,
+        hasType: docType !== 'unknown',
+        textLength: textLen,
+        durationMs: durationMs,
+        createdAt: db.serverDate()
+      }
+    });
+  } catch (e) {
+    console.warn('[ocr] 审计日志写入失败:', e);
+  }
+}
+
+// ========== 以下为原有 verify action 代码（保持不变） ==========
+
+async function verify(docType, fileID, selectedPath, openid) {
+  if (!fileID) return { code: 400, msg: '缺少文件' };
+
+  // === 反滥用检查 ===
+  var abuseCheck = await checkAbuse(openid);
+  if (!abuseCheck.allowed) {
+    return {
+      code: 429,
+      msg: abuseCheck.reason || '操作过于频繁，请稍后再试',
+      data: {
+        summary: '操作受限',
+        fields: [{ label: '状态', value: abuseCheck.reason }],
+        matched: false, ocrAvailable: true,
+        expectedType: '', extractedType: '', warning: abuseCheck.reason
+      }
+    };
+  }
+
+  var startTime = Date.now();
+
+  // 下载文件
+  var buffer;
+  try {
+    var res = await cloud.downloadFile({ fileID });
+    buffer = res.fileContent;
+  } catch (e) {
+    console.error('[ocr] 下载失败:', e);
+    return failResult('图片下载失败');
+  }
+
+  // 图片质量检查
+  if (buffer.length < 5000) {
+    return failResult('图片过小，请拍摄清晰照片');
+  }
+  if (buffer.length > 10 * 1024 * 1024) {
+    return failResult('图片过大');
+  }
+
+  // 立即删除云存储文件
+  try { await cloud.deleteFile({ fileList: [fileID] }); } catch (e) {}
+
+  // OCR 识别
+  var text = '';
+  try {
+    var t0 = Date.now();
+    var data = await doLocalOCR(buffer, OCR_LANG);
+    text = data.text || '';
+    console.log('OCR took', Date.now() - t0, 'ms');
+  } catch (e) {
+    console.error('[ocr] tesseract 失败:', e.message);
+    await logOCR(openid, docType, selectedPath, false, false, 0, Date.now() - startTime);
+    return {
+      code: 0,
+      data: {
+        summary: 'OCR 引擎加载中，请重试',
+        fields: [{ label: '状态', value: '引擎加载中' }],
+        matched: true, ocrAvailable: false,
+        expectedType: '', extractedType: '', warning: ''
+      }
+    };
+  }
+
+  var textLen = (text || '').trim().length;
+
+  // 质量门 — 文字太少
+  if (textLen < ABUSE_RULES.minTextLength) {
+    await logOCR(openid, docType, selectedPath, false, false, textLen, Date.now() - startTime);
+    return {
+      code: 0,
+      data: {
+        summary: '未识别到足够文字',
+        fields: [{ label: '状态', value: '文字不足（' + textLen + '字符）' }],
+        matched: false, ocrAvailable: true,
+        expectedType: '', extractedType: '',
+        warning: '未能识别足够文字，请重新拍摄清晰照片'
+      }
+    };
+  }
+
+  // 提取字段 + 比对
+  var fields = extractFields(docType, text);
+  var typeField = fields.find(function(f) {
+    return f.label === '申请类别' || f.label === '签证类型';
+  });
+  var extractedType = typeField ? typeField.value : '';
+  var expectedType = mapPath(selectedPath);
+
+  var matched = true, warning = '';
+  if (extractedType && expectedType) {
+    if (extractedType.indexOf(expectedType) === -1 &&
+        expectedType.indexOf(extractedType) === -1) {
+      matched = false;
+      warning = '识别到「' + extractedType + '」，你选择的是「' + expectedType + '」';
+    }
+  } else if (!extractedType && expectedType) {
+    matched = false;
+    warning = '未能识别申请类别，请确认照片是否清晰且包含完整的申请信息';
+  }
+
+  // 审计日志
+  await logOCR(openid, docType, selectedPath, matched, extractedType !== '', textLen, Date.now() - startTime);
+
+  return {
+    code: 0,
+    data: {
+      summary: fields.map(function(f) { return f.label + ':' + f.value; }).join(' · '),
+      fields: fields, matched: matched, ocrAvailable: true,
+      expectedType: expectedType, extractedType: extractedType, warning: warning
+    }
+  };
+}
+
+// ========== 反滥用 ==========
+
+async function checkAbuse(openid) {
+  if (!openid) return { allowed: true }; // MCP 调用不限制
+
+  var now = Date.now();
+
+  try {
+    // 查询最近记录
+    var recent = await db.collection('ocr_audit')
+      .where({ _openid: openid })
+      .orderBy('createdAt', 'desc')
+      .limit(ABUSE_RULES.cooldownAfterFailures + 1)
+      .get();
+
+    var records = recent.data || [];
+
+    // 今日计数
+    var todayStart = new Date();
+    todayStart.setHours(0, 0, 0, 0);
+    var todayCount = records.filter(function(r) {
+      return r.createdAt && new Date(r.createdAt) >= todayStart;
+    }).length;
+
+    if (todayCount >= ABUSE_RULES.maxPerDay) {
+      return { allowed: false, reason: '今日识别次数已达上限（' + ABUSE_RULES.maxPerDay + '次），请明天再试' };
+    }
+
+    // 最小间隔
+    if (records.length > 0) {
+      var lastTime = new Date(records[0].createdAt).getTime();
+      var elapsed = (now - lastTime) / 1000;
+      if (elapsed < ABUSE_RULES.minIntervalSec) {
+        return { allowed: false, reason: '请等待 ' + Math.ceil(ABUSE_RULES.minIntervalSec - elapsed) + ' 秒后再试' };
+      }
+    }
+
+    // 连续失败冷却
+    var recentFailures = records.filter(function(r) { return !r.matched; });
+    if (recentFailures.length >= ABUSE_RULES.cooldownAfterFailures) {
+      var oldestFailure = new Date(recentFailures[recentFailures.length - 1].createdAt).getTime();
+      var sinceFirstFail = (now - oldestFailure) / 60000;
+      if (sinceFirstFail < ABUSE_RULES.cooldownMinutes) {
+        var waitMin = Math.ceil(ABUSE_RULES.cooldownMinutes - sinceFirstFail);
+        return { allowed: false, reason: '连续识别失败，请等待 ' + waitMin + ' 分钟后再试' };
+      }
+    }
+
+    return { allowed: true };
+  } catch (e) {
+    console.warn('[ocr] 反滥用检查异常:', e);
+    return { allowed: true };
+  }
+}
+
+async function logOCR(openid, docType, selectedPath, matched, hasType, textLen, durationMs) {
+  if (!openid) return;
+  try {
+    await db.collection('ocr_audit').add({
+      data: {
+        _openid: openid,
+        docType: docType || '',
+        selectedPath: selectedPath || '',
+        matched: matched,
+        hasType: hasType,
+        textLength: textLen,
+        durationMs: durationMs,
+        createdAt: db.serverDate()
+      }
+    });
+  } catch (e) {
+    console.warn('[ocr] 审计日志写入失败:', e);
+  }
+}
+
+function failResult(msg) {
+  return {
+    code: 0,
+    data: {
+      summary: msg,
+      fields: [{ label: '状态', value: msg }],
+      matched: false, ocrAvailable: true,
+      expectedType: '', extractedType: '', warning: msg
+    }
+  };
+}
+
+// ========== 原有 verify 字段提取 ==========
+
+function extractFields(docType, text) {
+  var fields = [];
+  if (docType === 'submission_receipt') {
+    var ref = text.match(/[A-Z]{2,4}[-\s]?\d{6,10}/);
+    if (ref) fields.push({ label: '申请编号', value: ref[0] });
+    var date = text.match(/(\d{1,2}[-\/]\d{1,2}[-\/]\d{2,4}|\d{4}[年-]\d{1,2}[月-]\d{1,2})/);
+    if (date) fields.push({ label: '递交日期', value: date[0] });
+    var cat = text.match(/(優才|高才通|專才|IANG|受養人|投資移民|科技人才|优才|高才|专才)/);
+    if (cat) {
+      var m = { '優才': '优才', '專才': '专才', '受養人': '受养人' };
+      fields.push({ label: '申请类别', value: m[cat[0]] || cat[0] });
+    }
+    if (!fields.length) fields.push({ label: '状态', value: '回执已识别' });
+  } else if (docType === 'hk_id_visa') {
+    var id = text.match(/[A-Z]\d{6}\([A-Z0-9]\)/);
+    if (id) fields.push({ label: '身份证号', value: id[0] });
+    var visa = text.match(/(優才|高才通|專才|IANG|學生|受養人|工作|投資|优才|高才|专才|学生)/);
+    if (visa) {
+      var vm = { '優才': '优才', '專才': '专才', '受養人': '受养人', '學生': '学生' };
+      fields.push({ label: '签证类型', value: vm[visa[0]] || visa[0] });
+    }
+    if (!fields.length) fields.push({ label: '状态', value: '证件已识别' });
+  } else if (docType === 'hk_permanent_id') {
+    var pid = text.match(/[A-Z]\d{6}\([A-Z0-9]\)/);
+    if (pid) fields.push({ label: '身份证号', value: pid[0] });
+    var perm = text.match(/(永久|PERMANENT|三顆星|\*\*\*)/i);
+    if (perm) fields.push({ label: '永居标识', value: '已确认' });
+    if (!fields.length) fields.push({ label: '状态', value: '永居身份证已识别' });
+  }
+  return fields;
+}
+
+function mapPath(selectedPath) {
+  var m = {
+    'submitted_qmas': '优才', 'submitted_ttps': '高才通',
+    'submitted_asmpt': '专才', 'submitted_iang': 'IANG',
+    'submitted_cies': '投资移民', 'submitted_techtas': '科技人才',
+    'approved_employed': '在港就业', 'approved_business': '在港创业',
+    'approved_studying': '在港学习', 'approved_mainland': '主要在内地'
+  };
+  return m[selectedPath] || '';
+}

@@ -1,0 +1,8 @@
+<view class="milestone-lock" wx:if="{{locked}}">
+  <view class="lock-overlay">
+    <text class="lock-overlay__icon">🔒</text>
+    <text class="lock-overlay__text">{{stageName}} · {{unlockHint}}</text>
+    <button class="btn btn--primary btn--sm" bindtap="onUnlock">上传材料解锁</button>
+  </view>
+</view>
+<slot wx:else />

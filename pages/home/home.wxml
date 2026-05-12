@@ -1,0 +1,58 @@
+<!-- pages/home/home.wxml - 首页引导页 -->
+<view class="page">
+  <!-- 加载中 -->
+  <view class="loading-screen" wx:if="{{loading}}">
+    <text class="logo-text">住港伴</text>
+    <text class="loading-dot">加载中...</text>
+  </view>
+
+  <!-- 未登录 - 品牌欢迎页 -->
+  <view class="welcome" wx:elif="{{unauthenticated}}">
+    <view class="hero">
+      <text class="app-icon">🏠</text>
+      <text class="app-name">住港伴</text>
+      <text class="tagline">香港身份全流程陪伴工具</text>
+    </view>
+
+    <view class="features">
+      <view class="feature">
+        <text class="feat-icon">🔒</text>
+        <text class="feat-title">隐私至上</text>
+        <text class="feat-desc">AES-256加密 本地存储</text>
+      </view>
+      <view class="feature">
+        <text class="feat-icon">✅</text>
+        <text class="feat-title">合规准确</text>
+        <text class="feat-desc">Cap.115法源 五级置信度</text>
+      </view>
+      <view class="feature">
+        <text class="feat-icon">🚀</text>
+        <text class="feat-title">好用高效</text>
+        <text class="feat-desc">7大模块 12条路径</text>
+      </view>
+    </view>
+
+    <view class="login-area">
+      <button class="login-btn" open-type="getPhoneNumber" bindgetphonenumber="handleLogin">
+        手机号快捷登录
+      </button>
+      <view class="privacy-check">
+        <text>登录即同意《隐私协议》和《用户协议》</text>
+      </view>
+    </view>
+
+    <view class="footer-links">
+      <text bindtap="goLogin">其他方式登录</text>
+    </view>
+  </view>
+
+  <!-- 已锁定 - 付费引导 -->
+  <view class="locked-screen" wx:elif="{{locked}}">
+    <text class="lock-icon">🔒</text>
+    <text class="lock-title">试用已到期</text>
+    <text class="lock-desc">免费试用期已结束，升级会员继续使用全部功能</text>
+    <button class="upgrade-btn" bindtap="goPaywall">查看会员方案</button>
+  </view>
+
+  <floating-ai visible="{{true}}" />
+</view>

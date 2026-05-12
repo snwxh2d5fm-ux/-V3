@@ -1,0 +1,13 @@
+{
+  "usingComponents": {
+    "stage-indicator": "/components/stage-indicator/stage-indicator",
+    "status-badge": "/components/status-badge/status-badge",
+    "privacy-toggle": "/components/privacy-toggle/privacy-toggle",
+    "ux-skeleton": "/components/ux-skeleton/ux-skeleton",
+    "ux-error-boundary": "/components/ux-error-boundary/ux-error-boundary"
+  },
+  "navigationBarTitleText": "证件夹",
+  "navigationBarBackgroundColor": "#1A1A2E",
+  "navigationBarTextStyle": "white",
+  "backgroundColor": "#F5F0E8"
+}

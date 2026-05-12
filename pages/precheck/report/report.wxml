@@ -1,0 +1,10 @@
+<view class="container">
+  <view class="page-header"><text class="page-header__title">预审报告</text></view>
+  <view class="card">
+    <text class="report-score">材料完整度：{{score}}%</text>
+    <text class="report-note">基于规则引擎匹配，非AI主观判断</text>
+    <text class="report-disclaimer">以上预审结果仅供参考，不构成法律建议。最终审核以入境处决定为准。</text>
+  </view>
+
+  <floating-ai visible="{{true}}" />
+</view>

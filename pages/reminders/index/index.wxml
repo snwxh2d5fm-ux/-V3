@@ -1,0 +1,218 @@
+<!-- 住港伴 v4.1 — 提醒器主页 (Tab3·PRD v4对齐) -->
+<view class="container">
+  <!-- 7阶段流程指示器 -->
+  <stage-indicator stages="{{stageSteps}}" progress="{{stageProgress}}" />
+  <status-badge />
+
+  <!-- ===== 顶部Header ===== -->
+  <view class="page-header">
+    <view class="header-left">
+      <text class="page-header-title">📋 提醒器</text>
+      <text class="page-header-sub">关键时间不遗漏 · {{stats.active}} 项待办</text>
+    </view>
+    <view class="header-right">
+      <!-- 列表视图入口 -->
+      <text class="header-icon-btn" bindtap="navigateToList">📋</text>
+    </view>
+  </view>
+
+  <!-- ===== 统计条 ===== -->
+  <view class="stats-bar">
+    <view class="stat-item">
+      <text class="stat-num">{{stats.total}}</text>
+      <text class="stat-label">全部</text>
+    </view>
+    <view class="stat-item">
+      <text class="stat-num" style="color:var(--blue)">{{stats.active}}</text>
+      <text class="stat-label">进行中</text>
+    </view>
+    <view class="stat-item">
+      <text class="stat-num" style="color:var(--red)">{{stats.urgent}}</text>
+      <text class="stat-label">紧急</text>
+    </view>
+    <view class="stat-item">
+      <text class="stat-num" style="color:var(--green)">{{stats.completed}}</text>
+      <text class="stat-label">已完成</text>
+    </view>
+  </view>
+
+  <!-- ===== 视图切换 Tab ===== -->
+  <view class="mode-tabs">
+    <view class="mode-tab {{viewMode === 'timeline' ? 'active' : ''}}" bindtap="switchView" data-mode="timeline">
+      ⏱️ 时间线
+    </view>
+    <view class="mode-tab {{viewMode === 'list' ? 'active' : ''}}" bindtap="switchView" data-mode="list">
+      📄 列表
+    </view>
+  </view>
+
+  <!-- ===== 筛选栏 ===== -->
+  <view class="filter-row">
+    <scroll-view class="filter-scroll" scroll-x>
+      <text class="filter-chip {{filterStatus === 'all' ? 'active' : ''}}" bindtap="onFilterStatus" data-status="all">全部</text>
+      <text class="filter-chip {{filterStatus === 'active' ? 'active' : ''}}" bindtap="onFilterStatus" data-status="active">进行中</text>
+      <text class="filter-chip {{filterStatus === 'completed' ? 'active' : ''}}" bindtap="onFilterStatus" data-status="completed">已完成</text>
+      <text class="filter-chip {{filterType === 'all' ? 'active' : ''}}" bindtap="onFilterType" data-type="all" style="margin-left: 16rpx">全部来源</text>
+      <text class="filter-chip {{filterType === 'rule_engine' ? 'active' : ''}}" bindtap="onFilterType" data-type="rule_engine">规则引擎</text>
+      <text class="filter-chip {{filterType === 'ocr' ? 'active' : ''}}" bindtap="onFilterType" data-type="ocr">OCR识别</text>
+      <text class="filter-chip {{filterType === 'manual' ? 'active' : ''}}" bindtap="onFilterType" data-type="manual">手动</text>
+    </scroll-view>
+  </view>
+
+  <!-- ===== 时间线视图 ===== -->
+  <view wx:if="{{viewMode === 'timeline'}}" class="timeline-view">
+    <block wx:for="{{chainGroups}}" wx:key="chainId" wx:for-item="group">
+
+      <!-- 链标题 -->
+      <view class="chain-header" bindtap="viewChain" data-chain-id="{{group.chainId}}" wx:if="{{group.chainId}}">
+        <view class="chain-header-left">
+          <text class="chain-icon">🔗</text>
+          <view>
+            <text class="chain-title">{{group.chainLabel}}</text>
+            <text class="chain-count">{{group.items.length}} 个节点</text>
+          </view>
+        </view>
+        <view class="chain-header-right">
+          <view class="progress" style="width:120rpx">
+            <view class="progress-fill green" style="width:{{group.progress}}%"></view>
+          </view>
+          <text class="chain-progress-text">{{group.progress}}%</text>
+        </view>
+      </view>
+
+      <!-- 提醒卡片 -->
+      <block wx:for="{{group.items}}" wx:key="id" wx:for-item="reminder">
+        <view class="card {{reminder.statusCls}} fade-in" bindtap="viewReminder" data-id="{{reminder.id}}">
+          <!-- 卡片顶部行 -->
+          <view class="card-row">
+            <view class="card-tags">
+              <text class="tag {{reminder.typeCls}}">{{reminder.typeLabel}}</text>
+              <text class="tag tag-xs" style="color:{{reminder.confidenceColor}};background:{{reminder.confidenceBg}}">{{reminder.confidenceLabel}}</text>
+              <text class="tag {{reminder.priorityCls}}" wx:if="{{reminder.priority !== 'normal'}}">{{reminder.priorityLabel}}</text>
+            </view>
+            <text class="card-date">{{reminder.deadlineFormatted}}</text>
+          </view>
+
+          <!-- 标题 -->
+          <text class="reminder-title">{{reminder.title || reminder.label}}</text>
+
+          <!-- 描述 -->
+          <text class="reminder-desc" wx:if="{{reminder.description}}">{{reminder.description}}</text>
+
+          <!-- 倒计时 -->
+          <view class="countdown-row">
+            <text class="countdown-badge {{reminder.priority === 'urgent' ? 'urgent' : reminder.priority === 'warning' ? 'warning' : ''}}">
+              {{reminder.countdownDisplay}}
+            </text>
+            <text class="linked-doc-badge" wx:if="{{reminder.isLinkedToDoc}}">
+              📎 关联证件 ×{{reminder.linkedDocIds.length}}
+            </text>
+          </view>
+
+          <!-- 操作按钮 -->
+          <view class="card-actions" wx:if="{{reminder.status === 'active'}}" catchtap="stop">
+            <button class="btn btn-success btn-sm" bindtap="markComplete" data-id="{{reminder.id}}">✓ 完成</button>
+            <button class="btn btn-outline btn-sm" bindtap="viewReminder" data-id="{{reminder.id}}">详情</button>
+          </view>
+
+          <!-- 已完成标记 -->
+          <view class="completed-mark" wx:if="{{reminder.status === 'completed'}}">
+            <text class="tag tag-success">✅ 已完成 · {{reminder.countdownDisplay}}</text>
+          </view>
+        </view>
+      </block>
+    </block>
+  </view>
+
+  <!-- ===== 列表视图 ===== -->
+  <view wx:if="{{viewMode === 'list'}}" class="list-view">
+    <view class="card" style="padding:0">
+      <block wx:for="{{getFilteredReminders()}}" wx:key="id">
+        <view class="list-item" bindtap="viewReminder" data-id="{{item.id}}">
+          <view class="list-item-left">
+            <text class="list-status-icon {{item.status === 'completed' ? 'done' : item.priority === 'urgent' ? 'urgent' : ''}}">
+              {{item.status === 'completed' ? '✓' : item.priority === 'urgent' ? '!' : '○'}}
+            </text>
+          </view>
+          <view class="list-item-content">
+            <text class="list-item-title">{{item.title || item.label}}</text>
+            <view class="list-item-meta">
+              <text class="tag {{item.typeCls}}" style="font-size:18rpx;padding:2rpx 8rpx">{{item.typeLabel}}</text>
+              <text class="list-item-date">{{item.deadlineFormatted}}</text>
+            </view>
+          </view>
+          <view class="list-item-right">
+            <text class="countdown-mini {{item.priority === 'urgent' ? 'urgent' : item.priority === 'warning' ? 'warning' : ''}}">{{item.countdownDisplay}}</text>
+            <text class="list-item-arrow">›</text>
+          </view>
+        </view>
+      </block>
+    </view>
+  </view>
+
+  <!-- ===== 空状态 ===== -->
+  <view class="empty-state" wx:if="{{stats.total === 0 && !loading}}">
+    <text class="empty-icon">⏰</text>
+    <text class="empty-text">暂无提醒，一切尽在掌握</text>
+    <text class="empty-sub">点击左下角 ＋ 添加第一个提醒</text>
+  </view>
+
+  <!-- ===== 免费用户升级提示 ===== -->
+  <view class="lock-section" wx:if="{{!isPro && stats.active > 0}}">
+    <text class="lock-icon">🔓</text>
+    <text class="lock-title">免费用户 · 1条流程线</text>
+    <text class="lock-desc">{{freeLimitReached ? '已达流程线上限。' : ''}}升级专业会员解锁 100+ 规则链式提醒</text>
+    <button class="btn btn-primary btn-sm" bindtap="viewPremium">升级专业会员 →</button>
+  </view>
+
+  <!-- ===== 浮动AI组件 ===== -->
+  <floating-ai visible="{{true}}" />
+
+  <!-- ===== 底部添加按钮(FAB) ===== -->
+  <view class="add-fab" bindtap="toggleAddMenu">
+    <text>{{showAddMenu ? '✕' : '＋'}}</text>
+  </view>
+
+  <!-- ===== 添加菜单弹层 ===== -->
+  <view class="modal-overlay" wx:if="{{showAddMenu}}" bindtap="toggleAddMenu" role="dialog" aria-modal="true" aria-label="添加提醒">
+    <view class="modal-sheet" catchtap="stop">
+      <view class="modal-handle"></view>
+      <view class="modal-title">添加提醒</view>
+      <view class="add-option" bindtap="navigateToOCR">
+        <text class="add-option-icon">📷</text>
+        <view class="add-option-info">
+          <text class="add-option-title">拍照识别日期</text>
+          <text class="add-option-desc">拍摄证件/文件，AI自动识别关键日期</text>
+        </view>
+        <text class="list-item-arrow">›</text>
+      </view>
+      <view class="add-option" bindtap="navigateToPaste">
+        <text class="add-option-icon">📋</text>
+        <view class="add-option-info">
+          <text class="add-option-title">粘贴文本识别</text>
+          <text class="add-option-desc">粘贴通知/邮件，自动提取日期</text>
+        </view>
+        <text class="list-item-arrow">›</text>
+      </view>
+      <view class="add-option" bindtap="navigateToRuleEngine">
+        <text class="add-option-icon">⚙️</text>
+        <view class="add-option-info">
+          <text class="add-option-title">规则引擎生成</text>
+          <text class="add-option-desc">{{freeLimitReached ? '免费用户已达上限' : '根据你的流程自动生成提醒链'}}</text>
+        </view>
+        <text class="list-item-arrow">›</text>
+        <text class="pro-badge" wx:if="{{!isPro}}">PRO</text>
+      </view>
+      <view class="add-option" bindtap="navigateToManual">
+        <text class="add-option-icon">✏️</text>
+        <view class="add-option-info">
+          <text class="add-option-title">手动添加</text>
+          <text class="add-option-desc">自行输入标题、截止日期和备注</text>
+        </view>
+        <text class="list-item-arrow">›</text>
+      </view>
+    </view>
+  </view>
+
+  <view class="safe-bottom"></view>
+</view>

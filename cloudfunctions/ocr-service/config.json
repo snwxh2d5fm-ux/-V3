@@ -1,0 +1,10 @@
+{
+  "permissions": {
+    "openapi": [
+      "ocr.printedText"
+    ]
+  },
+  "timeout": 120,
+  "envVariables": {},
+  "triggers": []
+}

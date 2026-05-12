@@ -1,0 +1,67 @@
+<view class="container" wx:if="{{process}}">
+  <view class="page-header">
+    <text class="page-header__title">{{process.name}}</text>
+    <text class="page-header__subtitle">{{process.stages.length}}个阶段 · {{process.totalCycle || ''}}</text>
+    <progress-bar percent="{{process.progress}}" color="#FFFFFF" />
+  </view>
+
+  <!-- 费用信息 -->
+  <view class="card card--outlined" wx:if="{{template.costs}}">
+    <view class="card__row" wx:if="{{template.costs.application}}">
+      <text class="card__row-label">申请费</text>
+      <text class="card__row-value">HK$ {{template.costs.application}}</text>
+    </view>
+    <view class="card__row" wx:if="{{template.costs.visa}}">
+      <text class="card__row-label">签证费</text>
+      <text class="card__row-value">HK$ {{template.costs.visa}}</text>
+    </view>
+  </view>
+
+  <!-- 阶段列表 -->
+  <view class="stages-list">
+    <view class="stage-card card fade-in"
+          wx:for="{{process.stages}}" wx:key="id"
+          data-id="{{item.id}}"
+          bindtap="toggleStage">
+      <view class="stage-header">
+        <view class="stage-number {{item.status}}">
+          <text wx:if="{{item.status === 'completed'}}">✓</text>
+          <text wx:elif="{{item.status === 'current'}}">{{index + 1}}</text>
+          <text wx:else>🔒</text>
+        </view>
+        <view class="stage-info">
+          <text class="stage-name">{{item.name}}</text>
+          <text class="stage-desc">{{item.description}}</text>
+        </view>
+        <text class="stage-arrow">{{expandedStage === item.id ? '▼' : '▶'}}</text>
+      </view>
+
+      <!-- 展开详情 -->
+      <view class="stage-detail" wx:if="{{expandedStage === item.id && item.unlocked}}">
+        <view class="step-item" wx:for="{{item.steps}}" wx:key="*this" wx:for-index="si">
+          <view class="step-check {{item.completedSteps && item.completedSteps.includes(si) ? 'done' : ''}}"
+                catchtap="markStepDone" data-stage-id="{{item.id}}" data-step-idx="{{si}}">
+            <text wx:if="{{item.completedSteps && item.completedSteps.includes(si)}}">✓</text>
+            <text wx:else>{{si + 1}}</text>
+          </view>
+          <text class="step-text {{item.completedSteps && item.completedSteps.includes(si) ? 'done' : ''}}">
+            {{item.name || item}}
+          </text>
+        </view>
+      </view>
+
+      <!-- 未解锁提示 -->
+      <view class="lock-overlay" wx:if="{{expandedStage === item.id && !item.unlocked}}">
+        <text class="lock-overlay__icon">🔒</text>
+        <text class="lock-overlay__text">上传里程碑材料后可查看本阶段详情</text>
+        <button class="btn btn--primary btn--sm" catchtap="unlockStage" data-id="{{item.id}}">
+          上传材料解锁
+        </button>
+      </view>
+    </view>
+  </view>
+
+  <view class="safe-area-bottom"></view>
+
+  <floating-ai visible="{{true}}" />
+</view>

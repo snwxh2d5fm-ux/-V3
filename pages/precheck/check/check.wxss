@@ -1,0 +1,8 @@
+.score-circle { text-align: center; padding: 20rpx 0; }
+.score-num { font-size: 72rpx; font-weight: 800; color: var(--color-primary); display: block; }
+.score-label { font-size: var(--font-xs); color: var(--color-text-muted); }
+.check-row { display: flex; align-items: center; gap: 12rpx; padding: 12rpx 0; flex-wrap: wrap; }
+.check-row + .check-row { border-top: 1rpx solid var(--color-border); }
+.check-row.missing { opacity: 0.5; }
+.check-name { font-size: var(--font-sm); }
+.check-detail { font-size: var(--font-xs); color: var(--color-warning); width: 100%; margin-left: 40rpx; }

@@ -1,0 +1,74 @@
+{
+  "version": "1.0",
+  "milestone": "OCR_VERIFICATION_V1",
+  "description": "身份验证 OCR 识别规则与反滥用策略",
+
+  "verification_rules": {
+    "document_types": {
+      "submission_receipt": {
+        "required_fields": ["申请编号"],
+        "optional_fields": ["递交日期", "申请类别"],
+        "min_text_length": 20,
+        "reject_patterns": ["身份证", "ID CARD", "居民身份"]
+      },
+      "hk_id_visa": {
+        "required_fields": [],
+        "optional_fields": ["身份证号", "签证类型", "有效期至"],
+        "min_text_length": 15,
+        "accept_patterns": ["香港", "HONG KONG", "入境", "IMMIGRATION"]
+      },
+      "hk_permanent_id": {
+        "required_fields": [],
+        "optional_fields": ["身份证号", "永居标识"],
+        "min_text_length": 10,
+        "accept_patterns": ["永久", "PERMANENT", "***"]
+      }
+    },
+
+    "path_matching": {
+      "submitted_qmas": "优才",
+      "submitted_ttps": "高才通",
+      "submitted_asmpt": "专才",
+      "submitted_iang": "IANG",
+      "submitted_cies": "投资移民",
+      "submitted_techtas": "科技人才",
+      "approved_employed": "在港就业",
+      "approved_business": "在港创业",
+      "approved_studying": "在港学习",
+      "approved_mainland": "主要在内地"
+    },
+
+    "auto_correction": {
+      "enabled": true,
+      "description": "识别结果与选择不一致时，允许按识别结果自动修正选择"
+    }
+  },
+
+  "anti_abuse": {
+    "rate_limits": {
+      "max_per_user_per_day": 20,
+      "min_interval_seconds": 5,
+      "cooldown_after_failures": 5,
+      "cooldown_minutes": 10
+    },
+
+    "image_validation": {
+      "min_file_size_bytes": 5000,
+      "max_file_size_bytes": 10485760,
+      "reject_blank_ratio": 0.95,
+      "description": "拒绝过小/过大/纯色图片"
+    },
+
+    "audit_logging": {
+      "collection": "ocr_audit",
+      "fields": ["_openid", "doc_type", "selected_path", "ocr_available", "matched", "text_length", "duration_ms", "created_at"],
+      "retention_days": 90
+    }
+  },
+
+  "quality_gates": {
+    "minimum_text_length": 10,
+    "field_extraction_minimum": 1,
+    "description": "OCR 识别文字不足10字符或未能提取任何字段时视为无效"
+  }
+}

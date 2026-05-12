@@ -1,0 +1,208 @@
+<!-- 住港伴 v4.5 — 身份状态选择页 (纯本地版) -->
+<view class="container">
+  <view class="nav-spacer"></view>
+  <view class="hero">
+    <text class="hero__logo">🛂</text>
+    <text class="hero__title">欢迎使用住港伴</text>
+    <text class="hero__subtitle">请选择你目前所处的身份办理阶段，我们将为你匹配最合适的流程指引</text>
+  </view>
+
+  <stage-indicator stages="{{stageSteps}}" progress="{{stageProgress}}" />
+
+  <view class="cards-area">
+    <!-- 未申请 -->
+    <view class="status-card {{selectedStatus === 'unapplied' ? 'expanded' : ''}}" wx:if="{{!selectedStatus || selectedStatus === 'unapplied'}}">
+      <view class="status-card__main" bindtap="{{selectedStatus === 'unapplied' ? 'collapseCard' : 'selectCard'}}" data-status="unapplied">
+        <view class="status-card__icon status-card__icon--blue">📝</view>
+        <view class="status-card__body">
+          <text class="status-card__title">我还未申请</text>
+          <text class="status-card__desc">尚未向入境处提交任何申请，从评估开始</text>
+        </view>
+        <view class="status-card__tag tag--blue">无需识别身份</view>
+        <text class="status-card__chevron">{{selectedStatus === 'unapplied' ? '⌃' : '›'}}</text>
+      </view>
+      <view class="status-card__expand" wx:if="{{selectedStatus === 'unapplied'}}">
+        <text class="expand-label">你的当前身份</text>
+        <view class="chip-group">
+          <view class="chip {{selectedSubStatus === 'unapplied_student' ? 'active' : ''}}" bindtap="selectSub" data-value="unapplied_student"><text class="chip__icon">🎓</text><text>在校学生</text></view>
+          <view class="chip {{selectedSubStatus === 'unapplied_employed' ? 'active' : ''}}" bindtap="selectSub" data-value="unapplied_employed"><text class="chip__icon">💼</text><text>在职人士</text></view>
+          <view class="chip {{selectedSubStatus === 'unapplied_owner' ? 'active' : ''}}" bindtap="selectSub" data-value="unapplied_owner"><text class="chip__icon">🏢</text><text>企业主</text></view>
+          <view class="chip {{selectedSubStatus === 'unapplied_overseas' ? 'active' : ''}}" bindtap="selectSub" data-value="unapplied_overseas"><text class="chip__icon">🌏</text><text>海外华人</text></view>
+        </view>
+      </view>
+    </view>
+
+    <!-- 已交件 -->
+    <view class="status-card {{selectedStatus === 'submitted' ? 'expanded' : ''}}" wx:if="{{!selectedStatus || selectedStatus === 'submitted'}}">
+      <view class="status-card__main" bindtap="{{selectedStatus === 'submitted' ? 'collapseCard' : 'selectCard'}}" data-status="submitted">
+        <view class="status-card__icon status-card__icon--orange">📤</view>
+        <view class="status-card__body">
+          <text class="status-card__title">已提交申请</text>
+          <text class="status-card__desc">已向入境处递交，正在等待审批结果</text>
+        </view>
+        <view class="status-card__tag tag--orange">需要识别递交回执</view>
+        <text class="status-card__chevron">{{selectedStatus === 'submitted' ? '⌃' : '›'}}</text>
+      </view>
+      <view class="status-card__expand" wx:if="{{selectedStatus === 'submitted'}}">
+        <text class="expand-label">你的申请路径</text>
+        <view class="chip-group">
+          <view class="chip {{selectedSubStatus === 'submitted_qmas' ? 'active' : ''}}" bindtap="selectSub" data-value="submitted_qmas"><text>优才</text></view>
+          <view class="chip {{selectedSubStatus === 'submitted_ttps' ? 'active' : ''}}" bindtap="selectSub" data-value="submitted_ttps"><text>高才通</text></view>
+          <view class="chip {{selectedSubStatus === 'submitted_asmpt' ? 'active' : ''}}" bindtap="selectSub" data-value="submitted_asmpt"><text>专才</text></view>
+          <view class="chip {{selectedSubStatus === 'submitted_iang' ? 'active' : ''}}" bindtap="selectSub" data-value="submitted_iang"><text>IANG</text></view>
+        </view>
+        <view class="local-capture" wx:if="{{selectedSubStatus}}">
+          <view class="local-capture__header">
+            <text class="local-capture__label">📸 拍照留存递交回执</text>
+            <text class="local-capture__hint">照片仅保存在你的手机本地，不会上传</text>
+          </view>
+          <!-- 扫描动画 -->
+          <view class="local-capture__scan" wx:if="{{capturing}}">
+            <view class="scan-line"></view>
+            <text class="local-capture__scan-text">🔬 正在扫描识别中...</text>
+            <text class="local-capture__scan-hint">文件读取后立即删除</text>
+          </view>
+          <!-- 未拍照 -->
+          <view class="local-capture__area" bindtap="captureDoc" data-type="submission_receipt" wx:elif="{{!capturedImage}}">
+            <text class="local-capture__icon">📷</text>
+            <text class="local-capture__text">点击拍照留存递交回执</text>
+          </view>
+          <!-- 已拍照 + OCR 结果 -->
+          <view class="local-capture__done {{ocrMatched === false ? 'local-capture__done--warn' : ''}}" wx:else>
+            <view class="local-capture__thumb" style="background-image:url({{capturedImage}})"></view>
+            <view class="local-capture__info">
+              <text class="local-capture__status">{{ocrMatched === false ? '⚠️ 资料不匹配' : '✅ 已留存'}}</text>
+              <text class="local-capture__summary">{{capturedSummary}}</text>
+              <!-- OCR 识别字段 -->
+              <view class="ocr-match-fields" wx:if="{{ocrFields.length > 0}}">
+                <text class="ocr-match-field" wx:for="{{ocrFields}}" wx:key="label">{{item.label}}：{{item.value}}</text>
+              </view>
+              <text class="local-capture__warning" wx:if="{{ocrWarning}}">{{ocrWarning}}</text>
+              <text class="local-capture__retake" bindtap="captureDoc" data-type="submission_receipt">重新拍照</text>
+            </view>
+          </view>
+        </view>
+      </view>
+    </view>
+
+    <!-- 已获批 -->
+    <view class="status-card {{selectedStatus === 'approved' ? 'expanded' : ''}}" wx:if="{{!selectedStatus || selectedStatus === 'approved'}}">
+      <view class="status-card__main" bindtap="{{selectedStatus === 'approved' ? 'collapseCard' : 'selectCard'}}" data-status="approved">
+        <view class="status-card__icon status-card__icon--green">✅</view>
+        <view class="status-card__body">
+          <text class="status-card__title">已获批 / 在港</text>
+          <text class="status-card__desc">签证已获批并激活，处于在港或续签阶段</text>
+        </view>
+        <view class="status-card__tag tag--green">需要识别身份证/签证</view>
+        <text class="status-card__chevron">{{selectedStatus === 'approved' ? '⌃' : '›'}}</text>
+      </view>
+      <view class="status-card__expand" wx:if="{{selectedStatus === 'approved'}}">
+        <text class="expand-label">你的当前状态</text>
+        <view class="chip-group">
+          <view class="chip {{selectedSubStatus === 'approved_employed' ? 'active' : ''}}" bindtap="selectSub" data-value="approved_employed"><text>在港就业</text></view>
+          <view class="chip {{selectedSubStatus === 'approved_business' ? 'active' : ''}}" bindtap="selectSub" data-value="approved_business"><text>在港创业</text></view>
+          <view class="chip {{selectedSubStatus === 'approved_studying' ? 'active' : ''}}" bindtap="selectSub" data-value="approved_studying"><text>在港学习</text></view>
+          <view class="chip {{selectedSubStatus === 'approved_mainland' ? 'active' : ''}}" bindtap="selectSub" data-value="approved_mainland"><text>主要在内地</text></view>
+        </view>
+        <view class="local-capture" wx:if="{{selectedSubStatus}}">
+          <view class="local-capture__header">
+            <text class="local-capture__label">📸 拍照留存身份证/签证</text>
+            <text class="local-capture__hint">照片仅保存在你的手机本地，不会上传</text>
+          </view>
+          <view class="local-capture__scan" wx:if="{{capturing}}">
+            <view class="scan-line"></view>
+            <text class="local-capture__scan-text">🔬 正在扫描识别中...</text>
+            <text class="local-capture__scan-hint">文件读取后立即删除</text>
+          </view>
+          <view class="local-capture__area" bindtap="captureDoc" data-type="hk_id_visa" wx:elif="{{!capturedImage}}">
+            <text class="local-capture__icon">📷</text>
+            <text class="local-capture__text">点击拍照留存身份证/签证</text>
+          </view>
+          <view class="local-capture__done {{ocrMatched === false ? 'local-capture__done--warn' : ''}}" wx:else>
+            <view class="local-capture__thumb" style="background-image:url({{capturedImage}})"></view>
+            <view class="local-capture__info">
+              <text class="local-capture__status">{{ocrMatched === false ? '⚠️ 资料不匹配' : '✅ 已留存'}}</text>
+              <text class="local-capture__summary">{{capturedSummary}}</text>
+              <view class="ocr-match-fields" wx:if="{{ocrFields.length > 0}}">
+                <text class="ocr-match-field" wx:for="{{ocrFields}}" wx:key="label">{{item.label}}：{{item.value}}</text>
+              </view>
+              <text class="local-capture__warning" wx:if="{{ocrWarning}}">{{ocrWarning}}</text>
+              <text class="local-capture__retake" bindtap="captureDoc" data-type="hk_id_visa">重新拍照</text>
+            </view>
+          </view>
+        </view>
+      </view>
+    </view>
+
+    <!-- 已永居 -->
+    <view class="status-card {{selectedStatus === 'permanent' ? 'expanded' : ''}}" wx:if="{{!selectedStatus || selectedStatus === 'permanent'}}">
+      <view class="status-card__main" bindtap="{{selectedStatus === 'permanent' ? 'collapseCard' : 'selectCard'}}" data-status="permanent">
+        <view class="status-card__icon status-card__icon--purple">🏆</view>
+        <view class="status-card__body">
+          <text class="status-card__title">已获永居</text>
+          <text class="status-card__desc">已取得香港永久居民身份，全部流程已完成</text>
+        </view>
+        <view class="status-card__tag tag--purple">需要识别永居身份证</view>
+        <text class="status-card__chevron">{{selectedStatus === 'permanent' ? '⌃' : '›'}}</text>
+      </view>
+      <view class="status-card__expand" wx:if="{{selectedStatus === 'permanent'}}">
+        <view class="local-capture">
+          <view class="local-capture__header">
+            <text class="local-capture__label">📸 拍照留存永居身份证</text>
+            <text class="local-capture__hint">照片仅保存在你的手机本地，不会上传</text>
+          </view>
+          <view class="local-capture__scan" wx:if="{{capturing}}">
+            <view class="scan-line"></view>
+            <text class="local-capture__scan-text">🔬 正在扫描识别中...</text>
+            <text class="local-capture__scan-hint">文件读取后立即删除</text>
+          </view>
+          <view class="local-capture__area" bindtap="captureDoc" data-type="hk_permanent_id" wx:elif="{{!capturedImage}}">
+            <text class="local-capture__icon">📷</text>
+            <text class="local-capture__text">点击拍照留存永居身份证</text>
+          </view>
+          <view class="local-capture__done {{ocrMatched === false ? 'local-capture__done--warn' : ''}}" wx:else>
+            <view class="local-capture__thumb" style="background-image:url({{capturedImage}})"></view>
+            <view class="local-capture__info">
+              <text class="local-capture__status">{{ocrMatched === false ? '⚠️ 资料不匹配' : '✅ 已留存'}}</text>
+              <text class="local-capture__summary">{{capturedSummary}}</text>
+              <view class="ocr-match-fields" wx:if="{{ocrFields.length > 0}}">
+                <text class="ocr-match-field" wx:for="{{ocrFields}}" wx:key="label">{{item.label}}：{{item.value}}</text>
+              </view>
+              <text class="local-capture__warning" wx:if="{{ocrWarning}}">{{ocrWarning}}</text>
+              <text class="local-capture__retake" bindtap="captureDoc" data-type="hk_permanent_id">重新拍照</text>
+            </view>
+          </view>
+        </view>
+      </view>
+    </view>
+
+    <!-- 暂不选择 -->
+    <view class="status-card skip-card" wx:if="{{!selectedStatus}}">
+      <view class="status-card__main skip-main" bindtap="skipIdentity">
+        <view class="status-card__icon status-card__icon--gray">⏭️</view>
+        <view class="status-card__body">
+          <text class="status-card__title">暂不选择身份</text>
+          <text class="status-card__desc">先体验攻略书和证件夹，稍后可在「我的」页面补选</text>
+        </view>
+        <text class="status-card__tag tag--gray">可稍后补选</text>
+        <text class="status-card__chevron">›</text>
+      </view>
+    </view>
+  </view>
+
+  <!-- 隐私声明 -->
+  <view class="privacy-note">
+    <text class="privacy-note__icon">🛡️</text>
+    <text class="privacy-note__text">以上拍照仅保存在你的手机本地，不做任何上传。删除小程序即自动清除。</text>
+  </view>
+
+  <!-- 底部确认按钮 -->
+  <view class="confirm-bar" wx:if="{{selectedStatus}}">
+    <button class="confirm-btn {{canConfirm ? '' : 'confirm-btn--disabled'}}" bindtap="confirmStatus" disabled="{{!canConfirm}}">
+      {{canConfirm ? '确认并开始使用' : (selectedStatus === 'unapplied' ? '请选择身份' : '请拍照留存')}}
+    </button>
+  </view>
+
+  <view class="safe-bottom"></view>
+  <floating-ai visible="{{true}}" />
+</view>

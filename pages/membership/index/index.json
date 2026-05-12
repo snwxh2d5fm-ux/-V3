@@ -1,0 +1,9 @@
+{
+  "navigationBarTitleText": "会员方案",
+  "navigationBarBackgroundColor": "#1a1a2e",
+  "navigationBarTextStyle": "white",
+  "backgroundColor": "#f5f7fa",
+  "usingComponents": {
+    "stage-indicator": "/components/stage-indicator/stage-indicator"
+  }
+}

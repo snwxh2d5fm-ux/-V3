@@ -1,0 +1,296 @@
+<!-- 住港伴 v4.1 — 提醒详情页 (OCR/粘贴/手动/规则引擎 四种模式) -->
+<view class="container">
+  <view class="page-header">
+    <text class="page-title">{{reminder ? reminder.title : (action === 'ocr' ? '拍照识别日期' : action === 'paste' ? '粘贴文本识别' : action === 'rule' ? '规则引擎' : '添加提醒')}}</text>
+    <text class="page-back" bindtap="goBack">‹ 返回</text>
+  </view>
+
+  <!-- ==================== 已有提醒详情 ==================== -->
+  <block wx:if="{{reminder}}">
+    <view class="card detail-card">
+      <view class="detail-header">
+        <text class="detail-title">{{reminder.title || reminder.label}}</text>
+        <view class="detail-tags">
+          <text class="tag {{reminder.type === 'ocr' ? 'tag-blue' : reminder.type === 'rule_engine' ? 'tag-purple' : 'tag-gray'}}">{{reminder.type === 'ocr' ? 'OCR识别' : reminder.type === 'rule_engine' ? '规则引擎' : '手动'}}</text>
+          <text class="tag tag-xs" style="background:{{reminder.confidence === 'A' ? '#ECFDF5' : reminder.confidence === 'B' ? '#EFF6FF' : '#FFF7ED'}};color:{{reminder.confidence === 'A' ? '#059669' : reminder.confidence === 'B' ? '#2563EB' : '#EA580C'}}">[{{reminder.confidence}}]</text>
+        </view>
+      </view>
+
+      <view class="detail-row">
+        <text class="detail-label">截止日期</text>
+        <text class="detail-value {{reminder.priority === 'urgent' ? 'urgent' : ''}}">{{reminder.deadline}}</text>
+      </view>
+      <view class="detail-row" wx:if="{{reminder.description}}">
+        <text class="detail-label">描述</text>
+        <text class="detail-value">{{reminder.description}}</text>
+      </view>
+      <view class="detail-row" wx:if="{{countdown}}">
+        <text class="detail-label">倒计时</text>
+        <text class="countdown-badge {{countdown.urgent ? 'urgent' : countdown.warning ? 'warning' : 'normal'}}">{{countdown.label}}</text>
+      </view>
+    </view>
+
+    <!-- 关联证件 -->
+    <view class="card" wx:if="{{linkedDocs.length > 0}}">
+      <view class="section-title">📎 关联证件</view>
+      <view class="linked-doc-item" wx:for="{{linkedDocs}}" wx:key="id" bindtap="viewDocument" data-doc-id="{{item.id}}">
+        <text class="doc-icon">{{item.docType === 'id_card' ? '🪪' : item.docType === 'passport' ? '🛂' : '📄'}}</text>
+        <text class="doc-name">{{item.name || item.docType}}</text>
+        <text class="doc-arrow">›</text>
+      </view>
+    </view>
+
+    <!-- 依赖链 -->
+    <view class="card" wx:if="{{dependencyChain.length > 0}}">
+      <view class="section-title">🔗 前置依赖</view>
+      <view class="dep-item" wx:for="{{dependencyChain}}" wx:key="id" bindtap="viewDependency" data-id="{{item.id}}">
+        <text class="dep-status">{{item.status === 'completed' ? '✅' : '⏳'}}</text>
+        <text class="dep-name">{{item.label}}</text>
+        <text class="dep-deadline">{{item.deadline}}</text>
+      </view>
+    </view>
+
+    <!-- 操作按钮 -->
+    <view class="action-row" wx:if="{{reminder.status === 'active'}}">
+      <button class="btn btn-success flex-1" bindtap="markComplete">✓ 完成</button>
+      <button class="btn btn-outline flex-1" bindtap="openDeferModal">⏰ 延期</button>
+      <button class="btn btn-ghost flex-1" bindtap="ignoreReminder">忽略</button>
+    </view>
+    <view class="action-row" wx:if="{{reminder.status === 'completed'}}">
+      <text class="completed-banner">✅ 已完成 · {{reminder.completedAt}}</text>
+    </view>
+  </block>
+
+  <!-- ==================== OCR 拍照识别模式 ==================== -->
+  <block wx:elif="{{action === 'ocr'}}">
+    <!-- 初始状态：流程示意图 -->
+    <block wx:if="{{!ocrImagePath && !ocrResult}}">
+      <view class="card ocr-demo-card">
+        <text class="mode-desc">拍摄含日期的证件或文件，AI自动识别关键日期并生成提醒</text>
+
+        <!-- 示意图：三步流程 -->
+        <view class="demo-flow">
+          <!-- Step 1: 证件示意图 -->
+          <view class="demo-step">
+            <view class="demo-step-num">1</view>
+            <text class="demo-step-title">拍摄证件</text>
+            <view class="demo-doc-mock">
+              <view class="demo-doc-header">
+                <text class="demo-doc-title">港澳通行证</text>
+                <text class="demo-doc-sub">EXIT-ENTRY PERMIT</text>
+              </view>
+              <view class="demo-doc-body">
+                <view class="demo-doc-row demo-doc-row--masked">
+                  <text class="demo-doc-label">姓名</text>
+                  <text class="demo-doc-val">张***</text>
+                </view>
+                <view class="demo-doc-row demo-doc-row--masked">
+                  <text class="demo-doc-label">证件号</text>
+                  <text class="demo-doc-val">C1****34</text>
+                </view>
+                <view class="demo-doc-row demo-doc-row--highlight">
+                  <text class="demo-doc-label">有效期至</text>
+                  <text class="demo-doc-val demo-doc-val--date">2027-08-15</text>
+                  <view class="demo-date-box"></view>
+                </view>
+                <view class="demo-doc-row demo-doc-row--masked">
+                  <text class="demo-doc-label">签发日期</text>
+                  <text class="demo-doc-val">2017-08-**</text>
+                </view>
+              </view>
+              <text class="demo-lock-badge">🔒 脱敏展示</text>
+            </view>
+          </view>
+
+          <!-- 箭头连接 -->
+          <view class="demo-arrow">
+            <text class="demo-arrow-line">│</text>
+            <text class="demo-arrow-icon">↓</text>
+            <text class="demo-arrow-line">│</text>
+          </view>
+
+          <!-- Step 2: AI识别 -->
+          <view class="demo-step">
+            <view class="demo-step-num">2</view>
+            <text class="demo-step-title">AI自动识别</text>
+            <view class="demo-ai-box">
+              <text class="demo-ai-icon">🤖</text>
+              <text class="demo-ai-text">识别到关键日期</text>
+              <view class="demo-date-tag">
+                <text class="demo-date-tag-icon">📅</text>
+                <text class="demo-date-tag-val">2027-08-15</text>
+                <text class="demo-date-tag-label">证件到期日</text>
+              </view>
+            </view>
+          </view>
+
+          <!-- 箭头连接 -->
+          <view class="demo-arrow">
+            <text class="demo-arrow-line">│</text>
+            <text class="demo-arrow-icon">↓</text>
+            <text class="demo-arrow-line">│</text>
+          </view>
+
+          <!-- Step 3: 配置提醒 -->
+          <view class="demo-step">
+            <view class="demo-step-num">3</view>
+            <text class="demo-step-title">一键设置提醒</text>
+            <view class="demo-reminder-card">
+              <view class="demo-reminder-row">
+                <text class="demo-reminder-label">标题</text>
+                <text class="demo-reminder-val">港澳通行证到期提醒</text>
+              </view>
+              <view class="demo-reminder-row">
+                <text class="demo-reminder-label">截止日</text>
+                <text class="demo-reminder-val demo-reminder-val--date">2027-08-15</text>
+              </view>
+              <view class="demo-reminder-row">
+                <text class="demo-reminder-label">提前</text>
+                <text class="demo-reminder-val">90天 / 30天 / 7天</text>
+              </view>
+              <view class="demo-save-btn">
+                <text>✓ 确认创建提醒</text>
+              </view>
+            </view>
+          </view>
+        </view>
+      </view>
+
+      <button class="btn btn-primary btn-block card" bindtap="chooseImageForOCR">
+        📷 开始拍照识别
+      </button>
+    </block>
+
+    <!-- 已拍照：显示预览 -->
+    <view class="card" wx:if="{{ocrImagePath}}">
+      <view class="ocr-image-area">
+        <image class="ocr-preview" src="{{ocrImagePath}}" mode="widthFix" />
+      </view>
+
+      <view class="ocr-loading" wx:if="{{ocrParsing}}">
+        <text>⏳ 正在识别...</text>
+      </view>
+
+      <view class="ocr-results" wx:if="{{ocrResult}}">
+        <view wx:if="{{ocrResult.dates && ocrResult.dates.length > 0}}">
+          <text class="section-title">识别到以下日期：</text>
+          <view class="ocr-date-item" wx:for="{{ocrResult.dates}}" wx:key="*this" bindtap="useOCRDate" data-date="{{item.date || item}}" data-label="{{item.label || ''}}">
+            <text class="ocr-date-icon">📅</text>
+            <view class="ocr-date-info">
+              <text class="ocr-date-value">{{item.date || item}}</text>
+              <text class="ocr-date-label" wx:if="{{item.label}}">{{item.label}}</text>
+            </view>
+            <text class="ocr-date-use">使用 ›</text>
+          </view>
+        </view>
+        <text class="ocr-no-result" wx:else>{{ocrResult.message || '未识别到日期'}}</text>
+
+        <button class="btn btn-outline btn-block" bindtap="chooseImageForOCR" wx:if="{{ocrImagePath}}">
+          📷 重新拍照
+        </button>
+      </view>
+    </view>
+
+    <!-- 手动输入兜底 -->
+    <view class="card" wx:if="{{ocrResult && ocrResult.dates && ocrResult.dates.length === 0}}">
+      <text class="section-title">或手动输入</text>
+      <input class="form-input" placeholder="提醒标题" value="{{formTitle}}" bindinput="onTitleInput" />
+      <input class="form-input" placeholder="截止日期 (YYYY-MM-DD)" value="{{formDeadline}}" bindinput="onDeadlineInput" />
+      <button class="btn btn-primary btn-block" bindtap="addManualReminder">保存提醒</button>
+    </view>
+  </block>
+
+  <!-- ==================== 粘贴文本识别模式 ==================== -->
+  <block wx:elif="{{action === 'paste'}}">
+    <view class="card">
+      <text class="mode-desc">粘贴通知、邮件或短信内容，AI自动提取其中的日期信息。</text>
+      <textarea class="form-textarea" placeholder="在此粘贴文本..." value="{{pasteText}}" bindinput="onPasteTextInput" auto-height maxlength="2000" />
+      <button class="btn btn-primary btn-block" bindtap="parsePastedText">🔍 识别日期</button>
+    </view>
+
+    <view class="card" wx:if="{{parsedDates.length > 0}}">
+      <text class="section-title">识别到以下日期：</text>
+      <view class="ocr-date-item" wx:for="{{parsedDates}}" wx:key="*this" bindtap="useParsedDate" data-date="{{item}}">
+        <text class="ocr-date-icon">📅</text>
+        <text class="ocr-date-value">{{item}}</text>
+        <text class="ocr-date-use">使用 ›</text>
+      </view>
+    </view>
+
+    <view class="card" wx:if="{{formDeadline}}">
+      <input class="form-input" placeholder="提醒标题" value="{{formTitle}}" bindinput="onTitleInput" />
+      <input class="form-input" value="{{formDeadline}}" disabled />
+      <button class="btn btn-primary btn-block" bindtap="addManualReminder">保存提醒</button>
+    </view>
+  </block>
+
+  <!-- ==================== 手动添加模式 ==================== -->
+  <block wx:elif="{{action === 'add'}}">
+    <view class="card">
+      <input class="form-input" placeholder="提醒标题 (必填)" value="{{formTitle}}" bindinput="onTitleInput" />
+      <input class="form-input" placeholder="截止日期 YYYY-MM-DD (必填)" value="{{formDeadline}}" bindinput="onDeadlineInput" />
+      <textarea class="form-textarea" placeholder="备注说明 (选填)" value="{{formDescription}}" bindinput="onDescriptionInput" auto-height />
+      <button class="btn btn-primary btn-block" bindtap="addManualReminder">💾 保存提醒</button>
+    </view>
+  </block>
+
+  <!-- ==================== 规则引擎模式 ==================== -->
+  <block wx:elif="{{action === 'rule'}}">
+    <view class="card">
+      <text class="mode-desc">选择预设规则链，系统自动生成一组关联提醒。</text>
+
+      <view class="rule-list" wx:if="{{availableRules.length > 0}}">
+        <view class="rule-item {{selectedRuleId === item.rule_id ? 'active' : ''}}"
+              wx:for="{{availableRules}}" wx:key="rule_id"
+              bindtap="selectRule" data-rule-id="{{item.rule_id}}">
+          <text class="rule-item-icon">{{item.icon || '📋'}}</text>
+          <view class="rule-item-info">
+            <text class="rule-item-title">{{item.name || item.rule_id}}</text>
+            <text class="rule-item-desc">{{item.reminders ? item.reminders.length : 0}} 个节点</text>
+          </view>
+          <text class="rule-item-check">{{selectedRuleId === item.rule_id ? '✓' : ''}}</text>
+        </view>
+      </view>
+      <text class="empty-hint" wx:else>暂无可用的预设规则</text>
+
+      <button class="btn btn-primary btn-block" bindtap="applyRule" wx:if="{{selectedRuleId}}">
+        🚀 生成提醒链
+      </button>
+    </view>
+  </block>
+
+  <!-- ==================== 延期弹窗 ==================== -->
+  <view class="modal-overlay" wx:if="{{showDeferModal}}" bindtap="cancelDefer">
+    <view class="modal-sheet" catchtap="">
+      <view class="modal-handle"></view>
+      <text class="modal-title">延期提醒</text>
+      <view class="defer-control">
+        <text class="defer-label">延期天数</text>
+        <input class="form-input" type="number" value="{{deferDays}}" bindinput="onDeferDaysChange" />
+      </view>
+      <text class="defer-preview">新截止日期：{{deferDate}}</text>
+      <view class="modal-actions">
+        <button class="btn btn-ghost flex-1" bindtap="cancelDefer">取消</button>
+        <button class="btn btn-primary flex-1" bindtap="confirmDefer">确认延期</button>
+      </view>
+    </view>
+  </view>
+
+  <!-- ==================== 编辑模式 ==================== -->
+  <block wx:if="{{reminder && isEdit}}">
+    <view class="edit-overlay">
+      <view class="edit-card">
+        <text class="section-title">编辑提醒</text>
+        <input class="form-input" placeholder="标题" value="{{formTitle}}" bindinput="onTitleInput" />
+        <input class="form-input" placeholder="截止日期" value="{{formDeadline}}" bindinput="onDeadlineInput" />
+        <textarea class="form-textarea" placeholder="描述" value="{{formDescription}}" bindinput="onDescriptionInput" />
+        <view class="modal-actions">
+          <button class="btn btn-outline flex-1" bindtap="toggleEdit">取消</button>
+          <button class="btn btn-primary flex-1" bindtap="saveEdit">保存</button>
+        </view>
+      </view>
+    </view>
+  </block>
+
+  <view class="safe-bottom"></view>
+</view>

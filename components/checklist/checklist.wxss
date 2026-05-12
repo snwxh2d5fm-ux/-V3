@@ -1,0 +1,7 @@
+.cl-item { display: flex; align-items: flex-start; gap: 12rpx; padding: 12rpx 0; }
+.cl-item + .cl-item { border-top: 1rpx solid var(--color-border); }
+.cl-check { width: 28rpx; font-size: var(--font-md); color: var(--color-text-muted); flex-shrink: 0; }
+.cl-item.checked .cl-check { color: var(--color-success); }
+.cl-item.checked .cl-name { text-decoration: line-through; color: var(--color-text-muted); }
+.cl-name { font-size: var(--font-sm); display: block; }
+.cl-detail { font-size: var(--font-xs); color: var(--color-text-muted); display: block; }

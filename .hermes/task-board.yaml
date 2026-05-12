@@ -1,0 +1,170 @@
+# 住港伴 任务看板
+# 格式: 给人读也给 AI parse。每次开发/审查后由对应 Agent 更新。
+# 路径: .hermes/task-board.yaml
+
+updated: 2026-05-11T22:30:00+08:00
+
+phases:
+  - id: phase0
+    name: Phase 0 — 基础设施
+    status: active
+    progress: 85%  # 11/13 完成
+    
+  - id: phase1
+    name: Phase 1 — 核心功能上线
+    status: blocked
+    progress: 0%
+    blockers:
+      - P0-TEST-01  # 测试覆盖0%
+      - P0-FIX-HIGH  # 6个HIGH级代码问题
+
+tasks:
+  # === PHASE 0 未完项 ===
+  - id: P0-DES-01
+    title: UI/UX 设计审计 DSG-1
+    phase: phase0
+    stage: design
+    status: pending
+    priority: P1
+    doc: null
+    assigned: null
+    notes: 无外部依赖，可立即启动。预计3天。
+
+  - id: P0-TEST-01
+    title: 搭建测试框架 + 核心云函数 smoke test
+    phase: phase0
+    stage: testing
+    status: in_progress
+    priority: P0
+    doc: null
+    assigned: null
+    notes: |
+      - Jest 已安装 (2026-05-11)
+      - 旧测试文件 __tests__/v3-unit.test.js 引用已废弃路径，需修复
+      - 需新建 tests/smoke/ 下的云函数 smoke test
+    subtasks:
+      - 修复旧测试文件路径引用
+      - 编写 rag-search smoke test
+      - 编写 ai-chat smoke test
+      - 编写 preaudit-engine smoke test
+      - 编写 k2-leak-scanner smoke test
+
+  # === PHASE 0 代码修复 ===
+  - id: P0-FIX-HIGH
+    title: 修复 6 个 HIGH 级代码问题
+    phase: phase0
+    stage: development
+    status: pending
+    priority: P0
+    doc: ../V3代码审查报告_20260511.md
+    notes: |
+      HIGH-1: 资源泄漏 (rag-search)
+      HIGH-2: checkpoint 原子性 (crawler)
+      HIGH-3: 去重键脆弱 (knowledge-import)
+      HIGH-4: topK 无上限保护 (rag-search)
+      HIGH-5: 静默降级无日志 (ai-chat)
+      HIGH-6: 索引逻辑冗余
+      立即修复: HIGH-1/2/5
+      Phase 1前: HIGH-3/4
+
+  - id: P0-FIX-MED
+    title: 修复 12 个 MEDIUM 级代码问题
+    phase: phase0
+    stage: development
+    status: pending
+    priority: P2
+    doc: ../V3代码审查报告_20260511.md
+
+  # === PHASE 1 预备 ===
+  - id: P1-REDBOOK
+    title: 修复小红书登录态 + 恢复采集
+    phase: phase1
+    stage: data
+    status: pending
+    priority: P1
+
+  - id: P1-SAFETY-LOG
+    title: 补全 ai-chat safety 日志字段
+    phase: phase1
+    stage: development
+    status: pending
+    priority: P2
+
+  - id: P1-CRON
+    title: 搭建计划任务 (policy-monitor + k2-leak-scanner)
+    phase: phase1
+    stage: ops
+    status: pending
+    priority: P2
+
+  # === 已完成的里程碑 ===
+  - id: P0-INF-01
+    title: 微信生态基建
+    phase: phase0
+    stage: done
+    status: completed
+    completed: 2026-05-10
+
+  - id: P0-INF-02
+    title: CloudBase 环境 + 24 云函数
+    phase: phase0
+    stage: done
+    status: completed
+    completed: 2026-05-10
+
+  - id: P0-INF-03
+    title: 知识库建设 (8,058 条)
+    phase: phase0
+    stage: done
+    status: completed
+    completed: 2026-05-10
+
+  - id: P0-SEC-01
+    title: K2 安全防线
+    phase: phase0
+    stage: done
+    status: completed
+    completed: 2026-05-10
+
+  - id: P0-DEV-01
+    title: V3 代码框架 (21页面+24云函数)
+    phase: phase0
+    stage: done
+    status: completed
+    completed: 2026-05-10
+
+  - id: P0-DEV-02
+    title: V3 代码审查 (25项发现)
+    phase: phase0
+    stage: done
+    status: completed
+    completed: 2026-05-11
+
+  - id: P0-HARNESS
+    title: Harness Engineering 基础设施
+    phase: phase0
+    stage: done
+    status: completed
+    completed: 2026-05-11
+    notes: |
+      - .hermes/rules/ × 3
+      - .hermes/skills/ × 2
+      - scripts/verify.sh (基线: 26/0/2)
+      - CLAUDE.md 升级为 dev-map
+      - task-board.yaml (本文件)
+
+risks:
+  - id: RISK-01
+    title: 测试覆盖 0%
+    severity: critical
+    mitigation: P0-TEST-01
+
+  - id: RISK-02
+    title: 6个HIGH级代码问题
+    severity: high
+    mitigation: P0-FIX-HIGH
+
+  - id: RISK-03
+    title: 小红书登录过期
+    severity: medium
+    mitigation: P1-REDBOOK

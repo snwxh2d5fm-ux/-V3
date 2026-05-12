@@ -1,0 +1,7 @@
+<view class="ds-preview">
+  <view class="ds-toggle" wx:if="{{mode !== 'local'}}">
+    <text class="ds-mode-label">{{mode === 'desensitized' ? '脱敏模式' : '特征提取模式'}}</text>
+    <text class="ds-toggle-btn" bindtap="toggleView">{{showOriginal ? '隐藏原文' : '显示原文'}}</text>
+  </view>
+  <slot />
+</view>

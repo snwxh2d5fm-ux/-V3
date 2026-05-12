@@ -1,0 +1,295 @@
+/* pages/membership/index — 会员方案页样式 */
+
+page {
+  background: #f5f7fa;
+  font-family: -apple-system, BlinkMacSystemFont, 'PingFang SC', sans-serif;
+}
+
+.page {
+  padding-bottom: 60rpx;
+}
+
+/* ========== 加载态 ========== */
+.loading-wrap {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  padding: 200rpx 0;
+}
+.loading-text {
+  margin-top: 24rpx;
+  font-size: 28rpx;
+  color: #999;
+}
+
+/* ========== 状态栏 ========== */
+.status-bar {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin: 24rpx 32rpx;
+  padding: 28rpx 32rpx;
+  background: #fff;
+  border-radius: 16rpx;
+  box-shadow: 0 2rpx 12rpx rgba(0,0,0,0.04);
+}
+.status-label {
+  font-size: 24rpx;
+  color: #999;
+  display: block;
+  margin-bottom: 4rpx;
+}
+.status-level {
+  font-size: 36rpx;
+  font-weight: 700;
+  color: #333;
+}
+.status-level.free { color: #999; }
+.status-level.basic { color: #059669; }
+.status-level.pro { color: #2563EB; }
+.status-level.premium { color: #7C3AED; }
+.lock-badge {
+  font-size: 24rpx;
+  color: #DC2626;
+  padding: 8rpx 16rpx;
+  background: #FEF2F2;
+  border-radius: 8rpx;
+}
+
+/* ========== 周期切换 ========== */
+.period-switch {
+  display: flex;
+  margin: 0 32rpx 24rpx;
+  background: #E5E7EB;
+  border-radius: 12rpx;
+  padding: 6rpx;
+}
+.period-option {
+  flex: 1;
+  text-align: center;
+  padding: 16rpx 0;
+  font-size: 28rpx;
+  color: #666;
+  border-radius: 10rpx;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8rpx;
+}
+.period-option.active {
+  background: #fff;
+  color: #1a73e8;
+  font-weight: 600;
+  box-shadow: 0 2rpx 8rpx rgba(0,0,0,0.08);
+}
+.save-tag {
+  font-size: 20rpx;
+  color: #fff;
+  background: #DC2626;
+  padding: 2rpx 10rpx;
+  border-radius: 6rpx;
+}
+
+/* ========== 方案卡片 ========== */
+.plans-grid {
+  display: flex;
+  flex-direction: column;
+  gap: 24rpx;
+  padding: 0 32rpx;
+}
+
+.plan-card {
+  position: relative;
+  background: #fff;
+  border-radius: 20rpx;
+  padding: 36rpx 32rpx;
+  border: 2rpx solid #E5E7EB;
+  transition: all 0.2s;
+}
+.plan-card.highlighted {
+  border-color: #1a73e8;
+  box-shadow: 0 4rpx 24rpx rgba(26,115,232,0.12);
+  background: linear-gradient(135deg, #EFF6FF 0%, #fff 40%);
+}
+.plan-card.current {
+  opacity: 0.7;
+}
+
+/* 标签 */
+.plan-badge {
+  position: absolute;
+  top: 0;
+  right: 32rpx;
+  background: linear-gradient(135deg, #1a73e8, #2563EB);
+  color: #fff;
+  font-size: 22rpx;
+  padding: 6rpx 20rpx;
+  border-radius: 0 0 12rpx 12rpx;
+  font-weight: 600;
+}
+
+/* 方案头部 */
+.plan-header {
+  display: flex;
+  align-items: center;
+  gap: 12rpx;
+  margin-bottom: 16rpx;
+}
+.plan-name {
+  font-size: 34rpx;
+  font-weight: 700;
+  color: #1a1a2e;
+}
+.plan-level-tag {
+  font-size: 22rpx;
+  padding: 4rpx 14rpx;
+  border-radius: 6rpx;
+  font-weight: 600;
+}
+.plan-level-tag.basic { background: #ECFDF5; color: #059669; }
+.plan-level-tag.pro { background: #EFF6FF; color: #2563EB; }
+.plan-level-tag.premium { background: #F5F3FF; color: #7C3AED; }
+
+/* 价格 */
+.plan-price {
+  display: flex;
+  align-items: baseline;
+  margin-bottom: 8rpx;
+}
+.price-symbol {
+  font-size: 36rpx;
+  font-weight: 700;
+  color: #1a1a2e;
+}
+.price-value {
+  font-size: 60rpx;
+  font-weight: 800;
+  color: #1a1a2e;
+  line-height: 1;
+}
+.price-unit {
+  font-size: 26rpx;
+  color: #999;
+  margin-left: 6rpx;
+}
+.plan-price-compare {
+  font-size: 24rpx;
+  color: #999;
+  margin-bottom: 20rpx;
+}
+
+/* 权益列表 */
+.plan-features {
+  border-top: 1rpx solid #f0f0f0;
+  padding-top: 24rpx;
+  margin-bottom: 28rpx;
+}
+.feature-item {
+  display: flex;
+  align-items: center;
+  gap: 12rpx;
+  padding: 8rpx 0;
+}
+.feature-check {
+  font-size: 22rpx;
+  color: #059669;
+  font-weight: 700;
+  width: 28rpx;
+  text-align: center;
+}
+.feature-text {
+  font-size: 26rpx;
+  color: #555;
+}
+
+/* 订阅按钮 */
+.subscribe-btn {
+  width: 100%;
+  height: 80rpx;
+  line-height: 80rpx;
+  font-size: 30rpx;
+  font-weight: 600;
+  border-radius: 12rpx;
+  text-align: center;
+  border: none;
+  /* Kill WeChat native button styles */
+  position: relative;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  overflow: visible;
+}
+.subscribe-btn::after {
+  border: none;
+}
+.subscribe-btn.primary {
+  background: linear-gradient(135deg, #1a73e8, #2563EB);
+  color: #fff;
+}
+.subscribe-btn.outline {
+  background: #fff;
+  color: #1a73e8;
+  border: 2rpx solid #1a73e8;
+}
+.subscribe-btn.current-btn {
+  width: 100%;
+  height: 80rpx;
+  line-height: 80rpx;
+  font-size: 30rpx;
+  font-weight: 600;
+  border-radius: 12rpx;
+  text-align: center;
+  background: #f0f0f0;
+  color: #999;
+}
+
+/* ========== 支付结果弹窗 ========== */
+.result-overlay {
+  position: fixed;
+  top: 0; left: 0; right: 0; bottom: 0;
+  background: rgba(0,0,0,0.5);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 1000;
+}
+.result-modal {
+  background: #fff;
+  border-radius: 24rpx;
+  padding: 60rpx 48rpx;
+  width: 560rpx;
+  text-align: center;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 16rpx;
+}
+.result-icon {
+  font-size: 80rpx;
+}
+.result-title {
+  font-size: 36rpx;
+  font-weight: 700;
+  color: #1a1a2e;
+}
+.result-msg {
+  font-size: 28rpx;
+  color: #666;
+  margin-bottom: 16rpx;
+}
+.result-btn {
+  width: 100%;
+  height: 80rpx;
+  line-height: 80rpx;
+  font-size: 30rpx;
+  font-weight: 600;
+  border-radius: 12rpx;
+  background: linear-gradient(135deg, #1a73e8, #2563EB);
+  color: #fff;
+  border: none;
+  text-align: center;
+}
+.result-btn::after {
+  border: none;
+}

@@ -1,0 +1,8 @@
+{
+  "usingComponents": {
+    "privacy-toggle": "/components/privacy-toggle/privacy-toggle",
+    "progress-bar": "/components/progress-bar/progress-bar",
+    "floating-ai": "/components/floating-ai/floating-ai"
+  },
+  "navigationBarTitleText": "流程控"
+}

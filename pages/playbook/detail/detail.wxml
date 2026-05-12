@@ -1,0 +1,20 @@
+<view class="container" wx:if="{{playbook}}">
+  <view class="page-header">
+    <text class="page-header__title">{{playbook.title}}</text>
+    <text class="page-header__subtitle">⭐ {{playbook.rating}} · {{playbook.source}} · 更新 {{playbook.updated}}</text>
+  </view>
+  <view class="card" wx:if="{{playbook.points}}">
+    <text class="card__title">💡 核心要点</text>
+    <text class="pb-point" wx:for="{{playbook.points}}" wx:key="*this">{{index + 1}}. {{item}}</text>
+  </view>
+  <view class="card" wx:if="{{playbook.steps}}">
+    <text class="card__title">📋 步骤清单</text>
+    <text class="pb-step" wx:for="{{playbook.steps}}" wx:key="*this">□ {{item}}</text>
+  </view>
+  <view class="card" wx:if="{{playbook.pitfalls}}">
+    <text class="card__title">⚠️ 踩过的坑</text>
+    <text class="pb-pitfall" wx:for="{{playbook.pitfalls}}" wx:key="*this">• {{item}}</text>
+  </view>
+
+  <floating-ai visible="{{true}}" />
+</view>

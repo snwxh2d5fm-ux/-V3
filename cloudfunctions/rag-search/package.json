@@ -1,0 +1,9 @@
+{
+  "name": "rag-search",
+  "version": "1.0.0",
+  "description": "RAG检索服务 — 三层过滤 (visibility + source + post-retrieval K2 scan)",
+  "main": "index.js",
+  "dependencies": {
+    "wx-server-sdk": "latest"
+  }
+}

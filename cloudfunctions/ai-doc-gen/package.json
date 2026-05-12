@@ -1,0 +1,7 @@
+{
+  "name": "ai-doc-gen",
+  "version": "3.0.0",
+  "description": "住港伴 AI 文档生成云函数 — 模板 + DeepSeek 增强",
+  "main": "index.js",
+  "dependencies": {}
+}

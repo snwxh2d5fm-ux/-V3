@@ -1,0 +1,9 @@
+{
+  "name": "knowledge-import",
+  "version": "1.0.0",
+  "description": "住港伴 知识库批量导入云函数, 支持 JSONL 文件导入和逐批写入",
+  "main": "index.js",
+  "dependencies": {
+    "wx-server-sdk": "latest"
+  }
+}

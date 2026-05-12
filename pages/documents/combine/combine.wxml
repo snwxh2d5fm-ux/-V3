@@ -1,0 +1,222 @@
+<!-- pages/documents/combine/combine.wxml — UX深度优化v5 -->
+<view class="page">
+
+  <!-- ===== 头部：环形进度 + 路径 + 阶段 ===== -->
+  <view class="header-v5">
+    <view class="header-top">
+      <!-- 环形进度 -->
+      <view class="progress-ring-wrap" bindtap="togglePathSwitcher">
+        <view class="progress-ring">
+          <view class="ring-bg"></view>
+          <view class="ring-fg" style="--progress: {{progress}}deg;"></view>
+          <view class="ring-center">
+            <text class="ring-percent">{{progress}}%</text>
+            <text class="ring-label">完成</text>
+          </view>
+        </view>
+      </view>
+      <view class="header-info" bindtap="togglePathSwitcher">
+        <view class="header-path-row">
+          <text class="header-path">{{pathName}}</text>
+          <!-- 身份适配标记 -->
+          <text class="identity-badge {{identityMatched ? 'matched' : 'incomplete'}}" wx:if="{{identity && identity.personaLabel}}">
+            {{identityMatched ? '🎯 已适配' : '⚠️ 待完善'}}
+          </text>
+        </view>
+        <view class="header-stage">
+          <text class="stage-dot {{currentStage.index <= 2 ? 'active' : ''}}"></text>
+          <text class="stage-dot {{currentStage.index === 3 ? 'active' : ''}}"></text>
+          <text class="stage-dot {{currentStage.index === 4 ? 'active' : ''}}"></text>
+          <text class="stage-dot {{currentStage.index >= 5 ? 'active' : ''}}"></text>
+          <text class="stage-text">第{{currentStage.index}}/{{currentStage.total}}阶段 · {{currentStage.name}}</text>
+        </view>
+        <view class="header-stats">
+          <text class="stat-item ready-stat">🟢 {{hasCount}}项已备</text>
+          <text class="stat-item missing-stat">🔴 {{missingCount}}项待补</text>
+        </view>
+      </view>
+      <text class="header-switch-icon" bindtap="togglePathSwitcher">⇄</text>
+    </view>
+    <!-- 路径切换下拉 -->
+    <view class="path-switcher {{showPathSwitcher ? 'open' : ''}}" wx:if="{{showPathSwitcher}}">
+      <view class="ps-option {{userPath === opt.value ? 'active' : ''}}"
+            wx:for="{{pathOptions}}" wx:key="value"
+            data-path="{{opt.value}}" bindtap="switchPath">
+        <text>{{opt.label}}</text>
+        <text class="ps-check" wx:if="{{userPath === opt.value}}">✓</text>
+      </view>
+    </view>
+  </view>
+
+  <!-- ===== 优先级分区 ===== -->
+  <!-- 身份适配提示 -->
+  <view class="identity-prompt" wx:if="{{identity && !identityMatched}}">
+    <text class="ip-icon">⚠️</text>
+    <view class="ip-body">
+      <text class="ip-title">身份画像未完善</text>
+      <text class="ip-desc">完善婚育、职业信息后，清单将自动适配您的身份，补充家属材料、经营证明等</text>
+    </view>
+    <text class="ip-action" bindtap="navigateToProfile">完善 ›</text>
+  </view>
+  <view class="zones" wx:if="{{priorityZones.length}}">
+
+    <block wx:for="{{priorityZones}}" wx:for-item="zone" wx:key="zone">
+      <view class="zone-card {{zone.zone}}">
+
+        <!-- 分区标题栏 -->
+        <view class="zone-header" data-zone="{{zone.zone}}" bindtap="toggleZone">
+          <view class="zone-header-left">
+            <text class="zone-icon">{{zone.icon}}</text>
+            <text class="zone-label">{{zone.label}}</text>
+            <text class="zone-count">{{zone.items.length}}项</text>
+          </view>
+          <text class="zone-arrow {{showZoneDetail[zone.zone] ? 'open' : ''}}">▾</text>
+        </view>
+
+        <!-- 分区内容 -->
+        <view class="zone-body {{showZoneDetail[zone.zone] ? 'open' : ''}}">
+          <block wx:for="{{zone.items}}" wx:for-item="item" wx:key="id">
+            <view class="doc-card {{item.status}}" bindtap="onDocTap" data-item="{{item}}">
+
+              <!-- 状态图标 -->
+              <view class="doc-status-icon">
+                <text wx:if="{{item.status === 'has'}}">✅</text>
+                <text wx:elif="{{item.status === 'missing' && item.stage <= 2}}">🔴</text>
+                <text wx:elif="{{item.status === 'missing'}}">🟡</text>
+                <text wx:else>⚪</text>
+              </view>
+
+              <!-- 文档信息 -->
+              <view class="doc-body">
+                <view class="doc-title-row">
+                  <text class="doc-name">{{item.name}}</text>
+                  <text class="doc-tag {{item.required ? 'required' : 'optional'}}">
+                    {{item.required ? '必需' : '建议'}}
+                  </text>
+                  <!-- 身份适配标记 -->
+                  <text class="doc-tag identity-adapted" wx:if="{{item.identityAdapted}}">🎯 身份适配</text>
+                  <!-- 到期警告 -->
+                  <text class="doc-expiry-warn" wx:if="{{item.expiryWarning}}">
+                    ⚠️ {{item.expiryDays}}天后到期
+                  </text>
+                </view>
+                <text class="doc-meta">
+                  {{item.category}}
+                  <text wx:if="{{item.spec.validity}}"> · 有效期{{item.spec.validity}}</text>
+                  <text wx:if="{{item.spec.size}}"> · {{item.spec.size}}</text>
+                </text>
+              </view>
+
+              <!-- 操作 -->
+              <view class="doc-action">
+                <text class="doc-arrow" wx:if="{{item.status === 'has'}}">查看 ›</text>
+                <view class="doc-add-btn" wx:else catchtap="showSpecForDoc" data-item="{{item}}">
+                  <text>＋</text>
+                </view>
+              </view>
+            </view>
+          </block>
+
+          <!-- 分区空状态 -->
+          <view class="zone-empty" wx:if="{{zone.items.length === 0}}">
+            <text>{{zone.emptyText}}</text>
+          </view>
+        </view>
+      </view>
+    </block>
+  </view>
+
+  <!-- ===== 空状态 ===== -->
+  <view class="empty-state" wx:if="{{!checklist.length}}">
+    <text class="empty-icon">📭</text>
+    <text class="empty-text">未选择身份路径</text>
+    <text class="empty-hint">请先在「我的」页面选择身份办理状态，或点击下方选择路径</text>
+    <button class="btn-select-path" bindtap="togglePathSwitcher">选择路径 →</button>
+  </view>
+
+  <!-- ===== 底部操作栏（固定） ===== -->
+  <view class="bottom-bar-v5">
+    <!-- 状态信息条 -->
+    <view class="bar-status">
+      <view class="bar-status-main" wx:if="{{missingCount > 0 && priorityZones.length > 0 && priorityZones[0].zone === 'urgent'}}">
+        <text class="bar-status-icon">🔴</text>
+        <text class="bar-status-text">当前阶段还差 <text class="bar-status-count">{{priorityZones[0].items.length}}</text> 项紧急材料</text>
+      </view>
+      <view class="bar-status-main" wx:elif="{{missingCount === 0 && hasCount > 0}}">
+        <text class="bar-status-icon">🎉</text>
+        <text class="bar-status-text">全部就绪！可进入下一阶段</text>
+      </view>
+      <view class="bar-status-main" wx:elif="{{missingCount > 0}}">
+        <text class="bar-status-icon">📋</text>
+        <text class="bar-status-text">还差 <text class="bar-status-count">{{missingCount}}</text> 项材料</text>
+      </view>
+      <view class="bar-status-main" wx:else>
+        <text class="bar-status-text">开始添加证件吧</text>
+      </view>
+      <!-- 快捷捷径 -->
+      <view class="bar-quick-stats">
+        <text class="bqs-item">🟢 {{hasCount}}</text>
+        <text class="bqs-divider">/</text>
+        <text class="bqs-item">🔴 {{totalRequired - hasCount}}</text>
+        <text class="bqs-divider">·</text>
+        <text class="bqs-item">{{progress}}%</text>
+      </view>
+    </view>
+
+    <!-- 操作按钮 -->
+    <view class="bar-actions">
+      <button class="bar-btn primary" bindtap="navigateToAdd">
+        <text class="bar-btn-icon">＋</text>
+        <text>{{missingCount > 0 ? '补充证件' : '添加证件'}}</text>
+      </button>
+      <button class="bar-btn secondary" bindtap="toggleExportMode" wx:if="{{checklist.length}}">
+        <text>📤 导出</text>
+      </button>
+      <button class="bar-btn tertiary" bindtap="navigateToProfile" wx:if="{{identity && !identityMatched}}">
+        <text>👤 完善画像</text>
+      </button>
+    </view>
+  </view>
+
+  <!-- ===== 规格弹窗 (Bottom Sheet) ===== -->
+  <view class="spec-overlay {{showSpecSheet ? 'open' : ''}}" catchtap="hideSpecSheet" wx:if="{{showSpecSheet}}" role="dialog" aria-modal="true" aria-label="{{specDoc.name}}规格">
+    <view class="spec-sheet" catchtap="noop">
+      <view class="spec-handle"></view>
+      <view class="spec-header">
+        <text class="spec-title">{{specDoc.name}}</text>
+        <text class="spec-close" bindtap="hideSpecSheet">✕</text>
+      </view>
+      <view class="spec-body">
+        <view class="spec-row">
+          <text class="spec-label">📝 要求</text>
+          <text class="spec-value">{{specDoc.spec.tip}}</text>
+        </view>
+        <view class="spec-row">
+          <text class="spec-label">⏱ 有效期</text>
+          <text class="spec-value">{{specDoc.spec.validity}}</text>
+        </view>
+        <view class="spec-row">
+          <text class="spec-label">📐 规格</text>
+          <text class="spec-value">{{specDoc.spec.size}}</text>
+        </view>
+      </view>
+      <button class="spec-add-btn" bindtap="quickAddDoc">立即添加此证件 →</button>
+    </view>
+  </view>
+
+  <!-- ===== 导出预览弹窗 ===== -->
+  <view class="export-overlay {{showExportPreview ? 'open' : ''}}" catchtap="hideExportPreview" wx:if="{{showExportPreview}}" role="dialog" aria-modal="true" aria-label="清单预览">
+    <view class="export-sheet" catchtap="noop">
+      <view class="export-header">
+        <text class="export-title">📋 清单预览</text>
+        <text class="export-close" bindtap="hideExportPreview">✕</text>
+      </view>
+      <scroll-view class="export-content" scroll-y>
+        <text class="export-text" user-select>{{exportText}}</text>
+      </scroll-view>
+      <button class="export-copy-btn" bindtap="copyExport">📋 复制到剪贴板</button>
+    </view>
+  </view>
+
+  <floating-ai visible="{{true}}" />
+</view>

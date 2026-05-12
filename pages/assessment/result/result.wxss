@@ -1,0 +1,156 @@
+/* ===== 画像身份标签 ===== */
+.persona-tag {
+  display: flex; align-items: center; gap: 10rpx;
+  margin: 16rpx 32rpx 0; padding: 14rpx 20rpx;
+  background: #F3F4F6; border-radius: 14rpx;
+}
+.persona-icon { font-size: 24rpx; }
+.persona-text { font-size: 26rpx; color: #374151; font-weight: 600; }
+
+/* ===== 兼容性警告横幅 ===== */
+.compat-banner {
+  display: flex; align-items: flex-start; gap: 12rpx;
+  margin: 12rpx 32rpx 0; padding: 18rpx 22rpx;
+  border-radius: 14rpx; border-left: 6rpx solid;
+}
+.compat-banner--warn {
+  background: #FFFBEB; border-color: #F59E0B;
+}
+.compat-banner--reject {
+  background: #FEF2F2; border-color: #DC2626;
+}
+.compat-banner__icon { font-size: 28rpx; flex-shrink: 0; margin-top: 2rpx; }
+.compat-banner__text { font-size: 24rpx; line-height: 1.6; color: #374151; }
+
+/* ===== 加载/空态 ===== */
+.loading-area, .empty-area {
+  display: flex; flex-direction: column; align-items: center; justify-content: center;
+  min-height: 60vh; padding: 60rpx 48rpx; text-align: center;
+}
+.loading-icon, .empty-icon { font-size: 80rpx; margin-bottom: 24rpx; }
+.loading-text { font-size: 28rpx; color: #6B7280; }
+.empty-title { font-size: 36rpx; font-weight: 700; color: #111827; margin-bottom: 12rpx; }
+.empty-desc { font-size: 26rpx; color: #6B7280; line-height: 1.7; margin-bottom: 32rpx; }
+
+/* ===== 最佳匹配突出卡 ===== */
+.hero-card {
+  background: linear-gradient(135deg, #2563EB 0%, #4F46E5 100%);
+  margin: 24rpx 32rpx; border-radius: 24rpx;
+  padding: 36rpx 32rpx; color: #FFF;
+}
+.hero-badge {
+  font-size: 22rpx; background: rgba(255,255,255,0.2);
+  padding: 6rpx 16rpx; border-radius: 99rpx;
+  display: inline-block;
+}
+.hero-badges {
+  display: flex; align-items: center; gap: 10rpx; margin-bottom: 12rpx;
+}
+.hero-badge--compat {
+  background: rgba(255,255,255,0.3); border: 1rpx solid rgba(255,255,255,0.4);
+}
+.hero-path-name {
+  font-size: 40rpx; font-weight: 800; display: block; margin-bottom: 16rpx; line-height: 1.3;
+}
+.hero-meta { display: flex; align-items: center; gap: 16rpx; margin-bottom: 16rpx; }
+.hero-score { font-size: 32rpx; font-weight: 700; }
+.hero-confidence {
+  font-size: 22rpx; padding: 4rpx 14rpx; border-radius: 8rpx; font-weight: 600;
+}
+.hero-risk { font-size: 26rpx; opacity: 0.9; }
+.hero-details { display: flex; gap: 24rpx; margin-bottom: 24rpx; }
+.hero-detail { font-size: 24rpx; opacity: 0.85; }
+.hero-btn {
+  background: #FFF !important; color: #2563EB !important; font-weight: 700;
+  margin-bottom: 12rpx;
+}
+.hero-disclaimer {
+  font-size: 20rpx; opacity: 0.6; display: block; text-align: center;
+}
+
+/* ===== 结果列表 ===== */
+.results-section { padding: 0 32rpx 24rpx; }
+.section-title {
+  font-size: 28rpx; font-weight: 700; color: #111827;
+  margin-bottom: 16rpx; display: block;
+}
+
+.path-card {
+  background: #FFF; border-radius: 16rpx; margin-bottom: 12rpx;
+  overflow: hidden; box-shadow: 0 2rpx 8rpx rgba(0,0,0,0.04);
+  transition: box-shadow 0.2s;
+}
+.path-card.expanded { box-shadow: 0 4rpx 20rpx rgba(0,0,0,0.08); }
+
+.path-card__header {
+  display: flex; align-items: center; gap: 16rpx;
+  padding: 24rpx 28rpx;
+}
+.path-rank { flex-shrink: 0; width: 56rpx; text-align: center; }
+.rank-badge { font-size: 36rpx; }
+.rank-num { font-size: 24rpx; color: #9CA3AF; font-weight: 600; }
+.path-info { flex: 1; min-width: 0; }
+.path-name { font-size: 28rpx; font-weight: 600; color: #111827; display: block; margin-bottom: 8rpx; }
+.path-tags { display: flex; gap: 10rpx; }
+.tag {
+  font-size: 20rpx; padding: 2rpx 10rpx; border-radius: 6rpx; font-weight: 600;
+}
+.tag--score { }
+.tag--risk { background: #F3F4F6; }
+.path-arrow {
+  font-size: 20rpx; color: #9CA3AF; transition: transform 0.25s; flex-shrink: 0;
+}
+.path-arrow.rotate { transform: rotate(180deg); }
+
+/* ===== 展开详情 ===== */
+.path-card__body {
+  padding: 0 28rpx 28rpx; border-top: 1rpx solid #F3F4F6;
+  animation: fadeIn 0.25s;
+}
+@keyframes fadeIn { from { opacity: 0; } to { opacity: 1; } }
+
+.detail-block { margin-top: 20rpx; }
+.detail-title {
+  font-size: 24rpx; font-weight: 700; color: #374151;
+  display: block; margin-bottom: 10rpx;
+}
+.risk-list { display: flex; flex-direction: column; gap: 6rpx; }
+.risk-item {
+  font-size: 24rpx; color: #6B7280; line-height: 1.6;
+}
+.cycle-row {
+  display: flex; justify-content: space-between; padding: 6rpx 0;
+}
+.cycle-label { font-size: 24rpx; color: #9CA3AF; }
+.cycle-value { font-size: 24rpx; color: #374151; font-weight: 600; }
+.dp-list { display: flex; flex-direction: column; gap: 4rpx; }
+.dp-item { font-size: 24rpx; color: #6B7280; }
+.dp-dot { color: #2563EB; margin-right: 8rpx; }
+
+.btn--sm {
+  margin-top: 16rpx; padding: 14rpx 32rpx; font-size: 26rpx;
+}
+
+/* ===== 兼容性注释（路径展开详情内） ===== */
+.compat-note {
+  padding: 16rpx 18rpx; border-radius: 10rpx;
+  font-size: 24rpx; line-height: 1.6; color: #374151;
+}
+.compat-note--warn {
+  background: #FFF7ED; border-left: 4rpx solid #F59E0B;
+}
+.compat-note--reject {
+  background: #FEF2F2; border-left: 4rpx solid #DC2626;
+}
+
+/* 兼容标签 */
+.tag--compat {
+  font-size: 20rpx !important; padding: 2rpx 10rpx !important;
+  border-radius: 6rpx; font-weight: 600;
+}
+
+/* ===== 底部操作 ===== */
+.bottom-actions {
+  padding: 16rpx 32rpx 40rpx;
+  padding-bottom: calc(40rpx + env(safe-area-inset-bottom));
+}

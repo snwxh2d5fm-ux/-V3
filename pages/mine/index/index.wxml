@@ -1,0 +1,65 @@
+<!-- 住港伴 v4 — 我的页面 (Tab5·PRD v4对齐) -->
+<view class="container">
+  <!-- 7阶段流程指示器 -->
+  <stage-indicator stages="{{stageSteps}}" progress="{{stageProgress}}" />
+  <status-badge />
+  <view class="page-header">
+    <view class="user-section">
+      <text style="font-size:52rpx">{{isLoggedIn ? '👤' : '👋'}}</text>
+      <view>
+        <text class="user-name">{{isLoggedIn ? userInfo.nickName : '未登录'}}</text>
+        <text class="user-status" wx:if="{{isLoggedIn}}">{{userStatusLabel}}</text>
+      </view>
+    </view>
+  </view>
+
+  <!-- 会员卡片 -->
+  <view class="card membership-card">
+    <text style="font-size:var(--font-xs);opacity:0.8;display:block">当前会员</text>
+    <text style="font-size:var(--font-xl);font-weight:800;display:block;margin:8rpx 0">{{membershipName}}</text>
+    <text wx:if="{{membershipDays > 0}}" style="font-size:var(--font-xs);opacity:0.8;display:block">剩余 {{membershipDays}} 天</text>
+    <text wx:if="{{isLocked}}" style="font-size:var(--font-xs);color:#FEF2F2;display:block">🔒 已过期</text>
+    <view class="progress" style="background:rgba(255,255,255,0.2);margin-bottom:12rpx">
+      <view class="progress-fill" style="width:{{documentCount >= 10 ? '100%' : documentCount * 10 + '%'}};background:#FFF"></view>
+    </view>
+    <text style="font-size:var(--font-xs);opacity:0.8;display:block">已使用 {{documentCount}}/10 证件位</text>
+    <button class="btn" style="background:#FFF;color:var(--blue);margin-top:16rpx;width:100%;font-weight:700" bindtap="navigateTo" data-url="membership">{{isLocked ? '🔓 解锁全部功能' : '🚀 升级会员'}}</button>
+  </view>
+
+  <!-- 功能入口 -->
+  <view class="card" style="padding:0">
+    <view class="list-item" wx:for="{{menuItems}}" wx:key="id" bindtap="navigateTo" data-url="{{item.url}}" data-tab="{{item.tab}}">
+      <text class="list-item-icon">{{item.icon}}</text>
+      <view class="list-item-content">
+        <text class="list-item-title">{{item.title}}</text>
+        <text class="list-item-desc" wx:if="{{item.desc}}">{{item.desc}}</text>
+        <text class="list-item-desc" wx:elif="{{item.id === 'documents'}}">{{documentCount}} 份材料已存档</text>
+        <text class="list-item-desc" wx:elif="{{item.id === 'privacy'}}">{{authorizedFields}} 个标签已授权 · 数据加密中</text>
+      </view>
+      <text class="list-item-arrow">›</text>
+    </view>
+  </view>
+
+  <!-- 设置 -->
+  <view class="card" style="padding:0;margin-top:16rpx">
+    <view class="list-item" wx:for="{{settingsItems}}" wx:key="id" bindtap="navigateTo" data-url="{{item.url}}">
+      <text class="list-item-icon">{{item.icon}}</text>
+      <view class="list-item-content">
+        <text class="list-item-title">{{item.title}}</text>
+      </view>
+      <text class="list-item-arrow">›</text>
+    </view>
+  </view>
+
+  <!-- 退出登录 -->
+  <view style="text-align:center;padding:32rpx" wx:if="{{isLoggedIn}}">
+    <button class="btn btn-ghost" bindtap="logout" style="color:var(--red)">退出登录</button>
+  </view>
+
+  <view style="text-align:center;padding:20rpx;font-size:var(--font-xs);color:var(--gray-400)">
+    住港伴 v4.0 · 隐私优先 · DeepSeek V4
+  </view>
+
+  <floating-ai visible="{{true}}" />
+  <view class="safe-bottom"></view>
+</view>

@@ -1,0 +1,312 @@
+/**
+ * 住港伴 v4.1 — 提醒器主页样式
+ * 时间线视图 + 列表视图切换
+ */
+
+/* ===== 顶部Header扩展 ===== */
+.header-left { flex: 1; }
+.header-right { display: flex; gap: 12rpx; align-items: center; }
+.header-icon-btn {
+  font-size: 40rpx;
+  padding: 8rpx 12rpx;
+  border-radius: var(--radius-sm);
+  background: rgba(255,255,255,0.2);
+}
+
+/* ===== 统计条 ===== */
+.stats-bar {
+  display: flex;
+  justify-content: space-around;
+  padding: 20rpx 24rpx;
+  background: var(--white);
+  margin: 16rpx 24rpx 0;
+  border-radius: var(--radius);
+  box-shadow: var(--shadow-sm);
+}
+.stat-item {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 4rpx;
+}
+.stat-num {
+  font-size: var(--font-xl);
+  font-weight: 800;
+  color: var(--color-text);
+}
+.stat-label {
+  font-size: var(--font-xs);
+  color: var(--color-text-secondary);
+}
+
+/* ===== 筛选栏 ===== */
+.filter-row {
+  padding: 12rpx 0;
+}
+.filter-scroll {
+  white-space: nowrap;
+  padding: 0 24rpx;
+}
+.filter-chip {
+  display: inline-block;
+  padding: 8rpx 20rpx;
+  margin-right: 10rpx;
+  border-radius: 24rpx;
+  font-size: var(--font-xs);
+  font-weight: 500;
+  color: var(--gray-500);
+  background: var(--gray-100);
+  transition: all 0.2s;
+}
+.filter-chip.active {
+  color: var(--white);
+  background: var(--blue);
+}
+
+/* ===== 时间线视图 ===== */
+.timeline-view {
+  padding: 0 24rpx;
+}
+
+/* 链标题 */
+.chain-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 20rpx 8rpx 10rpx;
+  margin-top: 12rpx;
+}
+.chain-header-left {
+  display: flex;
+  align-items: center;
+  gap: 10rpx;
+}
+.chain-icon {
+  font-size: 28rpx;
+}
+.chain-title {
+  font-size: var(--font-sm);
+  font-weight: 700;
+  color: var(--color-text);
+  display: block;
+}
+.chain-count {
+  font-size: var(--font-xs);
+  color: var(--color-text-secondary);
+}
+.chain-header-right {
+  display: flex;
+  align-items: center;
+  gap: 10rpx;
+}
+.chain-progress-text {
+  font-size: var(--font-xs);
+  color: var(--green);
+  font-weight: 700;
+  min-width: 48rpx;
+  text-align: right;
+}
+
+/* 提醒卡片 */
+.reminder-title {
+  font-size: var(--font-lg);
+  font-weight: 700;
+  color: var(--color-text);
+  display: block;
+  margin: 10rpx 0 6rpx;
+}
+.reminder-desc {
+  font-size: var(--font-sm);
+  color: var(--color-text-secondary);
+  display: block;
+  line-height: 1.5;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+/* 卡片标签行 */
+.card-tags {
+  display: flex;
+  gap: 8rpx;
+  flex-wrap: wrap;
+}
+.card-date {
+  font-size: var(--font-xs);
+  color: var(--gray-500);
+  flex-shrink: 0;
+}
+
+/* 倒计时行 */
+.countdown-row {
+  display: flex;
+  align-items: center;
+  gap: 12rpx;
+  margin-top: 12rpx;
+}
+.countdown-badge {
+  display: inline-flex;
+  align-items: center;
+  padding: 6rpx 16rpx;
+  border-radius: 20rpx;
+  font-size: var(--font-xs);
+  font-weight: 700;
+  color: var(--gray-600);
+  background: var(--gray-100);
+}
+.countdown-badge.urgent {
+  color: var(--red);
+  background: var(--red-light);
+}
+.countdown-badge.warning {
+  color: var(--orange);
+  background: var(--orange-light);
+}
+
+.linked-doc-badge {
+  font-size: var(--font-xs);
+  color: var(--blue);
+}
+
+/* 卡片操作 */
+.card-actions {
+  display: flex;
+  gap: 12rpx;
+  margin-top: 16rpx;
+  padding-top: 14rpx;
+  border-top: 1rpx solid var(--gray-100);
+}
+
+/* 已完成标记 */
+.completed-mark {
+  margin-top: 12rpx;
+  padding-top: 10rpx;
+  border-top: 1rpx solid var(--gray-100);
+}
+
+/* ===== 列表视图 ===== */
+.list-view {
+  padding: 0 24rpx;
+}
+
+.list-item-left {
+  flex-shrink: 0;
+  width: 48rpx;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+.list-status-icon {
+  font-size: 28rpx;
+  color: var(--gray-400);
+  font-weight: 700;
+}
+.list-status-icon.done {
+  color: var(--green);
+}
+.list-status-icon.urgent {
+  color: var(--red);
+}
+
+.list-item-meta {
+  display: flex;
+  align-items: center;
+  gap: 10rpx;
+  margin-top: 4rpx;
+}
+.list-item-date {
+  font-size: var(--font-xs);
+  color: var(--color-text-secondary);
+}
+
+.list-item-right {
+  display: flex;
+  align-items: center;
+  gap: 8rpx;
+  flex-shrink: 0;
+}
+
+.countdown-mini {
+  font-size: var(--font-xs);
+  font-weight: 600;
+  color: var(--gray-500);
+}
+.countdown-mini.urgent {
+  color: var(--red);
+}
+.countdown-mini.warning {
+  color: var(--orange);
+}
+
+/* ===== 添加菜单弹层 ===== */
+.modal-title {
+  font-size: var(--font-lg);
+  font-weight: 700;
+  text-align: center;
+  padding: 8rpx 0 20rpx;
+  color: var(--color-text);
+}
+
+.add-option {
+  display: flex;
+  align-items: center;
+  gap: 16rpx;
+  padding: 22rpx 32rpx;
+  border-bottom: 1rpx solid var(--gray-100);
+  position: relative;
+}
+.add-option:active { background: var(--gray-50); }
+.add-option-icon {
+  font-size: 40rpx;
+  flex-shrink: 0;
+  width: 56rpx;
+  text-align: center;
+}
+.add-option-info {
+  flex: 1;
+  min-width: 0;
+}
+.add-option-title {
+  font-size: var(--font-md);
+  font-weight: 600;
+  display: block;
+}
+.add-option-desc {
+  font-size: var(--font-xs);
+  color: var(--color-text-secondary);
+  display: block;
+  margin-top: 4rpx;
+}
+
+.pro-badge {
+  position: absolute;
+  right: 48rpx;
+  top: 50%;
+  transform: translateY(-50%);
+  padding: 2rpx 10rpx;
+  border-radius: 6rpx;
+  font-size: 18rpx;
+  font-weight: 700;
+  color: var(--white);
+  background: linear-gradient(135deg, #F59E0B, #EA580C);
+}
+
+/* ===== 其他 ===== */
+.tag-xs {
+  padding: 2rpx 10rpx !important;
+  font-size: 20rpx !important;
+}
+.empty-sub {
+  font-size: var(--font-xs);
+  color: var(--color-text-muted);
+  margin-top: 8rpx;
+}
+
+/* ===== 动画 ===== */
+@keyframes fadeIn {
+  from { opacity: 0; transform: translateY(10rpx); }
+  to { opacity: 1; transform: translateY(0); }
+}
+.fade-in {
+  animation: fadeIn 0.3s ease;
+}

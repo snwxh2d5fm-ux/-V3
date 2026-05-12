@@ -1,0 +1,134 @@
+<!-- 住港伴 v4.3 — 攻略书主页 (Tab1·PRD v4对齐)
+     改造: 新增身份状态横幅 + 为你推荐区 -->
+<view class="container">
+  <stage-indicator stages="{{stageSteps}}" progress="{{stageProgress}}" />
+  <status-badge />
+
+  <view class="page-header">
+    <view class="header-left">
+      <text class="page-header__title">攻略书</text>
+      <text class="page-header__subtitle">海量免费攻略，根据您的状态AI为您私密定制推荐</text>
+    </view>
+  </view>
+
+  <!-- 身份状态感知横幅 -->
+  <view class="status-banner" wx:if="{{statusLabel}}">
+    <view class="status-banner-wrap">
+      <text class="status-banner-icon">{{userStatus === 'unapplied' ? '📋' : (userStatus === 'submitted' ? '⏳' : (userStatus === 'approved' ? '🛬' : '🏁'))}}</text>
+      <view class="status-banner-content">
+        <text class="status-banner-label">当前状态：{{statusLabel}}</text>
+        <text class="status-banner-hint">攻略推荐已为你定制</text>
+      </view>
+    </view>
+    <view class="status-banner-source" wx:if="{{cloudSource}}">
+      <text class="source-dot"></text><text>实时</text>
+    </view>
+  </view>
+
+  <!-- 搜索栏 -->
+  <view class="search-bar {{searchFocused ? 'focused' : ''}}">
+    <text class="search-bar-icon">🔍</text>
+    <input class="search-bar-input" placeholder="搜索攻略、问题、关键词..." value="{{searchKeyword}}" bindinput="onSearchInput" bindfocus="onSearchFocus" bindblur="onSearchBlur" confirm-type="search" />
+    <text class="search-clear" wx:if="{{searchKeyword}}" bindtap="clearSearch">✕</text>
+  </view>
+
+  <!-- 热门搜索标签 -->
+  <view class="hot-tags" wx:if="{{!searchKeyword}}">
+    <text class="hot-tag-label">🔥 热门：</text>
+    <text class="hot-tag" wx:for="{{hotTags}}" wx:key="*this" bindtap="searchByTag" data-tag="{{item}}">{{item}}</text>
+  </view>
+
+  <!-- 分类导航 -->
+  <scroll-view class="category-scroll" scroll-x="true" enhanced="true" show-scrollbar="{{false}}">
+    <view class="category-list">
+      <view class="cat-item {{activeCategory === item.id ? 'active' : ''}}" wx:for="{{categories}}" wx:key="id" bindtap="switchCategory" data-category="{{item.id}}">
+        <text class="cat-icon">{{item.icon}}</text>
+        <text class="cat-label">{{item.label}}</text>
+        <text class="cat-count">{{item.count}}</text>
+      </view>
+    </view>
+  </scroll-view>
+
+  <!-- 加载骨架屏 -->
+  <ux-skeleton wx:if="{{loading}}" mode="card" count="{{3}}" animated="{{true}}" />
+
+  <!-- 加载失败 -->
+  <ux-error-boundary wx:elif="{{loadError}}" type="data" retryable="{{true}}" bind:retry="loadGuides" />
+
+  <!-- 攻略卡片流 -->
+  <view class="guide-flow" wx:else>
+    <!-- 身份推荐区 -->
+    <view class="recommended-section" wx:if="{{recommendedCards.length > 0 && !searchKeyword && activeCategory === 'all'}}">
+      <view class="section-header">
+        <text class="section-title">🌟 为你推荐</text>
+        <text class="section-reason" wx:if="{{recommendedReason}}">{{recommendedReason}}</text>
+      </view>
+      <view class="recommended-cards">
+        <view class="guide-card fade-in" wx:for="{{recommendedCards}}" wx:key="id" bindtap="navigateToDetail" data-id="{{item.id}}">
+          <view class="confidence-badge {{item.confidence}}">[{{item.confidence}}]</view>
+          <view class="guide-card-body">
+            <text class="guide-card-icon">{{item.icon || '📄'}}</text>
+            <view class="guide-card-info">
+              <text class="guide-card-title">{{item.title}}</text>
+              <text class="guide-card-desc">{{item.desc || item.summary || ''}}</text>
+              <view class="guide-card-meta">
+                <text class="guide-card-source">📎 {{item.source || item.sourcePlatform || '攻略书'}}</text>
+                <text class="guide-card-updated">{{item.updated || item.updatedAt || ''}}</text>
+              </view>
+            </view>
+          </view>
+          <view class="guide-card-footer"><view class="guide-rating"><text class="rating-stars">⭐ {{item.rating || '4.0'}}</text></view><view class="guide-actions"><text class="guide-helpful">👍 {{item.helpful || 0}}</text><text class="guide-arrow">→</text></view></view>
+        </view>
+      </view>
+      <view class="section-divider"></view>
+    </view>
+
+    <!-- 排序栏 -->
+    <view class="sort-bar">
+      <text class="sort-label">共 {{filteredCards.length}} 篇攻略</text>
+      <view class="sort-options">
+        <text class="sort-option {{sortBy === 'default' ? 'active' : ''}}" bindtap="switchSort" data-sort="default">推荐</text>
+        <text class="sort-option {{sortBy === 'helpful' ? 'active' : ''}}" bindtap="switchSort" data-sort="helpful">👍最多</text>
+        <text class="sort-option {{sortBy === 'latest' ? 'active' : ''}}" bindtap="switchSort" data-sort="latest">最新</text>
+      </view>
+    </view>
+
+    <!-- 空搜索结果 -->
+    <view class="empty-state" wx:if="{{filteredCards.length === 0}}">
+      <text class="empty-icon">🔍</text>
+      <text class="empty-text" wx:if="{{searchKeyword}}">未找到与"{{searchKeyword}}"相关的攻略</text>
+      <text class="empty-text" wx:else>该分类暂无攻略</text>
+      <text class="empty-hint" wx:if="{{searchKeyword}}">试试其他关键词，如"证件照"、"银行开户"</text>
+    </view>
+
+    <!-- 卡片列表 -->
+    <view class="guide-card fade-in" wx:for="{{filteredCards}}" wx:key="id" bindtap="navigateToDetail" data-id="{{item.id}}">
+      <view class="confidence-badge {{item.confidence}}">[{{item.confidence}}]</view>
+      <view class="guide-card-body">
+        <text class="guide-card-icon">{{item.icon || '📄'}}</text>
+        <view class="guide-card-info">
+          <text class="guide-card-title">{{item.title}}</text>
+          <text class="guide-card-desc">{{item.desc || item.summary || ''}}</text>
+          <view class="guide-card-meta">
+            <text class="guide-card-source">📎 {{item.source || item.sourcePlatform || '攻略书'}}</text>
+            <text class="guide-card-updated">{{item.updated || item.updatedAt || ''}}</text>
+          </view>
+          <view class="guide-card-tags" wx:if="{{item.tags && item.tags.length > 0}}">
+            <text class="guide-tag" wx:for="{{item.tags}}" wx:key="*this" wx:for-item="tag">{{tag}}</text>
+          </view>
+        </view>
+      </view>
+      <view class="guide-card-footer"><view class="guide-rating"><text class="rating-stars">⭐ {{item.rating || '4.0'}}</text></view><view class="guide-actions"><text class="guide-helpful">👍 {{item.helpful || 0}}</text><text class="guide-arrow">→</text></view></view>
+    </view>
+
+    <view class="guide-footer">
+      <text class="guide-footer-text">— 住港伴攻略书 · 持续更新中 —</text>
+      <text class="guide-footer-hint">💡 攻略内容基于入境处公开信息及用户实操经验整理，仅供参考</text>
+    </view>
+  </view>
+
+  <view class="scroll-top-btn" wx:if="{{filteredCards.length > 5}}" bindtap="scrollToTop"><text>⬆</text></view>
+  <view class="safe-bottom"></view>
+
+  <floating-ai visible="{{true}}" />
+</view>

@@ -1,0 +1,45 @@
+.badge-bar {
+  display: flex; align-items: center; gap: 14rpx;
+  padding: 12rpx 24rpx;
+}
+
+.badge {
+  display: flex; align-items: center; gap: 8rpx;
+  padding: 8rpx 16rpx; border-radius: 20rpx;
+  font-size: 22rpx; font-weight: 600;
+}
+
+.badge--identity {
+  background: #F3F4F6;
+  color: #374151;
+}
+
+.badge--path {
+  background: #EFF6FF;
+  color: #2563EB;
+}
+
+.badge__lock { font-size: 16rpx; opacity: 0.5; margin-right: 2rpx; }
+.badge__text { white-space: nowrap; overflow: hidden; text-overflow: ellipsis; max-width: 200rpx; }
+.badge__arrow { font-size: 22rpx; color: #9CA3AF; margin-left: 2rpx; }
+
+/* ===== 支付拦截弹窗 ===== */
+.paywall-overlay {
+  position: fixed; inset: 0; z-index: 10000;
+  background: rgba(0,0,0,0.5);
+  display: flex; align-items: center; justify-content: center;
+}
+.paywall-card {
+  width: 600rpx; background: #FFF; border-radius: 24rpx;
+  padding: 48rpx 40rpx 36rpx; text-align: center;
+}
+.paywall__icon { font-size: 64rpx; display: block; margin-bottom: 16rpx; }
+.paywall__title { font-size: 34rpx; font-weight: 800; color: #111827; display: block; margin-bottom: 12rpx; }
+.paywall__desc { font-size: 26rpx; color: #6B7280; line-height: 1.6; display: block; margin-bottom: 24rpx; }
+.paywall__price {
+  background: #F9FAFB; border-radius: 14rpx; padding: 20rpx; margin-bottom: 28rpx;
+}
+.paywall__amount { font-size: 48rpx; font-weight: 800; color: #DC2626; display: block; }
+.paywall__note { font-size: 22rpx; color: #9CA3AF; display: block; margin-top: 4rpx; }
+.paywall__actions { display: flex; gap: 16rpx; }
+.paywall__actions .btn { flex: 1; }

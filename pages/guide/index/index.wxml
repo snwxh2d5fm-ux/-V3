@@ -1,0 +1,29 @@
+<view class="container">
+  <view class="page-header">
+    <text class="page-header__title">指引牌</text>
+    <text class="page-header__subtitle">每个步骤的标准答案——告诉你该怎么做、做到什么程度算合格</text>
+  </view>
+  <view class="filter-cats">
+    <text class="cat-btn {{activeCategory === 'all' ? 'active' : ''}}" data-cat="all" bindtap="filterCategory">全部</text>
+    <text class="cat-btn {{activeCategory === '评估' ? 'active' : ''}}" data-cat="评估" bindtap="filterCategory">评估</text>
+    <text class="cat-btn {{activeCategory === '材料' ? 'active' : ''}}" data-cat="材料" bindtap="filterCategory">材料</text>
+    <text class="cat-btn {{activeCategory === '递交' ? 'active' : ''}}" data-cat="递交" bindtap="filterCategory">递交</text>
+    <text class="cat-btn {{activeCategory === '落地' ? 'active' : ''}}" data-cat="落地" bindtap="filterCategory">落地</text>
+    <text class="cat-btn {{activeCategory === '续签' ? 'active' : ''}}" data-cat="续签" bindtap="filterCategory">续签</text>
+    <text class="cat-btn {{activeCategory === '永居' ? 'active' : ''}}" data-cat="永居" bindtap="filterCategory">永居</text>
+  </view>
+  <view class="guide-list">
+    <view class="card card--outlined guide-card fade-in"
+          wx:for="{{guides}}" wx:key="id" wx:if="{{activeCategory === 'all' || item.category === activeCategory}}"
+          data-id="{{item.id}}" bindtap="goToDetail">
+      <view class="guide-icon">{{item.icon}}</view>
+      <view class="guide-info">
+        <text class="guide-title">{{item.title}}</text>
+        <text class="guide-desc">{{item.desc}}</text>
+      </view>
+      <text class="guide-arrow">→</text>
+    </view>
+  </view>
+
+  <floating-ai visible="{{true}}" />
+</view>

@@ -1,0 +1,97 @@
+{
+  "role": "architect",
+  "findings": [
+    {
+      "severity": "CRITICAL",
+      "file": "项目整体",
+      "issue": "技术栈与描述严重不符。任务描述为'Taro 3.6 + React 18 + TypeScript'，但实际代码是原生微信小程序框架（.wxml/.wxss/.js CommonJS），不存在任何Taro/React/TS代码。project.config.json中compileType为'miniprogram'，无Taro编译配置。这意味着如果声称Taro开发，实际交付物完全不同。",
+      "suggestion": "若确需Taro框架，需整个项目重构迁移；若保持原生框架，应更新项目文档/PRD中的技术栈描述。"
+    },
+    {
+      "severity": "CRITICAL",
+      "file": "app.js:92-93",
+      "issue": "Session Token安全缺陷。token生成为 Buffer.from(`${openid}:${Date.now()}:${Math.random()}`).toString('base64')，纯base64编码无签名/加密，可被解码还原。云函数validateSession仅查用户存在+isLocked，完全不验证token内容完整性。任何人都可伪造token。",
+      "suggestion": "使用JWT（jsonwebtoken库）或至少HMAC签名token；validateSession应解码并验证签名有效性，而不仅是查用户是否存在。"
+    },
+    {
+      "severity": "HIGH",
+      "file": "app.js + utils/storage.js",
+      "issue": "双写架构无一致性保障。app.js的syncDataToCloud()将本地storage数据同步到CloudBase via db-admin云函数，但：1) 页面代码中同时存在localStorage直读（storage.js）和cloud.callFunction调用；2) 本地数据与云端数据可能不一致；3) 无冲突解决策略（last-write-wins隐式采用）；4) syncAllToCloud只在app.onLaunch时触发一次。",
+      "suggestion": "明确单一数据源：CloudBase为主、本地为缓存，或反之。建议采用CloudBase为主存储，本地Storage仅作离线缓存，通过version字段实现乐观锁或CRDT同步。"
+    },
+    {
+      "severity": "HIGH",
+      "file": "cloudfunctions/ai-chat/index.js:202-257",
+      "issue": "AI降级响应硬编码且可能过时。generateMockResponse函数内硬编码了优才/高才通/专才的政策回答，含具体数据如'12项准则评估制（2025年11月更新）'。这些数据会随着政策演变而过时，但作为代码内字符串无法热更新。",
+      "suggestion": "将降级/默认回答移至CloudBase数据库集合中（如faq_responses），支持运营人员动态更新；云函数优先查库，库无数据时才使用代码内built-in兜底。"
+    },
+    {
+      "severity": "HIGH",
+      "file": "cloudfunctions/payment/index.js:168-177",
+      "issue": "支付统一下单使用subMchId: ''空字符串。cloud.cloudPay.unifiedOrder中subMchId为空，spbillCreateIp硬编码为'0.0.0.0'。生产环境需要真实的服务商子商户号和客户端IP，当前为开发阶段的占位实现。",
+      "suggestion": "部署前替换subMchId为真实商户号；spbillCreateIp应从云函数context中获取真实客户端IP（cloud.getWXContext().CLIENTIP）。"
+    },
+    {
+      "severity": "MEDIUM",
+      "file": "app.js（整体）",
+      "issue": "App全局对象职责过重（God Object反模式）。app.js承载了：会话管理、token验证、数据同步、AI初始化、方案推荐合并、隐私事件总线，总计281行。违背单一职责原则。",
+      "suggestion": "拆分为独立服务模块：services/session.js、services/sync.js、services/ai.js、services/privacy.js，App仅做编排和初始化。"
+    },
+    {
+      "severity": "MEDIUM",
+      "file": "cloudfunctions/solution-engine + cloudfunctions/match-engine",
+      "issue": "方案匹配双引擎冗余。solution-engine（193行）和match-engine（260行）存在职责重叠。solution-engine做路径匹配推荐，match-engine做材料清单匹配，但api.js的matchSolutionPath中有fallback到match-engine的逻辑，说明两者职责边界不清。且solution-engine内部有12 PERSONA_FEATURES硬编码，与data/solution-library.js的12 PERSONAS定义重复。",
+      "suggestion": "合并统一：solution-engine负责路径匹配（PERSONAS在CloudBase中），match-engine仅负责材料-证件映射。消除客户端data/solution-library.js中与云函数重复的画像定义。"
+    },
+    {
+      "severity": "MEDIUM",
+      "file": "pages/index/index.js:116-119",
+      "issue": "政策动态在前端硬编码。policyUpdates数组直接写死在页面JS中，含'2026-04-28'日期的具体政策，不从CloudBase policy_updates集合查询。一旦有新政策，必须发版才能更新。",
+      "suggestion": "调用policy-monitor云函数的getRecentUpdates action，或直接查询CloudBase policy_updates集合，实现政策动态的运营端可更新。"
+    },
+    {
+      "severity": "MEDIUM",
+      "file": "无文件 (全局架构)",
+      "issue": "缺少统一的错误处理和重试机制。各云函数调用遍布try/catch但无统一模式：ai-chat降级到mock，api.js各种catch只console.error。无指数退避重试、无熔断器、无全局错误上报（仅app.js onError简单存储）。",
+      "suggestion": "封装cloud.callFunction为带重试/熔断的统一调用层（utils/cloud-caller.js），统一错误码定义，接入云函数日志监控。"
+    },
+    {
+      "severity": "MEDIUM",
+      "file": "cloudfunctions/reminder-engine/index.js (整体)",
+      "issue": "提醒引擎云函数同时负责：规则生成、自定义提醒CRUD、确认/驳回、链式触发、时间线生成、到期扫描。职责过宽，且generateFromEvent返回candidates而非直接持久化，需前端再调用confirmReminder写入，增加往返次数。",
+      "suggestion": "拆分reminder-engine为：reminder-generator（规则匹配+生成candidates）、reminder-crud（增删改查+确认）、reminder-scanner（定时到期扫描）。生成后自动持久化C级以下confidence的提醒，C级标记pending_confirm。"
+    },
+    {
+      "severity": "MEDIUM",
+      "file": "cloudfunctions/user-auth/index.js:383",
+      "issue": "手机号哈希使用固定盐值'zhugangban_salt'硬编码在代码中。固定盐值降低了哈希安全性（彩虹表攻击），应使用每用户随机盐。同时SMS验证码开发阶段接受123456万能码，生产环境必须移除。",
+      "suggestion": "盐值应使用crypto.randomBytes生成并存储在user记录中；生产部署前移除开发用万能验证码；部署时应通过环境变量控制是否启用万能码。"
+    },
+    {
+      "severity": "LOW",
+      "file": "项目整体",
+      "issue": "无正式状态管理方案。整个项目使用App.globalData + wx.setStorageSync进行全局状态共享，无React/Vue式响应式状态管理。对于7模块微信小程序当前规模尚可接受，但随着模块增加，跨页面状态同步将变得难以追踪。",
+      "suggestion": "引入轻量级发布订阅（EventEmitter）或mobx-miniprogram进行跨页面状态同步；至少应将globalData的修改统一通过app.setGlobalData方法进行，统一触发页面更新。"
+    },
+    {
+      "severity": "LOW",
+      "file": "项目整体",
+      "issue": "无RAG检索增强生成管线。上下文描述'Ollama RAG'，但实际代码中ai-chat云函数直接调用DeepSeek API（chat/completions），prompt通过switch-case注入system prompt，没有任何向量数据库、文档chunking、embedding检索、相似度排序环节。RAG未实现。",
+      "suggestion": "若需RAG：1) 将政策文档/攻略书内容向量化存入CloudBase或外部向量DB；2) ai-chat收到query后先embedding检索Top-K相关文档；3) 将检索结果拼接进system prompt上下文。"
+    },
+    {
+      "severity": "LOW",
+      "file": "cloudfunctions/process-manager/index.js:407-413",
+      "issue": "跨云函数调用存在级联依赖。verifyMilestone成功后调用document-manager触发归档，存在分布式事务问题——若document-manager失败，流程状态已更新但归档未执行，无补偿机制。",
+      "suggestion": "使用CloudBase的事务能力或至少实现Saga模式：记录补偿任务到异常队列，定时重试失败的归档操作。"
+    },
+    {
+      "severity": "LOW",
+      "file": "components/ (7个组件)",
+      "issue": "组件复用层较薄。全局注册7个组件（floating-ai, privacy-toggle, timeline, progress-bar, checklist, milestone-lock, desensitization-preview），其中floating-ai在app.json注册但实际只在特定页面使用（悬浮AI按钮）。全局注册增加所有页面初始加载负担。",
+      "suggestion": "floating-ai、milestone-lock等非全局组件应改为页面级usingComponents按需注册；按原子/复合/业务三层组织组件目录。"
+    }
+  ],
+  "score": 5,
+  "summary": "架构整体有清晰模块划分和云函数职责定义，但存在关键缺陷：技术栈与描述不符（实际是原生小程序而非Taro/React/TS）、Session token无安全签名、双写架构无一致性保障、RAG管线未实际实现、AI降级响应硬编码不可热更新。项目处于功能原型阶段，生产化需修补安全和数据一致性问题。"
+}

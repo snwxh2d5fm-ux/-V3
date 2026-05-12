@@ -1,0 +1,142 @@
+<view class="container">
+  <!-- 加载态 -->
+  <view wx:if="{{loading}}" class="loading-area">
+    <text class="loading-icon">🔍</text>
+    <text class="loading-text">分析你的背景，匹配最佳身份路径…</text>
+  </view>
+
+  <!-- 空态 -->
+  <view wx:elif="{{!bestMatch}}" class="empty-area">
+    <text class="empty-icon">📭</text>
+    <text class="empty-title">暂无匹配结果</text>
+    <text class="empty-desc">可能你当前的条件暂未匹配任何已知路径。建议重新评估或咨询AI助手获取个性化建议。</text>
+    <button class="btn btn--primary" bindtap="retake">重新评估</button>
+  </view>
+
+  <!-- 结果展示 -->
+  <view wx:else>
+    <!-- 画像标签 -->
+    <view class="persona-tag" wx:if="{{personaName}}">
+      <text class="persona-icon">👤</text>
+      <text class="persona-text">当前身份：{{personaName}}</text>
+    </view>
+
+    <!-- 兼容性警告横幅 -->
+    <view class="compat-banner {{compatWarningOk ? 'compat-banner--warn' : 'compat-banner--reject'}}" wx:if="{{compatWarning}}">
+      <text class="compat-banner__icon">{{compatWarningOk ? '⚠️' : '🚫'}}</text>
+      <text class="compat-banner__text">{{compatWarning}}</text>
+    </view>
+
+    <!-- 顶部概览卡 -->
+    <view class="hero-card">
+      <view class="hero-badges">
+        <text class="hero-badge hero-badge--main">🏆 最佳匹配</text>
+        <text class="hero-badge hero-badge--compat" wx:if="{{bestMatch.compatLevel !== 'compatible'}}" style="background:{{bestMatch.compatBg}};color:{{bestMatch.compatColor}}">{{bestMatch.compatLabel}}</text>
+      </view>
+      <text class="hero-path-name">{{bestMatch.name}}</text>
+      <view class="hero-meta">
+        <text class="hero-score" style="color:{{bestMatch.confidenceColor}}">匹配度 {{bestMatch.matchScore}}%</text>
+        <text class="hero-confidence" style="background:{{bestMatch.confidenceBg}};color:{{bestMatch.confidenceColor}}">{{bestMatch.confidenceLabel}}</text>
+        <text class="hero-risk">{{bestMatch.riskLabel}}</text>
+      </view>
+      <view class="hero-details">
+        <text class="hero-detail">⏱ 总周期: {{bestMatch.totalCycle}}</text>
+        <text class="hero-detail">📋 首签: {{bestMatch.firstVisa}}</text>
+      </view>
+      <button class="btn btn--primary btn--lg hero-btn" data-path="{{bestMatch.path}}" bindtap="selectPath">
+        选择此路径，开始规划
+      </button>
+      <text class="hero-disclaimer">* 评估结果基于规则匹配，仅供参考，不构成法律建议</text>
+    </view>
+
+    <!-- 全部匹配结果列表 -->
+    <view class="results-section">
+      <text class="section-title">全部匹配路径 ({{matches.length}})</text>
+
+      <view
+        class="path-card {{expandedPath === item.path ? 'expanded' : ''}}"
+        wx:for="{{matches}}"
+        wx:key="path"
+        data-path="{{item.path}}"
+        bindtap="toggleExpand"
+      >
+        <!-- 卡片头 -->
+        <view class="path-card__header">
+          <view class="path-rank">
+            <text class="rank-badge" wx:if="{{item.rank === 1}}">🥇</text>
+            <text class="rank-badge" wx:elif="{{item.rank === 2}}">🥈</text>
+            <text class="rank-badge" wx:elif="{{item.rank === 3}}">🥉</text>
+            <text class="rank-num" wx:else>#{{item.rank}}</text>
+          </view>
+          <view class="path-info">
+            <text class="path-name">{{item.name}}</text>
+            <view class="path-tags">
+              <text class="tag tag--score" style="background:{{item.confidenceBg}};color:{{item.confidenceColor}}">{{item.matchScore}}%</text>
+              <text class="tag tag--risk" style="color:{{item.riskColor}}">{{item.riskLabel}}</text>
+              <text class="tag tag--compat" style="background:{{item.compatBg}};color:{{item.compatColor}}" wx:if="{{item.compatLevel !== 'compatible'}}">{{item.compatLabel}}</text>
+            </view>
+          </view>
+          <text class="path-arrow {{expandedPath === item.path ? 'rotate' : ''}}">▼</text>
+        </view>
+
+        <!-- 展开详情 -->
+        <view class="path-card__body" wx:if="{{expandedPath === item.path}}">
+          <!-- 兼容性说明 -->
+          <view class="detail-block" wx:if="{{item.compatLevel === 'incompatible'}}">
+            <view class="compat-note compat-note--reject">
+              <text>🚫 该路径与你选择的身份「{{personaName}}」通常不匹配。如确实适用，请确认有特殊条件支持。</text>
+            </view>
+          </view>
+          <view class="detail-block" wx:elif="{{item.compatLevel === 'conditional'}}">
+            <view class="compat-note compat-note--warn">
+              <text>⚠️ 该路径在你选择的身份「{{personaName}}」下需要额外条件。请确认你满足路径的具体要求。</text>
+            </view>
+          </view>
+
+          <!-- 关键风险 -->
+          <view class="detail-block" wx:if="{{item.keyRisks.length > 0}}">
+            <text class="detail-title">⚠️ 关键风险</text>
+            <view class="risk-list">
+              <text class="risk-item" wx:for="{{item.keyRisks}}" wx:key="*this">• {{item}}</text>
+            </view>
+          </view>
+
+          <!-- 时间线 -->
+          <view class="detail-block" wx:if="{{item.totalCycle}}">
+            <text class="detail-title">⏱ 时间周期</text>
+            <view class="cycle-row">
+              <text class="cycle-label">总周期</text>
+              <text class="cycle-value">{{item.totalCycle}}</text>
+            </view>
+            <view class="cycle-row" wx:if="{{item.firstVisa}}">
+              <text class="cycle-label">首签</text>
+              <text class="cycle-value">{{item.firstVisa}}</text>
+            </view>
+          </view>
+
+          <!-- 决策节点 -->
+          <view class="detail-block" wx:if="{{item.decisionPoints.length > 0}}">
+            <text class="detail-title">🔀 关键决策节点</text>
+            <view class="dp-list">
+              <text class="dp-item" wx:for="{{item.decisionPoints}}" wx:key="*this">
+                <text class="dp-dot">●</text> {{item}}
+              </text>
+            </view>
+          </view>
+
+          <!-- 选择按钮 -->
+          <button class="btn btn--primary btn--sm" data-path="{{item.path}}" bindtap="selectPath">
+            选择此路径
+          </button>
+        </view>
+      </view>
+    </view>
+
+    <!-- 底部操作 -->
+    <view class="bottom-actions">
+      <button class="btn btn--outline" bindtap="retake">重新评估</button>
+    </view>
+  </view>
+
+  <floating-ai visible="{{true}}" />
+</view>

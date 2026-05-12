@@ -1,0 +1,155 @@
+<view class="container">
+  <stage-indicator stages="{{stageSteps}}" progress="{{stageProgress}}" />
+  <status-badge />
+  <view class="page-header">
+    <text class="page-header__title">流程控</text>
+    <text class="page-header__subtitle">7步走完香港身份规划全流程</text>
+  </view>
+
+  <!-- v5: 快捷入口工具栏 (指引牌/效率宝/信息栏 — DSG-1 P0-01 双中枢合并) -->
+  <view class="toolbar">
+    <view class="tool-btn" hover-class="tool-btn--hover" bindtap="goToGuide">
+      <text class="tool-btn__icon">🧭</text>
+      <text class="tool-btn__label">指引牌</text>
+    </view>
+    <view class="tool-btn" hover-class="tool-btn--hover" bindtap="goToPrecheck">
+      <text class="tool-btn__icon">🔍</text>
+      <text class="tool-btn__label">效率宝</text>
+    </view>
+    <view class="tool-btn" hover-class="tool-btn--hover" bindtap="goToInfo">
+      <text class="tool-btn__icon">📋</text>
+      <text class="tool-btn__label">信息栏</text>
+    </view>
+    <view class="tool-btn" hover-class="tool-btn--hover" bindtap="startAssessment">
+      <text class="tool-btn__icon">🎯</text>
+      <text class="tool-btn__label">资格评估</text>
+    </view>
+  </view>
+
+  <!-- skipped 引导横幅 -->
+  <view class="skip-banner" wx:if="{{isSkipped}}">
+    <text class="skip-banner__icon">🔒</text>
+    <view class="skip-banner__body">
+      <text class="skip-banner__title">请先选择身份状态</text>
+      <text class="skip-banner__desc">选择身份后解锁流程控全部功能</text>
+    </view>
+    <button class="btn btn--sm btn--primary" bindtap="goSelectIdentity">去选择</button>
+  </view>
+
+  <!-- ===== 活跃流程·7步内联详情 ===== -->
+  <view wx:if="{{activeProcess}}">
+    <view class="process-hero">
+      <text class="process-hero__name">{{activeProcess.name}}</text>
+      <view class="process-hero__meta">
+        <text class="process-hero__cycle" bindtap="showCycleHelp">⏱ {{activeProcess.totalCycle || '—'}}</text>
+        <text class="process-hero__risk" bindtap="showRiskHelp">{{activeProcess.riskLevel === 'low' ? '🟢低风险' : activeProcess.riskLevel === 'medium' ? '🟡中风险' : '🔴高风险'}}</text>
+      </view>
+      <view class="process-hero__progress">
+        <view class="mini-progress"><view class="mini-progress__fill" style="width:{{progress}}%"></view></view>
+        <text class="mini-progress__text">{{progress}}%</text>
+      </view>
+    </view>
+
+    <!-- 指标说明弹窗 -->
+    <view class="tooltip-overlay" wx:if="{{showHelpPopup}}" bindtap="closeHelpPopup">
+      <view class="tooltip-card" catchtap="catchStop">
+        <text class="tooltip-title">{{helpTitle}}</text>
+        <text class="tooltip-body">{{helpBody}}</text>
+        <button class="btn btn--primary btn--block" bindtap="closeHelpPopup">知道了</button>
+      </view>
+    </view>
+
+    <!-- 7步列表 -->
+    <view class="phase-list">
+      <view class="time-note">
+        <text class="time-note__icon">⏱</text>
+        <text class="time-note__text">以下为各阶段最低时间需求，实际耗时可能更长，请提前做好规划</text>
+      </view>
+      <view class="phase-card phase-card--{{item.status}}"
+            wx:for="{{phases}}" wx:key="id"
+            data-index="{{index}}" bindtap="togglePhase">
+        <view class="phase-card__header">
+          <view class="phase-dot phase-dot--{{item.status}}">
+            <text wx:if="{{item.status === 'done'}}">✓</text>
+            <text wx:elif="{{item.status === 'current'}}">{{item.stepIndex + 1}}</text>
+            <text wx:else>🔒</text>
+          </view>
+          <view class="phase-card__info">
+            <text class="phase-card__title">{{item.icon}} {{item.name}}</text>
+            <text class="phase-card__desc">{{item.desc}}</text>
+            <text class="phase-card__mintime" wx:if="{{item.minTime}}">⏱ 最低 {{item.minTime}}</text>
+          </view>
+          <view class="phase-card__right">
+            <text class="phase-card__count" wx:if="{{item.materialCount > 0}}">{{item.doneCount}}/{{item.materialCount}}</text>
+            <text class="phase-card__arrow">{{expandedPhaseIdx === index ? '▼' : '▶'}}</text>
+          </view>
+        </view>
+
+        <!-- 展开材料 -->
+        <view class="phase-card__body" wx:if="{{expandedPhaseIdx === index}}">
+          <!-- 资格评估：重评按钮 -->
+          <view class="step-row step-row--action" wx:if="{{item.hasAssessBtn}}">
+            <text class="step-row__icon">📋</text>
+            <text class="step-row__name">完成资格评估，锁定最优身份路径</text>
+            <button class="btn btn--xs btn--outline" bindtap="startAssessment">重新评估</button>
+          </view>
+
+          <!-- 材料准备：跳转证件夹 -->
+          <view class="step-row step-row--action" wx:if="{{item.linkDocs}}">
+            <text class="step-row__icon">📁</text>
+            <text class="step-row__name">前往证件夹收集录入所需材料</text>
+            <button class="btn btn--xs btn--primary" bindtap="goToDocuments">证件夹 ›</button>
+          </view>
+
+          <!-- 材料步骤 -->
+          <view class="step-row" wx:for="{{item.materials}}" wx:key="id" wx:for-item="mat">
+            <text class="step-row__icon">
+              <text wx:if="{{mat.status === 'completed'}}">✅</text>
+              <text wx:elif="{{mat.status === 'current'}}">⏳</text>
+              <text wx:else>⬜</text>
+            </text>
+            <text class="step-row__name {{mat.status === 'completed' ? 'done' : ''}}">{{mat.name}}</text>
+            <text class="step-row__confidence" wx:if="{{mat.confidence}}">[{{mat.confidence}}]</text>
+          </view>
+
+          <!-- 空材料提示 -->
+          <view class="step-row step-row--empty" wx:if="{{item.materialCount === 0 && item.status === 'current'}}">
+            <text class="step-row__icon">📭</text>
+            <text class="step-row__name">该阶段材料将在完成前置步骤后解锁</text>
+          </view>
+        </view>
+      </view>
+    </view>
+  </view>
+
+  <!-- 空状态 -->
+  <view class="card get-started-card" wx:if="{{!activeProcess && isUnapplied}}">
+    <text class="get-started-icon">🎯</text>
+    <text class="get-started-title">开始资格评估</text>
+    <text class="get-started-desc">回答15个问题，AI将根据12条路径匹配最佳方案</text>
+    <button class="btn btn--primary btn--block" bindtap="startAssessment">进入资格评估</button>
+  </view>
+
+  <view class="card get-started-card" wx:elif="{{!activeProcess && !isUnapplied}}">
+    <text class="get-started-icon">🗺️</text>
+    <text class="get-started-title">还没有流程</text>
+    <text class="get-started-desc">选择你的身份路径，专属7步进度看板</text>
+    <button class="btn btn--primary btn--block" bindtap="toggleTemplateSelect">选择流程路径</button>
+  </view>
+
+  <!-- 模板选择弹窗 -->
+  <view class="template-panel" wx:if="{{showTemplateSelect}}" catchtap="toggleTemplateSelect" role="dialog" aria-modal="true" aria-label="选择身份路径">
+    <view class="template-panel__mask"></view>
+    <view class="template-panel__content" catchtap="catchStop">
+      <text class="panel-title">选择身份路径</text>
+      <view class="template-card" wx:for="{{templates}}" wx:key="id" data-id="{{item.id}}" catchtap="selectTemplate">
+        <text class="template-name">{{item.name}}</text>
+        <text class="template-meta">{{item.totalCycle || '—'}}</text>
+      </view>
+    </view>
+  </view>
+
+  <view class="safe-area-bottom"></view>
+
+  <floating-ai visible="{{true}}" />
+</view>

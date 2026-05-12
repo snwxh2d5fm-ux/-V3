@@ -1,0 +1,69 @@
+[
+  {
+    "rule_id": "R_APPROVAL_001",
+    "trigger": { "event": "approval_received", "date_field": "approvalDate" },
+    "reminders": [
+      { "label": "提交赴港同意书", "offset_days": 90, "alerts": [60, 30, 14, 7, 3] },
+      { "label": "赴港同意书到期", "offset_days": 90, "alerts": [90, 60, 30, 14, 7, 3], "depends_on": "R_APPROVAL_001_A" },
+      { "label": "领取签证/进入许可", "offset_days": 90, "alerts": [14, 7, 3] },
+      { "label": "更新港澳通行证签注", "offset_days": 120, "alerts": [14, 7, 3] },
+      { "label": "赴港激活签证", "offset_days": 180, "alerts": [30, 14, 7, 3, 1] }
+    ]
+  },
+  {
+    "rule_id": "R_VISA_ACTIVATE_001",
+    "trigger": { "event": "visa_activated", "date_field": "activationDate" },
+    "reminders": [
+      { "label": "入境领取小白条", "offset_days": 0, "alerts": [1, 0] },
+      { "label": "申办香港身份证", "offset_days": 30, "alerts": [21, 14, 7, 3, 1] }
+    ]
+  },
+  {
+    "rule_id": "R_HKID_001",
+    "trigger": { "event": "hk_id_applied", "date_field": "applicationDate" },
+    "reminders": [
+      { "label": "领取香港身份证", "offset_days": 14, "alerts": [10, 7, 3] }
+    ]
+  },
+  {
+    "rule_id": "R_RENEWAL_PREP_001",
+    "trigger": { "event": "visa_expiring", "date_field": "expiryDate" },
+    "reminders": [
+      { "label": "续签材料准备启动", "offset_days": -180, "alerts": [180, 90, 60] },
+      { "label": "续签窗口开启", "offset_days": -90, "alerts": [90, 60, 30] },
+      { "label": "推荐信时效性（建议3个月内最优）", "offset_days": -90, "alerts": [75, 60], "note": "非硬性要求，仅为建议" },
+      { "label": "递交续签申请", "offset_days": 0, "alerts": [60, 30, 14, 7, 3] },
+      { "label": "签证到期预警", "offset_days": 0, "alerts": [30, 14, 7, 3, 1] }
+    ]
+  },
+  {
+    "rule_id": "R_TAX_001",
+    "trigger": { "event": "tax_deadline", "date_field": "deadlineDate" },
+    "reminders": [
+      { "label": "薪俸税申报截止", "offset_days": 0, "alerts": [30, 14, 7, 3] }
+    ]
+  },
+  {
+    "rule_id": "R_PR_001",
+    "trigger": { "event": "pr_eligible", "date_field": "sevenYearDate" },
+    "reminders": [
+      { "label": "永居申请准备启动", "offset_days": -180, "alerts": [180, 90, 60] },
+      { "label": "永居材料清单检查", "offset_days": 0, "alerts": [90, 60, 30, 14, 7] },
+      { "label": "永居面试准备", "offset_days": 60, "alerts": [30, 14, 7] }
+    ]
+  },
+  {
+    "rule_id": "R_MPF_001",
+    "trigger": { "event": "mpf_check", "date_field": "checkDate" },
+    "reminders": [
+      { "label": "强积金缴纳检查", "offset_days": 0, "alerts": [30, 14, 7, 3] }
+    ]
+  },
+  {
+    "rule_id": "R_PERMIT_EXPIRY_001",
+    "trigger": { "event": "permit_expiring", "date_field": "expiryDate" },
+    "reminders": [
+      { "label": "港澳通行证到期预警", "offset_days": 0, "alerts": [90, 60, 30, 14, 7, 3] }
+    ]
+  }
+]

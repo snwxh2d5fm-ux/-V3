@@ -1,0 +1,328 @@
+/**
+ * 住港伴 v4.1 — 12条流程模板 (PRD v3.1)
+ * 基于全生命周期时间轴重构 v1.0 + V5校验
+ * 每条含: 四阶段框架 + 6标准决策节点 + 置信度标注
+ */
+
+const { APPLICATION_PATHS } = require('./constants');
+
+module.exports = {
+  "processTemplates": [
+    // ========== 路径1: 全日制学生→IANG→永居 ==========
+    {
+      "id": "student_iang",
+      "name": "赴港升学就业通道",
+      "pathType": APPLICATION_PATHS.STUDENT_IANG,
+      "totalCycle": "7-8年",
+      "firstVisa": "学生签(13-14月)",
+      "riskLevel": "low",
+      "decisionPoints": ["dp1_initial_path", "dp2_student_to_work", "dp3_renewal_strategy", "dp5_pr_sprint", "dp6_family_sync"],
+      "phases": [
+        {
+          "id": "phase1_evaluation", "order": 1, "name": "资格评估(Pre-Application)",
+          "duration": "3-6个月", "confidence": "B",
+          "milestones": ["获学校录取offer", "学生签证获批(6-8周 [B])"],
+          "steps": [
+            { "id": "s1_1", "name": "申请港校并获录取", "confidence": "A" },
+            { "id": "s1_2", "name": "启动学生签证(6-8周审批 [B])", "confidence": "B" },
+            { "id": "s1_3", "name": "办理港澳通行证+逗留D签注", "confidence": "B" },
+            { "id": "s1_4", "name": "经济准备(首年30-40万港币 [C])", "confidence": "C" }
+          ]
+        },
+        {
+          "id": "phase2_onboarding", "order": 2, "name": "获批与激活(Onboarding)",
+          "duration": "0-6个月", "confidence": "A",
+          "milestones": ["获得香港身份证"],
+          "steps": [
+            { "id": "s2_1", "name": "入境激活e-Visa(3个月内 [A])", "confidence": "A" },
+            { "id": "s2_2", "name": "办理香港身份证(30天内 [A])", "confidence": "A" },
+            { "id": "s2_3", "name": "银行开户+租房+注册 [C]", "confidence": "C" }
+          ]
+        },
+        {
+          "id": "phase3_maintenance", "order": 3, "name": "中期维持(Mid-Term)",
+          "duration": "1-6年", "confidence": "A",
+          "milestones": ["从学生→工作身份转换(里程碑②)"],
+          "steps": [
+            { "id": "s3_1", "name": "全日制学习(本科2-4年/硕士1-2年 [A])", "confidence": "A" },
+            { "id": "s3_2", "name": "合法兼职(2023/2024起无限时) ⚠️已更新 [A]", "confidence": "A" },
+            { "id": "s3_3", "name": "暑假/寒假离港(建议单次≤3个月 [C])", "confidence": "C" },
+            { "id": "s3_4", "name": "毕业前3个月准备IANG(决策点② [B])", "confidence": "B" },
+            { "id": "s3_5", "name": "IANG首次24个月(不绑雇主 [A])", "confidence": "A" },
+            { "id": "s3_6", "name": "续签: 雇主ID990B+在职+MPF+税单 [B]", "confidence": "B" },
+            { "id": "s3_7", "name": "积累MPF+税单(永居「铁三角」 [A])", "confidence": "A" }
+          ]
+        },
+        {
+          "id": "phase4_pr_sprint", "order": 4, "name": "永居冲刺(PR Sprint)",
+          "duration": "第6-7年", "confidence": "A",
+          "milestones": ["香港永久居民身份(里程碑③)"],
+          "steps": [
+            { "id": "s4_1", "name": "整理7年全部记录 [A]", "confidence": "A" },
+            { "id": "s4_2", "name": "准备解释信(如有长离港 [C])", "confidence": "C" },
+            { "id": "s4_3", "name": "提交永居核实申请(入境处 [A])", "confidence": "A" }
+          ]
+        }
+      ],
+      "keyRisks": [
+        { "risk": "学生签证到期前未及时申请IANG→身份断档", "level": "medium", "confidence": "B" },
+        { "risk": "毕业延迟(挂科/论文延期)→需及时申请签证延期", "level": "medium", "confidence": "B" },
+        { "risk": "IANG续签时失业→需30天内找到新雇主或转换身份", "level": "medium", "confidence": "B" }
+      ]
+    },
+    // ========== 路径2: 兼读制→优才/专才→永居 ==========
+    {
+      "id": "parttime_qmas",
+      "name": "兼读进修身份规划",
+      "pathType": APPLICATION_PATHS.PARTTIME_QMAS,
+      "totalCycle": "7-9年",
+      "firstVisa": "—",
+      "riskLevel": "medium_high",
+      "decisionPoints": ["dp1_initial_path", "dp4_category_switch", "dp5_pr_sprint"],
+      "phases": [
+        {
+          "id": "phase1_evaluation", "order": 1, "name": "资格评估",
+          "duration": "0-2年(兼读学习阶段)", "confidence": "B",
+          "milestones": [],
+          "steps": [
+            { "id": "s1_1", "name": "兼读制学习(无香港居留身份 [A])", "confidence": "A" },
+            { "id": "s1_2", "name": "以旅游/商务签短期入境上课 ⚠️法律灰色地带 [D]", "confidence": "D" },
+            { "id": "s1_3", "name": "兼读制不能申IANG [A]", "confidence": "A" },
+            { "id": "s1_4", "name": "决策点①: 全日制转换vs优才独立申请 [B]", "confidence": "B" }
+          ]
+        },
+        {
+          "id": "phase2_onboarding", "order": 2, "name": "获批与激活",
+          "duration": "3-6个月", "confidence": "B",
+          "milestones": ["首次获得香港居留身份"],
+          "steps": [
+            { "id": "s2_1", "name": "优才新制(12项准则≥6项)审批3-6月 [B]", "confidence": "B" },
+            { "id": "s2_2", "name": "或专才(需香港雇主sponsor)审批4-6周 [A]", "confidence": "A" },
+            { "id": "s2_3", "name": "或高才B(如本科为合资格大学+3年经验)审批4周 [A]", "confidence": "A" }
+          ]
+        },
+        {
+          "id": "phase3_maintenance", "order": 3, "name": "中期维持",
+          "duration": "3-6年", "confidence": "C",
+          "milestones": [],
+          "steps": [{ "id": "s3_1", "name": "优才/专才维持+续签(同对应路径)", "confidence": "C" }]
+        },
+        {
+          "id": "phase4_pr_sprint", "order": 4, "name": "永居冲刺",
+          "duration": "第6-7年", "confidence": "A",
+          "milestones": ["永居"],
+          "steps": [{ "id": "s4_1", "name": "同对应路径永居流程", "confidence": "A" }]
+        }
+      ],
+      "keyRisks": [
+        { "risk": "兼读制学习期间在港天数对永居帮助有限 [C]", "level": "medium", "confidence": "C" },
+        { "risk": "毕业后需另寻路径获取身份(不可依赖兼读制)", "level": "high", "confidence": "A" }
+      ]
+    },
+    // ========== 路径3: 高才通A类(≥250万) ==========
+    {
+      "id": "ttps_a",
+      "name": "高才通A类·高收入通道",
+      "pathType": APPLICATION_PATHS.TTPS_A,
+      "totalCycle": "7年",
+      "firstVisa": "36月",
+      "riskLevel": "low",
+      "decisionPoints": ["dp1_initial_path", "dp3_renewal_strategy", "dp5_pr_sprint"],
+      "phases": [
+        {
+          "id": "phase1_evaluation", "order": 1, "name": "资格评估",
+          "duration": "1-2周", "confidence": "A",
+          "milestones": [],
+          "steps": [
+            { "id": "s1_1", "name": "核实年收入≥250万港币(纳税/审计) [A]", "confidence": "A" },
+            { "id": "s1_2", "name": "准备收入证明材料 [B]", "confidence": "B" }
+          ]
+        },
+        {
+          "id": "phase2_onboarding", "order": 2, "name": "获批与激活",
+          "duration": "0-3个月", "confidence": "A",
+          "milestones": ["获批36月签证"],
+          "steps": [
+            { "id": "s2_1", "name": "在线递交申请(审批~4周 [A])", "confidence": "A" },
+            { "id": "s2_2", "name": "下载e-Visa [A]", "confidence": "A" },
+            { "id": "s2_3", "name": "赴港激活签证 [A]", "confidence": "A" }
+          ]
+        },
+        {
+          "id": "phase3_maintenance", "order": 3, "name": "中期维持",
+          "duration": "1-6年", "confidence": "B",
+          "milestones": [],
+          "steps": [
+            { "id": "s3_1", "name": "36月首次签证期间就业/创业 [A]", "confidence": "A" },
+            { "id": "s3_2", "name": "续签(就业/创业/有经济活动证据) [B]", "confidence": "B" },
+            { "id": "s3_3", "name": "续签通常批2-3年 [C]", "confidence": "C" },
+            { "id": "s3_4", "name": "决策点③: 续签策略 [B]", "confidence": "B" }
+          ]
+        },
+        {
+          "id": "phase4_pr_sprint", "order": 4, "name": "永居冲刺",
+          "duration": "第6-7年", "confidence": "A",
+          "milestones": ["永居"],
+          "steps": [
+            { "id": "s4_1", "name": "提前6月准备续签材料 [B]", "confidence": "B" },
+            { "id": "s4_2", "name": "整理7年在港记录 [A]", "confidence": "A" },
+            { "id": "s4_3", "name": "递交永居申请 [A]", "confidence": "A" }
+          ]
+        }
+      ],
+      "keyRisks": [
+        { "risk": "续签时需证明在港就业或经济活动 [A]", "level": "medium", "confidence": "A" },
+        { "risk": "高才A续签关注经济贡献(续签证据要充足 [B])", "level": "low", "confidence": "B" }
+      ]
+    },
+    // ========== 路径4: 高才通B类 ==========
+    {
+      "id": "ttps_b",
+      "name": "高才通B类·名校学士通道",
+      "pathType": APPLICATION_PATHS.TTPS_B,
+      "totalCycle": "7年",
+      "firstVisa": "24月",
+      "riskLevel": "low",
+      "decisionPoints": ["dp1_initial_path", "dp3_renewal_strategy", "dp5_pr_sprint"],
+      "phases": [
+        {
+          "id": "phase1_evaluation", "order": 1, "name": "资格评估",
+          "duration": "1-2周", "confidence": "A",
+          "milestones": [],
+          "steps": [
+            { "id": "s1_1", "name": "确认学士为合资格大学(毕业≤5年) [A]", "confidence": "A" },
+            { "id": "s1_2", "name": "确认≥3年工作经验 [A]", "confidence": "A" }
+          ]
+        },
+        { "id": "phase2_onboarding", "order": 2, "name": "获批与激活", "duration": "0-2月", "confidence": "A", "milestones": ["获批24月签证"], "steps": [{ "id": "s2_1", "name": "在线递交→审批4周→激活 [A]", "confidence": "A" }] },
+        { "id": "phase3_maintenance", "order": 3, "name": "中期维持", "duration": "1-6年", "confidence": "B", "milestones": [], "steps": [{ "id": "s3_1", "name": "就业/创业→2+3+3续签 [B]", "confidence": "B" }] },
+        { "id": "phase4_pr_sprint", "order": 4, "name": "永居冲刺", "duration": "第6-7年", "confidence": "A", "milestones": ["永居"], "steps": [{ "id": "s4_1", "name": "永居申请 [A]", "confidence": "A" }] }
+      ],
+      "keyRisks": [{ "risk": "毕业证需在5年内颁发 [A]", "level": "low", "confidence": "A" }]
+    },
+    // ========== 路径5: 高才通C类 ==========
+    {
+      "id": "ttps_c",
+      "name": "高才通C类·应届生通道",
+      "pathType": APPLICATION_PATHS.TTPS_C,
+      "totalCycle": "7年",
+      "firstVisa": "24月",
+      "riskLevel": "medium",
+      "decisionPoints": ["dp1_initial_path", "dp3_renewal_strategy", "dp4_category_switch", "dp5_pr_sprint"],
+      "phases": [
+        {
+          "id": "phase1_evaluation", "order": 1, "name": "资格评估",
+          "duration": "1-2周", "confidence": "A",
+          "steps": [
+            { "id": "s1_1", "name": "确认学士为合资格大学(毕业≤5年) [A]", "confidence": "A" },
+            { "id": "s1_2", "name": "确认配额可用(年度10000名) [B]", "confidence": "B" }
+          ]
+        },
+        { "id": "phase2_onboarding", "order": 2, "name": "获批与激活", "duration": "0-2月", "confidence": "A", "steps": [{ "id": "s2_1", "name": "递交→审批→激活 [A]", "confidence": "A" }] },
+        { "id": "phase3_maintenance", "order": 3, "name": "中期维持", "duration": "1-6年", "confidence": "B", "steps": [{ "id": "s3_1", "name": "就业/创业+续签 [B]", "confidence": "B" }] },
+        { "id": "phase4_pr_sprint", "order": 4, "name": "永居冲刺", "duration": "第6-7年", "confidence": "A", "steps": [{ "id": "s4_1", "name": "永居申请 [A]", "confidence": "A" }] }
+      ],
+      "keyRisks": [{ "risk": "年度配额10000名，先到先得 [B]", "level": "medium", "confidence": "B" }, { "risk": "续签需在港就业(C类无工作经验优势 [B])", "level": "medium", "confidence": "B" }]
+    },
+    // ========== 路径6: 优才QMAS ==========
+    {
+      "id": "qmas",
+      "name": "优才计划·综合计分制",
+      "pathType": APPLICATION_PATHS.QMAS,
+      "totalCycle": "7-8年",
+      "firstVisa": "24月",
+      "riskLevel": "medium_low",
+      "decisionPoints": ["dp1_initial_path", "dp3_renewal_strategy", "dp4_category_switch", "dp5_pr_sprint", "dp6_family_sync"],
+      "phases": [
+        {
+          "id": "phase1_evaluation", "order": 1, "name": "资格评估", "duration": "1-3月", "confidence": "B",
+          "steps": [
+            { "id": "s1_1", "name": "12项准则自评(需≥6项 [B])", "confidence": "B" },
+            { "id": "s1_2", "name": "准备赴港计划书 [B]", "confidence": "B" },
+            { "id": "s1_3", "name": "收集学历+工作+资产证明 [B]", "confidence": "B" }
+          ]
+        },
+        {
+          "id": "phase2_onboarding", "order": 2, "name": "获批与激活", "duration": "0-6月", "confidence": "B",
+          "steps": [
+            { "id": "s2_1", "name": "递交申请(审批3-6月 [B])", "confidence": "B" },
+            { "id": "s2_2", "name": "获批24月签证 [A]", "confidence": "A" }
+          ]
+        },
+        {
+          "id": "phase3_maintenance", "order": 3, "name": "中期维持", "duration": "1-6年", "confidence": "C",
+          "steps": [
+            { "id": "s3_1", "name": "2+3+3续签模式 [B]", "confidence": "B" },
+            { "id": "s3_2", "name": "证明「通常居住」(建议≥180天/年 [C])", "confidence": "C" },
+            { "id": "s3_3", "name": "MPF+税单积累 [A]", "confidence": "A" }
+          ]
+        },
+        { "id": "phase4_pr_sprint", "order": 4, "name": "永居冲刺", "duration": "第6-7年", "confidence": "B", "steps": [{ "id": "s4_1", "name": "证明7年「通常居住」→永居申请 [B]", "confidence": "B" }] }
+      ],
+      "keyRisks": [{ "risk": "「通常居住」无硬性天数要求，但建议≥180天/年 [C]", "level": "medium", "confidence": "C" }, { "risk": "踩线6项者竞争激烈 [C]", "level": "medium", "confidence": "C" }]
+    },
+    // ========== 路径7: 专才ASMTP ==========
+    {
+      "id": "asmpt",
+      "name": "专才计划·雇主担保",
+      "pathType": APPLICATION_PATHS.ASMPT,
+      "totalCycle": "7年",
+      "firstVisa": "~2年",
+      "riskLevel": "medium",
+      "decisionPoints": ["dp1_initial_path", "dp3_renewal_strategy", "dp4_category_switch", "dp5_pr_sprint"],
+      "phases": [
+        { "id": "phase1_evaluation", "order": 1, "name": "资格评估", "duration": "1-3月", "confidence": "A",
+          "steps": [{ "id": "s1_1", "name": "确认香港雇主sponsor资格 [A]", "confidence": "A" }, { "id": "s1_2", "name": "证明职位无法由本地人填补 [B]", "confidence": "B" }] },
+        { "id": "phase2_onboarding", "order": 2, "name": "获批与激活", "duration": "0-3月", "confidence": "A",
+          "steps": [{ "id": "s2_1", "name": "雇主递交申请(审批4-6周 [A])", "confidence": "A" }] },
+        { "id": "phase3_maintenance", "order": 3, "name": "中期维持", "duration": "1-6年", "confidence": "B",
+          "steps": [{ "id": "s3_1", "name": "续签(需雇主继续sponsor [A])", "confidence": "A" }] },
+        { "id": "phase4_pr_sprint", "order": 4, "name": "永居冲刺", "duration": "第6-7年", "confidence": "A",
+          "steps": [{ "id": "s4_1", "name": "永居申请 [A]", "confidence": "A" }] }
+      ],
+      "keyRisks": [{ "risk": "绑雇主: 换雇主需重新申请 [A]", "level": "high", "confidence": "A" }, { "risk": "雇主撤回sponsor则身份中断 [A]", "level": "high", "confidence": "A" }]
+    },
+    // ========== 路径8: 科技人才TechTAS ==========
+    {
+      "id": "techtas",
+      "name": "科技人才入境计划",
+      "pathType": APPLICATION_PATHS.TECHTAS,
+      "totalCycle": "7年",
+      "firstVisa": "2年",
+      "riskLevel": "low",
+      "decisionPoints": ["dp1_initial_path", "dp3_renewal_strategy", "dp5_pr_sprint"],
+      "phases": [
+        { "id": "phase1_evaluation", "order": 1, "name": "资格评估", "duration": "1-2月", "confidence": "A",
+          "steps": [{ "id": "s1_1", "name": "确认符合合资格科技领域 [A]", "confidence": "A" }, { "id": "s1_2", "name": "合资格雇主sponsor [A]", "confidence": "A" }] },
+        { "id": "phase2_onboarding", "order": 2, "name": "获批与激活", "duration": "0-3月", "confidence": "A",
+          "steps": [{ "id": "s2_1", "name": "递交→审批→激活 [A]", "confidence": "A" }] },
+        { "id": "phase3_maintenance", "order": 3, "name": "中期维持", "duration": "1-6年", "confidence": "B",
+          "steps": [{ "id": "s3_1", "name": "续签 [B]", "confidence": "B" }] },
+        { "id": "phase4_pr_sprint", "order": 4, "name": "永居冲刺", "duration": "第6-7年", "confidence": "A",
+          "steps": [{ "id": "s4_1", "name": "永居申请 [A]", "confidence": "A" }] }
+      ],
+      "keyRisks": []
+    },
+    // ========== 路径9: CIES投资类身份规划 ==========
+    {
+      "id": "cies",
+      "name": "资本投资者入境计划",
+      "pathType": APPLICATION_PATHS.CIES,
+      "totalCycle": "8-9年",
+      "firstVisa": "—",
+      "riskLevel": "low",
+      "decisionPoints": ["dp1_initial_path", "dp5_pr_sprint"],
+      "phases": [
+        { "id": "phase1_evaluation", "order": 1, "name": "资格评估", "duration": "1-3月", "confidence": "A",
+          "steps": [{ "id": "s1_1", "name": "核实净资产≥3000万港币 [A]", "confidence": "A" }, { "id": "s1_2", "name": "选择合资格投资组合 [B]", "confidence": "B" }] },
+        { "id": "phase2_onboarding", "order": 2, "name": "获批与激活", "duration": "0-6月", "confidence": "B",
+          "steps": [{ "id": "s2_1", "name": "投资→审批→获批 [B]", "confidence": "B" }] },
+        { "id": "phase3_maintenance", "order": 3, "name": "中期维持", "duration": "1-7年", "confidence": "A",
+          "steps": [{ "id": "s3_1", "name": "持续持有合资格资产 [A]", "confidence": "A" }] },
+        { "id": "phase4_pr_sprint", "order": 4, "name": "永居冲刺", "duration": "第7-9年", "confidence": "A",
+          "steps": [{ "id": "s4_1", "name": "永居申请(通常≥7年 [A])", "confidence": "A" }] }
+      ],
+      "keyRisks": [{ "risk": "资产变现可能影响身份 [B]", "level": "medium", "confidence": "B" }]
+    }
+  ]
+};

@@ -1,0 +1,9 @@
+{
+  "name": "match-engine",
+  "version": "1.0.0",
+  "description": "住港伴 — 材料匹配引擎",
+  "main": "index.js",
+  "dependencies": {
+    "wx-server-sdk": "latest"
+  }
+}

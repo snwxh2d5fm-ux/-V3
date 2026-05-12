@@ -1,0 +1,11 @@
+<!-- ux-error-boundary 错误边界 -->
+<view class="err-boundary" role="alert" aria-label="{{title}}">
+  <view class="err-boundary__inner">
+    <text class="err-boundary__icon">{{icon}}</text>
+    <text class="err-boundary__title">{{title}}</text>
+    <text class="err-boundary__desc">{{desc}}</text>
+    <view class="err-boundary__actions">
+      <button wx:if="{{retryable}}" class="btn btn-primary btn-sm" bindtap="onRetry" aria-label="重新尝试">重新尝试</button>
+    </view>
+  </view>
+</view>

@@ -1,0 +1,9 @@
+{
+  "name": "solution-engine",
+  "version": "1.0.0",
+  "description": "住港伴v4.1 方案库智能推荐引擎 (PRD v3.1)",
+  "main": "index.js",
+  "dependencies": {
+    "wx-server-sdk": "latest"
+  }
+}

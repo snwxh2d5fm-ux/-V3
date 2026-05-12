@@ -1,0 +1,349 @@
+/**
+ * 住港伴 v4.1 — API 接口层 (PRD v3.1)
+ * 仅传输脱敏数据到服务端，原始文件永不上传
+ * V5新增: 方案库匹配服务、法律条文校验服务
+ */
+const { desensitizeFields, MODES } = require('./desensitize');
+
+const BASE = 'https://api.zhugangban.com/v1';
+
+function request(url, options = {}) {
+  return new Promise((resolve, reject) => {
+    wx.request({
+      url: `${BASE}${url}`,
+      method: options.method || 'GET',
+      data: options.data || {},
+      header: {
+        'Content-Type': 'application/json',
+        'Authorization': `Bearer ${wx.getStorageSync('__token__') || ''}`,
+        'X-Privacy-Mode': 'desensitized',
+        'X-Engine-Version': '4.1.0'
+      },
+      timeout: options.timeout || 15000,
+      success: (res) => {
+        if (res.statusCode === 200) resolve(res.data);
+        else reject({ code: res.statusCode, message: res.data });
+      },
+      fail: reject
+    });
+  });
+}
+
+// 用户认证
+async function wechatLogin() {
+  const { code } = await wx.login();
+  const res = await request('/auth/wechat', { method: 'POST', data: { code } });
+  wx.setStorageSync('__token__', res.token);
+  return res;
+}
+
+async function getPhoneNumber(encryptedData, iv) {
+  const res = await request('/auth/phone', { method: 'POST', data: { encryptedData, iv } });
+  return res.phoneNumber;
+}
+
+// 上报用户状态（脱敏后，含子状态）
+async function reportUserStatus(userStatus, subStatus, milestoneData) {
+  const safe = desensitizeFields(milestoneData, MODES.FEATURE);
+  return await request('/user/status', {
+    method: 'PUT',
+    data: { userStatus, subStatus, milestone: safe }
+  });
+}
+
+// 获取指引数据 (V5: 含置信度标注)
+async function fetchGuides(nodeId, options = {}) {
+  const params = new URLSearchParams();
+  if (options.confidenceLevel) params.set('confidence', options.confidenceLevel);
+  if (options.pathType) params.set('path', options.pathType);
+  return await request(`/guides/${nodeId}?${params.toString()}`);
+}
+
+// 获取政策更新 (V5: 含影响范围分析)
+async function fetchPolicyUpdates(options = {}) {
+  const params = new URLSearchParams();
+  if (options.pathType) params.set('path', options.pathType);
+  if (options.personaId) params.set('persona', options.personaId);
+  return await request(`/policies/updates?${params.toString()}`);
+}
+
+// 获取分类攻略内容 (V5: 含置信度标注)
+async function fetchPlaybook(scene, page = 1, confidenceLevel) {
+  let url = `/playbook/${scene}?page=${page}`;
+  if (confidenceLevel) url += `&confidence=${confidenceLevel}`;
+  return await request(url);
+}
+
+// 互动
+async function interact(interpretationId, action) {
+  return await request(`/interactions/${interpretationId}/${action}`, { method: 'POST' });
+}
+
+// 搜索攻略 (V5: 含置信度过滤)
+async function searchPlaybook(query, confidenceLevel) {
+  let url = `/playbook/search?q=${encodeURIComponent(query)}`;
+  if (confidenceLevel) url += `&confidence=${confidenceLevel}`;
+  return await request(url);
+}
+
+// 获取预审结果
+async function runPreCheck(processType, docFeatures) {
+  const safe = desensitizeFields(docFeatures, MODES.FEATURE);
+  return await request('/precheck/run', { method: 'POST', data: { processType, features: safe } });
+}
+
+// ============ V5新增: 方案库匹配服务 ============
+
+/**
+ * 提交方案库路径匹配请求 (云函数: solution-engine / match-engine)
+ * @param {object} profile 用户画像特征
+ */
+async function matchSolutionPath(profile) {
+  try {
+    const safe = desensitizeFields(profile, MODES.FEATURE);
+    const res = await wx.cloud.callFunction({
+      name: 'solution-engine',
+      data: { action: 'match', profile: safe }
+    });
+    return res.result;
+  } catch (e) {
+    // fallback to match-engine
+    try {
+      const res = await wx.cloud.callFunction({
+        name: 'match-engine',
+        data: { action: 'matchSolution', profile: desensitizeFields(profile, MODES.FEATURE) }
+      });
+      return res.result;
+    } catch (e2) {
+      console.error('[API] 方案库匹配失败:', e2);
+      return { code: 500, message: '方案匹配服务不可用' };
+    }
+  }
+}
+
+/**
+ * 获取方案库路径详情对比
+ * @param {string[]} pathIds 要对比的路径ID列表
+ */
+async function compareSolutionPaths(pathIds) {
+  try {
+    const res = await wx.cloud.callFunction({
+      name: 'solution-engine',
+      data: { action: 'compare', pathIds }
+    });
+    return res.result;
+  } catch (e) {
+    return { code: 500, message: '方案对比服务不可用' };
+  }
+}
+
+// ============ AI 对话服务 ============
+
+async function sendChatMessage(sessionId, message, mode, context) {
+  try {
+    const res = await wx.cloud.callFunction({
+      name: 'ai-chat',
+      data: { sessionId, message, mode: mode || 'general', context: context || {} }
+    });
+    return res.result;
+  } catch (e) {
+    console.error('[API] AI对话失败:', e);
+    return { code: 500, message: 'AI对话服务不可用', data: null };
+  }
+}
+
+/**
+ * 提交资格评估 (V5: 方案库对齐版)
+ */
+async function submitAssessment(answers) {
+  try {
+    const res = await wx.cloud.callFunction({
+      name: 'ai-assess',
+      data: { answers, version: 'v5' }
+    });
+    return res.result;
+  } catch (e) {
+    console.error('[API] 评估提交失败:', e);
+    return { code: 500, message: '评估服务不可用', data: null };
+  }
+}
+
+async function askPolicyQuestion(question) {
+  try {
+    const res = await wx.cloud.callFunction({
+      name: 'ai-chat',
+      data: { sessionId: 'qa_' + Date.now(), message: question, mode: 'qa', context: { confidenceCheck: true } }
+    });
+    return res.result;
+  } catch (e) {
+    console.error('[API] 政策问答失败:', e);
+    return { code: 500, message: '问答服务不可用', data: null };
+  }
+}
+
+async function generateDocument(docType, userLabels, extraInfo) {
+  try {
+    const res = await wx.cloud.callFunction({
+      name: 'ai-doc-gen',
+      data: { docType, userLabels: userLabels || [], extraInfo: extraInfo || {} }
+    });
+    return res.result;
+  } catch (e) {
+    console.error('[API] 文档生成失败:', e);
+    return { code: 500, message: '文档生成服务不可用', data: null };
+  }
+}
+
+// ============ 续签仪表盘服务 ============
+async function getDashboardData() {
+  return await request('/dashboard/data');
+}
+
+// ============ 案例库服务 ============
+async function getApprovedCases() {
+  return await request('/cases/approved');
+}
+
+// ============ 加密上传服务 ============
+async function uploadAnonymizedText(encryptedText, metadata) {
+  return await request('/upload/anonymized', {
+    method: 'POST',
+    data: { encryptedText, metadata }
+  });
+}
+
+// ============ 支付服务 ============
+/**
+ * 获取会员方案列表（云函数: payment.getPlans）
+ */
+async function fetchMembershipPlans() {
+  try {
+    const res = await wx.cloud.callFunction({
+      name: 'payment',
+      data: { action: 'getPlans' }
+    });
+    return res.result;
+  } catch (e) {
+    console.error('[API] 获取方案列表失败:', e);
+    return { code: 500, data: [] };
+  }
+}
+
+/**
+ * 创建支付订单（云函数: payment.createOrder）
+ * @param {string} planId 方案ID
+ * @param {string} period 'yearly' | 'monthly'
+ * @returns {{ code:0, data:{ orderId, payment, amount, amountYuan } }}
+ */
+async function createPaymentOrder(planId, period) {
+  try {
+    const res = await wx.cloud.callFunction({
+      name: 'payment',
+      data: { action: 'createOrder', planId, period: period || 'yearly' }
+    });
+    return res.result;
+  } catch (e) {
+    console.error('[API] 创建支付订单失败:', e);
+    return { code: 500, msg: '支付服务异常' };
+  }
+}
+
+/**
+ * 查询支付订单状态（云函数: payment.getOrderStatus）
+ */
+async function queryOrderStatus(orderId) {
+  try {
+    const res = await wx.cloud.callFunction({
+      name: 'payment',
+      data: { action: 'getOrderStatus', orderId }
+    });
+    return res.result;
+  } catch (e) {
+    return { code: 500, msg: '查询失败' };
+  }
+}
+
+/**
+ * 查询会员订阅状态（云函数: payment.checkSubscription）
+ */
+async function checkMembershipStatus() {
+  try {
+    const res = await wx.cloud.callFunction({
+      name: 'payment',
+      data: { action: 'checkSubscription' }
+    });
+    return res.result;
+  } catch (e) {
+    return { code: 500, data: { level: 'free', isActive: true } };
+  }
+}
+
+/**
+ * 获取用户订单记录（云函数: payment.getUserOrders）
+ */
+async function getUserOrders(limit) {
+  try {
+    const res = await wx.cloud.callFunction({
+      name: 'payment',
+      data: { action: 'getUserOrders', limit: limit || 10 }
+    });
+    return res.result;
+  } catch (e) {
+    return { code: 500, data: [] };
+  }
+}
+
+/**
+ * 获取用户订阅记录（云函数: payment.getSubscriptions）
+ */
+async function getUserSubscriptions() {
+  try {
+    const res = await wx.cloud.callFunction({
+      name: 'payment',
+      data: { action: 'getSubscriptions' }
+    });
+    return res.result;
+  } catch (e) {
+    return { code: 500, data: [] };
+  }
+}
+
+/** @deprecated 使用 createPaymentOrder 替代 */
+async function createPayment(planId, amount) {
+  return await createPaymentOrder(planId, 'yearly');
+}
+
+// ============ 通知服务 ============
+async function subscribeTemplateMessage(tmplIds) {
+  try {
+    const res = await wx.requestSubscribeMessage({ tmplIds });
+    return Object.values(res).some(v => v === 'accept');
+  } catch (e) {
+    return false;
+  }
+}
+
+// ============ 用户同步服务 ============
+async function syncUserProfile(profileData) {
+  try {
+    return await wx.cloud.callFunction({
+      name: 'user-auth',
+      data: { action: 'syncProfile', profile: profileData }
+    });
+  } catch (e) {
+    console.error('[API] syncProfile failed:', e);
+  }
+}
+
+module.exports = {
+  request, wechatLogin, getPhoneNumber, reportUserStatus,
+  fetchGuides, fetchPolicyUpdates, fetchPlaybook,
+  interact, searchPlaybook, runPreCheck,
+  sendChatMessage, submitAssessment, askPolicyQuestion,
+  generateDocument, getDashboardData, getApprovedCases,
+  uploadAnonymizedText, createPayment, createPaymentOrder, queryOrderStatus,
+  checkMembershipStatus, getUserOrders, getUserSubscriptions,
+  fetchMembershipPlans, subscribeTemplateMessage,
+  syncUserProfile,
+  matchSolutionPath, compareSolutionPaths
+};

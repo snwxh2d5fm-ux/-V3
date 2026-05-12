@@ -1,0 +1,10 @@
+{
+  "name": "payment",
+  "version": "2.0.0",
+  "description": "住港伴 — 微信支付V3直连服务",
+  "main": "index.js",
+  "dependencies": {
+    "wx-server-sdk": "latest",
+    "axios": "^1.6.0"
+  }
+}

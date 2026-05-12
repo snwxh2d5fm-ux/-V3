@@ -1,0 +1,305 @@
+/**
+ * 住港伴 v4.2 — 香港身份全流程陪伴工具 (PRD v4 完整对齐)
+ * 基于 PRD v4 + V5校验 + 方案库v1.0 + 7阶段流程指示器
+ */
+const api = require('./utils/api');
+const { initStorage, initDBSync, syncAllToCloud } = require('./utils/storage');
+const { initCrypto } = require('./utils/crypto');
+const { loadRules } = require('./utils/rule-engine');
+const { matchPersonaToPaths } = require('./data/solution-library');
+const constants = require('./data/constants');
+
+App({
+  globalData: {
+    // 用户状态
+    userInfo: null,
+    userStatus: null,         // 主状态: unapplied|submitted|approved|permanent
+    userSubStatus: null,      // V5新增: 子状态(细化选项)
+    isLoggedIn: false,
+    token: null,
+
+    // 手机号绑定
+    phoneBound: false,
+
+    // 隐私模式
+    privacyMode: 'local',
+
+    // 当前活跃流程
+    activeProcessId: null,
+    activeProcess: null,
+    selectedPath: null,       // V5新增: 选择的身份规划路径
+
+    // V5新增: 方案库推荐
+    solutionRecommendation: null,
+
+    // 会员等级
+    membershipLevel: 'free',
+    membershipExpiry: null,
+
+    // AI 助手状态
+    aiSessionId: null,
+    aiConversation: [],
+    aiReady: false,
+
+    // 系统状态
+    cloudReady: false,
+    dbSyncStatus: 'idle',
+    rulesLoaded: false,
+    encryptionKey: null,
+    dataVersion: constants.DATA_VERSION,
+    isOnline: true,
+    networkType: 'unknown',
+
+    // 流程控中枢配置
+    hubSections: ['process', 'playbook', 'precheck']
+  },
+
+  async onLaunch() {
+    console.log(`[住港伴] v${constants.APP_VERSION} 应用启动 — PRD v3.1 对齐`);
+
+    if (wx.cloud) {
+      wx.cloud.init({
+        env: constants.CLOUD_ENV_ID,
+        traceUser: true
+      });
+      this.globalData.cloudReady = true;
+      console.log('[住港伴] 云开发初始化完成');
+    }
+
+    // v5: 网络状态监听 (DSG-1 P0-04)
+    wx.onNetworkStatusChange((res) => {
+      this.globalData.isOnline = res.isConnected;
+      this.globalData.networkType = res.networkType;
+      if (!res.isConnected) {
+        console.log('[住港伴] 网络断开');
+      }
+    });
+    // 初始化时获取当前网络状态
+    wx.getNetworkType({
+      success: (res) => {
+        this.globalData.isOnline = res.networkType !== 'none';
+        this.globalData.networkType = res.networkType;
+      }
+    });
+
+    await Promise.all([
+      initStorage(),
+      initCrypto(),
+      loadRules()
+    ]);
+
+    this.globalData.rulesLoaded = true;
+
+    await this.loadSession();
+    this.initAISession();
+
+    if (this.globalData.isLoggedIn && this.globalData.cloudReady) {
+      this.syncDataToCloud();
+    }
+  },
+
+  async onShow() {
+    if (this.globalData.isLoggedIn) {
+      this.refreshProcessData();
+    }
+  },
+
+  // ========== 会话管理 ==========
+  async loadSession() {
+    try {
+      const session = wx.getStorageSync(constants.STORAGE_KEYS.SESSION);
+      if (session && session.token) {
+        const valid = await this.validateToken(session.token);
+        if (valid) {
+          this.globalData.userInfo = session.userInfo;
+          this.globalData.userStatus = session.userStatus || 'unapplied';
+          this.globalData.userSubStatus = session.userSubStatus || null;
+          this.globalData.isLoggedIn = true;
+          this.globalData.token = session.token;
+          this.globalData.membershipLevel = session.membershipLevel || 'free';
+          this.globalData.membershipExpiry = session.membershipExpiry;
+          this.globalData.phoneBound = session.phoneBound || false;
+          this.globalData.activeProcessId = session.activeProcessId;
+          this.globalData.activeProcess = session.activeProcess;
+          this.globalData.selectedPath = session.selectedPath || null;
+          this.globalData.solutionRecommendation = session.solutionRecommendation || null;
+        }
+      }
+    } catch (e) {
+      console.log('[住港伴] 无有效会话');
+    }
+  },
+
+  async validateToken(token) {
+    if (!this.globalData.cloudReady) return false;
+    try {
+      const res = await wx.cloud.callFunction({
+        name: 'user-auth',
+        data: { action: 'validate', token }
+      });
+      return res.result && res.result.valid;
+    } catch (e) {
+      return false;
+    }
+  },
+
+  async saveSession(sessionData) {
+    Object.assign(this.globalData, sessionData);
+    wx.setStorageSync(constants.STORAGE_KEYS.SESSION, {
+      token: this.globalData.token,
+      userInfo: this.globalData.userInfo,
+      userStatus: this.globalData.userStatus,
+      userSubStatus: this.globalData.userSubStatus,
+      membershipLevel: this.globalData.membershipLevel,
+      membershipExpiry: this.globalData.membershipExpiry,
+      phoneBound: this.globalData.phoneBound || false,
+      activeProcessId: this.globalData.activeProcessId,
+      activeProcess: this.globalData.activeProcess,
+      selectedPath: this.globalData.selectedPath,
+      solutionRecommendation: this.globalData.solutionRecommendation
+    });
+    if (this.globalData.cloudReady && this.globalData.token) {
+      await api.syncUserProfile({
+        userStatus: this.globalData.userStatus,
+        userSubStatus: this.globalData.userSubStatus,
+        membershipLevel: this.globalData.membershipLevel,
+        activeProcessId: this.globalData.activeProcessId,
+        selectedPath: this.globalData.selectedPath
+      });
+    }
+  },
+
+  // ========== V5新增: 方案库路径推荐 ==========
+  async getSolutionRecommendation(userProfile) {
+    if (this.globalData.solutionRecommendation) {
+      return this.globalData.solutionRecommendation;
+    }
+    // 客户端确定性匹配
+    const localMatches = matchPersonaToPaths(userProfile);
+    // 云端增强匹配
+    let cloudMatches = [];
+    if (this.globalData.cloudReady) {
+      try {
+        const res = await api.matchSolutionPath(userProfile);
+        cloudMatches = res.matches || [];
+      } catch (e) {
+        console.log('[住港伴] 云端方案库匹配不可用，使用本地匹配');
+      }
+    }
+    const merged = mergeRecommendations(localMatches, cloudMatches);
+    this.globalData.solutionRecommendation = merged;
+    wx.setStorageSync(constants.STORAGE_KEYS.SOLUTION_RECOMMENDATION, merged);
+    return merged;
+  },
+
+  // ========== 数据同步 ==========
+  async syncDataToCloud() {
+    if (this.globalData.dbSyncStatus === 'syncing') return;
+    this.globalData.dbSyncStatus = 'syncing';
+    try {
+      await syncAllToCloud();
+      this.globalData.dbSyncStatus = 'synced';
+      console.log('[住港伴] 数据云端同步完成');
+    } catch (e) {
+      this.globalData.dbSyncStatus = 'error';
+      console.error('[住港伴] 数据同步失败:', e);
+    }
+  },
+
+  async refreshProcessData() {
+    if (!this.globalData.cloudReady) return;
+    try {
+      const res = await wx.cloud.callFunction({
+        name: 'process-manager',
+        data: { action: 'getActive', processId: this.globalData.activeProcessId }
+      });
+      if (res.result && res.result.data) {
+        this.globalData.activeProcess = res.result.data;
+      }
+    } catch (e) {
+      console.log('[住港伴] 刷新流程数据失败');
+    }
+  },
+
+  // ========== AI 助手 ==========
+  initAISession() {
+    this.globalData.aiSessionId = 'ai_' + Date.now() + '_' + Math.random().toString(36).substr(2, 8);
+    this.globalData.aiReady = true;
+    this.globalData.aiConversation = [{
+      role: 'assistant',
+      content: '你好！我是住港伴AI专员 v4.1，基于最新V5知识库。可以帮你：\n• 评估香港身份路径\n• 解答入境政策问题\n• 整理材料清单\n• 规划时间线\n随时问我吧！'
+    }];
+  },
+
+  async sendAIMessage(message) {
+    if (!this.globalData.aiReady) return null;
+    try {
+      const res = await wx.cloud.callFunction({
+        name: 'ai-chat',
+        data: {
+          sessionId: this.globalData.aiSessionId,
+          message,
+          mode: 'general',
+          context: {
+            userStatus: this.globalData.userStatus,
+            userSubStatus: this.globalData.userSubStatus,
+            membershipLevel: this.globalData.membershipLevel,
+            activeProcess: this.globalData.activeProcess,
+            selectedPath: this.globalData.selectedPath,
+            dataVersion: constants.DATA_VERSION
+          }
+        }
+      });
+      return res.result;
+    } catch (e) {
+      console.error('[住港伴] AI消息发送失败:', e);
+      return { code: 500, message: 'AI服务暂时不可用' };
+    }
+  },
+
+  // ========== 隐私模式 ==========
+  setPrivacyMode(mode) {
+    const validModes = ['local', 'desensitized', 'feature'];
+    if (validModes.includes(mode)) {
+      this.globalData.privacyMode = mode;
+      wx.setStorageSync(constants.STORAGE_KEYS.PRIVACY_MODE, mode);
+      this.emitPrivacyChange(mode);
+    }
+  },
+
+  getPrivacyMode() {
+    return wx.getStorageSync(constants.STORAGE_KEYS.PRIVACY_MODE) || 'local';
+  },
+
+  emitPrivacyChange(mode) {
+    const pages = getCurrentPages();
+    pages.forEach(page => {
+      if (page.onPrivacyModeChange) {
+        page.onPrivacyModeChange(mode);
+      }
+    });
+  },
+
+  onError(err) {
+    console.error('[住港伴] 全局错误:', err);
+    const safeError = { message: err.message, timestamp: Date.now() };
+    wx.setStorageSync(constants.STORAGE_KEYS.ERROR_LOG, safeError);
+  }
+});
+
+// 合并本地和云端推荐结果
+function mergeRecommendations(localMatches, cloudMatches) {
+  const matchMap = {};
+  localMatches.forEach(m => {
+    const s = m.matchScore || m.score || 0;
+    matchMap[m.path] = (matchMap[m.path] || 0) + s;
+  });
+  cloudMatches.forEach(m => {
+    const s = m.matchScore || (typeof m.score === 'number' ? m.score : 0) || (m.confidence === 'high' ? 90 : 50);
+    matchMap[m.path] = (matchMap[m.path] || 0) + s;
+  });
+  return Object.entries(matchMap)
+    .sort(([, a], [, b]) => b - a)
+    .slice(0, 4)
+    .map(([path, score]) => ({ path, matchScore: Math.min(score / 2, 100) }));
+}

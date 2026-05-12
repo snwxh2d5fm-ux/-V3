@@ -1,0 +1,11 @@
+{
+  "name": "ai-assess",
+  "version": "3.0.0",
+  "description": "住港伴 AI 资格评估云函数 — 5路径评分引擎",
+  "main": "index.js",
+  "dependencies": {},
+  "cloudfunction-config": {
+    "timeout": 20,
+    "memorySize": 256
+  }
+}

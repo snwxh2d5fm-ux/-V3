@@ -1,0 +1,8 @@
+.process-option { padding: 16rpx; border-radius: var(--radius-sm); margin-bottom: 8rpx; border: 1rpx solid var(--color-border); }
+.process-option.selected { border-color: var(--color-primary); background: #F0FAF4; }
+.po-name { font-size: var(--font-md); font-weight: 500; display: block; }
+.po-meta { font-size: var(--font-xs); color: var(--color-text-muted); }
+.confirm-btn { margin: 24rpx 32rpx; }
+.precheck-intro { margin-top: 24rpx; }
+.intro-title { font-size: var(--font-md); font-weight: 600; display: block; margin-bottom: 12rpx; }
+.intro-text { font-size: var(--font-xs); color: var(--color-text-secondary); line-height: 1.8; white-space: pre-line; }

@@ -1,0 +1,46 @@
+<view class="container">
+  <view class="page-header">
+    <text class="page-header__title">里程碑验证</text>
+    <text class="page-header__subtitle">{{label}}</text>
+  </view>
+
+  <view class="card" wx:if="{{!imagePath}}">
+    <text class="card__title">请上传材料</text>
+    <text class="verify-desc">{{label || '拍照或从相册选择'}}</text>
+    <view class="upload-actions">
+      <button class="btn btn--primary" bindtap="takePhoto">📷 拍照</button>
+      <button class="btn btn--outline" bindtap="chooseFromAlbum">🖼️ 相册</button>
+    </view>
+  </view>
+
+  <view class="card" wx:if="{{imagePath}}">
+    <image class="verify-image" src="{{imagePath}}" mode="aspectFit" aria-label="上传的验证材料图片" />
+    <view class="verify-status" wx:if="{{verifyResult}}">
+      <view wx:if="{{verifyResult.valid}}">
+        <text class="verify-icon">✅</text>
+        <text class="verify-pass">验证通过</text>
+      </view>
+      <view wx:else>
+        <text class="verify-icon">❌</text>
+        <text class="verify-fail">验证失败：{{verifyResult.reason}}</text>
+        <button class="btn btn--outline btn--block" bindtap="retry">重新拍摄</button>
+      </view>
+    </view>
+    <view class="ocr-preview" wx:if="{{ocrResult && ocrResult.fields}}">
+      <text class="ocr-label">识别到的字段：</text>
+      <view wx:for="{{ocrResult.fields}}" wx:key="*this">
+        <text class="ocr-field">{{item}}: {{ocrResult.fields[item]}}</text>
+      </view>
+    </view>
+  </view>
+
+  <view class="loading-container" wx:if="{{verifying}}">
+    <text class="pulse">正在识别验证...</text>
+  </view>
+
+  <view class="card card--outlined">
+    <text class="privacy-note">🔒 你的原始照片存储在本机，仅用于本地验证，不上传服务端。</text>
+  </view>
+
+  <floating-ai visible="{{true}}" />
+</view>

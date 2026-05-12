@@ -1,0 +1,344 @@
+{
+  "项目": "住港伴V2",
+  "审查时间": "2026-05-09",
+  "审查人": "前端性能优化专家",
+  "总体评分": {
+    "分数": 52,
+    "满分": 100,
+    "等级": "中等偏下",
+    "摘要": "存在多个中等严重性问题，尤其是小程序包体积超标风险和无分包配置，需优先解决"
+  },
+  "维度详情": [
+    {
+      "维度": "小程序包体积",
+      "评分": 25,
+      "满分": 100,
+      "等级": "严重",
+      "现状": "app.json中22个页面全部在主包中，未配置任何分包(subpackages)。pages/目录436KB, components/124KB, data/100KB, utils/64KB, images/1.2MB(其中ai-avatar.png单独1.1MB)。预估主包体积约1.9MB+，超过微信2MB主包限制风险极高",
+      "问题": [
+        {
+          "严重程度": "P0",
+          "描述": "app.json完全未配置subpackages字段，所有页面全部打入主包",
+          "位置": "app.json",
+          "建议": "按功能模块拆分为3个分包：流程控(document-vault, process, reminder), 工具(precheck, milestone-verify, guide, playbook), 设置(mine, privacy, login, status-select, admin-db)，主包仅保留tabBar页面(index, document-vault/index, reminder/index, mine/index)"
+        },
+        {
+          "严重程度": "P0",
+          "描述": "images/ai-avatar.png文件大小1.1MB，占图片目录总大小的92%",
+          "位置": "images/ai-avatar.png",
+          "建议": "压缩至100KB以内(建议50-80KB)，使用TinyPNG或转换为WebP格式；或使用云存储CDN链接替代本地打包"
+        },
+        {
+          "严重程度": "P1",
+          "描述": "data/目录包含18.5KB的templates.js和52KB的db-seed(云函数非前端代码但可能被误打包)",
+          "位置": "data/templates.js, cloudfunctions/db-seed/index.js",
+          "建议": "templates.js中的12条流程模板数据较大(328行)，考虑按需加载或移至云函数；db-seed应为纯云函数代码，确认不会被打入前端包"
+        }
+      ],
+      "优化建议": "1.立即配置subpackages分包 2.压缩ai-avatar.png至80KB以下 3.启用project.config.json中的packOptions排除不必要的云函数文件"
+    },
+    {
+      "维度": "setData调用效率",
+      "评分": 55,
+      "满分": 100,
+      "等级": "中等",
+      "现状": "多处页面在onShow中无条件调用完整数据刷新loadAllData()，未做数据变更检测。floating-ai组件在每次发送消息时调用setData多次",
+      "问题": [
+        {
+          "严重程度": "P1",
+          "描述": "pages/index/index.js的loadAllData()一次性setData传入12个字段的大型对象(约包含完整process对象、stages数组、materials数组等)",
+          "位置": "pages/index/index.js:128-142",
+          "建议": "拆分为首屏关键数据(userStatus, greeting, activeProcess)先setData，次要数据(guideCategories, policyUpdates, precheckStatus)延迟setData；使用$setData优化或分帧渲染"
+        },
+        {
+          "严重程度": "P1",
+          "描述": "多个页面onShow中无条件调用加载函数，每次切Tab都重新setData全部数据，即使数据未变化",
+          "位置": "pages/index/index.js:61-63, pages/document-vault/index/index.js:21-23, pages/reminder/index/index.js:27-29, pages/mine/index/index.js:35-37",
+          "建议": "增加数据版本号/脏标记，仅在数据实际变更时才刷新setData"
+        },
+        {
+          "严重程度": "P2",
+          "描述": "floating-ai组件sendMessage()中连续3次setData(清空输入框+loading、追加消息、清除loading)，可合并",
+          "位置": "components/floating-ai/floating-ai.js:118-158",
+          "建议": "合并setData调用，或使用nextTick批量更新"
+        },
+        {
+          "严重程度": "P2",
+          "描述": "floating-ai组件每次发送消息后调用setStorageSync保存对话历史至Storage",
+          "位置": "components/floating-ai/floating-ai.js:161,203",
+          "建议": "改为防抖保存(debounce)，每3-5条消息才写入一次Storage"
+        },
+        {
+          "严重程度": "P2",
+          "描述": "reminder/index/index.js的loadReminders中同时setData todayReminders和upcomingReminders两个大数组",
+          "位置": "pages/reminder/index/index.js:71-76",
+          "建议": "分步渲染，先setData关键计数，再渲染列表"
+        }
+      ]
+    },
+    {
+      "维度": "首屏加载时间",
+      "评分": 45,
+      "满分": 100,
+      "等级": "中等偏低",
+      "现状": "app.js onLaunch中执行3个并行init + 串行loadSession(含云函数调用validateToken) + syncDataToCloud(含云函数调用)。首屏index页面依赖app.globalData的多个异步初始化结果",
+      "问题": [
+        {
+          "严重程度": "P1",
+          "描述": "app.js onLaunch中的loadSession()串行调用云函数user-auth validateToken，增加首屏等待时间(云函数冷启动可能1-3秒)",
+          "位置": "app.js:64-68 -> 87-109 -> 111-122",
+          "建议": "改为非阻塞模式：先使用本地缓存的session信息快速渲染首屏，后台异步验证token有效性；若验证失败再触发重新登录"
+        },
+        {
+          "严重程度": "P1",
+          "描述": "app.js onLaunch中syncDataToCloud()在首屏渲染前同步执行(虽然用了if条件，但仍是串行链的一部分)",
+          "位置": "app.js:75-77",
+          "建议": "将syncDataToCloud()延迟到首屏渲染完成后执行(使用setTimeout或onReady后触发)"
+        },
+        {
+          "严重程度": "P2",
+          "描述": "pages/index/index.js的onLoad仅做登录检查，onShow中才加载数据，但onShow的loadAllData()是同步计算+单次大setData",
+          "位置": "pages/index/index.js:53-63",
+          "建议": "增加骨架屏/loading状态过渡；首屏关键数据(userStatus, greeting)先渲染，其余数据异步加载"
+        },
+        {
+          "严重程度": "P2",
+          "描述": "暂无独立的骨架屏组件或加载占位符，所有页面用简单的loading=true控制wx:if切换",
+          "位置": "全局",
+          "建议": "为Tab首页(index, document-vault/index, reminder/index)增加骨架屏组件提升体感速度"
+        }
+      ]
+    },
+    {
+      "维度": "云函数冷启动",
+      "评分": 50,
+      "满分": 100,
+      "等级": "中等",
+      "现状": "项目包含11个云函数(ai-chat, ai-doc-gen, ai-assess, user-auth, solution-engine, process-manager, reminder-engine, guide-service, document-manager, db-admin, db-seed, content-clean, policy-monitor, match-engine, payment, free-trial-monitor, ocr-service等)。部分云函数使用同步require加载大型依赖",
+      "问题": [
+        {
+          "严重程度": "P1",
+          "描述": "ai-chat和ai-doc-gen云函数在入口文件顶层使用require('https')和require('url')，每次冷启动均加载Node内置模块",
+          "位置": "cloudfunctions/ai-chat/index.js:16-17, cloudfunctions/ai-doc-gen/index.js:19-20",
+          "建议": "将外部API调用逻辑移至独立模块并使用动态import()延迟加载；考虑使用云函数单例模式预连接HTTP agent复用"
+        },
+        {
+          "严重程度": "P1",
+          "描述": "user-auth云函数初始化时创建两个数据库实例(db和adminDb)，且包含542行代码(含短信验证码逻辑)，冷启动体积较大",
+          "位置": "cloudfunctions/user-auth/index.js:7-15",
+          "建议": "拆分user-auth为3个云函数：user-auth-core(登录/验证)、user-sms(短信服务)、user-admin(管理操作)，每个更小更快启动"
+        },
+        {
+          "严重程度": "P2",
+          "描述": "process-manager云函数570行大文件，包含11个action分支，单文件过大影响冷启动解析时间",
+          "位置": "cloudfunctions/process-manager/index.js",
+          "建议": "按领域拆分为process-crud.js(CRUD操作)和process-milestone.js(里程碑验证)"
+        },
+        {
+          "严重程度": "P2",
+          "描述": "solution-engine在冷启动时加载12个PERSONA_FEATURES和9个PATH_PROFILES静态数据对象(虽然是硬编码但占用内存)",
+          "位置": "cloudfunctions/solution-engine/index.js:13-35",
+          "建议": "静态数据可接受，但确认没有不必要的数据库连接(目前代码在匹配函数内才用db，较好)"
+        },
+        {
+          "严重程度": "P3",
+          "描述": "ai-chat中的prompts.js在require时被加载，包含大型系统提示词字符串",
+          "位置": "cloudfunctions/ai-chat/prompts.js",
+          "建议": "如系统提示词超过5KB，考虑压缩或使用模板字符串按需拼接减少内存占用"
+        }
+      ]
+    },
+    {
+      "维度": "网络请求效率",
+      "评分": 55,
+      "满分": 100,
+      "等级": "中等",
+      "现状": "混合使用HTTP API(wx.request到api.zhugangban.com)和云函数(wx.cloud.callFunction)。存在冗余请求和可并行化的串行请求",
+      "问题": [
+        {
+          "严重程度": "P1",
+          "描述": "app.js onLaunch先调用validateToken云函数，再调用syncDataToCloud(嵌套调用syncAllToCloud)，串行执行",
+          "位置": "app.js:64-77",
+          "建议": "validateToken可与首屏渲染并行，syncDataToCloud延迟到首屏后；或使用Promise.all并行(如不需要token验证结果)"
+        },
+        {
+          "严重程度": "P1",
+          "描述": "utils/api.js中matchSolutionPath函数失败后fallback到match-engine云函数做二次调用，增加一次完整冷启动请求",
+          "位置": "utils/api.js:101-122",
+          "建议": "使用CloudBase的HTTP触发器模式，或将两个引擎合并为一个云函数减少故障域"
+        },
+        {
+          "严重程度": "P2",
+          "描述": "document-vault/index和reminder/index每次onShow都调用云函数同步，即使刚同步完",
+          "位置": "pages/document-vault/index/index.js:30-51, pages/reminder/index/index.js:36-56",
+          "建议": "增加同步间隔控制(syncThrottle)，至少间隔30秒或仅在明确数据变更后才触发同步"
+        },
+        {
+          "严重程度": "P2",
+          "描述": "floating-ai的sendChatMessage每次都传递完整context对象(含activeProcess大对象)给云函数，增加请求体积",
+          "位置": "components/floating-ai/floating-ai.js:127-136",
+          "建议": "仅传递必要上下文摘要字段，移除activeProcess完整对象"
+        },
+        {
+          "严重程度": "P2",
+          "描述": "app.js的saveSession每次都调用api.syncUserProfile云函数上报状态，频繁写入",
+          "位置": "app.js:138-146",
+          "建议": "增加节流(throttle)，状态未变时不重复上报"
+        },
+        {
+          "严重程度": "P3",
+          "描述": "utils/api.js中所有HTTP请求默认15秒超时，云函数调用无超时设置",
+          "位置": "utils/api.js:22(15s), 各处callFunction无timeout",
+          "建议": "为wx.cloud.callFunction统一增加超时兜底(虽无原生参数，可用Promise.race包装)"
+        }
+      ]
+    },
+    {
+      "维度": "内存泄漏风险",
+      "评分": 60,
+      "满分": 100,
+      "等级": "中等",
+      "现状": "整体使用小程序原生框架，JS层面的内存泄漏风险较小，但存在几处潜在问题",
+      "问题": [
+        {
+          "严重程度": "P2",
+          "描述": "app.js中globalData.aiConversation数组持续增长(每次AI对话添加消息)，无上限控制",
+          "位置": "app.js:38-39, 203-208",
+          "建议": "限制aiConversation最大长度为100条，超出时移除最早的消息"
+        },
+        {
+          "严重程度": "P2",
+          "描述": "floating-ai组件saveHistory保存最近50条到Storage，但messages数组在data中无界增长",
+          "位置": "components/floating-ai/floating-ai.js:154,200-203",
+          "建议": "在setData前截断messages为最近50条，避免data中持有过多数据"
+        },
+        {
+          "严重程度": "P3",
+          "描述": "app.js emitPrivacyChange遍历所有页面页面栈(pages数组)调用onPrivacyModeChange，在页面栈较深时可能有性能影响",
+          "位置": "app.js:251-257",
+          "建议": "使用EventEmitter/观察者模式替代遍历页面栈，或在emit前检查pages.length"
+        },
+        {
+          "严重程度": "P3",
+          "描述": "pages/index/index.js confirmArchive中使用了var that=this保存上下文，但随后setTimeout中又调用this.loadAllData()混用",
+          "位置": "pages/index/index.js:231-274",
+          "建议": "统一使用箭头函数或this引用方式，避免上下文混淆"
+        }
+      ]
+    },
+    {
+      "维度": "图片/资源优化",
+      "评分": 30,
+      "满分": 100,
+      "等级": "严重",
+      "现状": "ai-avatar.png高达1.1MB，是所有Tab图标(300B级别)的3500倍+。资源加载策略不完善",
+      "问题": [
+        {
+          "严重程度": "P0",
+          "描述": "ai-avatar.png文件1.1MB，严重超标；作为AI助手头像显示，实际仅需约200x200px",
+          "位置": "images/ai-avatar.png",
+          "建议": "立即压缩至80KB以内(建议分辨率200x200px, WebP格式)；或上传至云存储使用CDN加载，本地仅保留占位图"
+        },
+        {
+          "严重程度": "P1",
+          "描述": "所有图片资源无懒加载配置，无WebP格式备选",
+          "位置": "全局images/",
+          "建议": "使用image组件的lazy-load属性；提供WebP格式备选(webp属性)；Tab图标使用SVG或iconfont替代PNG"
+        },
+        {
+          "严重程度": "P2",
+          "描述": "project.config.json中packOptions.ignore为空数组，未排除不必要的云函数node_modules或开发文件",
+          "位置": "project.config.json:52-55",
+          "建议": "配置ignore排除.skills/, .hermes/, .codebuddy/, cloudfunctions/*/node_modules/被打包到小程序前端"
+        },
+        {
+          "严重程度": "P2",
+          "描述": "无图片预加载或渐进式加载策略",
+          "位置": "全局",
+          "建议": "首页关键图片使用preload，非首屏图片使用懒加载"
+        }
+      ]
+    },
+    {
+      "维度": "长列表渲染性能",
+      "评分": 50,
+      "满分": 100,
+      "等级": "中等",
+      "现状": "Document Vault和Reminder页面使用全量数据数组直接setData渲染，无虚拟列表或分页机制",
+      "问题": [
+        {
+          "严重程度": "P1",
+          "描述": "document-vault/index每次加载时将所有证件全量渲染到categories数组中(含详细desc、status计算)，无分页上限",
+          "位置": "pages/document-vault/index/index.js:72-97",
+          "建议": "如证件数超过20个，启用分页加载(每次20条)或使用虚拟列表；wx:key确保使用唯一id"
+        },
+        {
+          "严重程度": "P2",
+          "描述": "reminder/index将reminders按today/upcoming分类过滤后直接全量setData(含复杂的formatReminder转换)，无上限",
+          "位置": "pages/reminder/index/index.js:61-76",
+          "建议": "限制列表最大显示20条，超出部分使用'查看更多'按钮；formatReminder计算密集操作考虑缓存结果"
+        },
+        {
+          "严重程度": "P2",
+          "描述": "pages/index/index的guideCategories(6项)、recommendedGuides(4项)和policyUpdates(2项)均硬编码在前端，虽然数据量小但结构固定",
+          "位置": "pages/index/index.js:106-119",
+          "建议": "当前量级可控(共12项)，但也建议设置wx:key确保diff效率"
+        },
+        {
+          "严重程度": "P3",
+          "描述": "floating-ai组件的messages数组包含完整对话历史，每次新消息都全量重新setData整个数组",
+          "位置": "components/floating-ai/floating-ai.js:118-157",
+          "建议": "使用数组追加语法(如'array[' + (messages.length) + ']')只更新新增项，避免全量diff"
+        }
+      ]
+    }
+  ],
+  "优先级修复路线图": [
+    {
+      "优先级": "P0-紧急",
+      "项目": [
+        "1. 配置app.json分包(subpackages)，将22个页面拆分到3个分包",
+        "2. 压缩ai-avatar.png从1.1MB至80KB以下，或迁移至云存储CDN",
+        "3. 配置project.config.json packOptions.ignore排除非打包文件"
+      ],
+      "预期收益": "包体积从>1.9MB降至<1MB，避免审核拒绝；首屏加载时间减少60%"
+    },
+    {
+      "优先级": "P1-高",
+      "项目": [
+        "1. 首屏优化：loadSession改为非阻塞，先渲染再验证token",
+        "2. 云函数冷启动优化：拆分user-auth(542行)和process-manager(570行)大文件",
+        "3. 网络请求优化：文档/提醒页面增加同步节流(≥30秒间隔)",
+        "4. setData优化：index页面拆分为分阶段渲染，增加数据变更检测",
+        "5. 长列表优化：证件夹和提醒器增加分页/上限(20条)"
+      ],
+      "预期收益": "首屏时间减少40%，云函数平均响应时间减少200-500ms"
+    },
+    {
+      "优先级": "P2-中",
+      "项目": [
+        "1. floating-ai组件setData合并和Storage防抖写入",
+        "2. 全局aiConversation增加长度上限(100条)",
+        "3. 增加骨架屏组件提升加载体验",
+        "4. 图片资源添加懒加载和WebP备选",
+        "5. 云函数统一增加超时兜底"
+      ],
+      "预期收益": "交互流畅度提升，内存稳定性改善"
+    }
+  ],
+  "技术栈评价": {
+    "框架选择": "微信原生小程序 + CloudBase云函数 - 技术选型合理，适合中小型项目",
+    "优势": [
+      "util/api.js设计良好，统一的云函数和HTTP请求封装",
+      "本地优先+云端同步架构(data/storage.js)符合隐私合规且减少网络依赖",
+      "lazyCodeLoading: requiredComponents已启用，组件按需加载",
+      "已在app.json中配置全局usingComponents，复用性好"
+    ],
+    "劣势": [
+      "缺少分包配置是最大短板",
+      "未使用小程序新的Skyline渲染引擎",
+      "无性能监控埋点或自定义测速",
+      "未使用wxs处理WXML中的复杂表达式(如日期格式化)"
+    ]
+  }
+}

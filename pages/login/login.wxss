@@ -1,0 +1,61 @@
+.login-page {
+  min-height: 100vh;
+  background: linear-gradient(180deg, var(--color-primary-dark) 0%, var(--color-primary) 50%, var(--color-bg) 50%);
+  display: flex;
+  flex-direction: column;
+}
+.login-hero {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  padding: 80rpx 40rpx 40rpx;
+}
+.login-logo { font-size: 80rpx; margin-bottom: 16rpx; }
+.login-title { font-size: 52rpx; font-weight: 800; color: #FFF; margin-bottom: 12rpx; }
+.login-subtitle { font-size: 28rpx; color: rgba(255,255,255,0.85); }
+.login-values {
+  display: flex; gap: 40rpx; margin-top: 48rpx;
+}
+.value-item { display: flex; flex-direction: column; align-items: center; gap: 8rpx; }
+.value-icon { font-size: 36rpx; }
+.value-text { font-size: 24rpx; color: rgba(255,255,255,0.8); }
+.login-actions {
+  padding: 40rpx 48rpx 60rpx;
+}
+
+
+.login-btn-wechat { margin-bottom: 24rpx; }
+.login-btn-phone { margin-bottom: 16rpx; }
+
+/* 手机号服务错误提示 */
+.login-error {
+  display: flex;
+  align-items: flex-start;
+  gap: 12rpx;
+  padding: 16rpx 20rpx;
+  margin-bottom: 16rpx;
+  background: #FFF7ED;
+  border: 1rpx solid #FED7AA;
+  border-radius: 12rpx;
+}
+.login-error-icon { font-size: 28rpx; flex-shrink: 0; margin-top: 2rpx; }
+.login-error-text {
+  font-size: 24rpx;
+  color: #C2410C;
+  line-height: 1.6;
+}
+
+.login-agreement { margin-top: 24rpx; margin-bottom: 24rpx; }
+.checkbox-group { display: flex; align-items: center; gap: 12rpx; }
+.checkbox {
+  width: 36rpx; height: 36rpx; border: 2rpx solid var(--color-border); border-radius: 6rpx;
+  display: flex; align-items: center; justify-content: center;
+  font-size: 24rpx; color: var(--color-primary);
+}
+.checkbox.checked { background: var(--color-primary); border-color: var(--color-primary); color: #FFF; }
+.agreement-text { font-size: 24rpx; color: var(--color-text-secondary); }
+.link { color: var(--color-primary); }
+.skip-login { text-align: center; padding: 16rpx; }
+.skip-text { font-size: 26rpx; color: var(--color-text-muted); }

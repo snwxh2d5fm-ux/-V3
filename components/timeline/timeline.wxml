@@ -1,0 +1,10 @@
+<view class="timeline-comp">
+  <view class="tl-item {{item.status}} fade-in" wx:for="{{items}}" wx:key="id" data-index="{{index}}" bindtap="onItemTap">
+    <view class="tl-dot {{item.status}}"></view>
+    <view class="tl-line" wx:if="{{index < items.length - 1}}"></view>
+    <view class="tl-content">
+      <text class="tl-name">{{item.name}}</text>
+      <text class="tl-desc">{{item.description || ''}}</text>
+    </view>
+  </view>
+</view>

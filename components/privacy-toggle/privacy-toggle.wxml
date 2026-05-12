@@ -1,0 +1,8 @@
+<view class="privacy-toggle">
+  <view class="mode-dot {{currentMode === item.key ? 'active' : ''}}"
+        wx:for="{{modes}}" wx:key="key"
+        data-mode="{{item.key}}"
+        bindtap="switchMode">
+    <text class="mode-icon">{{item.icon}}</text>
+  </view>
+</view>

@@ -1,0 +1,74 @@
+<!-- pages/mine/settings/settings.wxml -->
+<view class="page">
+  <!-- 账号 -->
+  <view class="section">
+    <text class="section-label">账号</text>
+    <view class="cell">
+      <text class="cell-label">手机号</text>
+      <text class="cell-value">{{phoneHash || '未绑定'}}</text>
+    </view>
+    <view class="cell" wx:if="{{memberSince}}">
+      <text class="cell-label">注册时间</text>
+      <text class="cell-value">{{memberSince}}</text>
+    </view>
+  </view>
+
+  <!-- 通知 -->
+  <view class="section">
+    <text class="section-label">通知</text>
+    <view class="cell switch-cell">
+      <text class="cell-label">提醒通知</text>
+      <switch checked="{{notifyReminder}}" bindchange="toggleReminder" color="#1a73e8"/>
+    </view>
+    <view class="cell switch-cell">
+      <text class="cell-label">政策变更</text>
+      <switch checked="{{notifyPolicy}}" bindchange="togglePolicy" color="#1a73e8"/>
+    </view>
+    <view class="cell switch-cell">
+      <text class="cell-label">版本更新</text>
+      <switch checked="{{notifyUpdate}}" bindchange="toggleUpdate" color="#1a73e8"/>
+    </view>
+  </view>
+
+  <!-- 隐私 -->
+  <view class="section">
+    <text class="section-label">隐私</text>
+    <view class="cell arrow" bindtap="goPrivacy">
+      <text class="cell-label">隐私中心</text>
+      <text class="cell-value">脱敏级别: {{privacyMode === 'L1' ? '绝对' : privacyMode === 'L2' ? '泛化' : '可保留'}}</text>
+    </view>
+  </view>
+
+  <!-- 存储 -->
+  <view class="section">
+    <text class="section-label">存储</text>
+    <view class="cell">
+      <text class="cell-label">本地缓存</text>
+      <text class="cell-value">{{cacheSize}}</text>
+    </view>
+    <view class="cell arrow" bindtap="clearCache">
+      <text class="cell-label danger">清除缓存</text>
+    </view>
+  </view>
+
+  <!-- 关于 -->
+  <view class="section">
+    <view class="cell arrow" bindtap="goAbout">
+      <text class="cell-label">关于住港伴</text>
+      <text class="cell-value">v3.0</text>
+    </view>
+  </view>
+
+  <!-- 危险操作 -->
+  <view class="section danger-zone">
+    <text class="section-label">账户</text>
+    <view class="cell arrow" bindtap="logout">
+      <text class="cell-label">退出登录</text>
+    </view>
+    <view class="cell arrow" bindtap="deleteAccount">
+      <text class="cell-label danger">注销账户</text>
+    </view>
+  </view>
+
+  <floating-ai visible="{{true}}" />
+</view>

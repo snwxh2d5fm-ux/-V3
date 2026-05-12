@@ -1,0 +1,9 @@
+{
+  "name": "policy-monitor",
+  "version": "1.0.0",
+  "description": "住港伴 — 香港入境政策动态监控",
+  "main": "index.js",
+  "dependencies": {
+    "wx-server-sdk": "latest"
+  }
+}

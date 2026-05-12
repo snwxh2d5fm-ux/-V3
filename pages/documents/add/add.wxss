@@ -1,0 +1,353 @@
+/* 住港伴 v3 — 添加证件页样式 */
+
+/* ===== Step 1: 输入方式选择 ===== */
+.input-modes {
+  display: flex;
+  flex-direction: column;
+  gap: 20rpx;
+  padding: 32rpx 24rpx;
+}
+.input-mode-card {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 10rpx;
+  padding: 36rpx 28rpx;
+  background: var(--white);
+  border-radius: var(--radius);
+  box-shadow: var(--shadow-sm);
+  border: 2rpx solid transparent;
+  transition: all 0.2s;
+}
+.input-mode-card:active {
+  border-color: var(--blue);
+  background: var(--blue-light);
+  transform: scale(0.98);
+}
+.input-mode-icon {
+  font-size: 64rpx;
+}
+.input-mode-title {
+  font-size: var(--font-lg);
+  font-weight: 700;
+  color: var(--gray-800);
+}
+.input-mode-desc {
+  font-size: var(--font-xs);
+  color: var(--gray-500);
+}
+.privacy-notice {
+  margin: 0 24rpx;
+  padding: 20rpx 24rpx;
+  background: var(--green-light);
+  border-radius: var(--radius-sm);
+  font-size: var(--font-xs);
+  color: var(--green-dark);
+  text-align: center;
+  line-height: 1.6;
+}
+
+/* ===== Step 2: 图片预览 + OCR状态 ===== */
+.image-preview {
+  margin: 16rpx 24rpx;
+  border-radius: var(--radius);
+  overflow: hidden;
+  background: var(--gray-100);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  height: 480rpx;
+}
+.preview-img {
+  width: 100%;
+  height: 100%;
+}
+
+.ocr-status {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  padding: 48rpx;
+  gap: 14rpx;
+}
+.ocr-spinner {
+  width: 48rpx;
+  height: 48rpx;
+  border: 4rpx solid var(--gray-200);
+  border-top-color: var(--blue);
+  border-radius: 50%;
+  animation: spin 0.8s linear infinite;
+}
+@keyframes spin {
+  to { transform: rotate(360deg); }
+}
+.ocr-status-text {
+  font-size: var(--font-md);
+  font-weight: 600;
+  color: var(--gray-700);
+}
+.ocr-status-sub {
+  font-size: var(--font-xs);
+  color: var(--gray-400);
+}
+
+.quality-warnings {
+  margin: 12rpx 24rpx;
+  padding: 20rpx 24rpx;
+  background: var(--orange-light);
+  border-radius: var(--radius-sm);
+  border-left: 6rpx solid var(--orange);
+}
+
+/* 隐私说明卡片 */
+.privacy-inline {
+  margin: 4rpx 24rpx 20rpx;
+  padding: 20rpx 24rpx;
+  background: linear-gradient(135deg, #ECFDF5 0%, #F0FDF4 100%);
+  border-radius: var(--radius-sm);
+  border: 1rpx solid #A7F3D0;
+  display: flex;
+  align-items: flex-start;
+  gap: 16rpx;
+}
+.privacy-inline__icon {
+  font-size: 36rpx;
+  line-height: 1;
+  flex-shrink: 0;
+  margin-top: 2rpx;
+}
+.privacy-inline__body {
+  display: flex;
+  flex-direction: column;
+  gap: 4rpx;
+}
+.privacy-inline__title {
+  font-size: 26rpx;
+  font-weight: 700;
+  color: #065F46;
+}
+.privacy-inline__desc {
+  font-size: 22rpx;
+  color: #047857;
+  line-height: 1.6;
+}
+.quality-title {
+  font-size: var(--font-sm);
+  font-weight: 700;
+  color: var(--orange);
+  display: block;
+  margin-bottom: 8rpx;
+}
+.quality-item {
+  font-size: var(--font-xs);
+  color: #C2410C;
+  display: block;
+  line-height: 1.8;
+}
+
+/* ===== Step 3: OCR结果确认 ===== */
+.image-thumb {
+  margin: 16rpx 24rpx;
+  position: relative;
+  border-radius: var(--radius);
+  overflow: hidden;
+  height: 200rpx;
+  background: var(--gray-100);
+}
+.thumb-img {
+  width: 100%;
+  height: 100%;
+  opacity: 0.7;
+}
+.thumb-badge {
+  position: absolute;
+  top: 12rpx;
+  right: 12rpx;
+  font-size: 36rpx;
+  background: rgba(255,255,255,0.9);
+  border-radius: 50%;
+  width: 56rpx;
+  height: 56rpx;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+/* ===== 极低置信度横幅 ===== */
+.low-confidence-banner {
+  display: flex; gap: 12rpx; align-items: flex-start;
+  margin: 0 24rpx 16rpx; padding: 20rpx 24rpx;
+  background: #FEF2F2; border: 2rpx solid #FECACA; border-radius: 14rpx;
+}
+.low-confidence-icon { font-size: 36rpx; flex-shrink: 0; }
+.low-confidence-body { flex: 1; }
+.low-confidence-title { font-size: 28rpx; font-weight: 700; color: #DC2626; display: block; margin-bottom: 4rpx; }
+.low-confidence-desc { font-size: 24rpx; color: #991B1B; line-height: 1.6; display: block; }
+
+.confidence-hint {
+  font-size: 24rpx;
+  color: var(--orange);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 6rpx;
+  margin-top: 12rpx;
+  padding: 10rpx 16rpx;
+  background: var(--orange-light);
+  border-radius: 10rpx;
+  font-weight: 500;
+}
+
+/* OCR字段行 */
+.field-row {
+  display: flex;
+  align-items: center;
+  padding: 16rpx 28rpx;
+  border-bottom: 1rpx solid var(--gray-100);
+  gap: 16rpx;
+}
+.field-label {
+  font-size: var(--font-sm);
+  color: var(--gray-500);
+  width: 140rpx;
+  flex-shrink: 0;
+  font-weight: 500;
+}
+.field-input {
+  flex: 1;
+  font-size: var(--font-md);
+  color: var(--gray-800);
+  text-align: right;
+  border: none;
+  background: transparent;
+}
+
+/* ===== Step 4: 所属人选择 ===== */
+.owner-select {
+  padding: 0 24rpx;
+  margin-top: 20rpx;
+}
+.owner-select__label {
+  font-size: 28rpx;
+  font-weight: 600;
+  color: var(--gray-700);
+  margin-bottom: 16rpx;
+  display: block;
+}
+.owner-select__options {
+  display: flex;
+  gap: 16rpx;
+}
+.owner-opt {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 6rpx;
+  padding: 20rpx 12rpx;
+  background: var(--white);
+  border-radius: var(--radius);
+  border: 2rpx solid var(--gray-200);
+  position: relative;
+  transition: all 0.2s;
+}
+.owner-opt--active {
+  border-color: var(--blue);
+  background: var(--blue-light);
+}
+.owner-opt__icon {
+  font-size: 40rpx;
+}
+.owner-opt__label {
+  font-size: 26rpx;
+  color: var(--gray-500);
+}
+.owner-opt--active .owner-opt__label {
+  color: var(--blue);
+  font-weight: 600;
+}
+.owner-opt__check {
+  position: absolute;
+  top: 8rpx;
+  right: 8rpx;
+  width: 32rpx;
+  height: 32rpx;
+  border-radius: 50%;
+  background: var(--blue);
+  color: var(--white);
+  font-size: 20rpx;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+.owner-name-input {
+  margin-top: 16rpx;
+  padding: 14rpx 20rpx;
+  background: var(--white);
+  border-radius: var(--radius);
+  border: 2rpx solid var(--gray-200);
+  font-size: 28rpx;
+  width: 100%;
+  box-sizing: border-box;
+}
+
+/* ===== Step 4: 分类选择 ===== */
+.category-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 16rpx;
+  padding: 0 24rpx;
+  margin: 20rpx 0;
+}
+.category-card {
+  position: relative;
+  background: var(--white);
+  border-radius: var(--radius);
+  padding: 24rpx 20rpx;
+  text-align: center;
+  border: 2rpx solid var(--gray-200);
+  transition: all 0.2s;
+}
+.category-card:active {
+  transform: scale(0.97);
+}
+.category-card.selected {
+  border-color: var(--blue);
+  background: var(--blue-light);
+}
+.category-icon {
+  font-size: 40rpx;
+  display: block;
+  margin-bottom: 8rpx;
+}
+.category-label {
+  font-size: var(--font-md);
+  font-weight: 700;
+  display: block;
+  color: var(--gray-800);
+}
+.category-desc {
+  font-size: var(--font-xs);
+  color: var(--gray-400);
+  display: block;
+  margin-top: 4rpx;
+}
+.category-check {
+  position: absolute;
+  top: 10rpx;
+  right: 10rpx;
+  width: 36rpx;
+  height: 36rpx;
+  border-radius: 50%;
+  background: var(--blue);
+  color: var(--white);
+  font-size: 22rpx;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+/* 按钮行 */
+.btn-flex {
+  flex: 1;
+}

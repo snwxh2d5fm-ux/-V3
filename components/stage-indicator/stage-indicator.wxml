@@ -1,0 +1,22 @@
+<!-- 7阶段流程指示器 — PRD v4 标准组件 -->
+<view class="stage-indicator">
+  <scroll-view class="stage-track" scroll-x="true" enhanced="true" show-scrollbar="{{false}}">
+    <view class="stage-nodes">
+      <block wx:for="{{stages}}" wx:key="id">
+        <view class="stage-node {{item.status}}">
+          <view class="stage-dot {{item.status}}">
+            <text wx:if="{{item.status === 'done'}}">✓</text>
+            <text wx:elif="{{item.status === 'locked'}}">🔒</text>
+            <text wx:else>{{index + 1}}</text>
+          </view>
+          <text class="stage-label {{item.status}}">{{item.label}}</text>
+        </view>
+        <view wx:if="{{index < stages.length - 1}}" class="stage-connector {{item.status}}"></view>
+      </block>
+    </view>
+  </scroll-view>
+  <!-- 进度条 -->
+  <view class="stage-progress-bar">
+    <view class="stage-progress-fill" style="width: {{progress}}%"></view>
+  </view>
+</view>

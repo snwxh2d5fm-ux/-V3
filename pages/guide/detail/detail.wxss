@@ -1,0 +1,1 @@
+.collapse-list{margin:0 0 16rpx}.collapse-header .arrow{font-size:var(--font-xs);color:var(--gray-400);transition:transform .2s}.collapse-header.open .arrow{transform:rotate(180deg)}

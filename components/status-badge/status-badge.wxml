@@ -1,0 +1,30 @@
+<view class="badge-bar" wx:if="{{identityLabel}}">
+  <!-- 身份标签（点击拦截） -->
+  <view class="badge badge--identity" bindtap="onTapIdentity">
+    <text class="badge__lock">🔒</text>
+    <text class="badge__text">{{identityIcon}} {{identityLabel}}</text>
+  </view>
+
+  <!-- 路径标签（可切换） -->
+  <view class="badge badge--path" wx:if="{{pathLabel}}" bindtap="onTapPath">
+    <text class="badge__text">{{pathLabel}}</text>
+    <text class="badge__arrow">›</text>
+  </view>
+</view>
+
+<!-- 支付拦截弹窗 -->
+<view class="paywall-overlay" wx:if="{{showPaywall}}" bindtap="closePaywall" role="dialog" aria-modal="true" aria-label="切换身份状态确认">
+  <view class="paywall-card" catchtap="">
+    <text class="paywall__icon">⚠️</text>
+    <text class="paywall__title">切换身份状态</text>
+    <text class="paywall__desc">个人身份状态确认后不允许更改。切换身份状态将影响之前所有的评估结果、流程进度和材料关联。</text>
+    <view class="paywall__price">
+      <text class="paywall__amount">¥599</text>
+      <text class="paywall__note">验证费用 · 切换后历史数据将重置</text>
+    </view>
+    <view class="paywall__actions">
+      <button class="btn btn--outline" bindtap="closePaywall">取消</button>
+      <button class="btn btn--primary" bindtap="confirmPaywall">支付 ¥599</button>
+    </view>
+  </view>
+</view>

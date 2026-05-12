@@ -1,0 +1,136 @@
+<!-- 住港伴 v4.5 — 攻略详情页 (结构化正文渲染) -->
+<view class="container">
+  <view class="loading-state" wx:if="{{loading}}"><text class="loading-icon">⏳</text><text class="loading-text">正在加载攻略...</text></view>
+  <view class="empty-state" wx:elif="{{notFound}}"><text class="empty-icon">🔍</text><text class="empty-text">攻略不存在或已被删除</text><button class="btn btn-outline btn-sm" bindtap="goBack">返回攻略书</button></view>
+  <view class="empty-state" wx:elif="{{loadError}}"><text class="empty-icon">😵</text><text class="empty-text">加载失败</text><button class="btn btn-outline btn-sm" bindtap="retry">重试</button></view>
+
+  <scroll-view class="detail-content" scroll-y="true" wx:else>
+
+    <!-- 攻略头卡片 -->
+    <view class="hero-card">
+      <view class="hero-top">
+        <text class="hero-icon">{{guide.icon || '📄'}}</text>
+        <view class="hero-info">
+          <text class="hero-title">{{guide.title}}</text>
+          <text class="hero-desc" wx:if="{{guide.desc}}">{{guide.desc}}</text>
+          <view class="hero-meta">
+            <text class="hero-meta-item">📎 {{guide.source || '攻略书'}}</text>
+            <text class="hero-meta-item">🕐 {{guide.updated || ''}}</text>
+            <view class="confidence-tag-mini" style="background:{{guide.confidenceInfo.bg}};color:{{guide.confidenceInfo.color}}" bindtap="toggleConfidenceInfo">[{{guide.confidence}}] {{guide.confidenceInfo.label}}</view>
+          </view>
+        </view>
+      </view>
+      <view class="hero-tags" wx:if="{{guide.tags && guide.tags.length > 0}}">
+        <text class="hero-tag" wx:for="{{guide.tags}}" wx:key="*this">{{item}}</text>
+      </view>
+      <view class="hero-context" wx:if="{{guide.applicableConditions || guide.legalBasis}}">
+        <view class="ctx-item" wx:if="{{guide.applicableConditions}}"><text class="ctx-icon">👤</text><text class="ctx-text">{{guide.applicableConditions}}</text></view>
+        <view class="ctx-item ctx-legal" wx:if="{{guide.legalBasis}}"><text class="ctx-icon">📜</text><text class="ctx-text legal">{{guide.legalBasis}}</text></view>
+      </view>
+    </view>
+
+    <!-- D/E级横幅 -->
+    <view class="banner-d" wx:if="{{guide.confidence === 'D'}}"><text class="banner-icon">⚠️</text><text class="banner-text">{{guide.confidenceInfo.bannerText || '以下内容基于合理推断，入境处有酌情权，建议个案咨询'}}</text></view>
+    <view class="banner-e" wx:elif="{{guide.confidence === 'E'}}"><text class="banner-icon">⛔</text><text class="banner-text">此问题建议直接咨询入境处或持证律师</text></view>
+
+    <!-- FAQ 模式 -->
+    <view class="card faq-card" wx:if="{{contentType === 'faq'}}">
+      <view class="faq-q"><view class="faq-badge q">Q</view><text class="faq-q-text">{{guide.title}}</text></view>
+      <view class="faq-a"><view class="faq-badge a">A</view><text class="faq-a-text">{{guide.faqAnswer}}</text></view>
+    </view>
+
+    <!-- 步骤模式 -->
+    <block wx:if="{{contentType === 'steps' && guide.steps && guide.steps.length > 0}}">
+      <view class="section-bar"><view class="bar-accent"></view><text class="bar-title">📋 操作步骤</text></view>
+      <view class="steps-wrap">
+        <view class="step-card" wx:for="{{guide.steps}}" wx:key="order" wx:for-index="idx">
+          <view class="step-num">{{idx + 1}}</view>
+          <view class="step-body">
+            <text class="step-title">{{item.title}}</text>
+            <text class="step-desc" wx:if="{{item.description}}">{{item.description}}</text>
+            <view class="step-tips" wx:if="{{item.tips && item.tips.length > 0}}"><text class="step-tip" wx:for="{{item.tips}}" wx:key="*this" wx:for-item="tip">💡 {{tip}}</text></view>
+            <text class="step-time" wx:if="{{item.estimatedTime}}">⏱ 预计耗时: {{item.estimatedTime}}</text>
+          </view>
+        </view>
+      </view>
+    </block>
+
+    <!-- 长文模式 (解析版) -->
+    <block wx:if="{{contentType === 'article' && parsedSections && parsedSections.length > 0}}">
+      <view wx:for="{{parsedSections}}" wx:key="heading" wx:for-item="section">
+        <view class="section-bar"><view class="bar-accent"></view><text class="bar-title">{{section.heading}}</text></view>
+        <view class="article-card">
+          <block wx:for="{{section.segments}}" wx:key="*this" wx:for-item="seg">
+            <text class="seg-heading" wx:if="{{seg.type === 'heading'}}">{{seg.content}}</text>
+            <view class="seg-numbered" wx:elif="{{seg.type === 'numbered'}}"><view class="num-dot"></view><text class="num-text">{{seg.content}}</text></view>
+            <view class="seg-bullet" wx:elif="{{seg.type === 'bullet'}}"><text class="bul-mark">•</text><text class="bul-text">{{seg.content}}</text></view>
+            <view class="seg-keypoint" wx:elif="{{seg.type === 'keypoint'}}"><text class="kp-icon">⚡</text><text class="kp-text">{{seg.content}}</text></view>
+            <text class="seg-para" wx:else>{{seg.content}}</text>
+          </block>
+        </view>
+      </view>
+    </block>
+
+    <!-- 纯文本fallback -->
+    <view class="article-card" wx:elif="{{contentType === 'article' && guide.content}}"><text class="seg-para">{{guide.content}}</text></view>
+
+    <!-- 材料清单 -->
+    <block wx:if="{{guide.materials && guide.materials.length > 0}}">
+      <view class="section-bar"><view class="bar-accent accent-green"></view><text class="bar-title">📎 所需材料</text></view>
+      <view class="materials-card">
+        <view class="mat-item" wx:for="{{guide.materials}}" wx:key="*this"><view class="mat-check"><text>✓</text></view><text class="mat-name">{{item}}</text></view>
+      </view>
+    </block>
+
+    <!-- 避坑指南 -->
+    <block wx:if="{{guide.pitfalls && guide.pitfalls.length > 0}}">
+      <view class="section-bar"><view class="bar-accent accent-orange"></view><text class="bar-title">⚠️ 避坑指南</text></view>
+      <view class="pit-list">
+        <view class="pit-item" wx:for="{{guide.pitfalls}}" wx:key="*this" wx:for-index="pidx"><view class="pit-num">{{pidx + 1}}</view><text class="pit-text">{{item}}</text></view>
+      </view>
+    </block>
+
+    <!-- 评分 -->
+    <view class="feedback-card">
+      <text class="fb-ask">这篇攻略对你有用吗？</text>
+      <view class="fb-actions">
+        <view class="fb-btn {{userRating === 'up' ? 'fb-up' : ''}}" bindtap="rateArticle" data-rating="up"><text>👍 有用</text><text class="fb-count" wx:if="{{guide.helpful > 0}}">{{guide.helpful}}</text></view>
+        <view class="fb-btn {{userRating === 'down' ? 'fb-down' : ''}}" bindtap="rateArticle" data-rating="down"><text>👎 没用</text></view>
+      </view>
+    </view>
+
+    <view class="action-row">
+      <view class="act-btn" bindtap="toggleBookmark"><text>🔖 收藏攻略</text></view>
+      <button class="act-share" open-type="share"><text>📤 分享给朋友</text></button>
+    </view>
+
+    <block wx:if="{{relatedGuides.length > 0}}">
+      <view class="section-bar"><view class="bar-accent accent-purple"></view><text class="bar-title">📚 相关攻略</text></view>
+      <view class="related-card" wx:for="{{relatedGuides}}" wx:key="id" bindtap="navigateToRelated" data-id="{{item.id}}">
+        <text class="rel-icon">{{item.icon || '📄'}}</text>
+        <view class="rel-info"><text class="rel-title">{{item.title}}</text><view class="rel-meta"><text class="rel-source">{{item.source || ''}}</text><text class="rel-rating">⭐ {{item.rating || '4.0'}}</text></view></view>
+        <text class="rel-arrow">→</text>
+      </view>
+    </block>
+
+    <view class="page-end"><text class="end-line">— 住港伴攻略书 · 持续更新 —</text><text class="end-id">ID: {{guideId}}</text></view>
+
+    <!-- 置信度弹窗 -->
+    <view class="popup-mask" wx:if="{{showConfidenceInfo}}" bindtap="toggleConfidenceInfo" role="dialog" aria-modal="true" aria-label="信息置信度说明">
+      <view class="popup-card" catchtap="">
+        <text class="popup-title">📊 信息置信度说明</text>
+        <view class="popup-grid">
+          <view class="pop-row"><view class="pop-badge" style="background:#ECFDF5;color:#059669">A 法源明确</view><text class="pop-desc">Cap.115/基本法明确，无争议</text></view>
+          <view class="pop-row"><view class="pop-badge" style="background:#EFF6FF;color:#2563EB">B 政策明确</view><text class="pop-desc">入境处政策明确，有公开指引</text></view>
+          <view class="pop-row"><view class="pop-badge" style="background:#FFF7ED;color:#EA580C">C 多数实践</view><text class="pop-desc">多数实践一致，入境处有酌情权</text></view>
+          <view class="pop-row"><view class="pop-badge" style="background:#FEF2F2;color:#DC2626">D 合理推断</view><text class="pop-desc">法律/政策未明确，建议个案咨询</text></view>
+          <view class="pop-row"><view class="pop-badge" style="background:#F3F4F6;color:#9CA3AF">E 无法确认</view><text class="pop-desc">须咨询入境处或持证律师</text></view>
+        </view>
+        <button class="pop-close" bindtap="toggleConfidenceInfo">知道了</button>
+      </view>
+    </view>
+
+  </scroll-view>
+
+  <floating-ai visible="{{true}}" />
+</view>

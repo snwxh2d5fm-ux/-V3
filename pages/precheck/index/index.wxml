@@ -1,0 +1,23 @@
+<view class="container">
+  <view class="page-header">
+    <text class="page-header__title">效率宝</text>
+    <text class="page-header__subtitle">AI隐身预审——帮你查漏补缺、纠错优化，但不替代你的判断</text>
+  </view>
+  <view class="card">
+    <text class="card__title">选择流程进行预审</text>
+    <view class="process-option {{selectedProcess === item.id ? 'selected' : ''}}"
+          wx:for="{{processes}}" wx:key="id" data-id="{{item.id}}" bindtap="selectProcess">
+      <text class="po-name">{{item.name}}</text>
+      <text class="po-meta">{{item.stages.length}}阶段 · {{item.estimatedMonths}}个月</text>
+    </view>
+  </view>
+  <button class="btn btn--primary btn--block btn--lg confirm-btn" bindtap="runCheck" disabled="{{!selectedProcess}}">
+    开始预审
+  </button>
+  <view class="card card--outlined precheck-intro">
+    <text class="intro-title">💡 预审功能说明</text>
+    <text class="intro-text">• 完整性检查：逐项核验材料是否准备齐全\n• 格式合规：检查文档格式是否符合入境处标准\n• 一致性检查：跨文档比对姓名、日期、公司名\n• 矫正标注：标注问题位置并提供修正建议\n• 所有检查在本地完成，不上传原始材料</text>
+  </view>
+
+  <floating-ai visible="{{true}}" />
+</view>
