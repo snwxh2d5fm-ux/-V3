@@ -28,7 +28,8 @@ Page({
     ocrProcessing: false,        // OCR处理中
 
     // 质量检测
-    qualityIssues: [],           // 图片质量问题
+    qualityIssues: [],           // 图片质量问题(旧)
+    qualityResult: null,         // 质量检测结果(新·6项)
 
     // 分类选项 — 对齐PRD七大类
     categories: [
@@ -117,51 +118,27 @@ Page({
     this.setData({ inputMode: 'manual', step: 4 });
   },
 
-  // ========== Step 2: 图片处理 ==========
+  // ========== Step 2: 图片处理（仅质量检测，不OCR） ==========
 
-  /**
-   * 处理图片 — 质量检测 → 压缩 → 上传 → OCR
-   * 正确流程: compressImage → cloud.uploadFile → 传 fileID 给云函数
-   */
   async processImage(imagePath) {
-    this.setData({ imagePath, step: 2, ocrProcessing: true, qualityIssues: [] });
-
-    // 图片质量检测
-    try {
-      const quality = await checkImageQuality(imagePath);
-      if (!quality.pass) {
-        this.setData({ qualityIssues: quality.issues || ['图片质量较低，可能影响识别效果'] });
-      }
-    } catch (e) {
-      console.log('[OCR] 质量检测跳过:', e);
-    }
+    this.setData({ imagePath, step: 2, qualityIssues: [] });
 
     // 转为base64用于预览
     this.readImageBase64(imagePath);
 
-    // 压缩+缩放图片（降低上传/处理体积，加速OCR）
-    var compressedPath = imagePath;
+    // 本地质量检测（6项，<500ms）
     try {
-      compressedPath = await this.shrinkImage(imagePath, 1500);
+      var result = await checkImageQuality(imagePath);
+      this.setData({ qualityResult: result });
     } catch (e) {
-      console.log('[OCR] 缩放跳过，使用原图:', e);
+      console.log('[QC] 质量检测异常:', e);
+      this.setData({ qualityResult: { pass: true, score: 100, issues: [], summary: '基础' } });
     }
-    try {
-      var compressRes = await wxCompressImage(compressedPath);
-      compressedPath = compressRes;
-    } catch (e) {
-      console.log('[OCR] 压缩跳过:', e);
-    }
+  },
 
-    // 上传到云存储→获取fileID→传给云函数OCR
-    try {
-      var fileID = await this.uploadToCloud(compressedPath);
-      await this.runOCR(fileID);
-    } catch (e) {
-      console.error('[OCR] 上传失败:', e);
-      wx.showToast({ title: '图片上传失败，请手动填写', icon: 'none' });
-      this.setData({ step: 4, ocrProcessing: false });
-    }
+  /** 确认图片，进入手动填写 */
+  confirmImage() {
+    this.setData({ step: 3, docType: 'unknown', docTypeLabel: '手动录入' });
   },
 
   /** 缩放图片到maxPx以内，大幅加速OCR */

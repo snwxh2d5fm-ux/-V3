@@ -145,7 +145,7 @@ module.exports = {
           "steps": [
             { "id": "s2_1", "name": "在线递交申请(审批~4周 [A])", "confidence": "A" },
             { "id": "s2_2", "name": "下载e-Visa [A]", "confidence": "A" },
-            { "id": "s2_3", "name": "赴港激活签证 [A]", "confidence": "A" }
+            { "id": "s2_3", "name": "携e-Visa赴港入境·领取小白条 [A]", "confidence": "A" }
           ]
         },
         {

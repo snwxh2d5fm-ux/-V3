@@ -347,6 +347,39 @@
   justify-content: center;
 }
 
+/* ═══ 拍照指引 ═══ */
+.input-modes--compact { display: flex; gap: 16rpx; padding: 16rpx 24rpx 0; }
+.input-mode-chip { flex: 1; display: flex; flex-direction: column; align-items: center; padding: 20rpx 12rpx; border-radius: 16rpx; background: #FFF; border: 2rpx solid #E5E7EB; transition: all 0.15s; }
+.input-mode-chip:active { border-color: var(--blue); background: #E8F0FE; }
+.input-mode-chip__icon { font-size: 36rpx; }
+.input-mode-chip__label { font-size: 22rpx; color: #6B7280; margin-top: 6rpx; font-weight: 500; }
+.capture-guide { margin: 20rpx 24rpx 0; padding: 24rpx; border-radius: 16rpx; background: #F9FAFB; border: 1rpx solid #F3F4F6; }
+.capture-guide__title { font-size: 28rpx; font-weight: 700; color: #111827; margin-bottom: 16rpx; }
+.capture-guide__list { display: flex; flex-direction: column; gap: 10rpx; }
+.capture-guide__item { display: flex; align-items: flex-start; gap: 10rpx; font-size: 24rpx; color: #374151; line-height: 1.5; }
+.capture-guide__icon { flex-shrink: 0; width: 32rpx; text-align: center; }
+.capture-guide__note { display: block; margin-top: 16rpx; padding: 12rpx 16rpx; border-radius: 10rpx; background: #EFF6FF; font-size: 22rpx; color: #2563EB; line-height: 1.5; }
+
+/* ═══ 质量检测卡 ═══ */
+.quality-card { margin: 20rpx 24rpx; padding: 24rpx; border-radius: 16rpx; background: #FFF; box-shadow: 0 2rpx 8rpx rgba(0,0,0,0.04); }
+.quality-score-row { display: flex; justify-content: space-between; align-items: center; margin-bottom: 12rpx; }
+.quality-score-label { font-size: 28rpx; font-weight: 600; color: #111827; }
+.quality-score { font-size: 28rpx; font-weight: 800; padding: 4rpx 16rpx; border-radius: 8rpx; }
+.quality-score--优 { color: #059669; background: #ECFDF5; }
+.quality-score--良 { color: #2563EB; background: #EFF6FF; }
+.quality-score--一般 { color: #EA580C; background: #FFF7ED; }
+.quality-score--差 { color: #DC2626; background: #FEF2F2; }
+.quality-bar { height: 12rpx; border-radius: 6rpx; background: #F3F4F6; margin-bottom: 8rpx; overflow: hidden; }
+.quality-bar__fill { height: 100%; border-radius: 6rpx; transition: width 0.5s ease; }
+.quality-bar__fill--优 { background: #059669; }
+.quality-bar__fill--良 { background: #2563EB; }
+.quality-bar__fill--一般 { background: #EA580C; }
+.quality-bar__fill--差 { background: #DC2626; }
+.quality-score-hint { font-size: 22rpx; color: #9CA3AF; margin-bottom: 16rpx; }
+.quality-issue { display: flex; align-items: center; gap: 8rpx; padding: 6rpx 0; font-size: 24rpx; color: #6B7280; }
+.quality-issue__icon { flex-shrink: 0; }
+.quality-issue__msg { flex: 1; }
+
 /* 按钮行 */
 .btn-flex {
   flex: 1;

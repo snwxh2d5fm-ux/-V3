@@ -44,7 +44,7 @@
 
           <!-- 消息气泡 -->
           <view class="bubble {{item.role}}">
-            <text class="bubble-text" user-select>{{item.content}}</text>
+            <rich-text class="bubble-text" nodes="<div style='font-size:28rpx;line-height:1.8;color:#374151'>{{item.content}}</div>" user-select></rich-text>
             <!-- 快捷回复按钮 -->
             <view wx:if="{{item.quickReplies && item.quickReplies.length > 0}}" class="quick-replies">
               <view

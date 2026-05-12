@@ -57,6 +57,27 @@ Page({
 
   goBack: function() {
     wx.navigateBack();
+  },
+
+  deleteOrder: function(e) {
+    var orderId = e.currentTarget.dataset.id;
+    var that = this;
+    wx.showModal({
+      title: '删除订单',
+      content: '确定删除该订单记录？删除后不可恢复。',
+      confirmColor: '#DC2626',
+      success: function(res) {
+        if (res.confirm) {
+          var orders = that.data.orders.filter(function(o) { return o.orderId !== orderId; });
+          that.setData({ orders: orders, empty: orders.length === 0 });
+          // 同步删除本地缓存
+          var local = wx.getStorageSync('__user_orders__') || [];
+          local = local.filter(function(o) { return o.orderId !== orderId; });
+          wx.setStorageSync('__user_orders__', local);
+          wx.showToast({ title: '已删除', icon: 'none' });
+        }
+      }
+    });
   }
 });
 

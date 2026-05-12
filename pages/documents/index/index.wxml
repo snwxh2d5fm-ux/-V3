@@ -178,17 +178,7 @@
       </view>
     </view>
 
-    <!-- ── SmartUploadBar 智能上传入口 ── -->
-    <view class="smart-bar" bindtap="smartUpload">
-      <view class="smart-bar__icon"></view>
-      <view class="smart-bar__body">
-        <text class="smart-bar__title">上传任意文档，系统智能分类</text>
-        <text class="smart-bar__hint" wx:if="{{smartUploadSuggestion}}">
-          试试上传「{{smartUploadSuggestion}}」
-        </text>
-      </view>
-      <view class="smart-bar__btn"></view>
-    </view>
+    <!-- 智能上传已移除 — 仅保留卡槽系统 -->
 
     <!-- ── CloudStorageIndicator 云存储用量 ── -->
     <view class="cloud-bar" wx:if="{{hasCloudStorage}}">
@@ -327,10 +317,6 @@
         </view>
       </view>
 
-      <view class="overflow__add" bindtap="smartUpload">
-        <text class="overflow__add-icon">+</text>
-        <text>添加文件</text>
-      </view>
     </view>
 
     <!-- ── ArchivedSection 已归档材料折叠区 ── -->

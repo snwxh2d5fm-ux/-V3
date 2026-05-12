@@ -87,9 +87,11 @@ Page({
   loadUserPath() {
     try {
       var app = getApp();
-      // 三级回退：USER_PROFILE > globalData.selectedPath > activeProcess.pathType/templateId
+      // 四级回退：SESSION > USER_PROFILE > globalData > activeProcess
+      var session = wx.getStorageSync('__session__') || wx.getStorageSync('session') || {};
       var userData = wx.getStorageSync(CONSTANTS.STORAGE_KEYS.USER_PROFILE) || {};
-      var path = userData.selectedPath
+      var path = session.selectedPath
+        || userData.selectedPath
         || (app && app.globalData && app.globalData.selectedPath)
         || '';
       // 若仍为空，尝试从 activeProcess 提取

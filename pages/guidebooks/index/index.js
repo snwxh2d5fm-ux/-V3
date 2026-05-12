@@ -50,7 +50,7 @@ Page({
     filteredCards: [],
     recommendedCards: [],
     recommendedReason: '',
-    hotTags: ['证件照', '银行开户', '租房', '受养人', '税务', 'MPF', '驾照', '保险'],
+    hotTags: ['优才', '高才通', '专才', 'IANG', '计划书', '材料清单', '续签', '永居', '受养人', '身份证', '银行开户'],
     sortBy: 'default',
     loading: true,
     loadError: false,
@@ -124,7 +124,15 @@ Page({
     if (cat !== 'all') cards = cards.filter(function(c) { return c.category === cat; });
     if (kw.trim()) {
       var lower = kw.trim().toLowerCase();
-      cards = cards.filter(function(c) { return (c.title || '').toLowerCase().indexOf(lower) >= 0 || (c.desc || '').toLowerCase().indexOf(lower) >= 0 || (c.tags || []).some(function(t) { return t.toLowerCase().indexOf(lower) >= 0; }); });
+      var catMap = { qmas: '优才', ttps: '高才通', asmpt: '专才', iang: 'iang', landing: '赴港落地', renewal: '续签', pr_sprint: '永居', life: '在港生活' };
+      cards = cards.filter(function(c) {
+        var catName = catMap[c.category] || '';
+        return (c.title || '').toLowerCase().indexOf(lower) >= 0
+            || (c.desc || '').toLowerCase().indexOf(lower) >= 0
+            || catName.toLowerCase().indexOf(lower) >= 0
+            || (c.source || '').toLowerCase().indexOf(lower) >= 0
+            || (c.tags || []).some(function(t) { return t.toLowerCase().indexOf(lower) >= 0; });
+      });
     }
     if (sort === 'helpful') cards.sort(function(a, b) { return (b.helpful || 0) - (a.helpful || 0); });
     else if (sort === 'latest') cards.sort(function(a, b) { return (b.updated || '').localeCompare(a.updated || ''); });

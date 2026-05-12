@@ -44,9 +44,27 @@
         <text class="process-hero__cycle" bindtap="showCycleHelp">⏱ {{activeProcess.totalCycle || '—'}}</text>
         <text class="process-hero__risk" bindtap="showRiskHelp">{{activeProcess.riskLevel === 'low' ? '🟢低风险' : activeProcess.riskLevel === 'medium' ? '🟡中风险' : '🔴高风险'}}</text>
       </view>
-      <view class="process-hero__progress">
-        <view class="mini-progress"><view class="mini-progress__fill" style="width:{{progress}}%"></view></view>
-        <text class="mini-progress__text">{{progress}}%</text>
+      <!-- 材料完成度 — 环形进度+快捷入口 -->
+      <view class="material-completion">
+        <view class="mc-ring">
+          <view class="mc-ring__bg"></view>
+          <view class="mc-ring__fg" style="background: conic-gradient({{progress >= 80 ? '#059669' : progress >= 50 ? '#2563EB' : '#EA580C'}} {{progress * 3.6}}deg, #F3F4F6 0deg)"></view>
+          <view class="mc-ring__inner">
+            <text class="mc-ring__pct">{{progress}}%</text>
+            <text class="mc-ring__label">材料完整</text>
+          </view>
+        </view>
+        <view class="mc-detail">
+          <view class="mc-stat mc-stat--done">
+            <text class="mc-stat__num">{{materialDoneCount || 0}}</text>
+            <text class="mc-stat__label">已完成</text>
+          </view>
+          <view class="mc-stat mc-stat--pending">
+            <text class="mc-stat__num">{{materialTotalCount || 0}}</text>
+            <text class="mc-stat__label">总计</text>
+          </view>
+          <button class="mc-btn" bindtap="goToDocuments">📁 去准备材料</button>
+        </view>
       </view>
     </view>
 

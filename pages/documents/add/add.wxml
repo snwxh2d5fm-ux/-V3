@@ -5,37 +5,83 @@
   <block wx:if="{{step === 1}}">
     <view class="page-header">
       <text class="page-header-title">添加证件</text>
-      <text class="page-header-sub">选择一种方式录入证件信息</text>
+      <text class="page-header-sub">拍照前请阅读下方拍摄指引，确保照片清晰可用</text>
     </view>
 
-    <view class="input-modes">
-      <view class="input-mode-card" bindtap="onTapCamera">
-        <text class="input-mode-icon">📷</text>
-        <text class="input-mode-title">拍照识别</text>
-        <text class="input-mode-desc">自动识别证件关键信息</text>
+    <!-- 三模式按钮（缩小版） -->
+    <view class="input-modes input-modes--compact">
+      <view class="input-mode-chip" bindtap="onTapCamera">
+        <text class="input-mode-chip__icon">📷</text>
+        <text class="input-mode-chip__label">拍照</text>
       </view>
-      <view class="input-mode-card" bindtap="onTapAlbum">
-        <text class="input-mode-icon">🖼️</text>
-        <text class="input-mode-title">从相册选择</text>
-        <text class="input-mode-desc">选择已有照片进行识别</text>
+      <view class="input-mode-chip" bindtap="onTapAlbum">
+        <text class="input-mode-chip__icon">🖼️</text>
+        <text class="input-mode-chip__label">相册</text>
       </view>
-      <view class="input-mode-card" bindtap="onTapManual">
-        <text class="input-mode-icon">✍️</text>
-        <text class="input-mode-title">手动录入</text>
-        <text class="input-mode-desc">直接填写证件信息</text>
+      <view class="input-mode-chip" bindtap="onTapManual">
+        <text class="input-mode-chip__icon">✍️</text>
+        <text class="input-mode-chip__label">手动</text>
       </view>
+    </view>
+
+    <!-- 证件拍摄指引 -->
+    <view class="capture-guide">
+      <view class="capture-guide__title">📐 拍摄要求</view>
+      <view class="capture-guide__list">
+        <view class="capture-guide__item">
+          <text class="capture-guide__icon">✅</text>
+          <text>证件四角完整可见，无裁切</text>
+        </view>
+        <view class="capture-guide__item">
+          <text class="capture-guide__icon">✅</text>
+          <text>平放在深色桌面，正对拍摄</text>
+        </view>
+        <view class="capture-guide__item">
+          <text class="capture-guide__icon">✅</text>
+          <text>光线均匀，避免反光和阴影</text>
+        </view>
+        <view class="capture-guide__item">
+          <text class="capture-guide__icon">✅</text>
+          <text>文字清晰可读，不模糊</text>
+        </view>
+        <view class="capture-guide__item">
+          <text class="capture-guide__icon">✅</text>
+          <text>分辨率≥800×600，彩色拍摄</text>
+        </view>
+        <view class="capture-guide__item">
+          <text class="capture-guide__icon">❌</text>
+          <text>不要手持证件拍摄</text>
+        </view>
+        <view class="capture-guide__item">
+          <text class="capture-guide__icon">❌</text>
+          <text>不要使用复印件或屏幕截图</text>
+        </view>
+      </view>
+    </view>
+
+    <!-- 证件分类说明 -->
+    <view class="capture-guide">
+      <view class="capture-guide__title">📂 支持证件类型</view>
+      <view class="capture-guide__list">
+        <view class="capture-guide__item"><text>🆔 身份证 / 护照 / 港澳通行证 / 香港身份证</text></view>
+        <view class="capture-guide__item"><text>🎓 学位证 / 毕业证 / 成绩单</text></view>
+        <view class="capture-guide__item"><text>💼 工作证明 / 推荐信 / 在职证明</text></view>
+        <view class="capture-guide__item"><text>💰 银行流水 / 税单 / 存款证明</text></view>
+        <view class="capture-guide__item"><text>✅ 获批通知 / 签证 / e-Visa</text></view>
+      </view>
+      <text class="capture-guide__note">💡 拍照后系统将自动检测照片质量。文字识别将在智能审核阶段由专业模型完成。</text>
     </view>
 
     <view class="privacy-notice">
-      <text>🔒 证件照片和识别数据仅存储在您的设备本地，不上传服务器</text>
+      <text>🔒 证件照片仅存储在您的设备本地，不上传服务器</text>
     </view>
   </block>
 
-  <!-- ===== Step 2: 图片预览 + OCR处理中 ===== -->
+  <!-- ===== Step 2: 图片预览 + 质量检测 ===== -->
   <block wx:if="{{step === 2}}">
     <view class="page-header">
-      <text class="page-header-title">识别中...</text>
-      <text class="page-header-sub">{{ocrProcessing ? 'AI正在分析证件信息' : '处理完成'}}</text>
+      <text class="page-header-title">图片预览</text>
+      <text class="page-header-sub">确认照片清晰可用</text>
     </view>
 
     <!-- 图片预览 -->
@@ -43,74 +89,31 @@
       <image src="{{imagePath}}" mode="aspectFit" class="preview-img" aria-label="证件图片预览" />
     </view>
 
-    <!-- OCR处理指示器 -->
-    <view class="ocr-status" wx:if="{{ocrProcessing}}">
-      <view class="ocr-spinner"></view>
-      <text class="ocr-status-text">正在识别证件信息...</text>
-      <text class="ocr-status-sub">请稍候，通常需要 2-5 秒</text>
-    </view>
-
-    <!-- 隐私说明：提升信任度 -->
-    <view class="privacy-inline" wx:if="{{ocrProcessing}}">
-      <view class="privacy-inline__icon">🔒</view>
-      <view class="privacy-inline__body">
-        <text class="privacy-inline__title">你的隐私，我们守护</text>
-        <text class="privacy-inline__desc">证件照片仅用于本地识别，上传云端后<text style="font-weight:700;color:#059669">识别完成即刻删除</text>，不留存任何副本</text>
+    <!-- 质量检测结果 -->
+    <view class="quality-card" wx:if="{{qualityResult}}">
+      <view class="quality-score-row">
+        <text class="quality-score-label">照片质量</text>
+        <text class="quality-score quality-score--{{qualityResult.summary}}">{{qualityResult.summary}}</text>
+      </view>
+      <view class="quality-bar">
+        <view class="quality-bar__fill quality-bar__fill--{{qualityResult.summary}}" style="width:{{qualityResult.score}}%"></view>
+      </view>
+      <text class="quality-score-hint">综合评分 {{qualityResult.score}}/100</text>
+      <view class="quality-issue" wx:for="{{qualityResult.issues}}" wx:key="type">
+        <text class="quality-issue__icon">{{item.severity === 'warning' ? '⚠️' : 'ℹ️'}}</text>
+        <text class="quality-issue__msg">{{item.message}}</text>
       </view>
     </view>
 
-    <!-- 质量提示 -->
-    <view class="quality-warnings" wx:if="{{qualityIssues.length > 0}}">
-      <text class="quality-title">⚠️ 质量提示</text>
-      <text class="quality-item" wx:for="{{qualityIssues}}" wx:key="*this">{{item}}</text>
+    <!-- 操作按钮 -->
+    <view class="action-row">
+      <button class="btn btn-outline flex-1" bindtap="retakePhoto">🔄 重拍</button>
+      <button class="btn btn-primary flex-1" bindtap="confirmImage">✓ 确认，下一步</button>
     </view>
   </block>
 
-  <!-- ===== Step 3: OCR结果确认 ===== -->
+  <!-- ===== Step 3: 手动填写信息 ===== -->
   <block wx:if="{{step === 3}}">
-    <view class="page-header">
-      <text class="page-header-title">确认信息</text>
-      <text class="page-header-sub">识别类型: {{docTypeLabel}} · 置信度 {{confidencePercent}}%</text>
-    </view>
-
-    <!-- 极低置信度横幅：引导手动填写 -->
-    <view class="low-confidence-banner" wx:if="{{confidence < 0.3}}">
-      <text class="low-confidence-icon">⚠️</text>
-      <view class="low-confidence-body">
-        <text class="low-confidence-title">AI无法可靠识别此证件</text>
-        <text class="low-confidence-desc">建议点击下方「手动填写」按钮，自行录入证件信息，确保数据准确。</text>
-      </view>
-    </view>
-
-    <!-- 图片缩略图 -->
-    <view class="image-thumb" wx:if="{{imagePath}}">
-      <image src="{{imagePath}}" mode="aspectFill" class="thumb-img" aria-label="识别证件缩略图" />
-      <view class="thumb-badge">📷</view>
-    </view>
-
-    <!-- 置信度进度条 -->
-    <view class="card" style="margin-top:16rpx">
-      <view class="card-row">
-        <text class="card-row-label">AI识别置信度</text>
-        <text style="font-weight:700;color:{{confidence >= 0.7 ? 'var(--green)' : confidence >= 0.4 ? 'var(--orange)' : 'var(--red)'}}">{{confidencePercent}}%</text>
-      </view>
-      <view class="progress">
-        <view class="progress-fill {{confidence >= 0.7 ? 'green' : confidence >= 0.4 ? 'orange' : 'red'}}" style="width:{{confidencePercent}}%"></view>
-      </view>
-      <view class="confidence-hint" wx:if="{{confidence < 0.7}}">
-        <text>⚠️</text>
-        <text>AI识别置信度较低，建议核对并修正下方字段</text>
-      </view>
-    </view>
-
-    <!-- OCR字段列表 -->
-    <view class="card" style="padding:0;margin-top:16rpx">
-      <view class="section-header" style="padding:24rpx 28rpx 14rpx">📋 识别到的字段</view>
-      <view class="field-row" wx:for="{{ocrFieldList}}" wx:key="key">
-        <text class="field-label">{{item.label}}</text>
-        <input class="field-input" value="{{item.value}}" bindinput="onFieldChange" data-field="{{item.key}}" placeholder="未识别" />
-      </view>
-    </view>
 
     <!-- 操作按钮 -->
     <view style="display:flex;gap:16rpx;padding:0 24rpx;margin-top:20rpx">

@@ -123,7 +123,7 @@ Page({
       let quickReplies = [];
 
       if (res && res.code === 200 && res.data) {
-        replyContent = res.data.content || replyContent;
+        replyContent = this.formatReplyContent(res.data.content || replyContent);
         quickReplies = res.data.quickReplies || [];
         // 处理方案推荐结果
         if (res.data.assessmentResult) {
@@ -243,6 +243,13 @@ Page({
   },
 
   // ========== 辅助方法 ==========
+
+  /** 转换markdown **粗体** 为高亮文本 */
+  formatReplyContent(text) {
+    if (!text) return '';
+    return text.replace(/\*\*(.+?)\*\*/g, '<span style="color:#1a73e8;font-weight:700">$1</span>');
+  },
+
   formatAssessmentResult(result) {
     if (!result) return '';
     let text = '📊 评估结果：\n';

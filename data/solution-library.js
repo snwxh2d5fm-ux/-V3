@@ -294,7 +294,7 @@ const PATH_DETAILS = {
     name: '高才通A类·高收入通道',
     phases: [
       { phase: 'phase1_evaluation', duration: '1-2周', actions: ['核实年收入≥250万港币', '准备收入证明材料'], confidence: 'A' },
-      { phase: 'phase2_onboarding', duration: '0-3月', actions: ['在线递交申请(审批4周)', '下载e-Visa', '赴港激活签证'], confidence: 'A' },
+      { phase: 'phase2_onboarding', duration: '0-3月', actions: ['在线递交申请(审批4周)', '下载e-Visa', '携e-Visa入境激活'], confidence: 'A' },
       { phase: 'phase3_maintenance', duration: '1-6年', actions: ['36月首次签证', '续签(就业/创业)', 'MPF+税单积累'], confidence: 'B' },
       { phase: 'phase4_pr_sprint', duration: '第6-7年', actions: ['提前6月准备续签材料', '整理在港记录', '递交永居申请'], confidence: 'A' }
     ],

@@ -31,6 +31,8 @@ Page({
     activeProcess: null,
     phases: [],            // 四阶段分组
     progress: 0,
+    materialDoneCount: 0,
+    materialTotalCount: 0,
     expandedPhaseIdx: 0,   // 当前展开的阶段
 
     // 空状态·模板选择
@@ -141,8 +143,9 @@ Page({
       if (stepIdx >= 1 && stepIdx < 7) stepMaterials[stepIdx].push(s);
     });
 
-    const doneCount = allStages.filter(s => s.status === 'completed').length;
-    const progress = allStages.length > 0 ? Math.round((doneCount / allStages.length) * 100) : 0;
+    var doneCount = allStages.filter(function(s) { return s.status === 'completed'; }).length;
+    var progress = allStages.length > 0 ? Math.round((doneCount / allStages.length) * 100) : 0;
+    this.setData({ materialDoneCount: doneCount, materialTotalCount: allStages.length });
 
     // 当前阶段：资格评估完成后 → 材料准备解锁
     // 资格评估的状态：有 activeProcess 即表示已完成
