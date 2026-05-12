@@ -52,30 +52,40 @@
 .specimen-icon { font-size: 24rpx; }
 .specimen-text { font-size: 22rpx; color: var(--color-success); }
 
-/* ═══ R4: CSS证件示意图 ═══ */
-.doc-mockup { margin-top: 16rpx; padding: 20rpx; border-radius: 16rpx; background: #F8FAFC; border: 2rpx dashed var(--gray-300); position: relative; }
-.mockup-frame { display: flex; gap: 20rpx; padding: 20rpx; background: #FFF; border-radius: 12rpx; border: 1rpx solid var(--gray-200); position: relative; z-index: 1; }
-.mockup-photo { width: 140rpx; height: 170rpx; border-radius: 8rpx; background: var(--gray-100); border: 2rpx dashed var(--gray-300); display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 6rpx; flex-shrink: 0; }
-.mockup-photo__icon { font-size: 40rpx; opacity: 0.5; }
-.mockup-photo__label { font-size: 20rpx; color: var(--gray-400); }
-.mockup-fields { flex: 1; display: flex; flex-direction: column; gap: 14rpx; padding-top: 8rpx; }
-.mockup-field { position: relative; }
-.mockup-line { height: 14rpx; border-radius: 4rpx; background: var(--gray-200); margin-bottom: 4rpx; }
-.mockup-line--name { width: 55%; }
-.mockup-line--id { width: 80%; }
-.mockup-line--date { width: 60%; }
-.mockup-line--addr { width: 72%; }
-.mockup-tag { font-size: 18rpx; color: var(--gray-400); }
-.mockup-field--pii .mockup-line { background: repeating-linear-gradient(90deg, var(--gray-300) 0px, var(--gray-300) 8rpx, transparent 8rpx, transparent 12rpx); }
-.mockup-field--pii .mockup-tag { color: var(--color-error); }
-/* 四角对齐指示 */
-.mockup-corners { position: absolute; inset: 8rpx; pointer-events: none; z-index: 0; }
-.mockup-corner { position: absolute; width: 28rpx; height: 28rpx; }
-.mockup-corner--tl { top: 0; left: 0; border-top: 4rpx solid var(--color-primary); border-left: 4rpx solid var(--color-primary); border-radius: 6rpx 0 0 0; }
-.mockup-corner--tr { top: 0; right: 0; border-top: 4rpx solid var(--color-primary); border-right: 4rpx solid var(--color-primary); border-radius: 0 6rpx 0 0; }
-.mockup-corner--bl { bottom: 0; left: 0; border-bottom: 4rpx solid var(--color-primary); border-left: 4rpx solid var(--color-primary); border-radius: 0 0 0 6rpx; }
-.mockup-corner--br { bottom: 0; right: 0; border-bottom: 4rpx solid var(--color-primary); border-right: 4rpx solid var(--color-primary); border-radius: 0 0 6rpx 0; }
-.mockup-note { display: block; text-align: center; margin-top: 14rpx; font-size: 22rpx; color: var(--gray-400); }
+/* ═══ R4: 证件线框示意图 (脱敏案例库驱动) ═══ */
+.doc-wireframe { margin: 16rpx 24rpx 0; padding: 24rpx; border-radius: 18rpx; background: #FAFBFC; border: 1rpx solid var(--gray-200); position: relative; }
+/* 证件卡片 */
+.wf-card { padding: 24rpx; border-radius: 12rpx; background: #FFF; border: 2rpx solid var(--gray-300); position: relative; z-index: 1; }
+/* 头部 */
+.wf-header { display: flex; align-items: center; gap: 16rpx; padding-bottom: 20rpx; margin-bottom: 16rpx; border-bottom: 1rpx solid var(--gray-200); }
+.wf-logo-line { width: 56rpx; height: 56rpx; border-radius: 8rpx; border: 2rpx dashed var(--gray-300); flex-shrink: 0; }
+.wf-title { font-size: 24rpx; font-weight: 600; color: var(--gray-600); }
+/* 正文区 */
+.wf-body { display: flex; gap: 20rpx; }
+.wf-photo { width: 130rpx; height: 160rpx; border-radius: 6rpx; border: 2rpx dashed var(--gray-300); display: flex; flex-direction: column; align-items: center; justify-content: center; flex-shrink: 0; position: relative; }
+.wf-photo__frame { width: 90rpx; height: 110rpx; border: 2rpx dotted var(--gray-300); border-radius: 4rpx; }
+.wf-photo__tag { font-size: 18rpx; color: var(--gray-400); margin-top: 8rpx; }
+/* 字段线框 */
+.wf-fields { flex: 1; display: flex; flex-direction: column; gap: 16rpx; padding-top: 4rpx; }
+.wf-field { position: relative; }
+.wf-line { height: 2rpx; border-radius: 1rpx; background: var(--gray-300); margin-bottom: 6rpx; }
+.wf-line--short { width: 45%; }
+.wf-line--mid { width: 65%; }
+.wf-line--long { width: 82%; }
+.wf-line--full { width: 95%; }
+.wf-label { font-size: 20rpx; color: var(--gray-400); }
+.wf-pii-tag { position: absolute; right: 0; top: 0; font-size: 18rpx; color: var(--color-error); background: var(--color-error-bg); padding: 2rpx 8rpx; border-radius: 4rpx; }
+/* 底部印章 */
+.wf-footer { display: flex; align-items: center; gap: 12rpx; margin-top: 20rpx; padding-top: 16rpx; border-top: 1rpx solid var(--gray-200); }
+.wf-seal { width: 64rpx; height: 64rpx; border-radius: 50%; border: 3rpx dashed var(--gray-300); flex-shrink: 0; }
+.wf-footer-label { font-size: 20rpx; color: var(--gray-400); }
+/* 四角标尺 */
+.wf-ruler-tl, .wf-ruler-tr, .wf-ruler-bl, .wf-ruler-br { position: absolute; width: 36rpx; height: 36rpx; z-index: 0; }
+.wf-ruler-tl { top: 8rpx; left: 8rpx; border-top: 4rpx solid var(--color-primary); border-left: 4rpx solid var(--color-primary); border-radius: 4rpx 0 0 0; }
+.wf-ruler-tr { top: 8rpx; right: 8rpx; border-top: 4rpx solid var(--color-primary); border-right: 4rpx solid var(--color-primary); border-radius: 0 4rpx 0 0; }
+.wf-ruler-bl { bottom: 8rpx; left: 8rpx; border-bottom: 4rpx solid var(--color-primary); border-left: 4rpx solid var(--color-primary); border-radius: 0 0 0 4rpx; }
+.wf-ruler-br { bottom: 8rpx; right: 8rpx; border-bottom: 4rpx solid var(--color-primary); border-right: 4rpx solid var(--color-primary); border-radius: 0 0 4rpx 0; }
+.wf-hint { display: block; text-align: center; margin-top: 16rpx; font-size: 22rpx; color: var(--gray-400); }
 
 /* 通用指引（无卡槽上下文时） */
 .capture-guide { margin: 20rpx 24rpx 0; padding: 24rpx; border-radius: 16rpx; background: var(--gray-50); border: 1rpx solid var(--gray-100); }

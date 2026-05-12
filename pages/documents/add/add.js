@@ -726,7 +726,7 @@ function getSlotGuide(slotKey, docName) {
   var name = (docName || '').toLowerCase();
   var guides = {
     // 身份证
-    id_card: { icon: '🪪', title: '身份证材料标准', items: [
+    id_card: { icon: '🪪', title: '身份证材料标准', wfTitle: '中华人民共和国居民身份证', items: [
       '正反面均需拍摄，四角完整可见',
       '平放深色桌面，正对拍摄，不倾斜',
       '确保证件号、姓名、照片清晰可读',
@@ -734,7 +734,7 @@ function getSlotGuide(slotKey, docName) {
       '圆角边框不得裁切或遮挡'
     ], piiFields: ['姓名', '身份证号', '出生日期', '地址'], specimen: '正面(人像面)+背面(国徽面)·四角完整·无反光·彩色' },
     // 学位证
-    degree: { icon: '🎓', title: '学位证/毕业证材料标准', items: [
+    degree: { icon: '🎓', title: '学位证/毕业证材料标准', wfTitle: '学士学位证书', items: [
       '证书原件彩色拍摄，不可拍摄复印件',
       '确保证书编号、姓名、学位、日期清晰',
       '如有英文版本一并拍摄',
@@ -742,20 +742,20 @@ function getSlotGuide(slotKey, docName) {
       '证书四角完整，印章清晰可辨'
     ], piiFields: ['姓名', '证书编号', '毕业日期'], specimen: '学位证正面+背面' },
     // 港澳通行证
-    hk_permit: { icon: '🛂', title: '港澳通行证材料标准', items: [
+    hk_permit: { icon: '🛂', title: '港澳通行证材料标准', wfTitle: '往来港澳通行证', items: [
       '个人信息页+签注页均需拍摄',
       '证件号（C开头）、姓名、有效期需清晰',
       '签注页需显示D签注类型和有效期',
       '反光环境下从侧面打光避免正面强光'
     ], piiFields: ['姓名', '证件号', '出生日期', '有效期'], specimen: '通行证个人信息页+签注页' },
     // 护照
-    passport: { icon: '🛂', title: '护照材料标准', items: [
+    passport: { icon: '🛂', title: '护照材料标准', wfTitle: '中华人民共和国护照', items: [
       '个人信息页完整拍摄（含照片、护照号、签名）',
       '确保护照号（E/G开头）和有效期清晰',
       '如有签证页一并拍摄'
     ], piiFields: ['姓名', '护照号', '出生日期', '国籍'], specimen: '护照个人信息页' },
     // 工作证明
-    work: { icon: '💼', title: '工作证明/推荐信材料标准', items: [
+    work: { icon: '💼', title: '工作证明/推荐信材料标准', wfTitle: '在職證明 / 工作证明', items: [
       '公司抬头纸原件拍摄',
       '公章+签字必须清晰可见',
       '包含入职日期、职位、薪资信息',
@@ -763,7 +763,7 @@ function getSlotGuide(slotKey, docName) {
       '英文版需一并提供'
     ], piiFields: ['姓名', '身份证号', '薪资', '公司名'], specimen: '公司抬头纸+公章+签字' },
     // 银行流水
-    bank: { icon: '💰', title: '银行流水/资产证明材料标准', items: [
+    bank: { icon: '💰', title: '银行流水/资产证明材料标准', wfTitle: '银行流水 / 资产证明', items: [
       '银行官方流水单原件拍摄',
       '最近6-12个月完整记录',
       '账户名、账号、银行名称清晰',
@@ -771,7 +771,7 @@ function getSlotGuide(slotKey, docName) {
       '加盖银行印章的版本'
     ], piiFields: ['账户持有人', '账号', '金额'], specimen: '最近12个月银行流水' },
     // 获批通知
-    approval: { icon: '✅', title: '获批通知/e-Visa材料标准', items: [
+    approval: { icon: '✅', title: '获批通知/e-Visa材料标准', wfTitle: '入境许可通知书 / e-Visa', items: [
       '入境处发出的正式通知原件',
       '申请编号、批准日期、签证类型清晰',
       'e-Visa可拍摄打印版或手机截图',

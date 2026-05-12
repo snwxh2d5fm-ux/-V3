@@ -29,40 +29,60 @@
         <text class="specimen-text">标本参照：{{slotGuide.specimen}}</text>
       </view>
 
-      <!-- R4: CSS证件示意图 — 标注关键PII区域 -->
-      <view class="doc-mockup" wx:if="{{slotContext}}">
-        <view class="mockup-frame">
-          <view class="mockup-photo">
-            <text class="mockup-photo__icon">📷</text>
-            <text class="mockup-photo__label">照片区</text>
+      <!-- R4: 证件线框示意图 — 脱敏案例库驱动 -->
+      <view class="doc-wireframe" wx:if="{{slotContext}}">
+        <view class="wf-card">
+          <!-- 线框头部 -->
+          <view class="wf-header">
+            <view class="wf-logo-line"></view>
+            <text class="wf-title">{{slotGuide.wfTitle || slotDocName || '证件参照'}}</text>
           </view>
-          <view class="mockup-fields">
-            <view class="mockup-field mockup-field--pii">
-              <view class="mockup-line mockup-line--name"></view>
-              <text class="mockup-tag">🔒 姓名</text>
+          <!-- 照片/图章区 (左侧) -->
+          <view class="wf-body">
+            <view class="wf-photo">
+              <view class="wf-photo__frame"></view>
+              <text class="wf-photo__tag">照片</text>
             </view>
-            <view class="mockup-field mockup-field--pii">
-              <view class="mockup-line mockup-line--id"></view>
-              <text class="mockup-tag">🔒 证件号</text>
+            <!-- PII字段线框区 (右侧) -->
+            <view class="wf-fields">
+              <view class="wf-field">
+                <view class="wf-line wf-line--short"></view>
+                <text class="wf-label">姓名</text>
+                <text class="wf-pii-tag">脱敏</text>
+              </view>
+              <view class="wf-field">
+                <view class="wf-line wf-line--long"></view>
+                <text class="wf-label">证件号码</text>
+                <text class="wf-pii-tag">脱敏</text>
+              </view>
+              <view class="wf-field">
+                <view class="wf-line wf-line--mid"></view>
+                <text class="wf-label">出生日期</text>
+                <text class="wf-pii-tag">脱敏</text>
+              </view>
+              <view class="wf-field">
+                <view class="wf-line wf-line--full"></view>
+                <text class="wf-label">签发机关/地址</text>
+                <text class="wf-pii-tag">脱敏</text>
+              </view>
+              <view class="wf-field">
+                <view class="wf-line wf-line--mid"></view>
+                <text class="wf-label">有效期限</text>
+              </view>
             </view>
-            <view class="mockup-field">
-              <view class="mockup-line mockup-line--date"></view>
-              <text class="mockup-tag">有效期</text>
-            </view>
-            <view class="mockup-field mockup-field--pii">
-              <view class="mockup-line mockup-line--addr"></view>
-              <text class="mockup-tag">🔒 地址</text>
-            </view>
+          </view>
+          <!-- 底部印章区 -->
+          <view class="wf-footer">
+            <view class="wf-seal"></view>
+            <text class="wf-footer-label">发证机关印章</text>
           </view>
         </view>
-        <!-- 四角对齐指示 -->
-        <view class="mockup-corners">
-          <view class="mockup-corner mockup-corner--tl"></view>
-          <view class="mockup-corner mockup-corner--tr"></view>
-          <view class="mockup-corner mockup-corner--bl"></view>
-          <view class="mockup-corner mockup-corner--br"></view>
-        </view>
-        <text class="mockup-note">👆 请参照上图拍摄，确保四角完整、文字清晰</text>
+        <!-- 四角对齐标尺 -->
+        <view class="wf-ruler-tl"></view>
+        <view class="wf-ruler-tr"></view>
+        <view class="wf-ruler-bl"></view>
+        <view class="wf-ruler-br"></view>
+        <text class="wf-hint">📐 请将证件对准四角标尺，确保边框完整、无裁切</text>
       </view>
     </view>
 
