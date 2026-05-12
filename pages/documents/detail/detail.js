@@ -1,6 +1,6 @@
 // pages/documents/detail/detail.js
 const CONSTANTS = require('../../../data/constants.js');
-const { getDocumentMeta, deleteDocument: deleteDocFromVault, saveDocumentMeta, getAllDocuments } = require('../../../utils/storage');
+const { getDocumentMeta, deleteDocument: deleteDocFromVault, saveDocumentMeta } = require('../../../utils/storage');
 
 Page({
   data: {
@@ -142,6 +142,10 @@ Page({
   restoreDocument() {
     try {
       const doc = getDocumentMeta(this.data.docId);
+      if (!doc) {
+        wx.showToast({ title: '证件不存在', icon: 'none' });
+        return;
+      }
       if (doc) {
         doc.status = 'active';
         delete doc.archivedAt;

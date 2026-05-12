@@ -29,7 +29,7 @@ const CONFIDENCE_BADGE = {
 const DOMAIN_MAP = {
   'QMAS': 'qmas', 'TTPS': 'ttps', 'ASMTP': 'asmpt', 'IANG': 'iang',
   'LANDING': 'landing', 'RENEWAL': 'renewal', 'PR': 'pr_sprint', 'LIFE': 'life',
-  'TAX': 'life', 'EDUCATION': 'life'
+  'TAX': 'life', 'EDUCATION': 'life', 'OTHER': 'other'
 };
 
 exports.main = async (event) => {
@@ -147,22 +147,22 @@ async function getRecommended(event) {
   // ====== 状态画像 ======
   const STATE_PROFILE = {
     unapplied: {
-      cats: { qmas: 10, ttps: 10, asmpt: 8, iang: 8, life: 3 },
+      cats: { qmas: 10, ttps: 10, asmpt: 8, iang: 8, life: 3, other: 2 },
       tags: ['必读', '优才', '高才通', '专才', 'IANG', '身份规划', '政策'],
       reason: '未申请 · 推荐路径对比与资格评估攻略'
     },
     submitted: {
-      cats: { qmas: 5, ttps: 5, renewal: 10, iang: 5, life: 3 },
+      cats: { qmas: 5, ttps: 5, renewal: 10, iang: 5, life: 3, other: 2 },
       tags: ['续签', '材料', '必读', '优才', '高才通', '身份规划', '政策'],
       reason: '已交件 · 推荐审批跟进与补件攻略'
     },
     approved: {
-      cats: { landing: 10, life: 8, renewal: 8, pr_sprint: 5 },
+      cats: { landing: 10, life: 8, renewal: 8, pr_sprint: 5, other: 2 },
       tags: ['落地', '银行', '开户', '租房', '驾照', '医疗', '续签', '永居', '必读', '身份证', '过关', '拍照'],
       reason: '已获批 · 推荐赴港落地与续签规划攻略'
     },
     permanent: {
-      cats: { life: 10, pr_sprint: 8 },
+      cats: { life: 10, pr_sprint: 8, other: 2 },
       tags: ['永居', '护照', '教育', 'DSE', '国际学校', '医疗', '创业', '公司', '身份规划'],
       reason: '永居 · 推荐在港生活与护照办理攻略'
     }

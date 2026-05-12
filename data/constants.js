@@ -107,9 +107,11 @@ module.exports = {
     return this.MEMBERSHIP_LIMITS[tier][key];
   },
 
-  /** 是否为付费会员（含 basic/pro/premium） */
+  /** 是否为付费会员（含 basic/pro/premium）。防御性：未知等级→非付费 */
   isPayingMember: function(membershipLevel) {
-    return membershipLevel && membershipLevel !== 'free' && membershipLevel !== 'free_trial';
+    var level = (membershipLevel && this.MEMBERSHIP_LIMITS[membershipLevel])
+      ? membershipLevel : 'free';
+    return level !== 'free' && level !== 'free_trial';
   },
 
   // ============ 12条身份规划路径 (PRD v3.1 完整版) ============

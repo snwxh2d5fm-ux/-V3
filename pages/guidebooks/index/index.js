@@ -35,7 +35,7 @@ Page({
     searchFocused: false,
     activeCategory: 'all',
     categories: [
-      { id: 'all', icon: '📚', label: '全部', count: 46 },
+      { id: 'all', icon: '📚', label: '全部', count: 47 },
       { id: 'qmas', icon: '🎯', label: '优才', count: 8 },
       { id: 'ttps', icon: '🏃', label: '高才通', count: 4 },
       { id: 'asmpt', icon: '💼', label: '专才', count: 3 },
@@ -43,7 +43,8 @@ Page({
       { id: 'landing', icon: '🛬', label: '赴港落地', count: 5 },
       { id: 'renewal', icon: '🔄', label: '续签', count: 5 },
       { id: 'pr_sprint', icon: '🏁', label: '永居冲刺', count: 5 },
-      { id: 'life', icon: '🏠', label: '在港生活', count: 13 }
+      { id: 'life', icon: '🏠', label: '在港生活', count: 12 },
+      { id: 'other', icon: '📌', label: '其他', count: 1 }
     ],
     guideCards: [],
     filteredCards: [],

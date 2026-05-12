@@ -536,16 +536,34 @@ async function cancelSubscription(openid, event) {
  * @param {object} event — { orderId, invoiceType: 'personal'|'company', title, taxNumber, email, address, phone, bankInfo }
  */
 async function createInvoice(openid, event) {
-  var orderId = event.orderId;
-  var invoiceType = event.invoiceType || 'personal';
-  var title = event.title || '';
-  var taxNumber = event.taxNumber || '';
-  var email = event.email || '';
-  var address = event.address || '';
-  var phone = event.phone || '';
-  var bankInfo = event.bankInfo || '';
+  var orderId = (event.orderId || '').trim();
+  var invoiceType = (event.invoiceType || 'personal').trim();
+  var title = (event.title || '').trim();
+  var taxNumber = (event.taxNumber || '').trim();
+  var email = (event.email || '').trim();
+  var address = (event.address || '').trim();
+  var phone = (event.phone || '').trim();
+  var bankInfo = (event.bankInfo || '').trim();
 
   if (!orderId) return { code: 400, msg: '缺少 orderId' };
+
+  // 发票类型白名单
+  if (!['personal', 'company'].includes(invoiceType)) {
+    return { code: 400, msg: '无效的发票类型' };
+  }
+
+  // 输入长度限制
+  if (title.length > 100) return { code: 400, msg: '发票抬头不超过100字' };
+  if (taxNumber.length > 30) return { code: 400, msg: '税号不超过30位' };
+  if (address.length > 200) return { code: 400, msg: '地址不超过200字' };
+  if (phone.length > 20) return { code: 400, msg: '电话不超过20位' };
+  if (bankInfo.length > 200) return { code: 400, msg: '银行信息不超过200字' };
+
+  // 邮箱格式校验(服务端防线)
+  var emailRe = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+  if (email && !emailRe.test(email)) {
+    return { code: 400, msg: '邮箱格式不正确' };
+  }
 
   // 验证订单归属 + 状态
   var orderResult = await db.collection('orders').where({ _id: orderId, _openid: openid }).get();
@@ -586,14 +604,19 @@ async function createInvoice(openid, event) {
   var addResult = await db.collection('invoices').add({ data: invoiceData });
   var invoiceId = addResult._id;
 
-  await db.collection('audit_logs').add({
-    data: {
-      _openid: openid,
-      action: 'invoice_requested',
-      detail: { invoiceId: invoiceId, orderId: orderId, invoiceType: invoiceType },
-      createdAt: db.serverDate()
-    }
-  });
+  // 审计日志写入失败不影响主流程
+  try {
+    await db.collection('audit_logs').add({
+      data: {
+        _openid: openid,
+        action: 'invoice_requested',
+        detail: { invoiceId: invoiceId, orderId: orderId, invoiceType: invoiceType },
+        createdAt: db.serverDate()
+      }
+    });
+  } catch (auditErr) {
+    console.error('[payment] audit_logs写入失败:', auditErr.message);
+  }
 
   return {
     code: 0,
@@ -628,7 +651,7 @@ async function getInvoices(openid, event) {
         title: inv.title,
         status: inv.status,
         createdAt: inv.createdAt,
-        issuedAt: inv.issuedAt || null
+        issuedAt: inv.issuedAt || undefined ? inv.issuedAt : null
       };
     })
   };
@@ -661,7 +684,7 @@ async function getInvoiceDetail(openid, event) {
       bankInfo: inv.bankInfo,
       status: inv.status,
       createdAt: inv.createdAt,
-      issuedAt: inv.issuedAt || null
+      issuedAt: inv.issuedAt || undefined ? inv.issuedAt : null
     }
   };
 }

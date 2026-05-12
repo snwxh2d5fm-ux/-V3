@@ -59,12 +59,12 @@ bash scripts/verify.sh --diff     # 与基线对比 (检测新增失败)
 │   ├─ solution-library.js — 12 画像 + 匹配引擎 + 路径详情
 │   ├─ templates.js — 9 条流程模板
 │   ├─ persona-path-compat.js — 画像×路径兼容矩阵
-│   └─ guidebook-data.js — 攻略书内容 (46篇)
+│   └─ guidebook-data.js — 攻略书内容 (47篇，含9分类: qmas/ttps/asmpt/iang/landing/renewal/pr_sprint/life/other)
 │
 └─ CloudBase 云端:
     ├─ 云函数 (23个) — AI对话/资格匹配/提醒/攻略生成
     ├─ knowledge_chunks (8,058条) — RAG 知识库
-    └─ guidebook_articles (46篇) — 攻略书云备份
+    └─ guidebook_articles (47篇) — 攻略书云备份
 ```
 
 ### 数据流向图
@@ -173,4 +173,4 @@ knowledge_chunks ─→ batch-generate-guidebooks → guidebook_articles
    - 报告邮件发送至 gangban@funway.hk (附政策原文+链接+审核流程)
    - Cron: 每周一 09:00 自动运行 (job_id: 4291756d3e10)
    - 监控源: 入境处8个官方页面 + 7个公众号搜索关键词
-4. 部署: guidebook 云函数已部署到 CloudBase (V3 双驱动)
+5. **攻略书新增"其他"分类**: retirement_001 从 life→other；新增 other 标签页(📌)；STATE_PROFILE 全4状态+other:2；三处DOMAIN_MAP同步

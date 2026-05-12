@@ -23,7 +23,7 @@ var DOMAIN_MAP = {
   'QMAS': 'qmas', 'TTPS': 'ttps', 'ASMTP': 'asmpt', 'IANG': 'iang',
   'LANDING': 'landing', 'RENEWAL': 'renewal', 'PR': 'pr_sprint',
   'LIFE': 'life', 'TAX': 'life', 'EDUCATION': 'life',
-  'GENERAL': 'life', 'BANK': 'life', 'HOUSING': 'life'
+  'GENERAL': 'life', 'BANK': 'life', 'HOUSING': 'life', 'OTHER': 'other'
 };
 
 // 标题关键词 → 分类映射

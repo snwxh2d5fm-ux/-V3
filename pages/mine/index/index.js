@@ -110,6 +110,7 @@ Page({
         });
         // 同步到全局
         app.globalData.membershipLevel = level;
+        app.globalData.isLocked = data.isLocked || false;
       }
     }).catch(function() {
       // 降级使用本地数据

@@ -31,6 +31,16 @@
     <button class="btn-sm btn-gold" bindtap="goSelectIdentity">去选择</button>
   </view>
 
+  <!-- ═══ 账户锁定 (试用过期/会员到期) ═══ -->
+  <view class="lock-banner" wx:if="{{isLocked}}">
+    <view class="lock-banner__icon">🔒</view>
+    <view class="lock-banner__body">
+      <text class="lock-banner__title">账户已锁定</text>
+      <text class="lock-banner__desc">你的免费试用已到期或会员已过期，请续费解锁全部功能</text>
+    </view>
+    <button class="btn-sm btn-gold" bindtap="goUnlock">立即解锁</button>
+  </view>
+
   <!-- ═══ 无路径引导 (EmptyPathState) ═══ -->
   <view class="empty-path" wx:if="{{pageState === 'no_path' && !isSkipped}}">
     <view class="empty-path__hero">
@@ -194,8 +204,8 @@
 
         <view class="slot-list {{collapsedCategories[cat.categoryKey] ? 'slot-list--hide' : ''}}">
 
-          <!-- 身份卡槽：所属人切换 -->
-          <view class="owner-tabs owner-tabs--slot" wx:if="{{cat.categoryKey === 'identities' || cat.categoryKey === 'identity'}}">
+          <!-- 身份+学历卡槽：所属人切换 -->
+          <view class="owner-tabs owner-tabs--slot" wx:if="{{cat.categoryKey === 'identities' || cat.categoryKey === 'identity' || cat.categoryKey === 'education'}}">
             <view class="owner-tab {{identityOwner === item.value ? 'owner-tab--active' : ''}}"
                   wx:for="{{ownerOptions}}" wx:key="value"
                   bindtap="switchIdentityOwner" data-value="{{item.value}}">

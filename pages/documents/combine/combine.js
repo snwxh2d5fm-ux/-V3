@@ -140,7 +140,7 @@ Page({
 
   loadDocuments() {
     try {
-      var docs = getAllDocuments();
+      var docs = getAllDocuments().filter(function(d) { return d.status !== 'archived'; });
       this.setData({ allDocs: docs || [] });
       this.matchChecklist();
     } catch(e) {

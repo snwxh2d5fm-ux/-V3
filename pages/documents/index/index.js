@@ -19,6 +19,7 @@ Page({
     isFreeUser: true,
     isPayingUser: false,
     effectiveLimit: { maxDocuments: 10 },
+    isLocked: false,
 
     // === 7阶段流程指示器 ===
     stageSteps: [
@@ -113,6 +114,17 @@ Page({
       maxDocuments: constants.getEffectiveLimit(membership, 'maxDocuments')
     };
 
+    // 检查账户锁定（试用过期或会员到期未续费）
+    const isLocked = app.globalData.isLocked || false;
+    if (isLocked) {
+      this.setData({
+        isLocked: true,
+        pageState: 'locked',
+        loading: false
+      });
+      return;
+    }
+
     // 获取路径名称 — 优先 activeProcess.name（与流程控hero卡片同源）
     let selectedPathName = '';
     if (selectedPath) {
@@ -164,15 +176,17 @@ Page({
         return;
       }
 
-      const uploadedDocs = getAllDocuments();
-      const slotCategories = computeSlotStates(template, uploadedDocs);
+      var uploadedDocs = getAllDocuments();
+      var slotCategories = computeSlotStates(template, uploadedDocs, this.data.identityOwner);
 
       // 计算溢出区文档
-      const overflowDocs = uploadedDocs.filter(d =>
-        !slotCategories.some(cat =>
-          cat.slots.some(s => s.uploadedDocs && s.uploadedDocs.some(ud => ud.id === d.id))
-        ) && !d.archived
-      );
+      var overflowDocs = uploadedDocs.filter(function(d) {
+        return !slotCategories.some(function(cat) {
+          return cat.slots.some(function(s) {
+            return s.uploadedDocs && s.uploadedDocs.some(function(ud) { return ud.id === d.id; });
+          });
+        }) && !d.archived;
+      });
 
       // 已归档材料
       const archivedDocs = uploadedDocs.filter(d => d.archived);
@@ -190,18 +204,18 @@ Page({
       const leftDeg = Math.max(0, deg - 180);
 
       // 智能上传建议 — 随机选一个未填的必需槽位
-      let smartUploadSuggestion = '';
-      const allSlots = slotCategories.flatMap(c => c.slots);
-      const emptyRequired = allSlots.filter(
-        s => s.requirement === 'required' && s.fillStatus === 'empty'
+      var smartUploadSuggestion = '';
+      var allSlots = slotCategories.reduce(function(arr, c) { return arr.concat(c.slots); }, []);
+      var emptyRequired = allSlots.filter(
+        function(s) { return s.requirement === 'required' && s.fillStatus === 'empty'; }
       );
       if (emptyRequired.length > 0) {
-        const pick = emptyRequired[Math.floor(Math.random() * emptyRequired.length)];
+        var pick = emptyRequired[Math.floor(Math.random() * emptyRequired.length)];
         smartUploadSuggestion = pick.docName;
       }
 
-      // 存储原始槽位（全量）以供身份切换时从基准恢复
-      this._baseSlotCategories = JSON.parse(JSON.stringify(slotCategories));
+      // 存储模板引用以供身份切换时重新计算
+      this._slotTemplate = template;
 
       this.setData({
         slotTemplate: template,
@@ -322,50 +336,43 @@ Page({
     this.applyFilter();
   },
 
-  /** 刷新身份分类槽位（按当前 identityOwner 过滤） */
+  /** 刷新全部槽位（按当前 identityOwner 过滤所有分类） */
   refreshIdentitySlots() {
-    var identityOwner = this.data.identityOwner;
+    var template = this._slotTemplate;
     var allDocuments = this.data.allDocuments;
-    var baseCategories = this._baseSlotCategories;
-    if (!baseCategories || baseCategories.length === 0) return;
+    var identityOwner = this.data.identityOwner;
+    if (!template || !allDocuments) return;
 
-    var updated = baseCategories.map(function(cat) {
-      if (cat.categoryKey !== 'identities' && cat.categoryKey !== 'identity') return cat;
+    var computeSlotStates = require('../../data/document-index-templates').computeSlotStates;
+    var updated = computeSlotStates(template, allDocuments, identityOwner);
 
-      var docs = allDocuments.filter(function(d) { return (d.ownerType || 'self') === identityOwner; });
-      var updatedSlots = cat.slots.map(function(slot) {
-        var matchingDocs = docs.filter(function(d) {
-          // 1) 精确 slotKey 匹配
-          if (d.slotKey && d.slotKey === slot.slotKey) return true;
-          // 2) type 匹配 slotKey（OCR识别或分类推导的 docType）
-          if (d.type && slot.slotKey && d.type === slot.slotKey) return true;
-          return false;
+    // 重新计算溢出区文档
+    var overflowDocs = allDocuments.filter(function(d) {
+      return !updated.some(function(cat) {
+        return cat.slots.some(function(s) {
+          return s.uploadedDocs && s.uploadedDocs.some(function(ud) { return ud.id === d.id; });
         });
-        var filled = matchingDocs.length > 0;
-        return {
-          slotKey: slot.slotKey,
-          docName: slot.docName,
-          docIcon: slot.docIcon,
-          requirement: slot.requirement,
-          description: slot.description,
-          maxCount: slot.maxCount,
-          fillStatus: filled ? 'filled' : 'empty',
-          uploadedDocs: matchingDocs.slice(0, slot.maxCount === -1 ? matchingDocs.length : (slot.maxCount || 1)),
-          uploadedCount: matchingDocs.length
-        };
-      });
-
-      var filledCount = updatedSlots.filter(function(s) { return s.fillStatus === 'filled'; }).length;
-      return {
-        categoryKey: cat.categoryKey,
-        categoryName: cat.categoryName,
-        categoryIcon: cat.categoryIcon,
-        slots: updatedSlots,
-        categoryProgress: { filled: filledCount, total: cat.slots.length }
-      };
+      }) && !d.archived;
     });
 
-    this.setData({ slotCategories: updated });
+    // 重新计算进度
+    var filledTotal = updated.reduce(function(sum, cat) {
+      return sum + (cat.categoryProgress ? cat.categoryProgress.filled : 0);
+    }, 0);
+    var requiredTotal = updated.reduce(function(sum, cat) {
+      return sum + (cat.categoryProgress ? cat.categoryProgress.total : 0);
+    }, 0);
+    var percentage = requiredTotal > 0 ? Math.round((filledTotal / requiredTotal) * 100) : 0;
+    var deg = (percentage / 100) * 360;
+    var rightDeg = Math.min(deg, 180);
+    var leftDeg = Math.max(0, deg - 180);
+
+    this.setData({
+      slotCategories: updated,
+      overflowDocs: overflowDocs,
+      overflowCount: overflowDocs.length,
+      slotProgress: { filled: filledTotal, total: requiredTotal, percentage: percentage, rightDeg: rightDeg, leftDeg: leftDeg }
+    });
   },
 
   applyFilter() {
@@ -498,6 +505,11 @@ Page({
 
   goSelectIdentity() {
     wx.navigateTo({ url: '/pages/status-select/status-select' });
+  },
+
+  /** 账户锁定 → 跳转会员页解锁 */
+  goUnlock: function() {
+    wx.navigateTo({ url: '/pages/membership/index/index' });
   },
 
   goSelectPath() {

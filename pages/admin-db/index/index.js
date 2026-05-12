@@ -1,6 +1,6 @@
 // 住港伴 v4 — 数据库管理入口
 const app = getApp();
-const { saveDocuments, saveReminders } = require('../../../utils/storage');
+const { saveDocuments, saveReminders, saveProcessLines } = require('../../../utils/storage');
 
 Page({
   data: {
@@ -52,8 +52,8 @@ Page({
             if (res.result?.data) {
               const { documents, reminders, processes } = res.result.data;
               if (documents) saveDocuments(documents);
-              if (reminders) wx.setStorageSync('__reminders__', reminders);
-              if (processes) wx.setStorageSync('__processes__', processes);
+              if (reminders) saveReminders(reminders);
+              if (processes) saveProcessLines(processes);
             }
           }
           wx.hideLoading(); wx.showToast({ title: '拉取完成', icon: 'success' });
