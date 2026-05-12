@@ -1,0 +1,189 @@
+/* 订单详情样式 */
+
+page {
+  background: #f5f7fa;
+}
+
+.page {
+  padding-bottom: 60rpx;
+}
+
+.loading-wrap {
+  display: flex;
+  justify-content: center;
+  padding: 200rpx 0;
+}
+.loading-text { font-size: 28rpx; color: #999; }
+
+.empty-wrap {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  padding: 160rpx 40rpx;
+}
+.empty-icon { font-size: 80rpx; margin-bottom: 24rpx; }
+.empty-text { font-size: 32rpx; color: #333; font-weight: 600; margin-bottom: 40rpx; }
+
+.detail-card {
+  margin: 24rpx 32rpx;
+  background: #fff;
+  border-radius: 20rpx;
+  overflow: hidden;
+}
+
+/* 头部 */
+.detail-header {
+  display: flex;
+  align-items: center;
+  gap: 20rpx;
+  padding: 36rpx 32rpx;
+  background: linear-gradient(135deg, #EFF6FF, #F8FAFC);
+  border-bottom: 1rpx solid #E5E7EB;
+}
+
+.header-icon { font-size: 52rpx; }
+
+.header-title {
+  font-size: 32rpx;
+  font-weight: 700;
+  color: #1a1a2e;
+  display: block;
+}
+
+.header-status {
+  font-size: 24rpx;
+  padding: 4rpx 14rpx;
+  border-radius: 6rpx;
+  font-weight: 500;
+  display: inline-block;
+  margin-top: 6rpx;
+}
+
+.header-status.completed { background: #D1FAE5; color: #065F46; }
+.header-status.pending { background: #FEF3C7; color: #92400E; }
+.header-status.failed { background: #FEE2E2; color: #991B1B; }
+.header-status.cancelled { background: #F3F4F6; color: #6B7280; }
+
+/* 金额 */
+.amount-block {
+  text-align: center;
+  padding: 36rpx 0;
+  border-bottom: 1rpx solid #f0f0f0;
+}
+
+.amount-value {
+  font-size: 68rpx;
+  font-weight: 800;
+  color: #DC2626;
+  display: block;
+}
+
+.amount-label {
+  font-size: 24rpx;
+  color: #999;
+  display: block;
+  margin-top: 4rpx;
+}
+
+/* 订单信息 */
+.info-section {
+  padding: 28rpx 32rpx;
+}
+
+.info-title {
+  font-size: 28rpx;
+  font-weight: 600;
+  color: #333;
+  margin-bottom: 16rpx;
+}
+
+.info-row {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 12rpx 0;
+}
+
+.info-label {
+  font-size: 26rpx;
+  color: #999;
+}
+
+.info-value {
+  font-size: 26rpx;
+  color: #333;
+}
+
+.info-value.mono {
+  font-family: 'Courier New', monospace;
+  font-size: 22rpx;
+  color: #666;
+  max-width: 360rpx;
+  word-break: break-all;
+  text-align: right;
+}
+
+.info-value.success {
+  color: #059669;
+  font-weight: 600;
+}
+
+/* 操作 */
+.actions {
+  padding: 32rpx;
+  display: flex;
+  flex-direction: column;
+  gap: 20rpx;
+}
+
+.btn-primary {
+  width: 100%;
+  height: 88rpx;
+  line-height: 88rpx;
+  background: linear-gradient(135deg, #1a73e8, #2563EB);
+  color: #fff;
+  border: none;
+  border-radius: 14rpx;
+  font-size: 30rpx;
+  font-weight: 600;
+  text-align: center;
+}
+
+.btn-primary::after { border: none; }
+
+.btn-ghost {
+  width: 100%;
+  height: 80rpx;
+  line-height: 80rpx;
+  background: #fff;
+  color: #1a73e8;
+  border: 2rpx solid #1a73e8;
+  border-radius: 14rpx;
+  font-size: 28rpx;
+  text-align: center;
+}
+
+.btn-ghost::after { border: none; }
+
+/* 已申请发票 */
+.invoice-done {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 12rpx;
+  padding: 20rpx;
+  background: #F0FDF4;
+  border-radius: 14rpx;
+  font-size: 28rpx;
+  color: #065F46;
+}
+
+.invoice-status-tag {
+  font-size: 22rpx;
+  padding: 4rpx 12rpx;
+  border-radius: 6rpx;
+  font-weight: 500;
+}
+
+.invoice-status-tag.pending { background: #FEF3C7; color: #92400E; }
+.invoice-status-tag.issued { background: #D1FAE5; color: #065F46; }

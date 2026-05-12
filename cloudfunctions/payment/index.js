@@ -586,4 +586,135 @@ async function createInvoice(openid, event) {
   var addResult = await db.collection('invoices').add({ data: invoiceData });
   var invoiceId = addResult._id;
 
-  await db.collec
+  await db.collection('audit_logs').add({
+    data: {
+      _openid: openid,
+      action: 'invoice_requested',
+      detail: { invoiceId: invoiceId, orderId: orderId, invoiceType: invoiceType },
+      createdAt: db.serverDate()
+    }
+  });
+
+  return {
+    code: 0,
+    data: {
+      invoiceId: invoiceId,
+      status: 'pending',
+      msg: '发票申请已提交，3个工作日内发送至您的邮箱'
+    }
+  };
+}
+
+/**
+ * 获取用户发票列表
+ */
+async function getInvoices(openid, event) {
+  var limit = Math.min((event && event.limit) || 10, 50);
+  var result = await db.collection('invoices')
+    .where({ _openid: openid })
+    .orderBy('createdAt', 'desc')
+    .limit(limit)
+    .get();
+
+  return {
+    code: 0,
+    data: result.data.map(function(inv) {
+      return {
+        invoiceId: inv._id,
+        orderId: inv.orderId,
+        productName: inv.productName,
+        orderAmountYuan: inv.orderAmountYuan,
+        invoiceType: inv.invoiceType,
+        title: inv.title,
+        status: inv.status,
+        createdAt: inv.createdAt,
+        issuedAt: inv.issuedAt || null
+      };
+    })
+  };
+}
+
+/**
+ * 获取单张发票详情
+ */
+async function getInvoiceDetail(openid, event) {
+  var invoiceId = event.invoiceId;
+  if (!invoiceId) return { code: 400, msg: '缺少 invoiceId' };
+
+  var result = await db.collection('invoices').where({ _id: invoiceId, _openid: openid }).get();
+  if (result.data.length === 0) return { code: 404, msg: '发票记录不存在' };
+
+  var inv = result.data[0];
+  return {
+    code: 0,
+    data: {
+      invoiceId: inv._id,
+      orderId: inv.orderId,
+      productName: inv.productName,
+      orderAmountYuan: inv.orderAmountYuan,
+      invoiceType: inv.invoiceType,
+      title: inv.title,
+      taxNumber: inv.taxNumber,
+      email: inv.email,
+      address: inv.address,
+      phone: inv.phone,
+      bankInfo: inv.bankInfo,
+      status: inv.status,
+      createdAt: inv.createdAt,
+      issuedAt: inv.issuedAt || null
+    }
+  };
+}
+
+// ==================== 内部函数 ====================
+
+async function activateMembership(openid, order) {
+  let level = 'basic';
+  try {
+    const planResult = await db.collection('membership_plans')
+      .where({ planId: order.planId }).get();
+    if (planResult.data.length > 0) level = planResult.data[0].level || 'basic';
+  } catch (e) { console.error('[payment] 查询方案等级失败:', e); }
+
+  const now = new Date();
+  const duration = order.period === 'monthly' ? 30 : 365;
+  const expireAt = new Date(now.getTime() + duration * 86400000);
+
+  const existingSubs = await db.collection('subscription_records')
+    .where({ _openid: openid, status: 'active' }).get();
+
+  if (existingSubs.data.length > 0) {
+    const sub = existingSubs.data[0];
+    const currentExpire = new Date(sub.expireAt);
+    const newExpire = currentExpire > now
+      ? new Date(currentExpire.getTime() + duration * 86400000) : expireAt;
+    await db.collection('subscription_records').doc(sub._id).update({
+      data: { planId: order.planId, level, expireAt: newExpire.toISOString(),
+        renewedAt: db.serverDate(), updatedAt: db.serverDate() }
+    });
+  } else {
+    await db.collection('subscription_records').add({
+      data: { _openid: openid, planId: order.planId, level,
+        orderId: order._id || null, status: 'active',
+        startedAt: db.serverDate(), expireAt: expireAt.toISOString(),
+        autoRenew: false, createdAt: db.serverDate(), updatedAt: db.serverDate() }
+    });
+  }
+
+  await db.collection('users').where({ _openid: openid }).update({
+    data: { membershipLevel: level, membershipExpireAt: expireAt.toISOString(),
+      isLocked: false, updatedAt: db.serverDate() }
+  });
+
+  const orderDocId = order._id || order.orderId;
+  if (orderDocId) {
+    await db.collection('orders').doc(orderDocId)
+      .update({ data: { subscriptionActivated: true } });
+  }
+
+  await db.collection('audit_logs').add({
+    data: { _openid: openid, action: 'subscription_activated',
+      detail: { planId: order.planId, level, orderId: order._id },
+      createdAt: db.serverDate() }
+  });
+}

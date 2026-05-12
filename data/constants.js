@@ -84,11 +84,32 @@ module.exports = {
     premium: '尊享会员'
   },
 
+  // @deprecated — 保留向后兼容，新代码用 MEMBERSHIP_LIMITS + getEffectiveLimit()
   FREE_LIMITS: {
     MAX_DOCUMENTS: 10,
     MAX_PROCESS_LINES: 1,
     ASSESSMENT_PER_MONTH: 3,
     AI_QUESTIONS_PER_DAY: 5
+  },
+
+  // 分级限制 (PRD v4: 基础会员及以上=无限证件位)
+  MEMBERSHIP_LIMITS: {
+    free:    { maxDocuments: 10,   maxProcessLines: 1,   assessmentPerMonth: 3,   aiQuestionsPerDay: 5 },
+    basic:   { maxDocuments: Infinity, maxProcessLines: Infinity, assessmentPerMonth: Infinity, aiQuestionsPerDay: Infinity },
+    pro:     { maxDocuments: Infinity, maxProcessLines: Infinity, assessmentPerMonth: Infinity, aiQuestionsPerDay: Infinity },
+    premium: { maxDocuments: Infinity, maxProcessLines: Infinity, assessmentPerMonth: Infinity, aiQuestionsPerDay: Infinity }
+  },
+
+  /** 获取用户的有效限制 */
+  getEffectiveLimit: function(membershipLevel, key) {
+    var tier = (membershipLevel && this.MEMBERSHIP_LIMITS[membershipLevel])
+      ? membershipLevel : 'free';
+    return this.MEMBERSHIP_LIMITS[tier][key];
+  },
+
+  /** 是否为付费会员（含 basic/pro/premium） */
+  isPayingMember: function(membershipLevel) {
+    return membershipLevel && membershipLevel !== 'free' && membershipLevel !== 'free_trial';
   },
 
   // ============ 12条身份规划路径 (PRD v3.1 完整版) ============

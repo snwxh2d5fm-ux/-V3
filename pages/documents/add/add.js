@@ -453,14 +453,15 @@ Page({
       return;
     }
 
-    // 检查免费用户上限
+    // 检查免费用户上限（付费用户跳过）
     const membershipLevel = app.globalData.membershipLevel || 'free';
-    if (membershipLevel === 'free') {
+    if (!constants.isPayingMember(membershipLevel)) {
       const docs = getAllDocuments();
-      if (docs.length >= constants.FREE_LIMITS.MAX_DOCUMENTS) {
+      const maxDocs = constants.getEffectiveLimit(membershipLevel, 'maxDocuments');
+      if (docs.length >= maxDocs) {
         wx.showModal({
           title: '免费额度已满',
-          content: `免费用户最多${constants.FREE_LIMITS.MAX_DOCUMENTS}份证件，请升级会员或删除旧证件后重试。`,
+          content: '免费用户最多' + maxDocs + '份证件，请升级会员或删除旧证件后重试。',
           confirmText: '升级会员',
           cancelText: '稍后再说',
           success: (res) => {

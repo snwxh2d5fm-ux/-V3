@@ -1,0 +1,55 @@
+<!-- 发票记录列表 -->
+<view class="page">
+
+  <view class="loading-wrap" wx:if="{{loading}}">
+    <text class="loading-text">加载中...</text>
+  </view>
+
+  <view class="empty-wrap" wx:elif="{{empty}}">
+    <text class="empty-icon">📄</text>
+    <text class="empty-text">暂无发票记录</text>
+    <text class="empty-desc">完成支付后可在订单详情页申请电子发票</text>
+    <button class="btn-primary" bindtap="goBack">返回</button>
+  </view>
+
+  <view class="invoice-list" wx:else>
+    <view
+      wx:for="{{invoices}}"
+      wx:key="invoiceId"
+      class="invoice-card"
+      bindtap="viewDetail"
+      data-id="{{item.invoiceId}}"
+    >
+      <view class="invoice-header">
+        <text class="invoice-product">{{item.productName}}</text>
+        <text class="invoice-status {{item.statusClass}}">{{item.statusLabel}}</text>
+      </view>
+
+      <view class="invoice-body">
+        <view class="invoice-row">
+          <text class="invoice-label">类型</text>
+          <text class="invoice-value">{{item.invoiceType === 'company' ? '🏢 企业' : '🧑 个人'}}</text>
+        </view>
+        <view class="invoice-row">
+          <text class="invoice-label">抬头</text>
+          <text class="invoice-value">{{item.title}}</text>
+        </view>
+        <view class="invoice-row">
+          <text class="invoice-label">金额</text>
+          <text class="invoice-value price">¥{{item.orderAmountYuan}}</text>
+        </view>
+        <view class="invoice-row">
+          <text class="invoice-label">申请时间</text>
+          <text class="invoice-value">{{item.createdAt}}</text>
+        </view>
+        <view class="invoice-row" wx:if="{{item.issuedAt}}">
+          <text class="invoice-label">开具时间</text>
+          <text class="invoice-value issued">{{item.issuedAt}}</text>
+        </view>
+      </view>
+    </view>
+  </view>
+
+  <floating-ai visible="{{true}}" />
+  <view class="safe-bottom"></view>
+</view>

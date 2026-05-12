@@ -24,7 +24,10 @@ Page({
     userStatus: null,
     membershipLevel: 'free',
     membershipName: '免费会员',
+    isPayingUser: false,
     documentCount: 0,
+    documentLimit: 10,          // 免费用户10，付费用户∞
+    documentLimitDisplay: '10',  // 展示用（免费=10，付费=∞）
     reminderCount: 0,
     authorizedFields: 0,
     privacyDays: 0,
@@ -51,9 +54,14 @@ Page({
     const userInfo = app.globalData.userInfo;
     const userStatus = app.globalData.userStatus || 'unapplied';
     const membershipLevel = app.globalData.membershipLevel || 'free';
+    const isPayingUser = constants.isPayingMember(membershipLevel);
     const documents = getAllDocuments();
     const reminders = getAllReminders();
     const fields = getAuthorizedFields();
+
+    // 付费会员无限证件位
+    const maxDocs = constants.getEffectiveLimit(membershipLevel, 'maxDocuments');
+    const docLimitDisplay = isPayingUser ? '∞' : String(maxDocs);
 
     const statusMap = {
       unapplied: '未申请', submitted: '申请处理中', approved: '在港进行中', permanent: '已获永居'
@@ -66,7 +74,10 @@ Page({
       userStatusLabel: statusMap[userStatus] || '',
       membershipLevel,
       membershipName: constants.MEMBERSHIP_NAMES[membershipLevel] || '免费会员',
+      isPayingUser,
       documentCount: documents.length,
+      documentLimit: maxDocs,
+      documentLimitDisplay: docLimitDisplay,
       reminderCount: reminders.filter(r => r.status === 'active').length,
       authorizedFields: fields ? fields.length : 0,
       privacyDays: Math.floor((Date.now() - new Date('2025-12-30').getTime()) / 86400000)
@@ -86,9 +97,14 @@ Page({
       var data = (res.result && res.result.data) || {};
       if (data.level) {
         var level = data.level === 'free_trial' ? 'free' : data.level;
+        var isPayingUser = constants.isPayingMember(level);
+        var maxDocs = constants.getEffectiveLimit(level, 'maxDocuments');
         that.setData({
           membershipLevel: level,
           membershipName: constants.MEMBERSHIP_NAMES[level] || '免费会员',
+          isPayingUser: isPayingUser,
+          documentLimit: maxDocs,
+          documentLimitDisplay: isPayingUser ? '∞' : String(maxDocs),
           membershipDays: data.daysRemaining || 0,
           isLocked: data.isLocked || false
         });

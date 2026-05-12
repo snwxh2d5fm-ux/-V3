@@ -57,6 +57,28 @@ page {
   border-radius: 8rpx;
 }
 
+/* ========== 快捷入口 ========== */
+.quick-entries {
+  display: flex;
+  margin: 0 32rpx 24rpx;
+  gap: 16rpx;
+}
+
+.quick-entry {
+  flex: 1;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 10rpx;
+  background: #fff;
+  border-radius: 14rpx;
+  padding: 24rpx 0;
+  box-shadow: 0 2rpx 12rpx rgba(0,0,0,0.04);
+}
+
+.entry-icon { font-size: 36rpx; }
+.entry-text { font-size: 28rpx; color: #333; font-weight: 500; }
+
 /* ========== 周期切换 ========== */
 .period-switch {
   display: flex;

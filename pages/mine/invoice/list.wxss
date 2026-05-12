@@ -1,0 +1,71 @@
+/* 发票记录列表样式 */
+
+page { background: #f5f7fa; }
+.page { padding-bottom: 60rpx; }
+
+.loading-wrap { display: flex; justify-content: center; padding: 200rpx 0; }
+.loading-text { font-size: 28rpx; color: #999; }
+
+.empty-wrap { display: flex; flex-direction: column; align-items: center; padding: 160rpx 40rpx; }
+.empty-icon { font-size: 80rpx; margin-bottom: 24rpx; }
+.empty-text { font-size: 32rpx; color: #333; font-weight: 600; margin-bottom: 12rpx; }
+.empty-desc { font-size: 26rpx; color: #999; margin-bottom: 40rpx; text-align: center; }
+
+.btn-primary {
+  background: linear-gradient(135deg, #1a73e8, #2563EB);
+  color: #fff;
+  border: none;
+  border-radius: 12rpx;
+  padding: 20rpx 48rpx;
+  font-size: 28rpx;
+  font-weight: 600;
+}
+.btn-primary::after { border: none; }
+
+/* 发票列表 */
+.invoice-list { padding: 24rpx 32rpx; }
+
+.invoice-card {
+  background: #fff;
+  border-radius: 16rpx;
+  padding: 28rpx;
+  margin-bottom: 20rpx;
+  box-shadow: 0 2rpx 12rpx rgba(0,0,0,0.04);
+}
+
+.invoice-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 20rpx;
+  padding-bottom: 20rpx;
+  border-bottom: 1rpx solid #f0f0f0;
+}
+
+.invoice-product { font-size: 32rpx; font-weight: 600; color: #1a1a2e; }
+
+.invoice-status {
+  font-size: 24rpx;
+  padding: 6rpx 16rpx;
+  border-radius: 8rpx;
+  font-weight: 500;
+}
+.status-pending { background: #FEF3C7; color: #92400E; }
+.status-issued { background: #D1FAE5; color: #065F46; }
+.status-rejected { background: #FEE2E2; color: #991B1B; }
+
+.invoice-body {}
+
+.invoice-row {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 10rpx 0;
+}
+
+.invoice-label { font-size: 26rpx; color: #999; }
+.invoice-value { font-size: 26rpx; color: #333; }
+.invoice-value.price { font-weight: 700; color: #DC2626; font-size: 30rpx; }
+.invoice-value.issued { color: #059669; font-weight: 500; }
+
+.safe-bottom { height: 40rpx; }

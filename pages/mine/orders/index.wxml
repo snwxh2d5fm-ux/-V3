@@ -1,0 +1,55 @@
+<!-- 我的订单列表 -->
+<view class="page">
+
+  <!-- 加载中 -->
+  <view class="loading-wrap" wx:if="{{loading}}">
+    <text class="loading-text">加载中...</text>
+  </view>
+
+  <!-- 空态 -->
+  <view class="empty-wrap" wx:elif="{{empty}}">
+    <text class="empty-icon">📋</text>
+    <text class="empty-text">暂无订单</text>
+    <text class="empty-desc">订阅会员后可在此查看订单记录</text>
+    <button class="btn-primary" bindtap="goBack">返回会员中心</button>
+  </view>
+
+  <!-- 订单列表 -->
+  <view class="orders-list" wx:else>
+    <view
+      wx:for="{{orders}}"
+      wx:key="orderId"
+      class="order-card"
+      bindtap="viewDetail"
+      data-id="{{item.orderId}}"
+    >
+      <view class="order-header">
+        <text class="order-product">{{item.productName}}</text>
+        <text class="order-status {{item.statusClass}}">{{item.statusLabel}}</text>
+      </view>
+
+      <view class="order-body">
+        <view class="order-row">
+          <text class="order-label">金额</text>
+          <text class="order-value price">¥{{item.amountYuan}}</text>
+        </view>
+        <view class="order-row">
+          <text class="order-label">下单时间</text>
+          <text class="order-value">{{item.createdAt}}</text>
+        </view>
+        <view class="order-row" wx:if="{{item.completedAt}}">
+          <text class="order-label">支付时间</text>
+          <text class="order-value">{{item.completedAt}}</text>
+        </view>
+      </view>
+
+      <view class="order-footer">
+        <text class="order-id">订单号: {{item.orderId}}</text>
+        <text class="order-arrow">查看详情 ›</text>
+      </view>
+    </view>
+  </view>
+
+  <floating-ai visible="{{true}}" />
+  <view class="safe-bottom"></view>
+</view>

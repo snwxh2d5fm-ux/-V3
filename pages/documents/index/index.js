@@ -17,7 +17,8 @@ Page({
     privacyMode: 'local',
     membershipLevel: 'free',
     isFreeUser: true,
-    isPremiumUser: false,
+    isPayingUser: false,
+    effectiveLimit: { maxDocuments: 10 },
 
     // === 7阶段流程指示器 ===
     stageSteps: [
@@ -80,7 +81,7 @@ Page({
     filteredDocs: [],
     searchQuery: '',
     documentCount: 0,
-    maxFreeDocs: constants.FREE_LIMITS.MAX_DOCUMENTS,
+    maxFreeDocs: constants.FREE_LIMITS.MAX_DOCUMENTS,  // @deprecated — 用 effectiveLimit 取代
     showLimitTip: false,
     showEmptyGuide: false,
 
@@ -106,8 +107,11 @@ Page({
     const hasSelectedPath = !!selectedPath;
 
     const membership = app.globalData.membershipLevel || 'free';
-    const isPremiumUser = membership === 'premium';
-    const isFreeUser = membership === 'free';
+    const isPayingUser = constants.isPayingMember(membership);
+    const isFreeUser = !isPayingUser;
+    const effectiveLimit = {
+      maxDocuments: constants.getEffectiveLimit(membership, 'maxDocuments')
+    };
 
     // 获取路径名称 — 优先 activeProcess.name（与流程控hero卡片同源）
     let selectedPathName = '';
@@ -123,7 +127,8 @@ Page({
       privacyMode: app.getPrivacyMode(),
       membershipLevel: membership,
       isFreeUser,
-      isPremiumUser,
+      isPayingUser,
+      effectiveLimit,
       userStatus,
       selectedPath,
       selectedPathName,
@@ -239,11 +244,12 @@ Page({
     const slot = this.findSlot(slotKey);
     if (!slot) return;
 
-    // 免费用户检查上限
-    if (this.data.isFreeUser && this.data.documentCount >= this.data.maxFreeDocs) {
+    // 免费用户检查上限（付费用户跳过）
+    var docLimit = this.data.effectiveLimit ? this.data.effectiveLimit.maxDocuments : constants.FREE_LIMITS.MAX_DOCUMENTS;
+    if (this.data.isFreeUser && this.data.documentCount >= docLimit) {
       wx.showModal({
         title: '免费额度已满',
-        content: `免费用户最多添加${this.data.maxFreeDocs}份证件。升级会员可无限制添加。`,
+        content: '免费用户最多添加' + docLimit + '份证件。升级会员可无限制添加。',
         confirmText: '了解会员',
         success: (res) => {
           if (res.confirm) wx.navigateTo({ url: '/pages/membership/index/index' });
@@ -307,7 +313,7 @@ Page({
       allDocuments: documents,
       documentCount: documents.length,
       loading: false,
-      showLimitTip: this.data.isFreeUser && documents.length >= this.data.maxFreeDocs
+      showLimitTip: this.data.isFreeUser && documents.length >= (this.data.effectiveLimit ? this.data.effectiveLimit.maxDocuments : constants.FREE_LIMITS.MAX_DOCUMENTS)
     });
 
     // 刷新身份分类槽位状态
@@ -465,10 +471,11 @@ Page({
   },
 
   navigateToAdd() {
-    if (this.data.isFreeUser && this.data.documentCount >= this.data.maxFreeDocs) {
+    var docLimit = this.data.effectiveLimit ? this.data.effectiveLimit.maxDocuments : constants.FREE_LIMITS.MAX_DOCUMENTS;
+    if (this.data.isFreeUser && this.data.documentCount >= docLimit) {
       wx.showModal({
         title: '免费额度已满',
-        content: `免费用户最多添加${this.data.maxFreeDocs}份证件。升级会员即可无限制添加，并解锁端到端加密云存储。`,
+        content: '免费用户最多添加' + docLimit + '份证件。升级会员即可无限制添加，并解锁端到端加密云存储。',
         confirmText: '升级会员',
         cancelText: '稍后再说',
         success: (res) => {
@@ -499,7 +506,8 @@ Page({
 
   /** 智能上传 — 拍照后自动分类 */
   smartUpload() {
-    if (this.data.isFreeUser && this.data.documentCount >= this.data.maxFreeDocs) {
+    var docLimit = this.data.effectiveLimit ? this.data.effectiveLimit.maxDocuments : constants.FREE_LIMITS.MAX_DOCUMENTS;
+    if (this.data.isFreeUser && this.data.documentCount >= docLimit) {
       wx.showModal({
         title: '免费额度已满',
         content: '升级会员解锁无限制上传',

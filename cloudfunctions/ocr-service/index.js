@@ -38,6 +38,8 @@ exports.main = async (event) => {
         return dryRun(event.text || '');
       case 'recognizeDates':
         return await recognizeDates(fileID, openid);
+      case 'test':
+        return runTests();
       default:
         return { code: 400, msg: '无效操作' };
     }
@@ -98,8 +100,10 @@ async function ocrAction(fileID, openid, overrideLang) {
     return { code: 400, msg: '图片过大' };
   }
 
-  // 立即删除云存储临时文件
-  try { await cloud.deleteFile({ fileList: [fileID] }); } catch (e) {}
+  // 立即删除云存储临时文件（零留存）
+  try { await cloud.deleteFile({ fileList: [fileID] }); } catch (e) {
+    console.warn('[ocr] deleteFile 失败（临时文件可能残留）:', e.message);
+  }
 
   // OCR 识别
   var text = '';
@@ -471,21 +475,27 @@ function extractGeneric(text, fields) {
   if (pp && !id18) fields.push({ label: '护照号', value: pp[0] });
 }
 
-// ========== 置信度计算 ==========
+// ========== 置信度计算（归一化 0-1） ==========
 
 function calcConfidence(docTypeInfo, fields, textLen) {
-  // 基础分: 类型识别置信度
-  var score = docTypeInfo.confidence * 0.4;
+  // 三维加权，总和上限 1.0
+  // 维度1: 类型识别 (0-0.4) — 能认出是什么证件
+  var typeScore = docTypeInfo.confidence * 0.4;
 
-  // 字段分: 有字段就加分
-  if (fields.length >= 3) score += 0.35;
-  else if (fields.length >= 1) score += 0.2;
+  // 维度2: 字段覆盖率 (0-0.35) — 提取到的字段越多越可信
+  var fieldScore = 0;
+  if (fields.length >= 5)      fieldScore = 0.35;
+  else if (fields.length >= 3) fieldScore = 0.28;
+  else if (fields.length >= 1) fieldScore = 0.15;
 
-  // 文本量分: 文字越多越可信
-  if (textLen >= 50) score += 0.25;
-  else if (textLen >= 20) score += 0.15;
-  else if (textLen >= 10) score += 0.05;
+  // 维度3: 文本充分度 (0-0.25) — OCR 文本量越大越可信（噪声少）
+  var textScore = 0;
+  if (textLen >= 80)           textScore = 0.25;
+  else if (textLen >= 40)      textScore = 0.18;
+  else if (textLen >= 20)      textScore = 0.12;
+  else if (textLen >= 10)      textScore = 0.05;
 
+  var score = typeScore + fieldScore + textScore;
   return Math.min(Math.round(score * 100) / 100, 0.99);
 }
 
@@ -755,4 +765,72 @@ function mapPath(selectedPath) {
     'approved_studying': '在港学习', 'approved_mainland': '主要在内地'
   };
   return m[selectedPath] || '';
+}
+
+// ========== 单元测试 — 覆盖 9 种证件类型 ==========
+
+function runTests() {
+  var cases = [
+    // id_card — 身份证
+    { name: 'id_card', text: '姓名：张三 性别：男 民族：汉 出生日期：1990-05-15 住址：浙江省杭州市西湖区 公民身份号码：330106199005154012 签发机关：杭州市公安局西湖分局 中华人民共和国居民身份证' },
+    // hk_id — 香港身份证
+    { name: 'hk_id', text: 'HONG KONG IDENTITY CARD 香港身份證 姓名：CHAN Tai Man 身份证号：A123456(3) 出生日期：1985-03-20 符号：A' },
+    // hk_permit — 港澳通行证
+    { name: 'hk_permit', text: '往来港澳通行证 姓名：李四 证件号码：C12345678 出生日期：1995-08-10 签发机关：公安部出入境管理局 有效期限：2023-01-01至2033-01-01' },
+    // passport — 护照
+    { name: 'passport', text: 'PASSPORT 中华人民共和国护照 姓名：WANG Wu 护照号：E12345678 国籍：中国 出生日期：1988-12-01 签发机关：公安部出入境管理局 有效期限：2020-06-01至2030-06-01' },
+    // degree — 学位证
+    { name: 'degree', text: '学士学位证书 姓名：赵六 性别：男 出生日期：1998-07-20 毕业院校：浙江大学 专业：计算机科学与技术 学位：学士 毕业日期：2020-06' },
+    // approval_letter — 获批通知
+    { name: 'approval_letter', text: '入境事務處 原則上批准通知書 申請編號：QMAS-20240001 申请人：孙七 批准日期：2024-03-15 签证类型：优才 有效期至：2026-03-14' },
+    // bank_statement — 银行流水
+    { name: 'bank_statement', text: '中国银行 BANK OF CHINA 账户持有人：周八 账号：6217001234567890 银行名称：中银 币种：人民币 账单周期：2024-01-01至2024-06-30' },
+    // work_proof — 工作证明
+    { name: 'work_proof', text: '在職證明 姓名：吴九 性别：男 公司：阿里巴巴集团 职位：高级工程师 入职日期：2019-04-01' },
+    // visa — 签证
+    { name: 'visa', text: '香港簽證 姓名：郑十 签证类型：IANG 非本地畢業生留港 有效期至：2025-12-31 签发日期：2023-06-15' },
+    // reminder_date — 日期识别
+    { name: 'reminder_date', text: '居留許可 有效期至：2026-12-31 截止日期：2025-08-15 出生日期2001年03月22日 申请日期 2024-01-05' },
+  ];
+
+  var results = [];
+  var passed = 0, failed = 0;
+
+  cases.forEach(function(c) {
+    var docTypeInfo = identifyDocType(c.text);
+    var docTypeOk = (c.name === 'reminder_date') ? true : (docTypeInfo.docType === c.name);
+    
+    var fields;
+    if (c.name === 'reminder_date') {
+      fields = extractAllDates(c.text).map(function(d) { return { label: d.label, value: d.date }; });
+    } else {
+      fields = extractAllFields(docTypeInfo.docType, c.text);
+    }
+
+    var confidence = calcConfidence(docTypeInfo, fields, c.text.trim().length);
+
+    var r = {
+      test: c.name,
+      docType: docTypeInfo.docType,
+      docTypeOK: docTypeOk,
+      fieldCount: fields.length,
+      confidence: confidence,
+    };
+
+    if (docTypeOk && fields.length >= 2) { passed++; r.status = 'PASS'; }
+    else { failed++; r.status = 'FAIL'; }
+
+    results.push(r);
+  });
+
+  return {
+    code: 0,
+    data: {
+      total: cases.length,
+      passed: passed,
+      failed: failed,
+      results: results,
+      summary: passed + '/' + cases.length + ' tests passed' + (failed > 0 ? ', ' + failed + ' FAILED' : ' — ALL PASSED')
+    }
+  };
 }

@@ -20,10 +20,10 @@
     <text wx:if="{{membershipDays > 0}}" style="font-size:var(--font-xs);opacity:0.8;display:block">剩余 {{membershipDays}} 天</text>
     <text wx:if="{{isLocked}}" style="font-size:var(--font-xs);color:#FEF2F2;display:block">🔒 已过期</text>
     <view class="progress" style="background:rgba(255,255,255,0.2);margin-bottom:12rpx">
-      <view class="progress-fill" style="width:{{documentCount >= 10 ? '100%' : documentCount * 10 + '%'}};background:#FFF"></view>
+      <view class="progress-fill" style="width:{{isPayingUser ? (documentCount > 0 ? '100%' : '0%') : (documentCount >= documentLimit ? '100%' : documentCount / documentLimit * 100 + '%')}};background:#FFF"></view>
     </view>
-    <text style="font-size:var(--font-xs);opacity:0.8;display:block">已使用 {{documentCount}}/10 证件位</text>
-    <button class="btn" style="background:#FFF;color:var(--blue);margin-top:16rpx;width:100%;font-weight:700" bindtap="navigateTo" data-url="membership">{{isLocked ? '🔓 解锁全部功能' : '🚀 升级会员'}}</button>
+    <text style="font-size:var(--font-xs);opacity:0.8;display:block">已使用 {{documentCount}}/{{documentLimitDisplay}} 证件位</text>
+    <button class="btn" style="background:#FFF;color:var(--blue);margin-top:16rpx;width:100%;font-weight:700" bindtap="navigateTo" data-url="membership">{{isLocked ? '🔓 解锁全部功能' : (isPayingUser ? '✨ 管理会员' : '🚀 升级会员')}}</button>
   </view>
 
   <!-- 功能入口 -->

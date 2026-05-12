@@ -29,6 +29,18 @@
     </view>
   </view>
 
+  <!-- 快捷入口 -->
+  <view class="quick-entries" wx:if="{{!loading}}">
+    <view class="quick-entry" bindtap="goOrders">
+      <text class="entry-icon">📋</text>
+      <text class="entry-text">我的订单</text>
+    </view>
+    <view class="quick-entry" bindtap="goInvoices">
+      <text class="entry-icon">📄</text>
+      <text class="entry-text">发票管理</text>
+    </view>
+  </view>
+
   <!-- 方案卡片 -->
   <view class="plans-grid" wx:if="{{!loading}}">
     <view

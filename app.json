@@ -30,6 +30,10 @@
     "pages/privacy/index/index",
     "pages/mine/settings/settings",
     "pages/membership/index/index",
+    "pages/mine/orders/index",
+    "pages/mine/orders/detail",
+    "pages/mine/invoice/apply",
+    "pages/mine/invoice/list",
     "pages/admin-db/index/index"
   ],
   "window": {

@@ -221,6 +221,16 @@ Page({
     this.setData({ showResult: false });
   },
 
+  // ========== 快捷入口 ==========
+
+  goOrders: function() {
+    wx.navigateTo({ url: '/pages/mine/orders/index' });
+  },
+
+  goInvoices: function() {
+    wx.navigateTo({ url: '/pages/mine/invoice/list' });
+  },
+
   // ========== 返回 ==========
   goBack: function() {
     wx.navigateBack();
