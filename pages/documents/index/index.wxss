@@ -5,27 +5,27 @@
 
 /* === DESIGN TOKENS === */
 page {
-  --navy:        #1a73e8;
-  --navy-light:  #1557b0;
-  --navy-lighter: #e8f0fe;
-  --gold:        #1a73e8;
+  --navy:        var(--color-primary);
+  --navy-light:  var(--color-primary-dark);
+  --navy-lighter: var(--color-primary-light);
+  --gold:        var(--color-primary);
   --gold-light:  #4A90D9;
-  --gold-bg:     #e8f0fe;
-  --parchment:   #F9FAFB;
-  --parchment-dk:#F3F4F6;
-  --green:       #059669;
-  --green-bg:    #ECFDF5;
-  --amber:       #1a73e8;
-  --amber-bg:    #e8f0fe;
-  --red:         #DC2626;
-  --red-bg:      #FEF2F2;
-  --gray-100:    #F3F4F6;
-  --gray-200:    #E5E7EB;
-  --gray-300:    #D1D5DB;
+  --gold-bg:     var(--color-primary-light);
+  --parchment:   var(--gray-50);
+  --parchment-dk:var(--gray-100);
+  --green:       var(--color-success);
+  --green-bg:    var(--color-success-bg);
+  --amber:       var(--color-primary);
+  --amber-bg:    var(--color-primary-light);
+  --red:         var(--color-error);
+  --red-bg:      var(--color-error-bg);
+  --gray-100:    var(--gray-100);
+  --gray-200:    var(--gray-200);
+  --gray-300:    var(--gray-300);
   --gray-400:    #757F8C;
   --gray-500:    #5E6773;
-  --gray-700:    #374151;
-  --white:       #FFFFFF;
+  --gray-700:    var(--gray-700);
+  --white:       var(--color-bg-card)FFF;
   --radius:      12rpx;
   --radius-lg:   20rpx;
   --shadow-sm:   0 2rpx 12rpx rgba(0,0,0,0.06);
@@ -226,7 +226,7 @@ page {
   display: flex;
   align-items: center;
   justify-content: center;
-  background: linear-gradient(135deg, #1a73e8, #1557b0);
+  background: linear-gradient(135deg, var(--color-primary), var(--color-primary-dark));
   color: var(--white);
   font-size: var(--font-sm);
   font-weight: 600;
@@ -877,7 +877,7 @@ page {
   gap: 14rpx;
   margin: 12rpx 24rpx;
   padding: 18rpx 22rpx;
-  background: linear-gradient(135deg, #FFF7ED, #FFEDD5);
+  background: linear-gradient(135deg, var(--color-bg-card)7ED, #FFEDD5);
   border: 1rpx solid rgba(180,83,9,0.2);
   border-radius: var(--radius);
 }
@@ -895,7 +895,7 @@ page {
 }
 .limit-tip__body { flex: 1; min-width: 0; display: flex; flex-direction: column; gap: 4rpx; }
 .limit-tip__title { font-size: var(--font-sm); font-weight: 700; color: var(--amber); }
-.limit-tip__desc { font-size: var(--font-xs); color: #C2410C; line-height: 1.5; }
+.limit-tip__desc { font-size: var(--font-xs); color: var(--color-warning); line-height: 1.5; }
 
 /* ═══ ACTION ROW ═══ */
 .action-row {
@@ -1065,23 +1065,43 @@ page {
   color: var(--gray-400);
 }
 
+/* ═══ 单行卡槽 ═══ */
+.slot { display: flex; align-items: center; gap: 16rpx; padding: 16rpx 20rpx; margin: 8rpx 20rpx; border-radius: 16rpx; background: var(--color-bg-card); box-shadow: 0 2rpx 8rpx rgba(0,0,0,0.03); }
+.slot--done { border-left: 6rpx solid var(--color-success); }
+.slot--partial { border-left: 6rpx solid var(--color-info); }
+.slot--empty { border-left: 6rpx solid var(--gray-200); }
+.slot__previews { display: flex; gap: 6rpx; flex-shrink: 0; align-items: center; }
+.slot__pthumb { width: 64rpx; height: 80rpx; border-radius: 8rpx; border: 1rpx solid var(--gray-100); }
+.slot__pcount { font-size: 22rpx; color: var(--gray-500); padding-left: 2rpx; }
+.slot__info { flex: 1; min-width: 0; }
+.slot__tags { display: flex; align-items: center; gap: 8rpx; margin-bottom: 4rpx; }
+.slot__name { font-size: 26rpx; font-weight: 600; color: var(--color-text-primary); }
+.slot__tag { font-size: 20rpx; padding: 2rpx 10rpx; border-radius: 6rpx; }
+.slot__tag--required { background: var(--color-error-bg); color: var(--color-error); }
+.slot__tag--recommended { background: var(--color-bg-card)7ED; color: var(--color-warning); }
+.slot__tag--optional { background: var(--gray-100); color: var(--gray-500); }
+.slot__count { font-size: 22rpx; color: var(--color-success); }
+.slot__btn { width: 56rpx; height: 56rpx; border-radius: 14rpx; display: flex; align-items: center; justify-content: center; font-size: 28rpx; font-weight: 700; flex-shrink: 0; }
+.slot__btn--add { background: var(--color-info-bg); color: var(--color-info); border: 2rpx dashed #BFDBFE; }
+.slot__btn--done { background: var(--color-success-bg); color: var(--color-success); }
+
 /* ═══ 画廊 ═══ */
 .gallery-grid { display: flex; flex-wrap: wrap; padding: 12rpx 20rpx; gap: 12rpx; }
-.gallery-item { width: calc(33.33% - 8rpx); border-radius: 12rpx; overflow: hidden; position: relative; background: #F3F4F6; }
+.gallery-item { width: calc(33.33% - 8rpx); border-radius: 12rpx; overflow: hidden; position: relative; background: var(--gray-100); }
 .gallery-item::after { content: ''; display: block; padding-bottom: 133%; }
 .gallery-thumb { position: absolute; inset: 0; width: 100%; height: 100%; }
 .gallery-overlay { position: absolute; bottom: 0; left: 0; right: 0; padding: 8rpx 12rpx; background: linear-gradient(transparent, rgba(0,0,0,0.6)); }
-.gallery-label { font-size: 22rpx; color: #FFF; }
-.gallery-empty { width: 100%; text-align: center; padding: 48rpx; color: #9CA3AF; font-size: 26rpx; }
+.gallery-label { font-size: 22rpx; color: var(--color-bg-card); }
+.gallery-empty { width: 100%; text-align: center; padding: 48rpx; color: var(--gray-400); font-size: 26rpx; }
 /* 全屏预览 */
 .image-viewer { position: fixed; inset: 0; z-index: 999; }
 .image-viewer__mask { position: absolute; inset: 0; background: #000; }
 .image-viewer__swiper { position: absolute; top: 0; left: 0; width: 100%; height: calc(100% - 120rpx); }
 .image-viewer__img { width: 100%; height: 100%; }
 .image-viewer__info { position: absolute; bottom: 0; left: 0; right: 0; padding: 24rpx 32rpx 40rpx; display: flex; justify-content: space-between; align-items: center; }
-.image-viewer__title { font-size: 30rpx; color: #FFF; font-weight: 600; }
+.image-viewer__title { font-size: 30rpx; color: var(--color-bg-card); font-weight: 600; }
 .image-viewer__count { font-size: 24rpx; color: rgba(255,255,255,0.6); }
-.image-viewer__close { position: absolute; top: 80rpx; right: 28rpx; width: 64rpx; height: 64rpx; border-radius: 50%; background: rgba(255,255,255,0.15); display: flex; align-items: center; justify-content: center; font-size: 32rpx; color: #FFF; z-index: 10; }
+.image-viewer__close { position: absolute; top: 80rpx; right: 28rpx; width: 64rpx; height: 64rpx; border-radius: 50%; background: rgba(255,255,255,0.15); display: flex; align-items: center; justify-content: center; font-size: 32rpx; color: var(--color-bg-card); z-index: 10; }
 
 /* ═══ SAFE BOTTOM ═══ */
 .safe-bottom { height: 120rpx; }

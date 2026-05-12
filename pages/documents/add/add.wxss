@@ -3,21 +3,22 @@
 /* ===== Step 1: 输入方式选择 ===== */
 .input-modes {
   display: flex;
-  flex-direction: column;
-  gap: 20rpx;
-  padding: 32rpx 24rpx;
+  flex-direction: row;
+  gap: 16rpx;
+  padding: 24rpx 24rpx 0;
 }
 .input-mode-card {
+  flex: 1;
   display: flex;
   flex-direction: column;
   align-items: center;
-  gap: 10rpx;
-  padding: 36rpx 28rpx;
-  background: var(--white);
-  border-radius: var(--radius);
-  box-shadow: var(--shadow-sm);
-  border: 2rpx solid transparent;
-  transition: all 0.2s;
+  gap: 8rpx;
+  padding: 28rpx 18rpx;
+  background: var(--color-bg-card);
+  border-radius: 18rpx;
+  box-shadow: 0 2rpx 12rpx rgba(0,0,0,0.05);
+  border: 2rpx solid var(--gray-200);
+  transition: all 0.15s;
 }
 .input-mode-card:active {
   border-color: var(--blue);
@@ -36,6 +37,54 @@
   font-size: var(--font-xs);
   color: var(--gray-500);
 }
+/* 卡槽专属指引卡片 */
+.slot-guide-card { margin: 20rpx 24rpx 0; padding: 24rpx; border-radius: 18rpx; background: linear-gradient(135deg, var(--color-info-bg), var(--color-info-bg)); border: 2rpx solid #BFDBFE; }
+.slot-guide__head { display: flex; align-items: center; gap: 12rpx; margin-bottom: 16rpx; }
+.slot-guide__icon { font-size: 40rpx; }
+.slot-guide__title { font-size: 28rpx; font-weight: 700; color: var(--color-primary-dark); }
+.slot-guide__items { display: flex; flex-direction: column; gap: 10rpx; }
+.slot-guide__item { display: flex; align-items: flex-start; gap: 10rpx; font-size: 24rpx; color: var(--gray-700); line-height: 1.6; }
+.slot-guide__dot { color: #3B82F6; flex-shrink: 0; font-size: 16rpx; margin-top: 6rpx; }
+.slot-guide__pii { margin-top: 16rpx; padding: 14rpx 18rpx; border-radius: 12rpx; background: var(--color-error-bg); border: 1rpx solid #FECACA; }
+.pii-label { font-size: 22rpx; color: var(--color-error); font-weight: 600; display: block; margin-bottom: 4rpx; }
+.pii-fields { font-size: 22rpx; color: var(--color-error); }
+.slot-guide__specimen { display: flex; align-items: center; gap: 8rpx; margin-top: 12rpx; padding: 12rpx 16rpx; border-radius: 10rpx; background: var(--color-success-bg); border: 1rpx solid #BBF7D0; }
+.specimen-icon { font-size: 24rpx; }
+.specimen-text { font-size: 22rpx; color: var(--color-success); }
+
+/* ═══ R4: CSS证件示意图 ═══ */
+.doc-mockup { margin-top: 16rpx; padding: 20rpx; border-radius: 16rpx; background: #F8FAFC; border: 2rpx dashed var(--gray-300); position: relative; }
+.mockup-frame { display: flex; gap: 20rpx; padding: 20rpx; background: #FFF; border-radius: 12rpx; border: 1rpx solid var(--gray-200); position: relative; z-index: 1; }
+.mockup-photo { width: 140rpx; height: 170rpx; border-radius: 8rpx; background: var(--gray-100); border: 2rpx dashed var(--gray-300); display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 6rpx; flex-shrink: 0; }
+.mockup-photo__icon { font-size: 40rpx; opacity: 0.5; }
+.mockup-photo__label { font-size: 20rpx; color: var(--gray-400); }
+.mockup-fields { flex: 1; display: flex; flex-direction: column; gap: 14rpx; padding-top: 8rpx; }
+.mockup-field { position: relative; }
+.mockup-line { height: 14rpx; border-radius: 4rpx; background: var(--gray-200); margin-bottom: 4rpx; }
+.mockup-line--name { width: 55%; }
+.mockup-line--id { width: 80%; }
+.mockup-line--date { width: 60%; }
+.mockup-line--addr { width: 72%; }
+.mockup-tag { font-size: 18rpx; color: var(--gray-400); }
+.mockup-field--pii .mockup-line { background: repeating-linear-gradient(90deg, var(--gray-300) 0px, var(--gray-300) 8rpx, transparent 8rpx, transparent 12rpx); }
+.mockup-field--pii .mockup-tag { color: var(--color-error); }
+/* 四角对齐指示 */
+.mockup-corners { position: absolute; inset: 8rpx; pointer-events: none; z-index: 0; }
+.mockup-corner { position: absolute; width: 28rpx; height: 28rpx; }
+.mockup-corner--tl { top: 0; left: 0; border-top: 4rpx solid var(--color-primary); border-left: 4rpx solid var(--color-primary); border-radius: 6rpx 0 0 0; }
+.mockup-corner--tr { top: 0; right: 0; border-top: 4rpx solid var(--color-primary); border-right: 4rpx solid var(--color-primary); border-radius: 0 6rpx 0 0; }
+.mockup-corner--bl { bottom: 0; left: 0; border-bottom: 4rpx solid var(--color-primary); border-left: 4rpx solid var(--color-primary); border-radius: 0 0 0 6rpx; }
+.mockup-corner--br { bottom: 0; right: 0; border-bottom: 4rpx solid var(--color-primary); border-right: 4rpx solid var(--color-primary); border-radius: 0 0 6rpx 0; }
+.mockup-note { display: block; text-align: center; margin-top: 14rpx; font-size: 22rpx; color: var(--gray-400); }
+
+/* 通用指引（无卡槽上下文时） */
+.capture-guide { margin: 20rpx 24rpx 0; padding: 24rpx; border-radius: 16rpx; background: var(--gray-50); border: 1rpx solid var(--gray-100); }
+.capture-guide__title { font-size: 28rpx; font-weight: 700; color: var(--color-text-primary); margin-bottom: 16rpx; }
+.capture-guide__list { display: flex; flex-direction: column; gap: 10rpx; }
+.capture-guide__item { display: flex; align-items: flex-start; gap: 10rpx; font-size: 24rpx; color: var(--gray-700); line-height: 1.5; }
+.capture-guide__icon { flex-shrink: 0; width: 32rpx; text-align: center; }
+.capture-guide__note { display: block; margin-top: 16rpx; padding: 12rpx 16rpx; border-radius: 10rpx; background: var(--color-info-bg); font-size: 22rpx; color: var(--color-info); line-height: 1.5; }
+
 .privacy-notice {
   margin: 0 24rpx;
   padding: 20rpx 24rpx;
@@ -103,7 +152,7 @@
 .privacy-inline {
   margin: 4rpx 24rpx 20rpx;
   padding: 20rpx 24rpx;
-  background: linear-gradient(135deg, #ECFDF5 0%, #F0FDF4 100%);
+  background: linear-gradient(135deg, var(--color-success-bg) 0%, var(--color-success-bg) 100%);
   border-radius: var(--radius-sm);
   border: 1rpx solid #A7F3D0;
   display: flex;
@@ -124,11 +173,11 @@
 .privacy-inline__title {
   font-size: 26rpx;
   font-weight: 700;
-  color: #065F46;
+  color: var(--color-success);
 }
 .privacy-inline__desc {
   font-size: 22rpx;
-  color: #047857;
+  color: var(--color-success);
   line-height: 1.6;
 }
 .quality-title {
@@ -140,7 +189,7 @@
 }
 .quality-item {
   font-size: var(--font-xs);
-  color: #C2410C;
+  color: var(--color-warning);
   display: block;
   line-height: 1.8;
 }
@@ -177,12 +226,12 @@
 .low-confidence-banner {
   display: flex; gap: 12rpx; align-items: flex-start;
   margin: 0 24rpx 16rpx; padding: 20rpx 24rpx;
-  background: #FEF2F2; border: 2rpx solid #FECACA; border-radius: 14rpx;
+  background: var(--color-error-bg); border: 2rpx solid #FECACA; border-radius: 14rpx;
 }
 .low-confidence-icon { font-size: 36rpx; flex-shrink: 0; }
 .low-confidence-body { flex: 1; }
-.low-confidence-title { font-size: 28rpx; font-weight: 700; color: #DC2626; display: block; margin-bottom: 4rpx; }
-.low-confidence-desc { font-size: 24rpx; color: #991B1B; line-height: 1.6; display: block; }
+.low-confidence-title { font-size: 28rpx; font-weight: 700; color: var(--color-error); display: block; margin-bottom: 4rpx; }
+.low-confidence-desc { font-size: 24rpx; color: var(--color-error); line-height: 1.6; display: block; }
 
 .confidence-hint {
   font-size: 24rpx;
@@ -346,6 +395,39 @@
   align-items: center;
   justify-content: center;
 }
+
+/* ═══ 证件对齐裁切 ═══ */
+.crop-container { position: relative; width: 100%; height: 600rpx; background: #000; overflow: hidden; }
+.crop-movable { position: absolute; inset: 0; width: 100%; height: 100%; }
+.crop-view { display: flex; align-items: center; justify-content: center; width: 200%; height: 200%; }
+.crop-img { width: 100%; opacity: 0.8; }
+/* 遮罩层 */
+.crop-mask { position: absolute; background: rgba(0,0,0,0.55); z-index: 2; }
+.crop-mask--top { top: 0; left: 0; right: 0; height: 80rpx; }
+.crop-mask--bottom { bottom: 0; left: 0; right: 0; height: 80rpx; }
+.crop-mask--left { top: 80rpx; left: 0; bottom: 80rpx; width: 40rpx; }
+.crop-mask--right { top: 80rpx; right: 0; bottom: 80rpx; width: 40rpx; }
+/* 证件框 */
+.crop-frame { position: absolute; top: 80rpx; left: 40rpx; right: 40rpx; bottom: 80rpx; z-index: 3; border: 4rpx dashed rgba(255,255,255,0.7); border-radius: 12rpx; }
+.crop-corner { position: absolute; width: 32rpx; height: 32rpx; }
+.crop-corner--tl { top: -4rpx; left: -4rpx; border-top: 6rpx solid #3B82F6; border-left: 6rpx solid #3B82F6; }
+.crop-corner--tr { top: -4rpx; right: -4rpx; border-top: 6rpx solid #3B82F6; border-right: 6rpx solid #3B82F6; }
+.crop-corner--bl { bottom: -4rpx; left: -4rpx; border-bottom: 6rpx solid #3B82F6; border-left: 6rpx solid #3B82F6; }
+.crop-corner--br { bottom: -4rpx; right: -4rpx; border-bottom: 6rpx solid #3B82F6; border-right: 6rpx solid #3B82F6; }
+.crop-hint { display: block; text-align: center; font-size: 22rpx; color: var(--gray-400); padding: 12rpx 24rpx; }
+
+/* ═══ 预览脱敏遮罩图层 ═══ */
+.privacy-overlay { position: absolute; inset: 0; z-index: 2; pointer-events: none; }
+.privacy-bar { position: absolute; background: rgba(0,0,0,0.65); border-radius: 4rpx; }
+.privacy-bar--name { top: 12%; left: 8%; width: 28%; height: 5%; }
+.privacy-bar--id { top: 20%; left: 8%; width: 45%; height: 4%; }
+.privacy-bar--birth { top: 28%; left: 8%; width: 25%; height: 4%; }
+.privacy-bar--addr { top: 36%; left: 8%; width: 55%; height: 5%; }
+.privacy-label { position: absolute; color: var(--color-bg-card); font-size: 18rpx; text-align: center; opacity: 0.8; }
+.privacy-label--name { top: 11.5%; left: 8%; width: 28%; }
+.privacy-label--id { top: 19.5%; left: 8%; width: 45%; }
+.privacy-label--birth { top: 27.5%; left: 8%; width: 25%; }
+.privacy-label--addr { top: 35.5%; left: 8%; width: 55%; }
 
 /* 按钮行 */
 .btn-flex {

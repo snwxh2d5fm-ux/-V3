@@ -5,7 +5,7 @@
   display: flex;
   flex-direction: column;
   height: 100vh;
-  background: #F3F4F6;
+  background: var(--gray-100);
 }
 
 /* 顶部标题栏 */
@@ -14,14 +14,14 @@
   align-items: center;
   justify-content: space-between;
   padding: 16rpx 24rpx;
-  background: #FFFFFF;
-  border-bottom: 1rpx solid #E5E7EB;
+  background: var(--color-bg-card)FFF;
+  border-bottom: 1rpx solid var(--gray-200);
 }
 
 .chat-title {
   font-size: 32rpx;
   font-weight: 600;
-  color: #1F2937;
+  color: var(--gray-800);
 }
 
 .chat-actions {
@@ -32,7 +32,7 @@
 
 .action-btn {
   font-size: 24rpx;
-  color: #2563EB;
+  color: var(--color-info);
   padding: 4rpx 12rpx;
 }
 
@@ -40,8 +40,8 @@
   font-size: 20rpx;
   padding: 4rpx 12rpx;
   border-radius: 8rpx;
-  background: #EFF6FF;
-  color: #2563EB;
+  background: var(--color-info-bg);
+  color: var(--color-info);
 }
 
 /* 消息列表 */
@@ -86,7 +86,7 @@
 }
 
 .assistant-avatar {
-  background: #EFF6FF;
+  background: var(--color-info-bg);
   margin-right: 12rpx;
 }
 
@@ -107,15 +107,15 @@
 }
 
 .bubble.assistant {
-  background: #FFFFFF;
-  color: #1F2937;
+  background: var(--color-bg-card)FFF;
+  color: var(--gray-800);
   border-top-left-radius: 4rpx;
   box-shadow: 0 1rpx 4rpx rgba(0,0,0,0.05);
 }
 
 .bubble.user {
-  background: #2563EB;
-  color: #FFFFFF;
+  background: var(--color-info);
+  color: var(--color-bg-card)FFF;
   border-top-right-radius: 4rpx;
 }
 
@@ -133,7 +133,7 @@
 
 .typing-dot {
   font-size: 16rpx;
-  color: #9CA3AF;
+  color: var(--gray-400);
   animation: typing 1.4s infinite;
 }
 
@@ -160,11 +160,11 @@
 
 .quick-reply-btn {
   padding: 8rpx 20rpx;
-  background: #EFF6FF;
+  background: var(--color-info-bg);
   border: 1rpx solid #BFDBFE;
   border-radius: 24rpx;
   font-size: 24rpx;
-  color: #2563EB;
+  color: var(--color-info);
   white-space: nowrap;
 }
 
@@ -177,8 +177,8 @@
   display: flex;
   padding: 12rpx 16rpx;
   gap: 12rpx;
-  background: #FFFFFF;
-  border-top: 1rpx solid #E5E7EB;
+  background: var(--color-bg-card)FFF;
+  border-top: 1rpx solid var(--gray-200);
   overflow-x: auto;
 }
 
@@ -187,16 +187,16 @@
   align-items: center;
   gap: 6rpx;
   padding: 8rpx 18rpx;
-  background: #F3F4F6;
+  background: var(--gray-100);
   border-radius: 20rpx;
   font-size: 24rpx;
-  color: #4B5563;
+  color: var(--gray-600);
   white-space: nowrap;
   flex-shrink: 0;
 }
 
 .quick-entry-item:active {
-  background: #E5E7EB;
+  background: var(--gray-200);
 }
 
 .entry-icon {
@@ -209,8 +209,8 @@
   align-items: center;
   padding: 12rpx 16rpx;
   padding-bottom: calc(12rpx + env(safe-area-inset-bottom));
-  background: #FFFFFF;
-  border-top: 1rpx solid #E5E7EB;
+  background: var(--color-bg-card)FFF;
+  border-top: 1rpx solid var(--gray-200);
   gap: 12rpx;
 }
 
@@ -218,23 +218,23 @@
   flex: 1;
   height: 72rpx;
   padding: 0 20rpx;
-  background: #F3F4F6;
+  background: var(--gray-100);
   border-radius: 36rpx;
   font-size: 28rpx;
-  color: #1F2937;
+  color: var(--gray-800);
 }
 
 .send-btn {
   padding: 12rpx 28rpx;
-  background: #D1D5DB;
+  background: var(--gray-300);
   border-radius: 36rpx;
   font-size: 28rpx;
-  color: #FFFFFF;
+  color: var(--color-bg-card)FFF;
   flex-shrink: 0;
 }
 
 .send-btn.active {
-  background: #2563EB;
+  background: var(--color-info);
 }
 
 /* ========== V7: 安全护栏样式 ========== */
@@ -243,11 +243,11 @@
 .permanent-notice {
   margin: 12rpx 16rpx;
   padding: 12rpx 16rpx;
-  background: #EFF6FF;
-  border-left: 6rpx solid #2563EB;
+  background: var(--color-info-bg);
+  border-left: 6rpx solid var(--color-info);
   border-radius: 4rpx;
   font-size: 22rpx;
-  color: #1E40AF;
+  color: var(--color-primary-dark);
   line-height: 1.5;
 }
 
@@ -257,7 +257,7 @@
 }
 
 .safety-banner {
-  background: #FFF3CD;
+  background: var(--color-bg-card)3CD;
   border-left: 6rpx solid #FFC107;
   padding: 12rpx 16rpx;
   margin-bottom: 8rpx;

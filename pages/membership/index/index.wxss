@@ -46,14 +46,14 @@ page {
   color: #333;
 }
 .status-level.free { color: #999; }
-.status-level.basic { color: #059669; }
-.status-level.pro { color: #2563EB; }
+.status-level.basic { color: var(--color-success); }
+.status-level.pro { color: var(--color-info); }
 .status-level.premium { color: #7C3AED; }
 .lock-badge {
   font-size: 24rpx;
-  color: #DC2626;
+  color: var(--color-error);
   padding: 8rpx 16rpx;
-  background: #FEF2F2;
+  background: var(--color-error-bg);
   border-radius: 8rpx;
 }
 
@@ -83,7 +83,7 @@ page {
 .period-switch {
   display: flex;
   margin: 0 32rpx 24rpx;
-  background: #E5E7EB;
+  background: var(--gray-200);
   border-radius: 12rpx;
   padding: 6rpx;
 }
@@ -101,14 +101,14 @@ page {
 }
 .period-option.active {
   background: #fff;
-  color: #1a73e8;
+  color: var(--color-primary);
   font-weight: 600;
   box-shadow: 0 2rpx 8rpx rgba(0,0,0,0.08);
 }
 .save-tag {
   font-size: 20rpx;
   color: #fff;
-  background: #DC2626;
+  background: var(--color-error);
   padding: 2rpx 10rpx;
   border-radius: 6rpx;
 }
@@ -126,13 +126,13 @@ page {
   background: #fff;
   border-radius: 20rpx;
   padding: 36rpx 32rpx;
-  border: 2rpx solid #E5E7EB;
+  border: 2rpx solid var(--gray-200);
   transition: all 0.2s;
 }
 .plan-card.highlighted {
-  border-color: #1a73e8;
+  border-color: var(--color-primary);
   box-shadow: 0 4rpx 24rpx rgba(26,115,232,0.12);
-  background: linear-gradient(135deg, #EFF6FF 0%, #fff 40%);
+  background: linear-gradient(135deg, var(--color-info-bg) 0%, #fff 40%);
 }
 .plan-card.current {
   opacity: 0.7;
@@ -143,7 +143,7 @@ page {
   position: absolute;
   top: 0;
   right: 32rpx;
-  background: linear-gradient(135deg, #1a73e8, #2563EB);
+  background: linear-gradient(135deg, var(--color-primary), var(--color-info));
   color: #fff;
   font-size: 22rpx;
   padding: 6rpx 20rpx;
@@ -169,8 +169,8 @@ page {
   border-radius: 6rpx;
   font-weight: 600;
 }
-.plan-level-tag.basic { background: #ECFDF5; color: #059669; }
-.plan-level-tag.pro { background: #EFF6FF; color: #2563EB; }
+.plan-level-tag.basic { background: var(--color-success-bg); color: var(--color-success); }
+.plan-level-tag.pro { background: var(--color-info-bg); color: var(--color-info); }
 .plan-level-tag.premium { background: #F5F3FF; color: #7C3AED; }
 
 /* 价格 */
@@ -215,7 +215,7 @@ page {
 }
 .feature-check {
   font-size: 22rpx;
-  color: #059669;
+  color: var(--color-success);
   font-weight: 700;
   width: 28rpx;
   text-align: center;
@@ -246,13 +246,13 @@ page {
   border: none;
 }
 .subscribe-btn.primary {
-  background: linear-gradient(135deg, #1a73e8, #2563EB);
+  background: linear-gradient(135deg, var(--color-primary), var(--color-info));
   color: #fff;
 }
 .subscribe-btn.outline {
   background: #fff;
-  color: #1a73e8;
-  border: 2rpx solid #1a73e8;
+  color: var(--color-primary);
+  border: 2rpx solid var(--color-primary);
 }
 .subscribe-btn.current-btn {
   width: 100%;
@@ -307,7 +307,7 @@ page {
   font-size: 30rpx;
   font-weight: 600;
   border-radius: 12rpx;
-  background: linear-gradient(135deg, #1a73e8, #2563EB);
+  background: linear-gradient(135deg, var(--color-primary), var(--color-info));
   color: #fff;
   border: none;
   text-align: center;

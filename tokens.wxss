@@ -1,0 +1,68 @@
+/**
+ * 住港伴 — DSG-3 语义色令牌体系
+ * 禁止直接使用 hex 值，全部通过 var() 引用本文件变量
+ */
+
+page {
+  /* ═══ 主色系统 ═══ */
+  --color-primary: #1a73e8;
+  --color-primary-dark: #1557b0;
+  --color-primary-light: #e8f0fe;
+
+  /* ═══ 中性色 ═══ */
+  --color-text-primary: #111827;
+  --color-text-secondary: #5f6368;
+  --color-text-muted: #9ca3af;
+  --color-bg-page: #f8f9fa;
+  --color-bg-card: #ffffff;
+  --color-border: #e5e7eb;
+
+  /* ═══ 语义色 ═══ */
+  --color-success: #059669;
+  --color-success-bg: #ecfdf5;
+  --color-warning: #ea580c;
+  --color-warning-bg: #fff7ed;
+  --color-error: #dc2626;
+  --color-error-bg: #fef2f2;
+  --color-info: #2563eb;
+  --color-info-bg: #eff6ff;
+
+  /* ═══ 灰阶 ═══ */
+  --gray-50: #f9fafb;
+  --gray-100: #f3f4f6;
+  --gray-200: #e5e7eb;
+  --gray-300: #d1d5db;
+  --gray-400: #9ca3af;
+  --gray-500: #6b7280;
+  --gray-600: #4b5563;
+  --gray-700: #374151;
+  --gray-800: #1f2937;
+  --gray-900: #111827;
+
+  /* ═══ 间距 ═══ */
+  --space-xs: 8rpx;
+  --space-sm: 12rpx;
+  --space-md: 16rpx;
+  --space-lg: 24rpx;
+  --space-xl: 32rpx;
+
+  /* ═══ 圆角 ═══ */
+  --radius-xs: 6rpx;
+  --radius-sm: 8rpx;
+  --radius: 16rpx;
+  --radius-lg: 24rpx;
+  --radius-pill: 20rpx;
+
+  /* ═══ 字号 ═══ */
+  --font-xs: 22rpx;
+  --font-sm: 26rpx;
+  --font-md: 30rpx;
+  --font-lg: 34rpx;
+  --font-xl: 40rpx;
+  --font-xxl: 48rpx;
+
+  /* ═══ 阴影 ═══ */
+  --shadow-sm: 0 2rpx 8rpx rgba(0,0,0,0.04);
+  --shadow: 0 4rpx 16rpx rgba(0,0,0,0.08);
+  --shadow-lg: 0 8rpx 32rpx rgba(0,0,0,0.12);
+}

@@ -87,7 +87,7 @@
 .guide-footer-hint { display: block; font-size: 20rpx; color: var(--gray-400); opacity: 0.7; }
 
 /* ===== v4.3 新增: 身份状态横幅 ===== */
-.status-banner { display: flex; align-items: center; justify-content: space-between; margin: 0 24rpx 12rpx; padding: 16rpx 20rpx; background: linear-gradient(135deg, var(--blue-light), #E8F0FE); border-radius: var(--radius); border-left: 6rpx solid var(--blue); }
+.status-banner { display: flex; align-items: center; justify-content: space-between; margin: 0 24rpx 12rpx; padding: 16rpx 20rpx; background: linear-gradient(135deg, var(--blue-light), var(--color-primary-light)); border-radius: var(--radius); border-left: 6rpx solid var(--blue); }
 .status-banner-wrap { display: flex; align-items: center; gap: 12rpx; }
 .status-banner-icon { font-size: 32rpx; }
 .status-banner-label { font-size: var(--font-sm); font-weight: 700; color: var(--blue); display: block; }

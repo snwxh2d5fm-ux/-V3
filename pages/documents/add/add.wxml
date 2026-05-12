@@ -4,28 +4,89 @@
   <!-- ===== Step 1: 选择输入方式 ===== -->
   <block wx:if="{{step === 1}}">
     <view class="page-header">
-      <text class="page-header-title">添加证件</text>
-      <text class="page-header-sub">拍照前请阅读下方拍摄指引，确保照片清晰可用</text>
+      <text class="page-header-title">{{slotContext ? slotDocName : '添加证件'}}</text>
+      <text class="page-header-sub">{{slotContext ? '按下方要求拍摄，系统自动质检' : '拍照前请阅读下方指引'}}</text>
     </view>
 
-    <!-- 三模式按钮（缩小版） -->
-    <view class="input-modes input-modes--compact">
-      <view class="input-mode-chip" bindtap="onTapCamera">
-        <text class="input-mode-chip__icon">📷</text>
-        <text class="input-mode-chip__label">拍照</text>
+    <!-- 卡槽专属指引（从卡槽进入时） -->
+    <view class="slot-guide-card" wx:if="{{slotContext && slotGuide}}">
+      <view class="slot-guide__head">
+        <text class="slot-guide__icon">{{slotGuide.icon}}</text>
+        <text class="slot-guide__title">{{slotGuide.title}}</text>
       </view>
-      <view class="input-mode-chip" bindtap="onTapAlbum">
-        <text class="input-mode-chip__icon">🖼️</text>
-        <text class="input-mode-chip__label">相册</text>
+      <view class="slot-guide__items">
+        <view class="slot-guide__item" wx:for="{{slotGuide.items}}" wx:key="*this">
+          <text class="slot-guide__dot">●</text>
+          <text>{{item}}</text>
+        </view>
       </view>
-      <view class="input-mode-chip" bindtap="onTapManual">
-        <text class="input-mode-chip__icon">✍️</text>
-        <text class="input-mode-chip__label">手动</text>
+      <view class="slot-guide__pii" wx:if="{{slotGuide.piiFields}}">
+        <text class="pii-label">🔒 拍摄后将自动脱敏：</text>
+        <text class="pii-fields">{{slotGuide.piiFields}}</text>
+      </view>
+      <view class="slot-guide__specimen" wx:if="{{slotGuide.specimen}}">
+        <text class="specimen-icon">📋</text>
+        <text class="specimen-text">标本参照：{{slotGuide.specimen}}</text>
+      </view>
+
+      <!-- R4: CSS证件示意图 — 标注关键PII区域 -->
+      <view class="doc-mockup" wx:if="{{slotContext}}">
+        <view class="mockup-frame">
+          <view class="mockup-photo">
+            <text class="mockup-photo__icon">📷</text>
+            <text class="mockup-photo__label">照片区</text>
+          </view>
+          <view class="mockup-fields">
+            <view class="mockup-field mockup-field--pii">
+              <view class="mockup-line mockup-line--name"></view>
+              <text class="mockup-tag">🔒 姓名</text>
+            </view>
+            <view class="mockup-field mockup-field--pii">
+              <view class="mockup-line mockup-line--id"></view>
+              <text class="mockup-tag">🔒 证件号</text>
+            </view>
+            <view class="mockup-field">
+              <view class="mockup-line mockup-line--date"></view>
+              <text class="mockup-tag">有效期</text>
+            </view>
+            <view class="mockup-field mockup-field--pii">
+              <view class="mockup-line mockup-line--addr"></view>
+              <text class="mockup-tag">🔒 地址</text>
+            </view>
+          </view>
+        </view>
+        <!-- 四角对齐指示 -->
+        <view class="mockup-corners">
+          <view class="mockup-corner mockup-corner--tl"></view>
+          <view class="mockup-corner mockup-corner--tr"></view>
+          <view class="mockup-corner mockup-corner--bl"></view>
+          <view class="mockup-corner mockup-corner--br"></view>
+        </view>
+        <text class="mockup-note">👆 请参照上图拍摄，确保四角完整、文字清晰</text>
       </view>
     </view>
 
-    <!-- 证件拍摄指引 -->
-    <view class="capture-guide">
+    <!-- 三模式按钮 -->
+    <view class="input-modes">
+      <view class="input-mode-card" bindtap="onTapCamera">
+        <text class="input-mode-icon">📷</text>
+        <text class="input-mode-title">拍照</text>
+        <text class="input-mode-desc">拍摄证件照片</text>
+      </view>
+      <view class="input-mode-card" bindtap="onTapAlbum">
+        <text class="input-mode-icon">🖼️</text>
+        <text class="input-mode-title">相册</text>
+        <text class="input-mode-desc">从相册中选择</text>
+      </view>
+      <view class="input-mode-card" bindtap="onTapManual">
+        <text class="input-mode-icon">✍️</text>
+        <text class="input-mode-title">手动录入</text>
+        <text class="input-mode-desc">直接填写信息</text>
+      </view>
+    </view>
+
+    <!-- 通用证件拍摄指引（无卡槽上下文时显示） -->
+    <view class="capture-guide" wx:if="{{!slotContext}}">
       <view class="capture-guide__title">📐 拍摄要求</view>
       <view class="capture-guide__list">
         <view class="capture-guide__item">
@@ -59,8 +120,8 @@
       </view>
     </view>
 
-    <!-- 证件分类说明 -->
-    <view class="capture-guide">
+    <!-- 证件分类说明（无卡槽上下文时显示） -->
+    <view class="capture-guide" wx:if="{{!slotContext}}">
       <view class="capture-guide__title">📂 支持证件类型</view>
       <view class="capture-guide__list">
         <view class="capture-guide__item"><text>🆔 身份证 / 护照 / 港澳通行证 / 香港身份证</text></view>
@@ -73,7 +134,7 @@
     </view>
 
     <view class="privacy-notice">
-      <text>🔒 证件照片仅存储在您的设备本地，不上传服务器</text>
+      <text>🔒 证件照片仅存储在您的设备本地，不上传服务器。该小程序帮助您做隐私预览、整理留存相册文档，避免照片误删。</text>
     </view>
   </block>
 
@@ -84,9 +145,20 @@
       <text class="page-header-sub">确认照片清晰可用</text>
     </view>
 
-    <!-- 图片预览 -->
+    <!-- 图片预览 + 脱敏遮罩 -->
     <view class="image-preview" wx:if="{{imagePath}}">
       <image src="{{imagePath}}" mode="aspectFit" class="preview-img" aria-label="证件图片预览" />
+      <!-- 隐私模式遮罩图层 -->
+      <view class="privacy-overlay" wx:if="{{privacyMode !== 'local'}}">
+        <view class="privacy-bar privacy-bar--name"></view>
+        <view class="privacy-bar privacy-bar--id"></view>
+        <view class="privacy-bar privacy-bar--birth"></view>
+        <view class="privacy-bar privacy-bar--addr"></view>
+        <text class="privacy-label privacy-label--name">***</text>
+        <text class="privacy-label privacy-label--id">****</text>
+        <text class="privacy-label privacy-label--birth">****</text>
+        <text class="privacy-label privacy-label--addr">****</text>
+      </view>
     </view>
 
     <!-- 质量检测结果 -->
@@ -110,6 +182,44 @@
       <button class="btn btn-outline flex-1" bindtap="retakePhoto">🔄 重拍</button>
       <button class="btn btn-primary flex-1" bindtap="confirmImage">✓ 确认，下一步</button>
     </view>
+  </block>
+
+  <!-- ===== Step 2.5: 证件对齐裁切 ===== -->
+  <block wx:if="{{step === 2.5}}">
+    <view class="page-header">
+      <text class="page-header-title">对齐证件</text>
+      <text class="page-header-sub">拖动/缩放图片，使证件边缘对齐框线</text>
+    </view>
+
+    <view class="crop-container">
+      <!-- 半透明遮罩+框线 -->
+      <view class="crop-mask crop-mask--top"></view>
+      <view class="crop-mask crop-mask--bottom"></view>
+      <view class="crop-mask crop-mask--left"></view>
+      <view class="crop-mask crop-mask--right"></view>
+      <!-- 证件框 -->
+      <view class="crop-frame">
+        <view class="crop-corner crop-corner--tl"></view>
+        <view class="crop-corner crop-corner--tr"></view>
+        <view class="crop-corner crop-corner--bl"></view>
+        <view class="crop-corner crop-corner--br"></view>
+      </view>
+
+      <!-- 可移动缩放的图片区域 -->
+      <movable-area class="crop-movable" scale-area>
+        <movable-view class="crop-view" direction="all" scale="true" scale-min="0.5" scale-max="3"
+          x="{{cropX}}" y="{{cropY}}" bindchange="onCropChange" bindscale="onCropScale">
+          <image class="crop-img" src="{{imagePath}}" mode="widthFix" />
+        </movable-view>
+      </movable-area>
+    </view>
+
+    <!-- 操作按钮 -->
+    <view class="action-row">
+      <button class="btn btn-outline flex-1" bindtap="retakePhoto">🔄 重拍</button>
+      <button class="btn btn-primary flex-1" bindtap="confirmCrop">✓ 对齐完成</button>
+    </view>
+    <text class="crop-hint">💡 请确保证件四角在框内、文字清晰</text>
   </block>
 
   <!-- ===== Step 3: 手动填写信息 ===== -->

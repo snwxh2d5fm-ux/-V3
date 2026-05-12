@@ -1,7 +1,6 @@
-/* 住港伴 v5 — 全局样式
- * 设计令牌对齐 v3 交互原型
- * v5 变更: 对比度修复 (WCAG AA 4.5:1) + 焦点可见性 + 横屏适配 + reduced-motion
- */
+/* 住港伴 v5 — 全局样式 (DSG-3 令牌体系) */
+@import "tokens.wxss";
+
 page {
   --blue: #1a73e8;
   --blue-dark: #1557b0;

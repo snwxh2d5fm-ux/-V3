@@ -73,7 +73,7 @@
   font-size: 32rpx;
   flex-shrink: 0;
 }
-.status-card__icon--blue   { background: #e8f0fe; }
+.status-card__icon--blue   { background: var(--color-primary-light); }
 .status-card__icon--orange { background: #fff3e0; }
 .status-card__icon--green  { background: #e8f5e9; }
 .status-card__icon--purple { background: #f3e5f5; }
@@ -105,7 +105,7 @@
   flex-shrink: 0;
   font-weight: 500;
 }
-.tag--blue   { background: #e8f0fe; color: #1a73e8; }
+.tag--blue   { background: var(--color-primary-light); color: var(--color-primary); }
 .tag--orange { background: #fff3e0; color: #e37400; }
 .tag--green  { background: #e8f5e9; color: #0d904f; }
 .tag--purple { background: #f3e5f5; color: #7b1fa2; }
@@ -156,8 +156,8 @@
 .chip:active { transform: scale(0.96); }
 .chip__icon { font-size: 24rpx; }
 .chip.active {
-  background: #e8f0fe;
-  color: #1a73e8;
+  background: var(--color-primary-light);
+  color: var(--color-primary);
   font-weight: 600;
   box-shadow: 0 0 0 2rpx rgba(26,115,232,0.2);
 }
@@ -192,11 +192,11 @@
   border: 2rpx dashed #e0e0e0;
   transition: border-color 0.2s;
 }
-.upload-area:active { border-color: #1a73e8; background: #fafbff; }
+.upload-area:active { border-color: var(--color-primary); background: #fafbff; }
 .upload-area__icon { font-size: 44rpx; display: block; margin-bottom: 8rpx; }
 .upload-area__text { font-size: 26rpx; color: #888; }
 .upload-area__preview { font-size: 26rpx; color: #0d904f; font-weight: 600; display: block; }
-.upload-area__retake { font-size: 22rpx; color: #1a73e8; margin-top: 6rpx; display: block; }
+.upload-area__retake { font-size: 22rpx; color: var(--color-primary); margin-top: 6rpx; display: block; }
 
 /* ===== 底部确认栏 ===== */
 .confirm-bar {
@@ -213,7 +213,7 @@
   width: 100%;
   height: 96rpx;
   border-radius: 48rpx;
-  background: linear-gradient(135deg, #1a73e8, #4a9af5);
+  background: linear-gradient(135deg, var(--color-primary), #4a9af5);
   color: #fff;
   font-size: 32rpx;
   font-weight: 700;
@@ -240,7 +240,7 @@
   gap: 12rpx;
   margin-top: 24rpx;
   padding: 20rpx 24rpx;
-  background: #F0F9FF;
+  background: var(--color-info-bg);
   border-radius: 12rpx;
   border: 1rpx solid #BAE6FD;
 }
@@ -260,14 +260,14 @@
   gap: 10rpx;
   margin: 40rpx 32rpx 0;
   padding: 24rpx;
-  background: #F0FDF4;
+  background: var(--color-success-bg);
   border-radius: 14rpx;
   border: 1rpx solid #BBF7D0;
 }
 .privacy-note__icon { font-size: 28rpx; }
 .privacy-note__text {
   font-size: 24rpx;
-  color: #166534;
+  color: var(--color-success);
   line-height: 1.5;
 }
 
@@ -277,7 +277,7 @@
   padding: 20rpx;
   background: #FAFBFC;
   border-radius: 14rpx;
-  border: 1rpx solid #E5E7EB;
+  border: 1rpx solid var(--gray-200);
 }
 .ocr-box__header { margin-bottom: 14rpx; }
 .ocr-box__label {
@@ -297,20 +297,20 @@
   padding: 20rpx;
   background: #FAFBFC;
   border-radius: 14rpx;
-  border: 1rpx solid #E5E7EB;
+  border: 1rpx solid var(--gray-200);
 }
 .local-capture__header { margin-bottom: 14rpx; }
 .local-capture__label {
   display: block; font-size: 28rpx; font-weight: 600; color: #1a1a2e; margin-bottom: 4rpx;
 }
 .local-capture__hint {
-  font-size: 22rpx; color: #059669;
+  font-size: 22rpx; color: var(--color-success);
 }
 
 /* 扫描动画 */
 .local-capture__scan {
   display: flex; flex-direction: column; align-items: center; justify-content: center;
-  padding: 48rpx 20rpx; background: #FFFBEB; border: 2rpx solid #F59E0B;
+  padding: 48rpx 20rpx; background: var(--color-bg-card)BEB; border: 2rpx solid #F59E0B;
   border-radius: 12rpx; position: relative; overflow: hidden;
 }
 .local-capture__scan-text { font-size: 28rpx; color: #B45309; margin-top: 12rpx; }
@@ -324,35 +324,35 @@
 /* 拍照区域 */
 .local-capture__area {
   display: flex; flex-direction: column; align-items: center; justify-content: center;
-  padding: 40rpx 20rpx; background: #fff; border: 2rpx dashed #D1D5DB;
+  padding: 40rpx 20rpx; background: #fff; border: 2rpx dashed var(--gray-300);
   border-radius: 12rpx; transition: all 0.2s;
 }
-.local-capture__area:active { border-color: #1a73e8; background: #FAFBFF; }
+.local-capture__area:active { border-color: var(--color-primary); background: #FAFBFF; }
 .local-capture__icon { font-size: 44rpx; display: block; margin-bottom: 8rpx; }
 .local-capture__text { font-size: 26rpx; color: #888; text-align: center; }
 
 /* 已留存 */
 .local-capture__done {
-  display: flex; gap: 20rpx; padding: 20rpx; background: #F0FDF4;
-  border: 2rpx solid #059669; border-radius: 12rpx; align-items: center;
+  display: flex; gap: 20rpx; padding: 20rpx; background: var(--color-success-bg);
+  border: 2rpx solid var(--color-success); border-radius: 12rpx; align-items: center;
 }
 .local-capture__thumb {
   width: 100rpx; height: 100rpx; border-radius: 10rpx;
   background-size: cover; background-position: center; flex-shrink: 0;
 }
 .local-capture__info { flex: 1; display: flex; flex-direction: column; gap: 6rpx; }
-.local-capture__status { font-size: 26rpx; font-weight: 700; color: #166534; }
-.local-capture__summary { font-size: 24rpx; color: #059669; }
-.local-capture__retake { font-size: 22rpx; color: #1a73e8; margin-top: 4rpx; }
+.local-capture__status { font-size: 26rpx; font-weight: 700; color: var(--color-success); }
+.local-capture__summary { font-size: 24rpx; color: var(--color-success); }
+.local-capture__retake { font-size: 22rpx; color: var(--color-primary); margin-top: 4rpx; }
 
 /* OCR 匹配字段 */
 .ocr-match-fields { margin-top: 6rpx; display: flex; flex-direction: column; gap: 2rpx; }
-.ocr-match-field { font-size: 20rpx; color: #059669; }
+.ocr-match-field { font-size: 20rpx; color: var(--color-success); }
 /* 不匹配 */
-.local-capture__done--warn { border-color: #DC2626; background: #FEF2F2; }
-.local-capture__done--warn .local-capture__status { color: #DC2626; }
+.local-capture__done--warn { border-color: var(--color-error); background: var(--color-error-bg); }
+.local-capture__done--warn .local-capture__status { color: var(--color-error); }
 .local-capture__warning {
-  font-size: 22rpx; color: #DC2626; margin-top: 6rpx; line-height: 1.4;
+  font-size: 22rpx; color: var(--color-error); margin-top: 6rpx; line-height: 1.4;
 }
 .local-capture__scan-hint {
   font-size: 20rpx; color: #B45309; margin-top: 6rpx; text-align: center;

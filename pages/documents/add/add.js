@@ -27,6 +27,9 @@ Page({
     ocrFieldList: [],            // OCR字段列表 [{key, value}]
     ocrProcessing: false,        // OCR处理中
 
+    // 对齐裁切
+    cropX: 0, cropY: 0, cropScale: 1,
+
     // 质量检测
     qualityIssues: [],           // 图片质量问题(旧)
     qualityResult: null,         // 质量检测结果(新·6项)
@@ -61,6 +64,12 @@ Page({
       { value: 'child',  label: '子女', icon: '👶' }
     ],
 
+    // 卡槽上下文
+    slotContext: false,
+    slotDocName: '',
+    slotGuide: null,
+    skipCategory: false,
+
     // 保存状态
     saving: false,
     privacyMode: 'local'
@@ -76,6 +85,17 @@ Page({
       this._slotKey = options.slotKey;
       this._slotDocName = options.docName ? decodeURIComponent(options.docName) : '';
       this._slotGuideId = options.guideId || '';
+      // 卡槽→分类自动映射，跳过分类选择步骤
+      var autoCat = slotToCategory(this._slotKey);
+      this.setData({
+        slotContext: true,
+        slotDocName: this._slotDocName,
+        slotGuide: getSlotGuide(this._slotKey, this._slotDocName),
+        docCategory: autoCat || '',
+        skipCategory: !!autoCat
+      });
+    } else {
+      this.setData({ slotContext: false, slotGuide: null, slotDocName: '', skipCategory: false });
     }
     this.setData({ privacyMode: app.getPrivacyMode() });
   },
@@ -136,8 +156,18 @@ Page({
     }
   },
 
-  /** 确认图片，进入手动填写 */
+  /** 确认图片 → 进入对齐裁切 */
   confirmImage() {
+    this.setData({ step: 2.5, cropX: 0, cropY: 0, cropScale: 1 });
+  },
+
+  onCropChange(e) {
+    this.setData({ cropX: e.detail.x, cropY: e.detail.y });
+  },
+  onCropScale(e) {
+    this.setData({ cropScale: e.detail.scale });
+  },
+  confirmCrop() {
     this.setData({ step: 3, docType: 'unknown', docTypeLabel: '手动录入' });
   },
 
@@ -574,6 +604,22 @@ Page({
       }
     }
 
+    // 用户授权：本地存储确认
+    var that = this;
+    wx.showModal({
+      title: '授权本地存储',
+      content: '确认将此证件照片加密保存到您的设备本地？\n\n📁 存储位置：微信文件管理 > 住港伴\n🔒 不上传服务器，仅本地留存\n💡 保存后可从证件夹随时查看',
+      confirmText: '授权保存',
+      cancelText: '取消',
+      success: function(res) {
+        if (res.confirm) {
+          that.doActualSave(docCategory, ocrFields, manualForm, imagePath, docType);
+        }
+      }
+    });
+  },
+
+  doActualSave: async function(docCategory, ocrFields, manualForm, imagePath, docType) {
     this.setData({ saving: true });
 
     // 生成证件ID
@@ -587,6 +633,13 @@ Page({
     if (imagePath) {
       try {
         filePath = await saveFile(imagePath, docId, docCategory);
+        // 并存一份到微信本地文件系统做独立持久化留存
+        try {
+          var fs = wx.getFileSystemManager();
+          var bakName = '住港伴_' + docCategory + '_' + docId + '.jpg';
+          var bakPath = wx.env.USER_DATA_PATH + '/' + bakName;
+          fs.copyFileSync(imagePath, bakPath);
+        } catch (be) { console.warn('[留存] 备份跳过:', be.message); }
       } catch (e) {
         console.error('[保存] 文件保存失败:', e);
         // 仍保存元数据，但标记无文件
@@ -642,8 +695,16 @@ Page({
     saveDocumentMeta(doc);
 
     this.setData({ saving: false });
-    wx.showToast({ title: '保存成功 ✅', icon: 'success', duration: 1500 });
-    setTimeout(function() { wx.navigateBack(); }, 1000);
+
+    // 显示备份留存信息
+    var bakName = '住港伴_' + docCategory + '_' + docId + '.jpg';
+    wx.showModal({
+      title: '保存成功 ✅',
+      content: '证件已加密保存到本地。\n\n📁 持久化备份：微信文件管理 > 住港伴\n文件名：' + bakName + '\n\n💡 即使清理小程序缓存，备份文件不会丢失。',
+      confirmText: '知道了',
+      showCancel: false,
+      success: function() { wx.navigateBack(); }
+    });
   },
 
   /** 计算有效期状态 */
@@ -659,3 +720,84 @@ Page({
     } catch (e) { return 'none'; }
   }
 });
+
+/** 卡槽→证件指引映射：从不同卡槽进入展示不同要求 */
+function getSlotGuide(slotKey, docName) {
+  var name = (docName || '').toLowerCase();
+  var guides = {
+    // 身份证
+    id_card: { icon: '🪪', title: '身份证材料标准', items: [
+      '正反面均需拍摄，四角完整可见',
+      '平放深色桌面，正对拍摄，不倾斜',
+      '确保证件号、姓名、照片清晰可读',
+      '勿使用复印件或屏幕截图',
+      '圆角边框不得裁切或遮挡'
+    ], piiFields: ['姓名', '身份证号', '出生日期', '地址'], specimen: '正面(人像面)+背面(国徽面)·四角完整·无反光·彩色' },
+    // 学位证
+    degree: { icon: '🎓', title: '学位证/毕业证材料标准', items: [
+      '证书原件彩色拍摄，不可拍摄复印件',
+      '确保证书编号、姓名、学位、日期清晰',
+      '如有英文版本一并拍摄',
+      '海外学历需同时拍摄认证文件',
+      '证书四角完整，印章清晰可辨'
+    ], piiFields: ['姓名', '证书编号', '毕业日期'], specimen: '学位证正面+背面' },
+    // 港澳通行证
+    hk_permit: { icon: '🛂', title: '港澳通行证材料标准', items: [
+      '个人信息页+签注页均需拍摄',
+      '证件号（C开头）、姓名、有效期需清晰',
+      '签注页需显示D签注类型和有效期',
+      '反光环境下从侧面打光避免正面强光'
+    ], piiFields: ['姓名', '证件号', '出生日期', '有效期'], specimen: '通行证个人信息页+签注页' },
+    // 护照
+    passport: { icon: '🛂', title: '护照材料标准', items: [
+      '个人信息页完整拍摄（含照片、护照号、签名）',
+      '确保护照号（E/G开头）和有效期清晰',
+      '如有签证页一并拍摄'
+    ], piiFields: ['姓名', '护照号', '出生日期', '国籍'], specimen: '护照个人信息页' },
+    // 工作证明
+    work: { icon: '💼', title: '工作证明/推荐信材料标准', items: [
+      '公司抬头纸原件拍摄',
+      '公章+签字必须清晰可见',
+      '包含入职日期、职位、薪资信息',
+      '推荐信需推荐人联系方式',
+      '英文版需一并提供'
+    ], piiFields: ['姓名', '身份证号', '薪资', '公司名'], specimen: '公司抬头纸+公章+签字' },
+    // 银行流水
+    bank: { icon: '💰', title: '银行流水/资产证明材料标准', items: [
+      '银行官方流水单原件拍摄',
+      '最近6-12个月完整记录',
+      '账户名、账号、银行名称清晰',
+      '余额和流水记录完整可见',
+      '加盖银行印章的版本'
+    ], piiFields: ['账户持有人', '账号', '金额'], specimen: '最近12个月银行流水' },
+    // 获批通知
+    approval: { icon: '✅', title: '获批通知/e-Visa材料标准', items: [
+      '入境处发出的正式通知原件',
+      '申请编号、批准日期、签证类型清晰',
+      'e-Visa可拍摄打印版或手机截图',
+      '含逗留条件和期限的页面'
+    ], piiFields: ['姓名', '申请编号', '签证类型'], specimen: '获批通知书/e-Visa PDF' },
+  };
+
+  // 模糊匹配: 根据docName关键词匹配到对应引导
+  for (var key in guides) {
+    if (name.indexOf(key.replace(/_/g, '')) >= 0 || name.indexOf(key) >= 0) return guides[key];
+  }
+  // slotKey 兜底匹配
+  if (slotKey && guides[slotKey]) return guides[slotKey];
+  return null;
+
+/** 卡槽key → 证件分类自动映射 */
+function slotToCategory(slotKey) {
+  var map = {
+    'id_card': 'identity', 'hk_permit': 'identity', 'passport': 'identity', 'hk_id': 'identity',
+    'degree_cert': 'education', 'transcript': 'education', 'degree_auth': 'education',
+    'emp_letter': 'work', 'reference_letter': 'work', 'salary_proof': 'work',
+    'bank_statement': 'assets', 'tax_record': 'assets', 'income_250w': 'assets',
+    'visa_label': 'approved', 'approval': 'approved', 'plan_statement': 'approved',
+    'photo': 'identity', 'student_visa': 'approved', 'hk_visa': 'approved'
+  };
+  return map[slotKey] || '';
+}
+
+}

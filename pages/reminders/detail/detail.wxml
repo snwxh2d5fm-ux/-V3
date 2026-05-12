@@ -237,6 +237,46 @@
     </view>
   </block>
 
+  <!-- ==================== 路径感知时间线 ==================== -->
+  <block wx:elif="{{action === 'timeline'}}">
+    <view class="card">
+      <text class="mode-desc" style="margin-bottom:20rpx;display:block">根据你的身份路径自动推算续签、永居、材料准备等关键时间节点。</text>
+
+      <view class="section-title" style="margin-bottom:16rpx">{{timelinePathName || '未选择路径'}}</view>
+
+      <!-- 结构化输入 -->
+      <view class="tl-input-row">
+        <text class="tl-label">📅 签证激活日期 (必填)</text>
+        <input class="form-input" type="text" placeholder="YYYY-MM-DD 如2026-08-15" value="{{activationDate}}" bindinput="onActivationDateChange" />
+      </view>
+      <view class="tl-input-row">
+        <text class="tl-label">🆔 办理身份证日期 (选填)</text>
+        <input class="form-input" type="text" placeholder="选填 YYYY-MM-DD" value="{{hkidDate}}" bindinput="onHkidDateChange" />
+      </view>
+
+      <button class="btn btn-primary btn-block" bindtap="generateTimeline" style="margin-top:12rpx">🔮 生成时间线</button>
+    </view>
+
+    <!-- 时间线列表 -->
+    <view class="timeline-list" wx:if="{{timelineStages.length > 0}}">
+      <view class="tl-stage {{item.type}}" wx:for="{{timelineStages}}" wx:key="index">
+        <view class="tl-stage__dot tl-stage__dot--{{item.type}}"></view>
+        <view class="tl-stage__line" wx:if="{{index < timelineStages.length - 1}}"></view>
+        <view class="tl-stage__body">
+          <view class="tl-stage__header">
+            <text class="tl-stage__icon">{{item.icon}}</text>
+            <text class="tl-stage__title">{{item.label}}</text>
+            <text class="tl-stage__badge tl-stage__badge--{{item.type}}">{{item.type === 'milestone' ? '里程碑' : item.type === 'renewal' ? '续签' : item.type === 'pr' ? '永居' : '材料'}}</text>
+          </view>
+          <text class="tl-stage__date">📅 {{item.date}}</text>
+          <text class="tl-stage__desc" wx:if="{{item.desc}}">{{item.desc}}</text>
+        </view>
+      </view>
+
+      <button class="btn btn-primary btn-block" bindtap="saveTimelineReminders" style="margin:24rpx">💾 一键生成 {{timelineStages.length}} 个提醒</button>
+    </view>
+  </block>
+
   <!-- ==================== 规则引擎模式 ==================== -->
   <block wx:elif="{{action === 'rule'}}">
     <view class="card">

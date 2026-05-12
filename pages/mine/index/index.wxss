@@ -1,9 +1,9 @@
 /* 住港伴 v4 — 我的页面样式 */
 
 .user-section{display:flex;align-items:center;gap:16rpx}
-.user-name{font-size:var(--font-lg);font-weight:600;color:#FFF;display:block}
+.user-name{font-size:var(--font-lg);font-weight:600;color:var(--color-bg-card);display:block}
 .user-status{font-size:var(--font-xs);color:rgba(255,255,255,.7);display:block}
-.membership-card{background:linear-gradient(135deg,#1E40AF,#2563EB);color:#FFF;text-align:left;padding:28rpx}
+.membership-card{background:linear-gradient(135deg,var(--color-primary-dark),var(--color-info));color:var(--color-bg-card);text-align:left;padding:28rpx}
 
 /* ===== 商务后台卡片 ===== */
 .biz-backend-card {
@@ -65,7 +65,7 @@
 .vault-title {
   font-size: var(--font-md);
   font-weight: 700;
-  color: #FFF;
+  color: var(--color-bg-card);
 }
 .vault-desc {
   font-size: var(--font-xs);

@@ -7,13 +7,22 @@ const app = getApp();
 const { getAllReminders, saveReminder, updateReminder, deleteReminder } = require('../../../utils/storage');
 const { getAllDocuments } = require('../../../utils/storage');
 const { getCountdown, formatDate, parseDateFromText } = require('../../../utils/date-parser');
+const { TIMELINE_TEMPLATES } = require('../../../data/timeline-templates');
 const constants = require('../../../data/constants');
 
 Page({
   data: {
     // 模式
-    action: '',               // '' | 'ocr' | 'paste' | 'add' | 'rule'
+    action: '',               // '' | 'ocr' | 'paste' | 'add' | 'rule' | 'timeline'
     isEdit: false,
+
+    // 路径感知时间线
+    timelinePath: '',
+    timelinePathName: '',
+    timelineStages: [],
+    activationDate: '',
+    hkidDate: '',
+    visaYears: '2',
 
     // 提醒数据
     reminderId: '',
@@ -71,6 +80,9 @@ Page({
     } else if (action === 'rule') {
       this.loadAvailableRules();
       this.setData({ loading: false });
+    } else if (action === 'timeline') {
+      this.initTimeline();
+      this.setData({ loading: false });
     } else {
       this.setData({ loading: false });
     }
@@ -78,6 +90,92 @@ Page({
     // 预加载证件列表
     this.loadAllDocuments();
   },
+
+  // ========== 路径感知时间线 ==========
+  initTimeline() {
+    var session = wx.getStorageSync('__session__') || {};
+    var app = getApp();
+    var path = (app && app.globalData && app.globalData.selectedPath) || session.selectedPath || '';
+    var pathNames = {
+      'qmas': '优才计划', 'ttps_a': '高才通A类', 'ttps_b': '高才通B类', 'ttps_c': '高才通C类',
+      'asmpt': '专才计划', 'student_iang': '学生→IANG', 'dependent': '受养人',
+      'cies': 'CIES投资移民', 'permanent': '永居申请'
+    };
+    var visaYearsMap = { 'qmas': 2, 'ttps_a': 3, 'ttps_b': 2, 'ttps_c': 2, 'asmpt': 2, 'student_iang': 1 };
+    this.setData({
+      timelinePath: path,
+      timelinePathName: pathNames[path] || path,
+      visaYears: String(visaYearsMap[path] || 2)
+    });
+  },
+
+  /** 根据激活日期+模板生成时间线 */
+  generateTimeline() {
+    var activation = this.data.activationDate;
+    if (!activation) { wx.showToast({ title: '请填写激活签证日期', icon: 'none' }); return; }
+
+    var path = this.data.timelinePath;
+    var template = TIMELINE_TEMPLATES[path] || TIMELINE_TEMPLATES['qmas'];
+    var start = new Date(activation);
+    var stages = [];
+
+    template.nodes.forEach(function(node) {
+      var date = addDays(start, node.offsetDays);
+      var iconMap = { milestone: '✅', deadline: '📅', renewal: '🔄', pr: '🏁', material: '📋' };
+      stages.push({
+        label: node.label,
+        date: date,
+        type: node.type,
+        icon: iconMap[node.type] || '📍',
+        desc: node.desc || '',
+        materials: node.materials || [],
+        range: node.range || null
+      });
+    });
+
+    // 如果填了身份证日期，插入HKID节点
+    if (this.data.hkidDate) {
+      stages.push({ label: '办理香港身份证', date: this.data.hkidDate, type: 'milestone', icon: '🆔', desc: '', materials: ['photo'], range: null });
+    }
+
+    // 按日期排序
+    stages.sort(function(a, b) { return new Date(a.date) - new Date(b.date); });
+    stages.forEach(function(s, i) { s.index = i + 1; });
+
+    this.setData({ timelineStages: stages });
+  },
+
+  /** 一键生成提醒到提醒列表 */
+  saveTimelineReminders() {
+    var that = this;
+    var stages = this.data.timelineStages;
+    if (!stages.length) { wx.showToast({ title: '先生成时间线', icon: 'none' }); return; }
+
+    wx.showModal({
+      title: '批量生成提醒',
+      content: '将为 ' + stages.length + ' 个时间节点生成提醒，确认？',
+      success: function(res) {
+        if (!res.confirm) return;
+        var count = 0;
+        stages.forEach(function(s) {
+          saveReminder({
+            id: 'TL_' + Date.now() + '_' + (count++),
+            title: s.label, deadline: s.date,
+            description: that.data.timelinePathName + ' · ' + s.type,
+            type: 'rule_engine', confidence: 'B',
+            linkedDocIds: [], status: 'active',
+            createdAt: new Date().toISOString()
+          });
+        });
+        wx.showToast({ title: '已生成 ' + stages.length + ' 个提醒', icon: 'success' });
+        setTimeout(function() { wx.navigateBack(); }, 1200);
+      }
+    });
+  },
+
+  onActivationDateChange(e) { this.setData({ activationDate: e.detail.value }); },
+  onHkidDateChange(e) { this.setData({ hkidDate: e.detail.value }); },
+  onVisaYearsChange(e) { this.setData({ visaYears: e.detail.value }); },
 
   // ========== 加载提醒详情 ==========
   loadReminderDetail(id) {
@@ -499,14 +597,26 @@ Page({
   // ========== 规则引擎 ==========
   loadAvailableRules() {
     try {
-      const app = getApp();
-      if (app.globalData.rulesLoaded) {
-        const reminderRules = require('../../../data/rules/reminders.js');
-        this.setData({ availableRules: reminderRules });
-      } else {
-        const reminderRules = require('../../../data/rules/reminders.js');
-        this.setData({ availableRules: reminderRules });
-      }
+      var reminderRules = require('../../../data/rules/reminders.js');
+      var ruleNames = {
+        'R_PASSPORT_EXPIRY': '护照到期提醒', 'R_EEP_EXPIRY': '回乡证到期提醒',
+        'R_PERMIT_EXPIRY': '港澳通行证到期提醒', 'R_VISA_EXPIRY_GENERAL': '签证到期通用提醒',
+        'R_HKID_RENEWAL': '香港身份证换领提醒', 'R_ADDRESS_PROOF': '住址证明更新提醒',
+        'R_ADDRESS_PROOF_QUARTERLY': '季度住址证明提醒', 'R_TAX_FILING': '报税截止提醒',
+        'R_TAX_PROVISIONAL': '暂缴税提醒', 'R_MPF_CONTRIBUTION': 'MPF供款提醒',
+        'R_MPF_ANNUAL': 'MPF年度审查提醒', 'R_BANK_ACCOUNT_OPEN': '银行开户提醒',
+        'R_BANK_STATEMENT': '银行月结单提醒', 'R_MEDICAL_INSURANCE': '医疗保险续保提醒',
+        'R_VISA_ACTIVATION': '签证激活截止提醒', 'R_IANG_APPLY': 'IANG申请窗口提醒',
+        'R_QMAS_TIMELINE': '优才申请时间线', 'R_TTPS_TIMELINE': '高才通申请时间线',
+        'R_ASMTP_TIMELINE': '专才申请时间线', 'R_PR_APPLICATION': '永居申请时间窗',
+        'R_DEPENDENT_VISA': '受养人签证到期提醒', 'R_RENEWAL_WINDOW': '续签窗口提醒'
+      };
+      var rulesWithNames = reminderRules.map(function(r) {
+        r.name = ruleNames[r.rule_id] || r.rule_id;
+        r.icon = r.icon || '📋';
+        return r;
+      });
+      this.setData({ availableRules: rulesWithNames });
     } catch (e) {
       console.error('[规则引擎] 加载规则失败:', e);
       this.setData({ availableRules: [] });
@@ -668,3 +778,10 @@ Page({
     wx.navigateBack();
   }
 });
+
+/** 日期加减天数 */
+function addDays(date, days) {
+  var d = new Date(date);
+  d.setDate(d.getDate() + days);
+  return d.toISOString().slice(0, 10);
+}

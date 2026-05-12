@@ -76,7 +76,13 @@ Page({
   },
 
   onLoad() { this.init(); },
-  onShow() { this.init(); },
+  onShow() { this.refresh(); },
+
+  refresh() {
+    this.loadUserPath();
+    this.loadIdentity();
+    this.loadDocuments();
+  },
 
   init() {
     this.loadIdentity();
@@ -87,12 +93,13 @@ Page({
   loadUserPath() {
     try {
       var app = getApp();
-      // 四级回退：SESSION > USER_PROFILE > globalData > activeProcess
-      var session = wx.getStorageSync('__session__') || wx.getStorageSync('session') || {};
+      // 五级回退：globalData(实时) > SESSION > USER_PROFILE > activeProcess
+      var session = wx.getStorageSync(CONSTANTS.STORAGE_KEYS.SESSION) || {};
       var userData = wx.getStorageSync(CONSTANTS.STORAGE_KEYS.USER_PROFILE) || {};
-      var path = session.selectedPath
+      // 优先取 globalData（实时，无存储延迟）
+      var path = (app && app.globalData && app.globalData.selectedPath)
+        || session.selectedPath
         || userData.selectedPath
-        || (app && app.globalData && app.globalData.selectedPath)
         || '';
       // 若仍为空，尝试从 activeProcess 提取
       if (!path && app && app.globalData && app.globalData.activeProcess) {

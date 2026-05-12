@@ -35,7 +35,7 @@
 .auth-action { font-size:28rpx; color:#202124; font-weight:500; width:100%; }
 .auth-time { font-size:22rpx; color:#999; }
 .auth-detail { font-size:22rpx; color:#999; }
-.clear-btn { font-size:26rpx; color:#1a73e8; }
+.clear-btn { font-size:26rpx; color:var(--color-primary); }
 
 /* ===== 加密科普 ===== */
 .crypto-intro { padding: 28rpx 28rpx 16rpx; }
@@ -43,7 +43,7 @@
 .crypto-section:last-child { margin-bottom: 0; }
 .crypto-section-header { display: flex; align-items: center; gap: 10rpx; margin-bottom: 10rpx; }
 .crypto-section-icon { font-size: 32rpx; }
-.crypto-section-title { font-size: 28rpx; font-weight: 700; color: #111827; }
+.crypto-section-title { font-size: 28rpx; font-weight: 700; color: var(--color-text-primary); }
 .crypto-section-body { font-size: 24rpx; color: #5f6368; line-height: 1.8; display: block; }
 
 .footer-note { padding:24rpx 48rpx; text-align:center; }

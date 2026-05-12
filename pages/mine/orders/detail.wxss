@@ -37,8 +37,8 @@ page {
   align-items: center;
   gap: 20rpx;
   padding: 36rpx 32rpx;
-  background: linear-gradient(135deg, #EFF6FF, #F8FAFC);
-  border-bottom: 1rpx solid #E5E7EB;
+  background: linear-gradient(135deg, var(--color-info-bg), #F8FAFC);
+  border-bottom: 1rpx solid var(--gray-200);
 }
 
 .header-icon { font-size: 52rpx; }
@@ -59,10 +59,10 @@ page {
   margin-top: 6rpx;
 }
 
-.header-status.completed { background: #D1FAE5; color: #065F46; }
-.header-status.pending { background: #FEF3C7; color: #92400E; }
-.header-status.failed { background: #FEE2E2; color: #991B1B; }
-.header-status.cancelled { background: #F3F4F6; color: #6B7280; }
+.header-status.completed { background: #D1FAE5; color: var(--color-success); }
+.header-status.pending { background: var(--color-warning-bg); color: #92400E; }
+.header-status.failed { background: #FEE2E2; color: var(--color-error); }
+.header-status.cancelled { background: var(--gray-100); color: var(--gray-500); }
 
 /* 金额 */
 .amount-block {
@@ -74,7 +74,7 @@ page {
 .amount-value {
   font-size: 68rpx;
   font-weight: 800;
-  color: #DC2626;
+  color: var(--color-error);
   display: block;
 }
 
@@ -124,7 +124,7 @@ page {
 }
 
 .info-value.success {
-  color: #059669;
+  color: var(--color-success);
   font-weight: 600;
 }
 
@@ -140,7 +140,7 @@ page {
   width: 100%;
   height: 88rpx;
   line-height: 88rpx;
-  background: linear-gradient(135deg, #1a73e8, #2563EB);
+  background: linear-gradient(135deg, var(--color-primary), var(--color-info));
   color: #fff;
   border: none;
   border-radius: 14rpx;
@@ -156,8 +156,8 @@ page {
   height: 80rpx;
   line-height: 80rpx;
   background: #fff;
-  color: #1a73e8;
-  border: 2rpx solid #1a73e8;
+  color: var(--color-primary);
+  border: 2rpx solid var(--color-primary);
   border-radius: 14rpx;
   font-size: 28rpx;
   text-align: center;
@@ -172,10 +172,10 @@ page {
   justify-content: center;
   gap: 12rpx;
   padding: 20rpx;
-  background: #F0FDF4;
+  background: var(--color-success-bg);
   border-radius: 14rpx;
   font-size: 28rpx;
-  color: #065F46;
+  color: var(--color-success);
 }
 
 .invoice-status-tag {
@@ -185,5 +185,5 @@ page {
   font-weight: 500;
 }
 
-.invoice-status-tag.pending { background: #FEF3C7; color: #92400E; }
-.invoice-status-tag.issued { background: #D1FAE5; color: #065F46; }
+.invoice-status-tag.pending { background: var(--color-warning-bg); color: #92400E; }
+.invoice-status-tag.issued { background: #D1FAE5; color: var(--color-success); }

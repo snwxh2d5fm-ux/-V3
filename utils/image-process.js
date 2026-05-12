@@ -206,10 +206,64 @@ function autoRotate(imagePath) {
   });
 }
 
+/**
+ * R3: 按证件类型+脱敏等级计算遮罩区域
+ * @param {string} docType - id_card|hk_permit|passport|degree|hk_id
+ * @param {string} level - low|medium|high
+ * @returns {Array} 遮罩区域 [{x, y, width, height, label}]
+ */
+function computeMaskRegions(docType, level) {
+  var types = {
+    id_card: {
+      low:    [{ x: 0.15, y: 0.08, width: 0.22, height: 0.28, label: '照片' }],
+      medium: [{ x: 0.15, y: 0.08, width: 0.22, height: 0.28, label: '照片' },
+               { x: 0.38, y: 0.18, width: 0.35, height: 0.05, label: '证件号' }],
+      high:   [{ x: 0.15, y: 0.08, width: 0.22, height: 0.28, label: '照片' },
+               { x: 0.38, y: 0.18, width: 0.35, height: 0.05, label: '证件号' },
+               { x: 0.08, y: 0.08, width: 0.18, height: 0.05, label: '姓名' },
+               { x: 0.08, y: 0.32, width: 0.60, height: 0.05, label: '地址' }]
+    },
+    hk_permit: {
+      low:    [{ x: 0.12, y: 0.06, width: 0.20, height: 0.26, label: '照片' }],
+      medium: [{ x: 0.12, y: 0.06, width: 0.20, height: 0.26, label: '照片' },
+               { x: 0.10, y: 0.38, width: 0.50, height: 0.04, label: '证件号' }],
+      high:   [{ x: 0.12, y: 0.06, width: 0.20, height: 0.26, label: '照片' },
+               { x: 0.10, y: 0.38, width: 0.50, height: 0.04, label: '证件号' },
+               { x: 0.10, y: 0.12, width: 0.18, height: 0.04, label: '姓名' },
+               { x: 0.10, y: 0.22, width: 0.22, height: 0.04, label: '出生' }]
+    },
+    passport: {
+      low:    [{ x: 0.12, y: 0.08, width: 0.22, height: 0.26, label: '照片' }],
+      medium: [{ x: 0.12, y: 0.08, width: 0.22, height: 0.26, label: '照片' },
+               { x: 0.40, y: 0.40, width: 0.35, height: 0.04, label: '护照号' }],
+      high:   [{ x: 0.12, y: 0.08, width: 0.22, height: 0.26, label: '照片' },
+               { x: 0.40, y: 0.40, width: 0.35, height: 0.04, label: '护照号' },
+               { x: 0.40, y: 0.10, width: 0.25, height: 0.04, label: '姓名' }]
+    },
+    degree: {
+      low:    [],
+      medium: [{ x: 0.30, y: 0.50, width: 0.40, height: 0.04, label: '证书编号' }],
+      high:   [{ x: 0.08, y: 0.12, width: 0.25, height: 0.04, label: '姓名' },
+               { x: 0.30, y: 0.50, width: 0.40, height: 0.04, label: '证书编号' },
+               { x: 0.30, y: 0.55, width: 0.30, height: 0.04, label: '毕业日期' }]
+    },
+    hk_id: {
+      low:    [{ x: 0.55, y: 0.15, width: 0.22, height: 0.28, label: '照片' }],
+      medium: [{ x: 0.55, y: 0.15, width: 0.22, height: 0.28, label: '照片' },
+               { x: 0.08, y: 0.15, width: 0.35, height: 0.04, label: '身份证号' }],
+      high:   [{ x: 0.55, y: 0.15, width: 0.22, height: 0.28, label: '照片' },
+               { x: 0.08, y: 0.15, width: 0.35, height: 0.04, label: '身份证号' },
+               { x: 0.08, y: 0.08, width: 0.18, height: 0.04, label: '姓名' }]
+    }
+  };
+  return (types[docType] && types[docType][level]) || [];
+}
+
 module.exports = {
   applyPrivacyMask,
   enhanceToScanned,
   cropToDocument,
   autoRotate,
-  getDefaultRegions
+  getDefaultRegions,
+  computeMaskRegions
 };

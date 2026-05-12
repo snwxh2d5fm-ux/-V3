@@ -25,7 +25,7 @@ page {
 }
 
 .success-icon { font-size: 80rpx; margin-bottom: 24rpx; }
-.success-title { font-size: 36rpx; font-weight: 700; color: #059669; margin-bottom: 12rpx; }
+.success-title { font-size: 36rpx; font-weight: 700; color: var(--color-success); margin-bottom: 12rpx; }
 .success-msg { font-size: 28rpx; color: #666; margin-bottom: 48rpx; }
 
 /* 订单摘要 */
@@ -39,13 +39,13 @@ page {
 
 .summary-label { font-size: 24rpx; color: #999; display: block; margin-bottom: 8rpx; }
 .summary-name { font-size: 30rpx; font-weight: 600; color: #333; display: block; }
-.summary-amount { font-size: 40rpx; font-weight: 800; color: #DC2626; display: block; margin-top: 8rpx; }
+.summary-amount { font-size: 40rpx; font-weight: 800; color: var(--color-error); display: block; margin-top: 8rpx; }
 
 /* 类型切换 */
 .type-switch {
   display: flex;
   margin: 0 32rpx 24rpx;
-  background: #E5E7EB;
+  background: var(--gray-200);
   border-radius: 12rpx;
   padding: 6rpx;
 }
@@ -61,7 +61,7 @@ page {
 
 .type-option.active {
   background: #fff;
-  color: #1a73e8;
+  color: var(--color-primary);
   font-weight: 600;
   box-shadow: 0 2rpx 8rpx rgba(0,0,0,0.08);
 }
@@ -87,7 +87,7 @@ page {
 }
 
 .required {
-  color: #DC2626;
+  color: var(--color-error);
 }
 
 .field-input {
@@ -100,7 +100,7 @@ page {
 }
 
 .field-input:focus {
-  border-bottom-color: #1a73e8;
+  border-bottom-color: var(--color-primary);
 }
 
 .field-hint {
@@ -114,7 +114,7 @@ page {
 .privacy-notice {
   margin: 24rpx 32rpx;
   padding: 28rpx;
-  background: linear-gradient(135deg, #059669, #10B981);
+  background: linear-gradient(135deg, var(--color-success), #10B981);
   border-radius: 16rpx;
   color: #fff;
 }
@@ -129,7 +129,7 @@ page {
   margin: 24rpx 32rpx 16rpx;
   height: 88rpx;
   line-height: 88rpx;
-  background: linear-gradient(135deg, #1a73e8, #2563EB);
+  background: linear-gradient(135deg, var(--color-primary), var(--color-info));
   color: #fff;
   border: none;
   border-radius: 14rpx;
@@ -145,7 +145,7 @@ page {
   margin: 16rpx 32rpx;
   height: 88rpx;
   line-height: 88rpx;
-  background: linear-gradient(135deg, #1a73e8, #2563EB);
+  background: linear-gradient(135deg, var(--color-primary), var(--color-info));
   color: #fff;
   border: none;
   border-radius: 14rpx;
@@ -161,8 +161,8 @@ page {
   height: 80rpx;
   line-height: 80rpx;
   background: #fff;
-  color: #1a73e8;
-  border: 2rpx solid #1a73e8;
+  color: var(--color-primary);
+  border: 2rpx solid var(--color-primary);
   border-radius: 14rpx;
   font-size: 28rpx;
   text-align: center;

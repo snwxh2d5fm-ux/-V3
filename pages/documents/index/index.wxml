@@ -223,59 +223,38 @@
 
         <view class="slot-list {{collapsedCategories[cat.categoryKey] ? 'slot-list--hide' : ''}}">
 
-          <!-- 身份+学历卡槽：所属人切换 -->
-          <view class="owner-tabs owner-tabs--slot" wx:if="{{cat.categoryKey === 'identities' || cat.categoryKey === 'identity'}}">
-            <view class="owner-tab {{identityOwner === item.value ? 'owner-tab--active' : ''}}"
-                  wx:for="{{ownerOptions}}" wx:key="value"
-                  bindtap="switchIdentityOwner" data-value="{{item.value}}">
-              <text class="owner-tab__label">{{item.label}}</text>
-            </view>
-          </view>
-
-          <view class="slot slot--empty"
-                wx:for="{{cat.slots}}" wx:key="slotKey" wx:for-item="slot"
-                wx:if="{{slot.fillStatus === 'empty'}}"
-                bindtap="uploadToSlot" data-slot-key="{{slot.slotKey}}">
-            <view class="slot__indicator slot__indicator--empty"></view>
-            <view class="slot__body">
-              <text class="slot__name">{{slot.docName}}</text>
-              <text class="slot__desc" wx:if="{{slot.description}}">{{slot.description}}</text>
-              <view class="slot__tag slot__tag--{{slot.requirement}}">
-                {{slot.requirement === 'required' ? '必需' : (slot.requirement === 'recommended' ? '建议' : '可选')}}
+          <!-- 身份+学历卡槽：所属人切换（学历仅本人+配偶） -->
+          <view class="owner-tabs owner-tabs--slot" wx:if="{{cat.categoryKey === 'identities' || cat.categoryKey === 'identity' || cat.categoryKey === 'education'}}">
+            <block wx:for="{{ownerOptions}}" wx:key="value">
+              <view class="owner-tab {{identityOwner === item.value ? 'owner-tab--active' : ''}}"
+                    wx:if="{{cat.categoryKey !== 'education' || item.value !== 'child'}}"
+                    bindtap="switchIdentityOwner" data-value="{{item.value}}">
+                <text class="owner-tab__label">{{item.label}}</text>
               </view>
-            </view>
-            <view class="slot__action slot__action--add">+</view>
+            </block>
           </view>
 
-          <view class="slot slot--filled"
+          <!-- 单行槽位：预览缩略图(左) + 名称+标签 + 添加按钮(右) -->
+          <view class="slot {{slot.fillStatus === 'filled' ? 'slot--done' : slot.fillStatus === 'partial' ? 'slot--partial' : 'slot--empty'}}"
                 wx:for="{{cat.slots}}" wx:key="slotKey" wx:for-item="slot"
-                wx:if="{{slot.fillStatus === 'filled' && slot.maxCount === 1}}"
-                bindtap="navigateToDetail" data-id="{{slot.uploadedDocs[0].id}}">
-            <view class="slot__indicator slot__indicator--filled"></view>
-            <view class="slot__thumb">
-              <view class="slot__thumb-inner slot__thumb-inner--done"></view>
+                bindtap="{{slot.fillStatus === 'empty' ? 'uploadToSlot' : 'navigateToDetail'}}"
+                data-slot-key="{{slot.slotKey}}" data-id="{{slot.uploadedDocs[0] ? slot.uploadedDocs[0].id : ''}}">
+            <!-- 左侧：已有证件缩略预览 -->
+            <view class="slot__previews" wx:if="{{slot.uploadedDocs && slot.uploadedDocs.length > 0}}">
+              <image class="slot__pthumb" wx:for="{{slot.uploadedDocs}}" wx:key="id" wx:for-item="doc" wx:if="{{index < 3}}" src="{{doc.filePath}}" mode="aspectFill" />
+              <text class="slot__pcount" wx:if="{{slot.uploadedDocs.length > 3}}">+{{slot.uploadedDocs.length - 3}}</text>
             </view>
-            <view class="slot__body">
-              <text class="slot__name">{{slot.docName}}</text>
-              <text class="slot__meta">{{slot.uploadedDocs[0].displayName || slot.docName}} · {{slot.uploadedDocs[0].createdAt || ''}}</text>
+            <!-- 右侧名称+标签+添加按钮 -->
+            <view class="slot__info">
+              <view class="slot__tags">
+                <text class="slot__name">{{slot.docName}}</text>
+                <view class="slot__tag slot__tag--{{slot.requirement}}">{{slot.requirement === 'required' ? '必需' : (slot.requirement === 'recommended' ? '建议' : '可选')}}</view>
+              </view>
+              <text class="slot__count" wx:if="{{slot.uploadedCount > 0}}">{{slot.uploadedCount}}份</text>
             </view>
-            <view class="slot__action slot__action--done">✓</view>
-          </view>
-
-          <view class="slot slot--multi"
-                wx:for="{{cat.slots}}" wx:key="slotKey" wx:for-item="slot"
-                wx:if="{{(slot.fillStatus === 'filled' || slot.fillStatus === 'partial') && slot.maxCount !== 1}}"
-                bindtap="uploadToSlot" data-slot-key="{{slot.slotKey}}">
-            <view class="slot__indicator {{slot.fillStatus === 'filled' ? 'slot__indicator--filled' : 'slot__indicator--partial'}}"></view>
-            <view class="slot__thumb">
-              <view class="slot__thumb-inner slot__thumb-inner--multi"></view>
-              <text class="slot__thumb-count">{{slot.uploadedCount}}/{{slot.maxCount === -1 ? '∞' : slot.maxCount}}</text>
+            <view class="slot__btn {{slot.fillStatus === 'empty' ? 'slot__btn--add' : 'slot__btn--done'}}">
+              {{slot.fillStatus === 'empty' ? '+' : slot.fillStatus === 'partial' ? '+' + slot.uploadedCount : '✓'}}
             </view>
-            <view class="slot__body">
-              <text class="slot__name">{{slot.docName}}</text>
-              <text class="slot__meta">{{slot.description || ''}}</text>
-            </view>
-            <view class="slot__action slot__action--more">›</view>
           </view>
 
           <view class="slot slot--warn"

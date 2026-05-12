@@ -336,10 +336,10 @@ const PATH_DETAILS = {
   },
   [APPLICATION_PATHS.QMAS]: {
     pathId: APPLICATION_PATHS.QMAS,
-    name: '优才计划·综合计分制',
+    name: '优才计划·12项评核准则',
     phases: [
       { phase: 'phase1_evaluation', duration: '1-3月', actions: ['12项准则自评(≥6项)', '准备赴港计划书', '收集学历+工作+资产证明'], confidence: 'B' },
-      { phase: 'phase2_onboarding', duration: '0-6月', actions: ['递交申请(审批3-6月)', '获批24月签证', '赴港激活'], confidence: 'B' },
+      { phase: 'phase2_onboarding', duration: '0-6月', actions: ['递交申请(审批6-12月)', '获批24月签证', '携e-Visa入境激活'], confidence: 'B' },
       { phase: 'phase3_maintenance', duration: '1-6年', actions: ['2+3+3续签模式', '证明「通常居住」', 'MPF+税单'], confidence: 'C' },
       { phase: 'phase4_pr_sprint', duration: '第6-7年', actions: ['证明在港「通常居住」7年', '永居申请'], confidence: 'B' }
     ],

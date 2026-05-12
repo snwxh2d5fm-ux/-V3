@@ -20,7 +20,7 @@ page { background: #f5f7fa; }
   gap: 16rpx;
 }
 
-.status-header.status-pending { background: linear-gradient(135deg, #FEF3C7, #FDE68A); }
+.status-header.status-pending { background: linear-gradient(135deg, var(--color-warning-bg), #FDE68A); }
 .status-header.status-issued { background: linear-gradient(135deg, #D1FAE5, #A7F3D0); }
 .status-header.status-rejected { background: linear-gradient(135deg, #FEE2E2, #FECACA); }
 
@@ -54,8 +54,8 @@ page { background: #f5f7fa; }
 .label { font-size: 26rpx; color: #999; }
 .value { font-size: 26rpx; color: #333; text-align: right; }
 .value.bold { font-weight: 600; }
-.value.price { font-weight: 700; color: #DC2626; font-size: 32rpx; }
-.value.issued { color: #059669; font-weight: 500; }
+.value.price { font-weight: 700; color: var(--color-error); font-size: 32rpx; }
+.value.issued { color: var(--color-success); font-weight: 500; }
 .value.mono { font-family: monospace; word-break: break-all; }
 .value.small { font-size: 22rpx; color: #666; }
 
@@ -63,10 +63,10 @@ page { background: #f5f7fa; }
 .hint {
   margin: 24rpx 32rpx;
   padding: 20rpx 28rpx;
-  background: #EFF6FF;
+  background: var(--color-info-bg);
   border-radius: 12rpx;
   font-size: 24rpx;
-  color: #2563EB;
+  color: var(--color-info);
   line-height: 1.6;
 }
 
@@ -76,8 +76,8 @@ page { background: #f5f7fa; }
   height: 80rpx;
   line-height: 80rpx;
   background: #fff;
-  color: #1a73e8;
-  border: 2rpx solid #1a73e8;
+  color: var(--color-primary);
+  border: 2rpx solid var(--color-primary);
   border-radius: 14rpx;
   font-size: 28rpx;
   text-align: center;

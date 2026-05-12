@@ -42,7 +42,7 @@ page {
   margin-bottom: 40rpx;
 }
 .btn-primary {
-  background: linear-gradient(135deg, #1a73e8, #2563EB);
+  background: linear-gradient(135deg, var(--color-primary), var(--color-info));
   color: #fff;
   border: none;
   border-radius: 12rpx;
@@ -86,10 +86,10 @@ page {
   border-radius: 8rpx;
   font-weight: 500;
 }
-.status-pending { background: #FEF3C7; color: #92400E; }
-.status-completed { background: #D1FAE5; color: #065F46; }
-.status-failed { background: #FEE2E2; color: #991B1B; }
-.status-cancelled { background: #F3F4F6; color: #6B7280; }
+.status-pending { background: var(--color-warning-bg); color: #92400E; }
+.status-completed { background: #D1FAE5; color: var(--color-success); }
+.status-failed { background: #FEE2E2; color: var(--color-error); }
+.status-cancelled { background: var(--gray-100); color: var(--gray-500); }
 
 /* 订单详情行 */
 .order-body {
@@ -115,7 +115,7 @@ page {
 
 .order-value.price {
   font-weight: 700;
-  color: #DC2626;
+  color: var(--color-error);
   font-size: 30rpx;
 }
 
@@ -135,7 +135,7 @@ page {
 
 .order-arrow {
   font-size: 26rpx;
-  color: #1a73e8;
+  color: var(--color-primary);
   font-weight: 500;
 }
 

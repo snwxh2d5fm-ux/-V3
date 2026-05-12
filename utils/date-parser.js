@@ -4,38 +4,69 @@
  */
 function parseDateFromText(text) {
   if (!text) return [];
-  const dates = [];
+  var dates = [];
+  var seen = {};
+
   // ISO 格式: 2026-05-07
-  const iso = text.match(/\d{4}-\d{2}-\d{2}/g);
-  if (iso) iso.forEach(d => dates.push({ date: d, format: 'ISO', original: d }));
+  var isoRe = /\d{4}-\d{2}-\d{2}/g;
+  var m;
+  while ((m = isoRe.exec(text)) !== null) {
+    if (!seen[m[0]]) { seen[m[0]] = true; dates.push({ date: m[0], format: 'ISO', original: m[0], label: extractContext(text, m.index, m[0]) }); }
+  }
 
-  // 中文格式: 2026年5月7日, 2026年05月07日
-  const cn = text.match(/(\d{4})\s*年\s*(\d{1,2})\s*月\s*(\d{1,2})\s*日/g);
-  if (cn) cn.forEach(d => {
-    const m = d.match(/(\d{4})\s*年\s*(\d{1,2})\s*月\s*(\d{1,2})\s*日/);
-    dates.push({ date: `${m[1]}-${m[2].padStart(2,'0')}-${m[3].padStart(2,'0')}`, format: 'CN', original: d });
-  });
+  // 中文格式: 2026年8月15日（含前/后/止等上下文）
+  var cnRe = /(\d{4})\s*年\s*(\d{1,2})\s*月\s*(\d{1,2})\s*日/g;
+  while ((m = cnRe.exec(text)) !== null) {
+    var dateStr = m[1] + '-' + m[2].padStart(2,'0') + '-' + m[3].padStart(2,'0');
+    if (!seen[dateStr]) {
+      seen[dateStr] = true;
+      var orig = m[0];
+      var label = extractContext(text, m.index, orig);
+      dates.push({ date: dateStr, format: 'CN', original: orig, label: label });
+    }
+  }
 
-  // 英文格式: May 7, 2026 / 7 May 2026 / 07/05/2026
-  const en1 = text.match(/(?:Jan|Feb|Mar|Apr|May|Jun|Jul|Aug|Sep|Oct|Nov|Dec)[a-z]*\s+\d{1,2},?\s+\d{4}/gi);
-  if (en1) en1.forEach(d => {
-    const parsed = new Date(d);
-    if (!isNaN(parsed)) dates.push({ date: parsed.toISOString().slice(0,10), format: 'EN', original: d });
-  });
-  const en2 = text.match(/\d{1,2}\s+(?:Jan|Feb|Mar|Apr|May|Jun|Jul|Aug|Sep|Oct|Nov|Dec)[a-z]*\s+\d{4}/gi);
-  if (en2) en2.forEach(d => {
-    const parsed = new Date(d);
-    if (!isNaN(parsed)) dates.push({ date: parsed.toISOString().slice(0,10), format: 'EN', original: d });
-  });
+  // 英文格式
+  var enRe = /(?:Jan|Feb|Mar|Apr|May|Jun|Jul|Aug|Sep|Oct|Nov|Dec)[a-z]*\s+\d{1,2},?\s+\d{4}/gi;
+  while ((m = enRe.exec(text)) !== null) {
+    var p = new Date(m[0]);
+    if (!isNaN(p)) {
+      var ds = p.toISOString().slice(0,10);
+      if (!seen[ds]) { seen[ds] = true; dates.push({ date: ds, format: 'EN', original: m[0], label: extractContext(text, m.index, m[0]) }); }
+    }
+  }
 
   // 斜杠格式: 07/05/2026
-  const slash = text.match(/\d{2}\/\d{2}\/\d{4}/g);
-  if (slash) slash.forEach(d => {
-    const parts = d.split('/');
-    dates.push({ date: `${parts[2]}-${parts[1]}-${parts[0]}`, format: 'SLASH', original: d });
-  });
+  var slRe = /\d{2}\/\d{2}\/\d{4}/g;
+  while ((m = slRe.exec(text)) !== null) {
+    var parts = m[0].split('/');
+    var ds2 = parts[2] + '-' + parts[1] + '-' + parts[0];
+    if (!seen[ds2]) { seen[ds2] = true; dates.push({ date: ds2, format: 'SLASH', original: m[0], label: extractContext(text, m.index, m[0]) }); }
+  }
 
   return dates;
+}
+
+/** 从日期前后提取事件上下文 */
+function extractContext(text, idx, dateStr) {
+  var before = text.substring(Math.max(0, idx - 20), idx).replace(/\s+/g, '');
+  var after = text.substring(idx + dateStr.length, Math.min(text.length, idx + dateStr.length + 30)).trim();
+  // 去掉日期前的修饰词
+  before = before.replace(/[之前此后至到应须须在从于於]/g, '').trim();
+  // 日期后紧跟的关键词提示
+  if (/^前/.test(after)) {
+    return (before || '') + (after.substring(1).trim() || '截止日');
+  }
+  if (/^(?:止|截止|到期|过期)/.test(after)) {
+    return (before || '') + (after.replace(/^(?:止|截止|到期|过期)/, '截止').trim() || '截止日');
+  }
+  if (/^(?:开始|起|生效)/.test(after)) {
+    return (before || '') + '起' + (after.replace(/^(?:开始|起|生效)/, '').trim() || '');
+  }
+  // 取日期后15字符作为标签
+  var label = after.substring(0, 20).replace(/[，,。.；;！!？?\s]+/g, '').trim();
+  if (!label && before) label = before;
+  return label || '关键日期';
 }
 
 // 计算倒计时

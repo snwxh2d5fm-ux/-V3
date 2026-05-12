@@ -288,7 +288,7 @@
   font-size: 18rpx;
   font-weight: 700;
   color: var(--white);
-  background: linear-gradient(135deg, #F59E0B, #EA580C);
+  background: linear-gradient(135deg, #F59E0B, var(--color-warning));
 }
 
 /* ===== 其他 ===== */

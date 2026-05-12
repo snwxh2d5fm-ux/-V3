@@ -62,8 +62,8 @@
   font-size: 20rpx; padding: 4rpx 14rpx; border-radius: 20rpx;
   white-space: nowrap; flex-shrink: 0;
 }
-.identity-badge.matched { background: rgba(52,211,153,0.3); color: #ECFDF5; }
-.identity-badge.incomplete { background: rgba(251,191,36,0.3); color: #FEF3C7; }
+.identity-badge.matched { background: rgba(52,211,153,0.3); color: var(--color-success-bg); }
+.identity-badge.incomplete { background: rgba(251,191,36,0.3); color: var(--color-warning-bg); }
 .header-stage { display: flex; align-items: center; gap: 6rpx; margin: 8rpx 0; }
 .stage-dot { width: 12rpx; height: 12rpx; border-radius: 50%; background: rgba(255,255,255,0.25); }
 .stage-dot.active { background: #34D399; box-shadow: 0 0 8rpx rgba(52,211,153,0.5); }
@@ -97,7 +97,7 @@
   display: flex; align-items: center; gap: 16rpx;
   margin: 12rpx 24rpx;
   padding: 20rpx 24rpx;
-  background: #FFFBEB;
+  background: var(--color-bg-card)BEB;
   border: 1rpx solid #FDE68A;
   border-radius: 18rpx;
 }
@@ -165,7 +165,7 @@
 .doc-tag.required { background: #FEE2E2; color: var(--red); }
 .doc-tag.optional { background: #E0E7FF; color: #4338CA; }
 .doc-tag.identity-adapted { background: #D1FAE5; color: var(--green); }
-.doc-expiry-warn { font-size: 18rpx; color: var(--red); background: #FEF2F2; padding: 2rpx 8rpx; border-radius: 6rpx; }
+.doc-expiry-warn { font-size: 18rpx; color: var(--red); background: var(--color-error-bg); padding: 2rpx 8rpx; border-radius: 6rpx; }
 .doc-meta { font-size: 22rpx; color: var(--gray-400); margin-top: 4rpx; display: block; }
 
 .doc-action { flex-shrink: 0; }
@@ -173,7 +173,7 @@
 .doc-add-btn {
   width: 56rpx; height: 56rpx;
   border-radius: 50%;
-  background: #EFF6FF;
+  background: var(--color-info-bg);
   border: 2rpx solid #BFDBFE;
   display: flex; align-items: center; justify-content: center;
   font-size: 32rpx; color: var(--blue); font-weight: 700;
