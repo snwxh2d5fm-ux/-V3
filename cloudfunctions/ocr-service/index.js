@@ -296,10 +296,12 @@ function getDateContext(text, pos, window) {
 // ========== 文档类型识别 ==========
 
 function identifyDocType(text) {
-  if (/身份证|居民身份|公民身份/.test(text))          return { docType: 'id_card', confidence: 0.95 };
+  // hk_id 必须在 id_card 之前判定 — "身份证号" 含 "身份证" 子串
+  if (/HONG KONG.*IDENTITY|香港.*身份證|香港.*身份证/.test(text)) return { docType: 'hk_id', confidence: 0.95 };
+  // 排除含"香港"的文本，避免 hk_id 误判为 id_card
+  if (!/香港|HONG KONG/i.test(text) && /身份证|居民身份|公民身份/.test(text)) return { docType: 'id_card', confidence: 0.95 };
   if (/港澳通行证|往来港澳|往來港澳/.test(text))        return { docType: 'hk_permit', confidence: 0.95 };
   if (/PASSPORT|护照|護照|Passport/.test(text))       return { docType: 'passport', confidence: 0.95 };
-  if (/HONG KONG.*IDENTITY|香港.*身份證|香港.*身份证/.test(text)) return { docType: 'hk_id', confidence: 0.95 };
   if (/学位|学士|碩士|博士|Bachelor|Master|Doctor/.test(text))  return { docType: 'degree', confidence: 0.85 };
   if (/獲批|批准|原則上批准|原則性批准|Approval|批准函/.test(text)) return { docType: 'approval_letter', confidence: 0.85 };
   if (/銀行|Bank|流水|Statement|账户|帳戶/.test(text))  return { docType: 'bank_statement', confidence: 0.80 };
@@ -772,7 +774,7 @@ function mapPath(selectedPath) {
 function runTests() {
   var cases = [
     // id_card — 身份证
-    { name: 'id_card', text: '姓名：张三 性别：男 民族：汉 出生日期：1990-05-15 住址：浙江省杭州市西湖区 公民身份号码：330106199005154012 签发机关：杭州市公安局西湖分局 中华人民共和国居民身份证' },
+    { name: 'id_card', text: '姓名：张三 性别：男 民族：汉 出生日期：1990-05-15 住址：浙江省杭州市西湖区 公民身份号码：000000000000000000 签发机关：杭州市公安局西湖分局 中华人民共和国居民身份证' },
     // hk_id — 香港身份证
     { name: 'hk_id', text: 'HONG KONG IDENTITY CARD 香港身份證 姓名：CHAN Tai Man 身份证号：A123456(3) 出生日期：1985-03-20 符号：A' },
     // hk_permit — 港澳通行证
@@ -784,7 +786,7 @@ function runTests() {
     // approval_letter — 获批通知
     { name: 'approval_letter', text: '入境事務處 原則上批准通知書 申請編號：QMAS-20240001 申请人：孙七 批准日期：2024-03-15 签证类型：优才 有效期至：2026-03-14' },
     // bank_statement — 银行流水
-    { name: 'bank_statement', text: '中国银行 BANK OF CHINA 账户持有人：周八 账号：6217001234567890 银行名称：中银 币种：人民币 账单周期：2024-01-01至2024-06-30' },
+    { name: 'bank_statement', text: '中国银行 BANK OF CHINA 账户持有人：周八 账号：0000000000000000 银行名称：中银 币种：人民币 账单周期：2024-01-01至2024-06-30' },
     // work_proof — 工作证明
     { name: 'work_proof', text: '在職證明 姓名：吴九 性别：男 公司：阿里巴巴集团 职位：高级工程师 入职日期：2019-04-01' },
     // visa — 签证

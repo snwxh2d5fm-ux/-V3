@@ -165,12 +165,18 @@ function matchTemplate(status, path, mode) {
  * 计算槽位运行时状态
  * @param {object} template - 索引模板
  * @param {Array} uploadedDocs - 已上传证件列表
+ * @param {string} ownerType - 当前所属人 ('self'|'spouse'|'child')，不传则不过滤
  * @returns {Array} 含 fillStatus 的分类+槽位
  */
-function computeSlotStates(template, uploadedDocs) {
+function computeSlotStates(template, uploadedDocs, ownerType) {
   return template.categories.map(function(cat) {
     var slots = cat.slots.map(function(slot) {
       var uploaded = uploadedDocs.filter(function(d) {
+        // 0) 所属人过滤：旧数据无 ownerType 视为 'self'
+        if (ownerType) {
+          var docOwner = d.ownerType || 'self';
+          if (docOwner !== ownerType) return false;
+        }
         // 1) 精确 slotKey 匹配（从卡槽点击添加的）
         if (d.slotKey && slot.slotKey && d.slotKey === slot.slotKey) return true;
         // 2) docType 匹配 slotKey（OCR识别或分类推导的 docType）

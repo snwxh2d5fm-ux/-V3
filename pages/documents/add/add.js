@@ -455,6 +455,21 @@ Page({
 
     // 检查免费用户上限（付费用户跳过）
     const membershipLevel = app.globalData.membershipLevel || 'free';
+
+    // 检查账户锁定
+    if (app.globalData.isLocked) {
+      wx.showModal({
+        title: '账户已锁定',
+        content: '你的免费试用已到期或会员已过期。续费后即可继续添加证件。',
+        confirmText: '立即解锁',
+        cancelText: '稍后再说',
+        success: function(res) {
+          if (res.confirm) wx.navigateTo({ url: '/pages/membership/index/index' });
+        }
+      });
+      return;
+    }
+
     if (!constants.isPayingMember(membershipLevel)) {
       const docs = getAllDocuments();
       const maxDocs = constants.getEffectiveLimit(membershipLevel, 'maxDocuments');

@@ -173,6 +173,11 @@ function getAllProcessLines() {
   return data ? data.lines : [];
 }
 
+function saveProcessLines(processLines) {
+  const data = { lines: processLines, version: (wx.getStorageSync(PROCESS_KEY)?.version || 1) + 1 };
+  wx.setStorageSync(PROCESS_KEY, data);
+}
+
 // --- 配置 ---
 function getConfig(key) {
   const config = wx.getStorageSync(CONFIG_KEY) || {};
@@ -232,7 +237,7 @@ module.exports = {
   saveDocumentMeta, getDocumentMeta, getAllDocuments, getDocumentsByType,
   saveFile, readFile, deleteDocument, searchDocuments,
   saveReminder, getAllReminders, updateReminder, deleteReminder,
-  saveProcessLine, getProcessLine, getAllProcessLines,
+  saveProcessLine, getProcessLine, getAllProcessLines, saveProcessLines,
   saveDocuments, saveReminders,
   getConfig, setConfig,
   FILE_BASE, META_KEY, REMINDER_KEY, PROCESS_KEY

@@ -35,6 +35,7 @@ App({
     // 会员等级
     membershipLevel: 'free',
     membershipExpiry: null,
+    isLocked: false,           // 试用过期/会员到期锁定
 
     // AI 助手状态
     aiSessionId: null,
@@ -101,6 +102,7 @@ App({
   async onShow() {
     if (this.globalData.isLoggedIn) {
       this.refreshProcessData();
+      this.syncLockStatus();  // 每次切回前台同步锁定状态
     }
   },
 
@@ -118,6 +120,7 @@ App({
           this.globalData.token = session.token;
           this.globalData.membershipLevel = session.membershipLevel || 'free';
           this.globalData.membershipExpiry = session.membershipExpiry;
+          this.globalData.isLocked = session.isLocked || false;
           this.globalData.phoneBound = session.phoneBound || false;
           this.globalData.activeProcessId = session.activeProcessId;
           this.globalData.activeProcess = session.activeProcess;
@@ -152,6 +155,7 @@ App({
       userSubStatus: this.globalData.userSubStatus,
       membershipLevel: this.globalData.membershipLevel,
       membershipExpiry: this.globalData.membershipExpiry,
+      isLocked: this.globalData.isLocked || false,
       phoneBound: this.globalData.phoneBound || false,
       activeProcessId: this.globalData.activeProcessId,
       activeProcess: this.globalData.activeProcess,
@@ -284,7 +288,35 @@ App({
     console.error('[住港伴] 全局错误:', err);
     const safeError = { message: err.message, timestamp: Date.now() };
     wx.setStorageSync(constants.STORAGE_KEYS.ERROR_LOG, safeError);
-  }
+  },
+
+  // ========== 锁定状态同步 ==========
+  /**
+   * 从云端同步 isLocked 状态（支付云函数最权威）
+   * 在 onShow 和支付后调用
+   */
+  syncLockStatus: async function() {
+    if (!this.globalData.cloudReady || !this.globalData.isLoggedIn) return;
+    try {
+      var res = await wx.cloud.callFunction({
+        name: 'payment',
+        data: { action: 'checkSubscription' }
+      });
+      var data = (res.result && res.result.data) || {};
+      var isLocked = data.isLocked || false;
+      // 本地数据比云端更可靠（已在 payment 激活时写入）
+      // 但如果云端说是 locked，以云端为准
+      if (isLocked) {
+        this.globalData.isLocked = true;
+        // 同步到 profile
+        var profile = wx.getStorageSync('__user_profile__') || {};
+        profile.isLocked = true;
+        wx.setStorageSync('__user_profile__', profile);
+      }
+    } catch (e) {
+      // 降级使用已有状态
+    }
+  },
 });
 
 // 合并本地和云端推荐结果
