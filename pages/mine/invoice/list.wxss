@@ -69,3 +69,11 @@ page { background: #f5f7fa; }
 .invoice-value.issued { color: #059669; font-weight: 500; }
 
 .safe-bottom { height: 40rpx; }
+
+/* 加载更多 */
+.load-more {
+  text-align: center;
+  padding: 24rpx;
+  font-size: 26rpx;
+  color: #1a73e8;
+}

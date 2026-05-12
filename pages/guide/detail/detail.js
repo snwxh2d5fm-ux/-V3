@@ -4,7 +4,8 @@ Page({
     guide: null,
     relatedGuides: [],
     isCollected: false,
-    showFullContent: true
+    showFullContent: true,
+    allOpen: false
   },
 
   onLoad(options) {
@@ -71,6 +72,30 @@ Page({
   onRelatedTap(e) {
     const { id } = e.currentTarget.dataset;
     wx.redirectTo({ url: `/pages/guide/detail/detail?id=${id}` });
+  },
+
+  toggleLayer(e) {
+    const { id } = e.currentTarget.dataset;
+    const guide = this.data.guide;
+    if (!guide || !guide.layers) return;
+    const layers = guide.layers.map(function(l) {
+      if (l.id === id) { l.open = !l.open; }
+      return l;
+    });
+    guide.layers = layers;
+    this.setData({ guide });
+  },
+
+  toggleAll() {
+    const guide = this.data.guide;
+    if (!guide || !guide.layers) return;
+    const allOpen = !this.data.allOpen;
+    const layers = guide.layers.map(function(l) {
+      l.open = allOpen;
+      return l;
+    });
+    guide.layers = layers;
+    this.setData({ guide, allOpen });
   },
 
   onShareAppMessage() {

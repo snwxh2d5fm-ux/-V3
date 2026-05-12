@@ -101,7 +101,7 @@
              placeholder="搜索证件名称、编号..."
              value="{{searchQuery}}"
              bindinput="onSearchInput" />
-      <text wx:if="{{searchQuery}}" class="search-bar__clear" bindtap="onClearSearch">&#x2715;</text>
+      <text wx:if="{{searchQuery}}" class="search-bar__clear" bindtap="onClearSearch">✕</text>
     </view>
 
     <!-- ── 免费上限提示 ── -->
@@ -145,7 +145,7 @@
           <text class="doc-item__desc">{{item.displayDesc}}</text>
         </view>
         <view class="doc-item__tag doc-item__tag--{{item.statusTag.cls}}">{{item.statusTag.text}}</view>
-        <text class="doc-item__arrow">&#x203A;</text>
+        <text class="doc-item__arrow">›</text>
       </view>
     </view>
 
@@ -163,7 +163,7 @@
 
     <!-- ── CloudStorageIndicator 云存储用量 ── -->
     <view class="cloud-bar" wx:if="{{hasCloudStorage}}">
-      <text class="cloud-bar__icon">&#x2601;</text>
+      <text class="cloud-bar__icon">☁</text>
       <view class="cloud-bar__body">
         <text class="cloud-bar__label">云存储 {{cloudStorageUsed}}GB / {{cloudStorageTotal}}GB</text>
         <view class="cloud-bar__track">
@@ -174,7 +174,7 @@
 
     <!-- ── StorageNoticeBar 本地存储提示 ── -->
     <view class="storage-notice">
-      <text class="storage-notice__icon">&#x1F4BE;</text>
+      <text class="storage-notice__icon">💾</text>
       <text class="storage-notice__text">以上图片均保存在你的本地设备，请务必保留好对应的原件以备后用</text>
     </view>
 
@@ -240,7 +240,7 @@
               <text class="slot__name">{{slot.docName}}</text>
               <text class="slot__meta">{{slot.uploadedDocs[0].displayName || slot.docName}} · {{slot.uploadedDocs[0].createdAt || ''}}</text>
             </view>
-            <view class="slot__action slot__action--done">&#x2713;</view>
+            <view class="slot__action slot__action--done">✓</view>
           </view>
 
           <view class="slot slot--multi"
@@ -256,7 +256,7 @@
               <text class="slot__name">{{slot.docName}}</text>
               <text class="slot__meta">{{slot.description || ''}}</text>
             </view>
-            <view class="slot__action slot__action--more">&#x203A;</view>
+            <view class="slot__action slot__action--more">›</view>
           </view>
 
           <view class="slot slot--warn"
@@ -294,7 +294,7 @@
             <text class="slot__name">{{doc.displayName || doc.name || '未命名'}}</text>
             <text class="slot__meta">{{doc.createdAt || ''}}</text>
           </view>
-          <view class="slot__action slot__action--muted">&#x203A;</view>
+          <view class="slot__action slot__action--muted">›</view>
         </view>
       </view>
 
@@ -308,7 +308,7 @@
     <view class="archive" wx:if="{{archivedCount > 0}}">
       <view class="archive__head" bindtap="toggleArchive">
         <view class="archive__head-left">
-          <text class="archive__icon">&#x1F4E6;</text>
+          <text class="archive__icon">📦</text>
           <text class="archive__label">已归档申请材料</text>
           <text class="archive__count">({{archivedCount}})</text>
         </view>
@@ -322,7 +322,7 @@
             <text class="slot__name slot__name--muted">{{doc.displayName || doc.name || '已归档'}}</text>
             <text class="slot__meta slot__meta--muted">已归档</text>
           </view>
-          <view class="slot__action slot__action--muted">&#x203A;</view>
+          <view class="slot__action slot__action--muted">›</view>
         </view>
       </view>
     </view>
@@ -357,7 +357,7 @@
   <!-- 空状态 · 搜索无结果 -->
   <view class="empty-state" wx:if="{{!loading && !showEmptyGuide && filteredDocs.length === 0 && allDocuments.length > 0}}">
     <view class="empty-state__hero empty-state__hero--sm">
-      <text class="empty-state__ring-icon empty-state__ring-icon--sm">&#x1F50D;</text>
+      <text class="empty-state__ring-icon empty-state__ring-icon--sm">🔍</text>
     </view>
     <text class="empty-state__title">未找到匹配的证件</text>
     <text class="empty-state__desc">尝试更换搜索词或切换分类</text>

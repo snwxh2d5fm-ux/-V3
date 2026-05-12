@@ -1,0 +1,94 @@
+<!-- 发票详情 -->
+<view class="page">
+
+  <view class="loading-wrap" wx:if="{{loading}}">
+    <text class="loading-text">加载中...</text>
+  </view>
+
+  <view class="empty-wrap" wx:elif="{{notFound}}">
+    <text class="empty-icon">🔍</text>
+    <text class="empty-text">发票记录不存在</text>
+    <button class="btn-ghost" bindtap="goBack">返回</button>
+  </view>
+
+  <view class="detail" wx:else>
+    <!-- 状态头 -->
+    <view class="status-header {{invoice.statusClass}}">
+      <text class="status-icon">{{invoice.status === 'issued' ? '✅' : invoice.status === 'pending' ? '⏳' : '❌'}}</text>
+      <text class="status-text">{{invoice.statusLabel}}</text>
+    </view>
+
+    <!-- 发票信息 -->
+    <view class="section">
+      <view class="section-title">发票信息</view>
+      <view class="row">
+        <text class="label">发票类型</text>
+        <text class="value">{{invoice.invoiceTypeLabel}}</text>
+      </view>
+      <view class="row">
+        <text class="label">发票抬头</text>
+        <text class="value bold">{{invoice.title}}</text>
+      </view>
+      <view class="row" wx:if="{{invoice.taxNumber}}">
+        <text class="label">纳税人识别号</text>
+        <text class="value mono">{{invoice.taxNumber}}</text>
+      </view>
+      <view class="row">
+        <text class="label">开票金额</text>
+        <text class="value price">¥{{invoice.orderAmountYuan}}</text>
+      </view>
+      <view class="row">
+        <text class="label">申请时间</text>
+        <text class="value">{{invoice.createdAt}}</text>
+      </view>
+      <view class="row" wx:if="{{invoice.issuedAt}}">
+        <text class="label">开具时间</text>
+        <text class="value issued">{{invoice.issuedAt}}</text>
+      </view>
+    </view>
+
+    <!-- 订单信息 -->
+    <view class="section">
+      <view class="section-title">关联订单</view>
+      <view class="row">
+        <text class="label">商品</text>
+        <text class="value">{{invoice.productName}}</text>
+      </view>
+      <view class="row">
+        <text class="label">订单编号</text>
+        <text class="value mono small">{{invoice.orderId}}</text>
+      </view>
+    </view>
+
+    <!-- 联系方式(仅当有数据时) -->
+    <view class="section" wx:if="{{invoice.email || invoice.phone || invoice.address}}">
+      <view class="section-title">联系方式</view>
+      <view class="row" wx:if="{{invoice.email}}">
+        <text class="label">邮箱</text>
+        <text class="value">{{invoice.email}}</text>
+      </view>
+      <view class="row" wx:if="{{invoice.phone}}">
+        <text class="label">电话</text>
+        <text class="value">{{invoice.phone}}</text>
+      </view>
+      <view class="row" wx:if="{{invoice.address}}">
+        <text class="label">地址</text>
+        <text class="value">{{invoice.address}}</text>
+      </view>
+      <view class="row" wx:if="{{invoice.bankInfo}}">
+        <text class="label">银行信息</text>
+        <text class="value">{{invoice.bankInfo}}</text>
+      </view>
+    </view>
+
+    <!-- 提示 -->
+    <view class="hint">
+      <text>💡 电子发票将在 {{invoice.status === 'pending' ? '3个工作日内' : '开具后'}} 发送至您的邮箱</text>
+    </view>
+
+    <button class="btn-ghost" bindtap="goBack">返回发票列表</button>
+  </view>
+
+  <floating-ai visible="{{true}}" />
+  <view class="safe-bottom"></view>
+</view>

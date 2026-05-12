@@ -314,25 +314,66 @@ Page({
     }
   },
 
-  /** 正则从OCR文本提取字段（云函数字段为空时的兜底） */
+    /** 正则从OCR文本提取字段（云函数字段为空时的兜底） */
   extractFieldsFromText(text, docType) {
     var fields = {};
-    // 身份证号: 18位
+    // 18位身份证号
     var idMatch = text.match(/\d{17}[\dXx]/);
     if (idMatch) fields.idNumber = idMatch[0].toUpperCase();
-    // 姓名: "姓名"后2-4个汉字
-    var nameMatch = text.match(/姓名[：:]\s*([\u4e00-\u9fff]{2,4})/);
-    if (nameMatch) fields.name = nameMatch[1];
-    // 日期
-    var dateMatch = text.match(/(\d{4})[-/](\d{1,2})[-/](\d{1,2})/);
-    if (dateMatch) fields.validTo = dateMatch[1] + '-' + dateMatch[2].padStart(2, '0') + '-' + dateMatch[3].padStart(2, '0');
+    // 香港身份证: A123456(7)
+    var hkid = text.match(/[A-Z]\d{6}\([0-9A]\)/);
+    if (hkid) fields.hkIdNumber = hkid[0];
+    // 护照号
+    var pp = text.match(/[A-Z]{1,2}\d{7,9}/);
+    if (pp && !idMatch) fields.passportNumber = pp[0];
+    // 姓名 — 容错空格
+    var nm = text.match(/姓\s*名[：:\s]+([\u4e00-\u9fff]{2,4})/);
+    if (nm) fields.name = nm[1];
+    if (!fields.name) {
+      var nm2 = text.match(/Name[：:\s]+([A-Z][a-z]+\s+[A-Z][a-z]+)/i);
+      if (nm2) fields.name = nm2[1];
+    }
+    // 出生日期（中文格式）
+    var bm = text.match(/出生[^：:\n]*[：:\s]*(\d{4})\s*年\s*(\d{1,2})\s*月\s*(\d{1,2})\s*日/);
+    if (bm) fields.birthDate = bm[1] + '-' + bm[2].padStart(2,'0') + '-' + bm[3].padStart(2,'0');
+    // 出生日期（ISO格式）
+    if (!fields.birthDate) {
+      var bm2 = text.match(/出生[^：:\n]*[：:\s]*(\d{4})[-\/](\d{1,2})[-\/](\d{1,2})/);
+      if (bm2) fields.birthDate = bm2[1] + '-' + bm2[2].padStart(2,'0') + '-' + bm2[3].padStart(2,'0');
+    }
+    // 日期（通用格式）
+    if (!fields.birthDate) {
+      var bm3 = text.match(/(\d{4})[-\/](\d{1,2})[-\/](\d{1,2})/);
+      if (bm3) fields.birthDate = bm3[1] + '-' + bm3[2].padStart(2,'0') + '-' + bm3[3].padStart(2,'0');
+    }
+    // 性别
+    var gm = text.match(/[性別别][：:\s]*(男|女|MALE|FEMALE)/i);
+    if (gm) fields.gender = /男|MALE/i.test(gm[1]) ? '男' : '女';
+    // 有效期起
+    var vf = text.match(/(?:签发日期|Issue\s*Date|簽發日期)[：:\s]*(\d{4}[-\/]\d{1,2}[-\/]\d{1,2})/i);
+    if (vf) fields.validFrom = vf[1];
+    // 有效期至
+    var vt = text.match(/(?:有效期[限至]|Valid\s*To|Expir|有效期限)[：:\s]*(\d{4}[-\/]\d{1,2}[-\/]\d{1,2})/i);
+    if (vt) fields.validTo = vt[1];
+    if (!fields.validTo) {
+      var vt2 = text.match(/(\d{4})年(\d{1,2})月(\d{1,2})日.*(?:有效|到期|至|期限)/);
+      if (vt2) fields.validTo = vt2[1] + '-' + vt2[2].padStart(2,'0') + '-' + vt2[3].padStart(2,'0');
+    }
     // 签发机关
-    var authMatch = text.match(/签发机关|簽發機關[：:]\s*(.+?)(?:$|\n)/);
-    if (authMatch) fields.issuingAuthority = authMatch[1].trim();
+    var au = text.match(/(?:签发机关|簽發機關|Issuing\s*Authority)[：:\s]*(.+?)(?:\n|$)/i);
+    if (au) fields.issuingAuthority = au[1].trim();
+    // 地址
+    var ad = text.match(/(?:住址|地址)[：:\s]*(.+?)(?:\n|$|签发|有效|公民)/);
+    if (ad) fields.address = ad[1].trim();
+    // 学位（学历证书）
+    if (/博士|Doctor|Ph\.D/i.test(text)) fields.degree = '博士';
+    else if (/硕士|Master|M\.S|M\.A/i.test(text)) fields.degree = '硕士';
+    else if (/学士|本科|Bachelor|B\.S|B\.A/i.test(text)) fields.degree = '学士';
+    // 院校
+    var un = text.match(/([\u4e00-\u9fff]{2,}(?:大学|學院|学院|University|College)[\u4e00-\u9fffA-Za-z\s]*)/);
+    if (un) fields.school = un[1].trim();
     return fields;
-  },
-
-  /** OCR字段值变更 */
+  },/** OCR字段值变更 */
   onFieldChange(e) {
     const field = e.currentTarget.dataset.field;
     const value = e.detail.value;

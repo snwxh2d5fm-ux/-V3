@@ -39,12 +39,22 @@ Page({
   },
 
   onShow() {
-    const userStatus = app.globalData.userStatus || wx.getStorageSync(constants.STORAGE_KEYS.USER_STATUS);
-    this.setData({
-      isSkipped: userStatus === 'skipped',
-      isUnapplied: userStatus === 'unapplied'
-    });
-    this.loadActiveProcess();
+    try {
+      var userStatus = app.globalData.userStatus || wx.getStorageSync(constants.STORAGE_KEYS.USER_STATUS);
+      this.setData({
+        isSkipped: userStatus === 'skipped',
+        isUnapplied: userStatus === 'unapplied'
+      });
+      this.loadActiveProcess();
+    } catch (e) {
+      console.error('[流程控] onShow 异常:', e);
+      this.setData({
+        activeProcess: null,
+        phases: [],
+        progress: 0,
+        isSkipped: true  // 降级到跳过状态
+      });
+    }
   },
 
   goSelectIdentity() { wx.navigateTo({ url: '/pages/status-select/status-select' }); },
@@ -75,10 +85,22 @@ Page({
   },
 
   loadActiveProcess() {
-    let lines = getAllProcessLines().filter(l => l.status === 'active');
-    lines.sort((a, b) => new Date(b.createdAt || 0) - new Date(a.createdAt || 0));
-    const seen = new Set();
-    lines = lines.filter(l => { const k = l.name + (l.source || ''); if (seen.has(k)) return false; seen.add(k); return true; });
+    try {
+      var lines = getAllProcessLines();
+      if (!Array.isArray(lines)) { lines = []; }
+      lines = lines.filter(function(l) { return l && l.status === 'active'; });
+      lines.sort(function(a, b) {
+        var ta = a.createdAt ? new Date(a.createdAt).getTime() : 0;
+        var tb = b.createdAt ? new Date(b.createdAt).getTime() : 0;
+        return tb - ta;
+      });
+      var seen = {};
+      lines = lines.filter(function(l) {
+        var k = (l.name || '') + (l.source || '');
+        if (seen[k]) return false;
+        seen[k] = true;
+        return true;
+      });
     const activeProcess = lines[0] || null;
 
     if (!activeProcess) {
@@ -177,6 +199,18 @@ Page({
       })),
       stageProgress: Math.round((currentStepIdx / 7) * 100)
     });
+    } catch (e) {
+      console.error('[流程控] loadActiveProcess 异常:', e);
+      // 降级：清空流程数据，让用户重新选择
+      this.setData({
+        activeProcess: null,
+        phases: [],
+        progress: 0,
+        expandedPhaseIdx: -1,
+        stageProgress: 0
+      });
+      wx.showToast({ title: '流程数据加载失败，请重新创建', icon: 'none' });
+    }
   },
 
   // 展开/折叠阶段

@@ -90,8 +90,16 @@ Page({
     if (!app.globalData.cloudReady && !wx.cloud) return;
     wx.cloud.callFunction({ name: 'guidebook', data: { action: 'getArticles', page: 1, pageSize: 200, sortBy: 'default' } }).then(function(res) {
       if (res.result && res.result.code === 0 && res.result.data && res.result.data.articles && res.result.data.articles.length > 0) {
-        var articles = res.result.data.articles.map(function(a) { a.helpful = ratingCache[a.id] || a.helpful || 0; return a; });
-        that.setData({ guideCards: articles, cloudSource: true });
+        var localIds = {};
+        that.data.guideCards.forEach(function(c) { localIds[c.id] = true; });
+        var cloudArticles = res.result.data.articles.map(function(a) { a.helpful = ratingCache[a.id] || a.helpful || 0; return a; });
+        // 仅补充本地缺失的卡片，不替换已有数据
+        var merged = that.data.guideCards.slice();
+        var added = 0;
+        cloudArticles.forEach(function(a) {
+          if (!localIds[a.id]) { merged.push(a); added++; }
+        });
+        that.setData({ guideCards: merged, cloudSource: added > 0 });
         that.applyFilters();
       }
     }).catch(function(e) { console.log('[攻略书] 云端加载失败:', e.message); });

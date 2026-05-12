@@ -48,6 +48,10 @@
         </view>
       </view>
     </view>
+
+    <view class="load-more" wx:if="{{hasMore}}" bindtap="loadMore">
+      <text>加载更多...</text>
+    </view>
   </view>
 
   <floating-ai visible="{{true}}" />

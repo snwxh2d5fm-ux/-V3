@@ -508,19 +508,55 @@ async function generate(limit, skip) {
     }
   }
 
+  // === 内容安全审核 ===
+  var moderatedArticles = [];
+  var blockedCount = 0;
+  for (var k = 0; k < articles.length; k++) {
+    var article = articles[k];
+    try {
+      var modRes = await cloud.callFunction({
+        name: 'content-moderation',
+        data: {
+          action: 'moderateText',
+          content: ((article.title || '') + ' ' + (article.desc || '') + ' ' + 
+                   (article.sections || []).map(function(s) { return s.body || ''; }).join(' ')).substring(0, 9000),
+          dataId: article.id,
+          source: 'batch-generate-guidebooks'
+        }
+      });
+      var modData = (modRes.result && modRes.result.data) ? modRes.result.data : {};
+      article.moderation = {
+        suggestion: modData.suggestion || 'Pass',
+        label: modData.label || 'Normal',
+        score: modData.score || 0,
+        keywords: modData.keywords || []
+      };
+      if (modData.suggestion === 'Block' && !modData.degraded) {
+        blockedCount++;
+        continue; // 跳过被拦截的文章
+      }
+    } catch (modErr) {
+      console.log('[batch-generate] 审核失败，默认放行:', article.id, modErr.message);
+      article.moderation = { suggestion: 'Pass', label: 'Normal', score: 0, keywords: [], degraded: true };
+    }
+    moderatedArticles.push(article);
+  }
+
   // 统计各分类数量
   var catCounts = {};
-  for (var k = 0; k < articles.length; k++) {
-    var c = articles[k].category;
+  for (var m = 0; m < moderatedArticles.length; m++) {
+    var c = moderatedArticles[m].category;
     catCounts[c] = (catCounts[c] || 0) + 1;
   }
 
   return {
     code: 0,
     data: {
-      totalGenerated: articles.length,
+      totalGenerated: moderatedArticles.length,
+      totalBeforeModeration: articles.length,
+      blockedCount: blockedCount,
       categoryCounts: catCounts,
-      articles: articles
+      articles: moderatedArticles
     }
   };
 }

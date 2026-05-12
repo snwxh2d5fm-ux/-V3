@@ -1,7 +1,7 @@
 # 住港伴 (ZhuGangBan) — 微信小程序项目上下文
 
 > 香港身份规划 AI 伴侣 · WeChat Mini Program + CloudBase
-> 最后更新: 2026-05-11
+> 最后更新: 2026-05-12
 
 ## 项目定位
 帮助内地/海外人士规划香港身份的微信小程序。覆盖 12 条申请路径的资格评估、材料准备、流程追踪、到期提醒。
@@ -15,20 +15,38 @@
 
 ## Harness Engineering 基础设施
 
-本项目采用 **Harness Engineering** 四块拼图架构：
+本项目采用 **Harness Engineering** 四块拼图架构（对齐白家杰「Harness Engineering 如何工程化落地」12章框架）：
 
-| 拼图 | 本地路径 | 状态 |
-|------|---------|:--:|
-| 约束 (Rule) | `.hermes/rules/` (3文件) | ✅ |
-| 流程 (Skill) | `.hermes/skills/` (2文件) | ✅ |
-| 反馈 (Gatekeeper) | `scripts/verify.sh` | ✅ 基线: 26/0/2 |
-| 知识库 (dev-map) | `CLAUDE.md` (本文件) + `.hermes/` | ✅ |
+| 拼图 | 本地路径 | 状态 | 评分 |
+|------|---------|:--:|:--:|
+| 约束与流程 | `.hermes/rules/` (6) + `.hermes/skills/` (5) + `.hermes/agents/` (7) + `.hermes/workflow/` | ✅ | 72/100 |
+| 反馈 | `scripts/verify.sh` (32项) + `scripts/workflow-verify.sh` (36项) | ✅ | 75/100 |
+| 知识库 | `CLAUDE.md` (本文件) + `.hermes/task-board.yaml` | ✅ | 70/100 |
+| 进化 | `.hermes/` 全部资产入仓库 + 角色契约体系 | ✅ | 68/100 |
+| **综合** | | | **🟢 71/100** |
+
+### 七 Agent 流水线
+
+```
+PM Agent (路由/调度)
+  │
+  ├─ S1 → 需求分析 Agent (requirement)  ──→ 需求文档
+  ├─ S2 → 方案设计 Agent (design)       ──→ 方案文档
+  ├─ S3 → 闸门总控 Agent (gate)         ──→ 准入/打回
+  ├─ S4 → 开发实现 Agent (dev)          ──→ 代码变更
+  ├─ S5 → 代码审查 Agent (review)       ──→ 审查报告
+  ├─ S6 → 测试验证 Agent (test)         ──→ 测试报告
+  └─ S7 → PM Agent                      ──→ 交付
+```
+
+详见: `.hermes/workflow/flow-definition.md` + `.hermes/workflow/agent-contracts/`
 
 ### 总验证脚本 (Gatekeeper)
 ```bash
-bash scripts/verify.sh          # 全量检查
-bash scripts/verify.sh --baseline # 建立/更新基线
-bash scripts/verify.sh --diff     # 与基线对比 (检测新增失败)
+bash scripts/verify.sh            # 全量检查 (32项: A1-A10/B1-B5/C1-C4)
+bash scripts/verify.sh --baseline  # 建立/更新基线
+bash scripts/verify.sh --diff      # 与基线对比 (检测新增失败 + 测试数变化)
+bash scripts/workflow-verify.sh    # 流程资产校验 (Agent/契约/Rule/Skill 完整性)
 ```
 **规则**: 每次代码改动后必须运行 `scripts/verify.sh` 并通过，才算开发完成。
 
@@ -40,7 +58,7 @@ bash scripts/verify.sh --diff     # 与基线对比 (检测新增失败)
 5. guidebook 内容必须通过 redactContent() 脱敏
 6. CLAUDE.md 必须同步更新
 
-详见: `.hermes/rules/`
+详见: `.hermes/rules/` (6文件: security/wechat-dev/code-quality/terminology/data-pipeline/ai-chat-guardrail)
 
 ## 核心架构
 
@@ -160,17 +178,22 @@ knowledge_chunks ─→ batch-generate-guidebooks → guidebook_articles
 - 如必须用 execute_code，读取用 `open()` 而非 `read_file()`
 
 ## 本轮进展 (2026-05-12)
-1. **攻略书推荐引擎 V3 双驱动全面修复**:
-   - 本地 getRecommended(): 补全 retirement 路径 → PATH_TAGS(13条×4状态=52组合全覆盖)
-   - 云端 guidebook 函数: V1→V3 升级，支持 selectedPath 双驱动评分
-   - 路径标签映射: 13条路径全部中文标签化
+1. **Harness Engineering H1+H2 全面升级**:
+   - Agent: 3→7 (PM/Requirement/Design/Gate/Dev/Review/Test)
+   - qa-agent 拆分为 review-agent + test-agent（审查与测试独立）
+   - `.hermes/workflow/flow-definition.md` — 七阶段流水线 + 前进/回退规则
+   - `.hermes/workflow/agent-contracts/` × 7 — 角色契约
+   - `.hermes/workflow/workflow-overview.md` — L1 人类可读流程总览
+   - `.hermes/workflow/mcp-evaluation.md` — MCP 扩展评估（结论：无需新增）
+   - `scripts/workflow-verify.sh` — 36项流程资产校验
+   - `scripts/verify.sh` 增强: A10测试数检查 + 历史基线保留 + diff增强
+   - H2-A: Rule 职责边界清理（去重+瘦身）
+   - H2-C: Memory 审计完成（手册→Skill，档案保留）
+2. **文档框架重组**:
+   - V3 项目根目录清理: 20+ 开发文档迁移至 `10_工程文档/住港伴V3/`
+   - `.gitignore` 创建: 排除 CLAUDE.md/.hermes/工程资产
+   - 港动人生/ 根目录: 90+ 散落文档按类归入 01-10 目录
+3. **攻略书推荐引擎 V3 双驱动全面修复**:
+   - PATH_TAGS(13条×4状态=52组合全覆盖) + 路径标签映射
    - 新增 A9 推荐覆盖度检查项 → verify.sh 从 28→32 项
-2. **退休路径补全**:
-   - data/guidebook-data.js: 新增 retirement_001《香港退休身份规划全指南》(CIES/家属/优才三路径)
-   - 攻略书总数: 46→47篇
-3. **政策监控系统上线**:
-   - scripts/policy-monitor.py: 自动化监控脚本 (官方政策+公众号验证+时效检查)
-   - 报告邮件发送至 gangban@funway.hk (附政策原文+链接+审核流程)
-   - Cron: 每周一 09:00 自动运行 (job_id: 4291756d3e10)
-   - 监控源: 入境处8个官方页面 + 7个公众号搜索关键词
-5. **攻略书新增"其他"分类**: retirement_001 从 life→other；新增 other 标签页(📌)；STATE_PROFILE 全4状态+other:2；三处DOMAIN_MAP同步
+4. **攻略书**: 新增 retirement_001→47篇 + "其他"分类

@@ -26,7 +26,8 @@ Page({
       data: { action: 'getInvoices', limit: 50 }
     }).then(function(res) {
       var result = res.result || {};
-      var invoices = (result.data || []).map(function(inv) {
+      var payload = result.data || {};
+      var invoices = (payload.list || []).map(function(inv) {
         return {
           invoiceId: inv.invoiceId,
           orderId: inv.orderId,
@@ -45,7 +46,9 @@ Page({
       that.setData({
         loading: false,
         invoices: invoices,
-        empty: invoices.length === 0
+        empty: invoices.length === 0,
+        total: payload.total || 0,
+        hasMore: payload.hasMore || false
       });
     }).catch(function() {
       that.setData({ loading: false, empty: true });
@@ -54,11 +57,32 @@ Page({
 
   viewDetail: function(e) {
     var invoiceId = e.currentTarget.dataset.id;
-    // 复用订单详情逻辑，展示发票信息
-    wx.showModal({
-      title: '发票详情',
-      content: '发票 ID: ' + invoiceId + '\n功能开发中，请联系客服',
-      showCancel: false
+    wx.navigateTo({ url: '/pages/mine/invoice/detail?invoiceId=' + invoiceId });
+  },
+
+  loadMore: function() {
+    var that = this;
+    var offset = that.data.invoices.length;
+    wx.cloud.callFunction({
+      name: 'payment',
+      data: { action: 'getInvoices', limit: 20, offset: offset }
+    }).then(function(res) {
+      var payload = (res.result && res.result.data) || {};
+      var newItems = (payload.list || []).map(function(inv) {
+        return {
+          invoiceId: inv.invoiceId, orderId: inv.orderId,
+          productName: inv.productName, orderAmountYuan: inv.orderAmountYuan,
+          invoiceType: inv.invoiceType, title: inv.title,
+          status: inv.status, statusLabel: getStatusLabel(inv.status),
+          statusClass: getStatusClass(inv.status),
+          createdAt: formatTime(inv.createdAt),
+          issuedAt: inv.issuedAt ? formatTime(inv.issuedAt) : ''
+        };
+      });
+      that.setData({
+        invoices: that.data.invoices.concat(newItems),
+        hasMore: payload.hasMore || false
+      });
     });
   },
 

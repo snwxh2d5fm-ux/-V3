@@ -1,0 +1,27 @@
+# 住港伴 — Git 忽略规则
+# 确保推送远程仓库时不包含工程文档和敏感配置
+
+# === 工程开发资产（不入仓库） ===
+CLAUDE.md          # AI 开发导航图（含项目架构，敏感）
+.hermes/           # Harness Engineering 基础设施（工程规则/技能/Agent）
+CODEBUDDY.md       # AI 编辑器配置
+
+# === 依赖 ===
+node_modules/
+
+# === 系统文件 ===
+.DS_Store
+Thumbs.db
+
+# === 微信开发者工具 ===
+project.private.config.json
+
+# === Python ===
+__pycache__/
+*.pyc
+.venv/
+
+# === 临时文件 ===
+*.swp
+*.swo
+*~

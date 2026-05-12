@@ -8,42 +8,62 @@
 ## 本轮完成事项
 
 ### 1. 攻略书推荐引擎 V3 双驱动全面修复
-- **问题**: PATH_TAGS 缺少 retirement 路径; 云端 getRecommended() 是 V1 旧算法不支持 selectedPath
-- **修复**:
-  - `data/guidebook-data.js`: PATH_TAGS 12→13 条路径 (新增 retirement), 路径标签映射 7→13 条全覆盖
-  - `cloudfunctions/guidebook/index.js`: V1 domain-weight→V3 双驱动 (STATE_PROFILE + PATH_TAGS + 评分+去重)
-  - 本地+云端算法对齐
-  - 新增 A9 检查项: verify.sh 28→32 项, 覆盖 PATH_TAGS/PATH_LABELS/retirement 三道检查
+- PATH_TAGS 12→13 条路径, 路径标签映射 7→13 条全覆盖
+- 本地+云端算法对齐, verify.sh 28→32 项
 
 ### 2. 退休路径内容补全
-- `data/guidebook-data.js`: 新增 `retirement_001`《香港退休身份规划全指南》
-- tags: ['退休', 'CIES', '家属', '身份规划'] — 可被推荐引擎 path match +20 命中
-- 攻略书总数: 46→47篇
-- 分类计数同步: `pages/guidebooks/index/index.js` life: 12→13
+- 攻略书 46→47篇, 新增 retirement_001
 
-### 3. 政策监控系统 (Policy Monitor)
-- `scripts/policy-monitor.py`: 完整的自动化监控脚本
-  - **官方源**: 入境处8个页面 (QMAS/TTPS/ASMTP/IANG/CIES/新闻/一站通/人才清单)
-  - **公众号**: 7个搜索关键词 × 搜狗微信 → 自动分类可靠性 (官方/中介/自媒体)
-  - **攻略书时效**: 按重要度分4级阈值 (30/60/90/180天) 检查过时文章
-  - **邮件**: 报告发送至 gangban@funway.hk (含政策原文+链接+公众号验证+审核5步流程)
-- Cron: 每周一 09:00 自动运行 (job_id: 4291756d3e10)
-- Dry-run 模式支持: `python3 scripts/policy-monitor.py --dry-run`
+### 3. 政策监控系统上线
+- scripts/policy-monitor.py, Cron每周一09:00
 
 ### 4. CloudBase 部署
-- guidebook 云函数已创建并部署到 cloudbase-d1g17tgt7cc199a60
-- 烟雾测试通过: action=getRecommended, selectedPath=retirement, userStatus=approved
-- 返回: reason="已获批 · 推荐赴港落地与续签规划攻略 · 退休身份规划通道"
+- guidebook 云函数部署, 烟雾测试通过
+
+### 5. HIGH-3 闭环 — 天元/玄武双端验证
+- BaseCrawler 三层清理链: close_browser() → _force_cleanup() → _cleanup_orphans()
+- 天元/玄武 3文件 MD5 一致, verify.sh 32/0/0, 双端无孤儿进程
+- P0-DEV-02 V3 代码审查: 10/10 全部闭环 ✅
+
+### 6. 流程控异常处理 ✅
+- process/index/index.js: onShow + loadActiveProcess try/catch + 数据校验 + 损坏降级
+- process/detail/detail.js: onLoad 校验, 深拷贝修复(JSON.parse), save 失败保护
+- verify.sh: 37/0/0
+
+### 7. Phase 0 闭环 ✅
+- 任务看板刷新: Phase 0 100% (13/13), Phase 1 ready, 风险全部清除
+- H1 Harness 升级: 3→7 Agent + 流程定义 + 角色契约
+
+### 8. DSG-2 线框图 ✅
+- 3 Excalidraw: 流程控 / 证件夹 / 流程详情-里程碑
+- 审计报告: DSG-2/DSG-2_线框图审计报告_20260512.md
 
 ---
 
 ## 当前基线
 
-- verify.sh: **32/0/0** (新增 4 项 A9 推荐覆盖度检查)
-- 攻略书: 47 篇 (46 + 1 retirement)
-- 推荐引擎: 13条路径 × 4状态 = 52组合全覆盖
-- 政策监控: 每周一 09:00 自动运行
-- Phase 0: 11/13 (85%) — 不变
+- verify.sh: **28/0/0** (10:45 baseline)
+- Hermes: 6 Rules / 5 Skills / 7 Agents — 全部完整
+- 攻略书: 47 篇
+- Phase 0: **100%** (13/13)
+- Phase 1: 真机测试进行中 — 全量问题跟踪表: `真机测试_全量问题跟踪_20260512.md`
+- 今日修改: 90+文件
+
+---
+
+## 真机测试发现 (10:30-11:00 session)
+
+| # | 问题 | 状态 |
+|:--:|------|:--:|
+| 1 | 流程控-指引牌详情为空 | ✅ layers引用修正+toggleHandler |
+| 2 | 证件OCR字段提取失败 | ✅ extractFieldsFromText增强18字段 |
+| 3 | 脱敏未遮罩本地照片 | ✅ image-process.js applyPrivacyMask |
+| 4 | 证件无扫描形态 | ✅ image-process.js enhanceToScanned |
+| 5 | 证件夹HTML实体字符 | ✅ 7处&#x→Unicode |
+| 6 | 效率宝预审报错 | ⚠️ preaudit-engine待部署 |
+| 7 | 提醒器按钮位置/字体 | ⚠️ 待处理 |
+| 8 | 提醒器GIF示意图 | ⚠️ 待处理 |
+| 10 | 攻略书分类/搜索无结果 | ✅ tryCloudLoad不再替换本地数据 |
 
 ---
 
@@ -51,16 +71,18 @@
 
 | 阻塞项 | 状态 |
 |--------|:--:|
-| 攻略书状态推荐 | ✅ 已修复 (V3双驱动全覆盖) |
-| 流程控异常处理 | ⬜ 待处理 |
-| 完整里程碑验证 | ⬜ 待处理 |
-| HIGH-3: 爬虫资源泄漏 | ⬜ 等待玄武 |
-
----
+| 攻略书状态推荐 | ✅ V3双驱动全覆盖 |
+| 流程控异常处理 | ✅ 2文件 try/catch |
+| Phase 0 闭环 | ✅ 100% 任务看板刷新 |
+| HIGH-3 爬虫资源泄漏 | ✅ 三层清理 双端一致 |
+| DSG-2 线框图 | ✅ 3 Excalidraw |
+| 效率宝预审(#6) | ⚠️ preaudit-engine部署 |
+| 提醒器UI(#7) | ⚠️ 布局调整 |
+| 提醒器GIF(#8) | ⚠️ 素材设计 |
 
 ## 下一步行动
 
-1. 流程控异常处理 — 异常分支完备
-2. 完整里程碑验证 — Phase 0 闭环
-3. DSG-2 线框图设计
-4. 等待玄武 HIGH-3 + MEDIUM-3 修复后合并
+1. 修复剩余3个真机Bug (#6效率宝 / #7提醒器按钮 / #8提醒器GIF)
+2. 继续真机测试剩余模块
+3. P1-REDBOOK 小红书登录态恢复采集
+4. DSG-3 暗色模式 + 动效 + 性能

@@ -34,6 +34,7 @@
     "pages/mine/orders/detail",
     "pages/mine/invoice/apply",
     "pages/mine/invoice/list",
+    "pages/mine/invoice/detail",
     "pages/admin-db/index/index"
   ],
   "window": {

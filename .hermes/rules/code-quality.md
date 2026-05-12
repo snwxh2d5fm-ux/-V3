@@ -17,11 +17,15 @@
 8. **新增页面必须注册到 app.json**
 9. **CLAUDE.md 必须同步更新** — 如新增模块/修改架构/发现新坑
 
-## 常见错误模式（自动检查）
+## 常见错误模式
 
-| 错误模式 | 检测方式 |
-|----------|----------|
-| `parseIncome` 中用 `includes` | grep `includes.*HK\$` |
-| WXML 双重 wx:for | grep `wx:for.*wx:for-item.*wx:for` |
-| guidebook-data.js 含 `投资移民` | grep `投资移民` |
-| 新增页面未注册 app.json | 对比 pages/*/index.js 和 app.json |
+以下模式会自动被 `verify.sh` 检测，开发完成后运行即可：
+
+| 错误模式 | verify.sh 检查项 |
+|----------|:--:|
+| `parseIncome` 中用 `includes` | A1 |
+| WXML 双重 wx:for | A2 |
+| guidebook-data.js 含敏感词 | A3 |
+| 新增页面未注册 app.json | A6 |
+| 硬编码 PII | A8 |
+| 云函数语法错误 | A7 |

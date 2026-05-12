@@ -266,36 +266,107 @@ header "C类 — 工程一致性"
 
 check_ok "C1 云函数目录存在" test -d cloudfunctions/
 
-for f in .hermes/rules/security.md .hermes/rules/wechat-dev.md .hermes/rules/code-quality.md; do
+for f in .hermes/rules/security.md .hermes/rules/wechat-dev.md .hermes/rules/code-quality.md .hermes/rules/terminology.md .hermes/rules/data-pipeline.md .hermes/rules/ai-chat-guardrail.md; do
   check_ok "C2 Rule: $f" test -f "$f"
 done
 
-for f in .hermes/skills/cloud-function-deploy.md .hermes/skills/guidebook-generate.md; do
+for f in .hermes/skills/cloud-function-deploy.md .hermes/skills/guidebook-generate.md .hermes/skills/build-verify.md .hermes/skills/rag-search-verify.md .hermes/skills/data-cleaning-run.md; do
   check_ok "C3 Skill: $f" test -f "$f"
 done
 
 check_fail "C4 无遗留 debug_sogou" ls debug_sogou*.py
 
 # ============================================================
+# A10: 测试用例数检查
+# ============================================================
+header "A10 — 测试用例数检查"
+# 统计 tests/smoke/ 下的测试用例数
+if [ -d "tests/smoke/" ]; then
+  TEST_COUNT=$(grep -r "test('" tests/smoke/ 2>/dev/null | wc -l | tr -d ' ')
+  TEST_COUNT=$((TEST_COUNT + $(grep -r 'it(' tests/smoke/ 2>/dev/null | wc -l | tr -d ' ')))
+  info_msg "A10 当前测试用例数: $TEST_COUNT"
+  PASS=$((PASS + 1))
+  
+  # 与基线对比测试数
+  if [ -f "$BASELINE_DIR/last_baseline.txt" ]; then
+    BASELINE_TESTS=$(grep "TEST_COUNT=" "$BASELINE_DIR/last_baseline.txt" 2>/dev/null | cut -d= -f2)
+    if [ -n "$BASELINE_TESTS" ] && [ "$TEST_COUNT" -lt "$BASELINE_TESTS" ]; then
+      fail_msg "A10 测试用例数减少: $BASELINE_TESTS → $TEST_COUNT (减了 $((BASELINE_TESTS - TEST_COUNT)) 个)"
+    elif [ "$TEST_COUNT" -gt "$BASELINE_TESTS" ]; then
+      pass_msg "A10 测试用例数: $TEST_COUNT (新增 $((TEST_COUNT - BASELINE_TESTS)) 个)"
+    fi
+  fi
+else
+  warn_msg "A10 tests/smoke/ 目录不存在"
+fi
+
+# ============================================================
 # 基线 / 对比
 # ============================================================
 if [ "$MODE" == "baseline" ]; then
   mkdir -p "$BASELINE_DIR"
-  echo "PASS=$PASS FAIL=$FAIL WARN=$WARN" > "$BASELINE_DIR/last_baseline.txt"
+  # 保存结构化基线: 计数 + 摘要 + 测试数 + 时间戳
+  {
+    echo "PASS=$PASS"
+    echo "FAIL=$FAIL"
+    echo "WARN=$WARN"
+    echo "TEST_COUNT=$TEST_COUNT"
+    echo "TIMESTAMP=$TIMESTAMP"
+    echo "GIT_SHA=$(git rev-parse HEAD 2>/dev/null || echo 'N/A')"
+  } > "$BASELINE_DIR/last_baseline.txt"
   cp "$REPORT_FILE" "$BASELINE_DIR/last_report.txt"
+  
+  # 同时保存带时间戳的历史基线 (保留最近10份)
+  mkdir -p "$BASELINE_DIR/history"
+  cp "$BASELINE_DIR/last_baseline.txt" "$BASELINE_DIR/history/baseline_${TIMESTAMP}.txt"
+  cp "$REPORT_FILE" "$BASELINE_DIR/history/report_${TIMESTAMP}.txt"
+  # 清理超过10份的历史基线
+  ls -t "$BASELINE_DIR/history/baseline_"* 2>/dev/null | tail -n +11 | xargs rm -f 2>/dev/null
+  
   echo -e "\n${CYAN}基线已保存: $BASELINE_DIR/last_baseline.txt${NC}"
+  echo -e "  PASS=$PASS FAIL=$FAIL WARN=$WARN TEST_COUNT=$TEST_COUNT"
 fi
 
 if [ "$MODE" == "diff" ]; then
+  header "基线对比"
   if [ -f "$BASELINE_DIR/last_baseline.txt" ]; then
-    source "$BASELINE_DIR/last_baseline.txt"
+    BASELINE_PASS=$(grep "PASS=" "$BASELINE_DIR/last_baseline.txt" | cut -d= -f2)
+    BASELINE_FAIL=$(grep "FAIL=" "$BASELINE_DIR/last_baseline.txt" | cut -d= -f2)
+    BASELINE_WARN=$(grep "WARN=" "$BASELINE_DIR/last_baseline.txt" | cut -d= -f2)
+    BASELINE_TESTS=$(grep "TEST_COUNT=" "$BASELINE_DIR/last_baseline.txt" | cut -d= -f2)
+    BASELINE_TIME=$(grep "TIMESTAMP=" "$BASELINE_DIR/last_baseline.txt" | cut -d= -f2)
+    
     NEW_FAILS=$((FAIL - ${BASELINE_FAIL:-0}))
-    if [ $NEW_FAILS -gt 0 ]; then
-      echo -e "\n${RED}⚠ 基线对比: 新增 $NEW_FAILS 项失败!${NC}" | tee -a "$REPORT_FILE"
-    elif [ $NEW_FAILS -lt 0 ]; then
+    NEW_PASS=$((PASS - ${BASELINE_PASS:-0}))
+    NEW_WARN=$((WARN - ${BASELINE_WARN:-0}))
+    
+    info_msg "基线时间: $BASELINE_TIME"
+    info_msg "当前: PASS=$PASS FAIL=$FAIL WARN=$WARN TEST_COUNT=$TEST_COUNT"
+    info_msg "基线: PASS=$BASELINE_PASS FAIL=$BASELINE_FAIL WARN=$BASELINE_WARN TEST_COUNT=$BASELINE_TESTS"
+    
+    # 失败数变化
+    if [ "$NEW_FAILS" -gt 0 ]; then
+      echo -e "\n${RED}⚠ 基线对比: 新增 $NEW_FAILS 项失败! 必须修复!${NC}" | tee -a "$REPORT_FILE"
+      FAIL=$((FAIL + 1))  # 额外惩罚：新增失败算严重违规
+    elif [ "$NEW_FAILS" -lt 0 ]; then
       echo -e "\n${GREEN}✓ 基线对比: 减少了 $((0 - NEW_FAILS)) 项失败${NC}" | tee -a "$REPORT_FILE"
     else
       echo -e "\n${GREEN}✓ 基线对比: 失败数无变化${NC}" | tee -a "$REPORT_FILE"
+    fi
+    
+    # 测试数变化
+    if [ -n "$BASELINE_TESTS" ] && [ -n "$TEST_COUNT" ]; then
+      TEST_DELTA=$((TEST_COUNT - BASELINE_TESTS))
+      if [ "$TEST_DELTA" -lt 0 ]; then
+        echo -e "${RED}⚠ 测试用例数减少: $BASELINE_TESTS → $TEST_COUNT (减了 ${TEST_DELTA#-} 个)${NC}" | tee -a "$REPORT_FILE"
+      elif [ "$TEST_DELTA" -gt 0 ]; then
+        echo -e "${GREEN}✓ 测试用例数增加: +$TEST_DELTA 个${NC}" | tee -a "$REPORT_FILE"
+      fi
+    fi
+    
+    # 通过数变化
+    if [ "$NEW_PASS" -gt 0 ]; then
+      echo -e "${GREEN}✓ 新增 $NEW_PASS 项通过${NC}" | tee -a "$REPORT_FILE"
     fi
   else
     warn_msg "无基线数据可对比，请先运行 --baseline"

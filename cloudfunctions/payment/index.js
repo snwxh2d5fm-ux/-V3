@@ -633,27 +633,47 @@ async function createInvoice(openid, event) {
  */
 async function getInvoices(openid, event) {
   var limit = Math.min((event && event.limit) || 10, 50);
+  var offset = Math.max(0, (event && event.offset) || 0);
+
+  // 总数
+  var countResult = await db.collection('invoices')
+    .where({ _openid: openid }).count();
+
+  // 分页数据(多取1条判断hasMore)
   var result = await db.collection('invoices')
     .where({ _openid: openid })
     .orderBy('createdAt', 'desc')
-    .limit(limit)
+    .skip(offset)
+    .limit(limit + 1)
     .get();
+
+  var items = result.data;
+  var hasMore = items.length > limit;
+  if (hasMore) items = items.slice(0, limit);
+
+  var list = items.map(function(inv) {
+    return {
+      invoiceId: inv._id,
+      orderId: inv.orderId,
+      productName: inv.productName,
+      orderAmountYuan: inv.orderAmountYuan,
+      invoiceType: inv.invoiceType,
+      title: inv.title,
+      status: inv.status,
+      createdAt: inv.createdAt,
+      issuedAt: inv.issuedAt != null ? inv.issuedAt : null
+    };
+  });
 
   return {
     code: 0,
-    data: result.data.map(function(inv) {
-      return {
-        invoiceId: inv._id,
-        orderId: inv.orderId,
-        productName: inv.productName,
-        orderAmountYuan: inv.orderAmountYuan,
-        invoiceType: inv.invoiceType,
-        title: inv.title,
-        status: inv.status,
-        createdAt: inv.createdAt,
-        issuedAt: inv.issuedAt || undefined ? inv.issuedAt : null
-      };
-    })
+    data: {
+      list: list,
+      total: countResult.total,
+      hasMore: hasMore,
+      offset: offset,
+      limit: limit
+    }
   };
 }
 
@@ -684,7 +704,7 @@ async function getInvoiceDetail(openid, event) {
       bankInfo: inv.bankInfo,
       status: inv.status,
       createdAt: inv.createdAt,
-      issuedAt: inv.issuedAt || undefined ? inv.issuedAt : null
+      issuedAt: inv.issuedAt != null ? inv.issuedAt : null
     }
   };
 }

@@ -85,7 +85,8 @@ Page({
       name: 'payment',
       data: { action: 'getInvoices', limit: 50 }
     }).then(function(res) {
-      var data = (res.result && res.result.data) || [];
+      var payload = (res.result && res.result.data) || {};
+      var data = payload.list || [];
       var found = data.filter(function(inv) {
         return inv.orderId === that.orderId;
       });

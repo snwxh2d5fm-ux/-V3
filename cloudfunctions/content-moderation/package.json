@@ -1,0 +1,9 @@
+{
+  "name": "content-moderation",
+  "version": "1.2.0",
+  "description": "住港伴内容安全审核云函数 — 腾讯云 TMS TextModeration API 封装",
+  "main": "index.js",
+  "dependencies": {
+    "wx-server-sdk": "~2.6.3"
+  }
+}

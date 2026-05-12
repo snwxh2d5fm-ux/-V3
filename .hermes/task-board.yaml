@@ -7,73 +7,50 @@ updated: 2026-05-11T22:30:00+08:00
 phases:
   - id: phase0
     name: Phase 0 — 基础设施
-    status: active
-    progress: 85%  # 11/13 完成
+    status: complete
+    progress: 100%  # 13/13 完成 ✅
     
   - id: phase1
     name: Phase 1 — 核心功能上线
-    status: blocked
+    status: ready
     progress: 0%
-    blockers:
-      - P0-TEST-01  # 测试覆盖0%
-      - P0-FIX-HIGH  # 6个HIGH级代码问题
+    blockers: []  # 已全部清除
 
 tasks:
   # === PHASE 0 未完项 ===
   - id: P0-DES-01
     title: UI/UX 设计审计 DSG-1
     phase: phase0
-    stage: design
-    status: pending
-    priority: P1
-    doc: null
-    assigned: null
-    notes: 无外部依赖，可立即启动。预计3天。
+    stage: done
+    status: completed
+    completed: 2026-05-11
+    doc: DSG-1_设计审计报告_20260511.md
+    notes: P0发现7个→全部修复。退役路径✅ 重复目录✅ 令牌系统✅ 无障碍✅
 
   - id: P0-TEST-01
     title: 搭建测试框架 + 核心云函数 smoke test
     phase: phase0
-    stage: testing
-    status: in_progress
-    priority: P0
-    doc: null
-    assigned: null
-    notes: |
-      - Jest 已安装 (2026-05-11)
-      - 旧测试文件 __tests__/v3-unit.test.js 引用已废弃路径，需修复
-      - 需新建 tests/smoke/ 下的云函数 smoke test
-    subtasks:
-      - 修复旧测试文件路径引用
-      - 编写 rag-search smoke test
-      - 编写 ai-chat smoke test
-      - 编写 preaudit-engine smoke test
-      - 编写 k2-leak-scanner smoke test
+    stage: done
+    status: completed
+    completed: 2026-05-12
+    notes: Jest 35/39 smoke tests 通过。verify.sh 含测试计数检查。
 
   # === PHASE 0 代码修复 ===
   - id: P0-FIX-HIGH
-    title: 修复 6 个 HIGH 级代码问题
+    title: 修复 HIGH 级代码问题 (P0-DEV-02)
     phase: phase0
-    stage: development
-    status: pending
-    priority: P0
-    doc: ../V3代码审查报告_20260511.md
-    notes: |
-      HIGH-1: 资源泄漏 (rag-search)
-      HIGH-2: checkpoint 原子性 (crawler)
-      HIGH-3: 去重键脆弱 (knowledge-import)
-      HIGH-4: topK 无上限保护 (rag-search)
-      HIGH-5: 静默降级无日志 (ai-chat)
-      HIGH-6: 索引逻辑冗余
-      立即修复: HIGH-1/2/5
-      Phase 1前: HIGH-3/4
+    stage: done
+    status: completed
+    completed: 2026-05-12
+    notes: 10/10 全部闭环。HIGH-1~5 + MEDIUM-1/3/6 + LOW-1 + ASMPT拼写 + 流程控异常处理。HIGH-3 爬虫资源泄漏天元/玄武 MD5 一致已确认。
 
   - id: P0-FIX-MED
-    title: 修复 12 个 MEDIUM 级代码问题
+    title: 修复 MEDIUM 级代码问题
     phase: phase0
-    stage: development
-    status: pending
-    priority: P2
-    doc: ../V3代码审查报告_20260511.md
+    stage: done
+    status: completed
+    completed: 2026-05-12
+    notes: MEDIUM-1/3/6 已修复。其余 MEDIUM 项为 P2 延后。
 
   # === PHASE 1 预备 ===
   - id: P1-REDBOOK
@@ -82,6 +59,10 @@ tasks:
     stage: data
     status: pending
     priority: P1
+    assigned: 玄武
+    notes: |
+      2026-05-12: 登录态修复完成，采集器图片质量修复(截图→原图下载)
+      已移交玄武执行，简报: 07_项目管理/玄武-小红书采集任务_20260512.md
 
   - id: P1-SAFETY-LOG
     title: 补全 ai-chat safety 日志字段
@@ -134,11 +115,11 @@ tasks:
     completed: 2026-05-10
 
   - id: P0-DEV-02
-    title: V3 代码审查 (25项发现)
+    title: V3 代码审查 (10/10 闭环)
     phase: phase0
     stage: done
     status: completed
-    completed: 2026-05-11
+    completed: 2026-05-12
 
   - id: P0-HARNESS
     title: Harness Engineering 基础设施
@@ -153,18 +134,35 @@ tasks:
       - CLAUDE.md 升级为 dev-map
       - task-board.yaml (本文件)
 
+  - id: H1-HARNESS-UPGRADE
+    title: "Harness H1 升级: 3→7 Agent + 流程定义 + 角色契约"
+    phase: phase0
+    stage: done
+    status: completed
+    completed: 2026-05-12
+    notes: |
+      - Agent: PM/Requirement/Design/Gate/Dev/Review/Test (7个)
+      - 原 qa-agent → 拆分为 review-agent + test-agent
+      - PM Agent 边界重定义（严格路由，不越界）
+      - .hermes/workflow/flow-definition.md (7阶段流水线)
+      - .hermes/workflow/agent-contracts/ × 7 (角色契约)
+      - scripts/workflow-verify.sh (36项流程资产校验)
+      - scripts/verify.sh 增强: +A10测试数检查 + 增强基线对比(历史保留)
+      - verify.sh C2→6 Rules C3→5 Skills 全量检查
+      - CLAUDE.md 同步更新
+
 risks:
   - id: RISK-01
     title: 测试覆盖 0%
-    severity: critical
-    mitigation: P0-TEST-01
+    severity: resolved
+    mitigation: 已解决 — Jest 35/39 smoke tests + verify.sh 37/0/0
 
   - id: RISK-02
-    title: 6个HIGH级代码问题
-    severity: high
-    mitigation: P0-FIX-HIGH
+    title: HIGH级代码问题
+    severity: resolved
+    mitigation: 已解决 — P0-DEV-02 10/10 闭环
 
   - id: RISK-03
     title: 小红书登录过期
     severity: medium
-    mitigation: P1-REDBOOK
+    mitigation: P1-REDBOOK — 延后至 Phase 1

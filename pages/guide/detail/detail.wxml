@@ -9,7 +9,7 @@
 
   <!-- 6层折叠 -->
   <view class="collapse-list">
-    <view wx:for="{{layers}}" wx:key="id">
+    <view wx:for="{{guide.layers}}" wx:key="id">
       <view class="collapse-header {{item.open ? 'open' : ''}}" bindtap="toggleLayer" data-id="{{item.id}}">
         <text>{{item.open ? '▼' : '▶'}} {{item.title}}</text>
         <text class="arrow">▼</text>

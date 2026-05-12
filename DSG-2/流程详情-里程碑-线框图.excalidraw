@@ -1,0 +1,42 @@
+{
+  "type": "excalidraw",
+  "version": 2,
+  "source": "hermes-agent",
+  "elements": [
+    {"type":"rectangle","id":"phone-bg","x":60,"y":10,"width":360,"height":700,"roundness":{"type":3},"backgroundColor":"#f8f9fa","fillStyle":"solid","strokeColor":"#dee2e6","strokeWidth":1},
+    {"type":"text","id":"phone-label","x":195,"y":5,"width":90,"height":18,"text":"流程詳情 · 里程碑","fontSize":14,"fontFamily":1,"strokeColor":"#868e96","originalText":"流程詳情 · 里程碑","autoResize":true},
+
+    {"type":"text","id":"nav-back","x":80,"y":20,"width":40,"height":18,"text":"← 返回","fontSize":13,"fontFamily":1,"strokeColor":"#1971c2","originalText":"← 返回","autoResize":true},
+    {"type":"text","id":"nav-title","x":155,"y":20,"width":170,"height":18,"text":"優才計劃 · 材料準備","fontSize":14,"fontFamily":1,"strokeColor":"#212529","originalText":"優才計劃 · 材料準備","autoResize":true},
+
+    {"type":"text","id":"stage-title","x":95,"y":55,"width":180,"height":20,"text":"階段 2/7 · 材料準備","fontSize":16,"fontFamily":1,"strokeColor":"#495057","originalText":"階段 2/7 · 材料準備","autoResize":true},
+    {"type":"rectangle","id":"prog-bg","x":95,"y":80,"width":290,"height":6,"roundness":{"type":3},"backgroundColor":"#e9ecef","fillStyle":"solid","strokeColor":"#dee2e6"},
+    {"type":"rectangle","id":"prog-fill","x":95,"y":80,"width":200,"height":6,"roundness":{"type":3},"backgroundColor":"#51cf66","fillStyle":"solid","strokeColor":"#51cf66"},
+    {"type":"text","id":"pct","x":400,"y":77,"width":30,"height":14,"text":"69%","fontSize":11,"fontFamily":1,"strokeColor":"#868e96","originalText":"69%","autoResize":true},
+
+    {"type":"rectangle","id":"ms-1","x":85,"y":100,"width":310,"height":52,"roundness":{"type":3},"backgroundColor":"#e6fcf5","fillStyle":"solid","strokeColor":"#63e6be","boundElements":[{"id":"ms-1-t","type":"text"}]},
+    {"type":"text","id":"ms-1-t","x":95,"y":108,"width":290,"height":36,"text":"📋 身份證明文件     ✅ 已完成\n香港身份證 + 中國護照 · 驗證日期 2026-04-15","fontSize":12,"fontFamily":1,"strokeColor":"#2b8a3e","textAlign":"left","verticalAlign":"middle","containerId":"ms-1","originalText":"📋 身份證明文件     ✅ 已完成\n香港身份證 + 中國護照 · 驗證日期 2026-04-15","autoResize":true},
+
+    {"type":"rectangle","id":"ms-2","x":85,"y":160,"width":310,"height":52,"roundness":{"type":3},"backgroundColor":"#e6fcf5","fillStyle":"solid","strokeColor":"#63e6be","boundElements":[{"id":"ms-2-t","type":"text"}]},
+    {"type":"text","id":"ms-2-t","x":95,"y":168,"width":290,"height":36,"text":"🎓 學歷證明文件     ✅ 已完成\n香港理工大學碩士學位證書 · 成績單","fontSize":12,"fontFamily":1,"strokeColor":"#2b8a3e","textAlign":"left","verticalAlign":"middle","containerId":"ms-2","originalText":"🎓 學歷證明文件     ✅ 已完成\n香港理工大學碩士學位證書 · 成績單","autoResize":true},
+
+    {"type":"rectangle","id":"ms-3","x":85,"y":220,"width":310,"height":52,"roundness":{"type":3},"backgroundColor":"#d3f9d8","fillStyle":"solid","strokeColor":"#51cf66","strokeWidth":2.5,"boundElements":[{"id":"ms-3-t","type":"text"}]},
+    {"type":"text","id":"ms-3-t","x":95,"y":228,"width":290,"height":36,"text":"💼 工作經驗證明     🔵 進行中\n在職證明 x1/2 · 推薦信 x0/1     [標記完成]","fontSize":12,"fontFamily":1,"strokeColor":"#2b8a3e","textAlign":"left","verticalAlign":"middle","containerId":"ms-3","originalText":"💼 工作經驗證明     🔵 進行中\n在職證明 x1/2 · 推薦信 x0/1     [標記完成]","autoResize":true},
+
+    {"type":"rectangle","id":"ms-4","x":85,"y":280,"width":310,"height":52,"roundness":{"type":3},"backgroundColor":"#f8f9fa","fillStyle":"solid","strokeColor":"#dee2e6","boundElements":[{"id":"ms-4-t","type":"text"}]},
+    {"type":"text","id":"ms-4-t","x":95,"y":288,"width":290,"height":36,"text":"💰 資產及收入證明   🔒 未解鎖\n需完成工作經驗證明後解鎖        [上傳解鎖]","fontSize":12,"fontFamily":1,"strokeColor":"#adb5bd","textAlign":"left","verticalAlign":"middle","containerId":"ms-4","originalText":"💰 資產及收入證明   🔒 未解鎖\n需完成工作經驗證明後解鎖        [上傳解鎖]","autoResize":true},
+
+    {"type":"rectangle","id":"ms-5","x":85,"y":340,"width":310,"height":52,"roundness":{"type":3},"backgroundColor":"#f8f9fa","fillStyle":"solid","strokeColor":"#dee2e6","boundElements":[{"id":"ms-5-t","type":"text"}]},
+    {"type":"text","id":"ms-5-t","x":95,"y":348,"width":290,"height":36,"text":"📝 赴港計劃書       🔒 未解鎖\n需在解鎖後填寫來港發展計劃        [上傳解鎖]","fontSize":12,"fontFamily":1,"strokeColor":"#adb5bd","textAlign":"left","verticalAlign":"middle","containerId":"ms-5","originalText":"📝 赴港計劃書       🔒 未解鎖\n需在解鎖後填寫來港發展計劃        [上傳解鎖]","autoResize":true},
+
+    {"type":"rectangle","id":"ms-6","x":85,"y":400,"width":310,"height":52,"roundness":{"type":3},"backgroundColor":"#f8f9fa","fillStyle":"solid","strokeColor":"#dee2e6","boundElements":[{"id":"ms-6-t","type":"text"}]},
+    {"type":"text","id":"ms-6-t","x":95,"y":408,"width":290,"height":36,"text":"🧾 語言能力證明     🔒 未解鎖\nIELTS / 普通話水平測試成績         [上傳解鎖]","fontSize":12,"fontFamily":1,"strokeColor":"#adb5bd","textAlign":"left","verticalAlign":"middle","containerId":"ms-6","originalText":"🧾 語言能力證明     🔒 未解鎖\nIELTS / 普通話水平測試成績         [上傳解鎖]","autoResize":true},
+
+    {"type":"text","id":"next-title","x":110,"y":468,"width":140,"height":18,"text":"🔓 解鎖後可進入","fontSize":14,"fontFamily":1,"strokeColor":"#495057","originalText":"🔓 解鎖後可進入","autoResize":true},
+    {"type":"rectangle","id":"next-phase","x":85,"y":492,"width":310,"height":60,"roundness":{"type":3},"backgroundColor":"#d0ebff","fillStyle":"solid","strokeColor":"#74c0fc","boundElements":[{"id":"next-phase-t","type":"text"}]},
+    {"type":"text","id":"next-phase-t","x":95,"y":500,"width":290,"height":44,"text":"⏭ 下一階段: 線上申請\n通過入境處網站提交優才計劃申請\n系統將自動預填已完成的材料信息","fontSize":12,"fontFamily":1,"strokeColor":"#1971c2","textAlign":"left","verticalAlign":"middle","containerId":"next-phase","originalText":"⏭ 下一階段: 線上申請\n通過入境處網站提交優才計劃申請\n系統將自動預填已完成的材料信息","autoResize":true},
+
+    {"type":"text","id":"tip-box","x":95,"y":570,"width":290,"height":48,"text":"💡 提示\n每完成一項里程碑後點擊 [標記完成]，\n完成后所有步驟將自動解鎖下一階段","fontSize":12,"fontFamily":1,"strokeColor":"#868e96","textAlign":"left","verticalAlign":"middle","originalText":"💡 提示\n每完成一項里程碑後點擊 [標記完成]，\n完成后所有步驟將自動解鎖下一階段","autoResize":true}
+  ],
+  "appState": { "viewBackgroundColor": "#ffffff" }
+}
