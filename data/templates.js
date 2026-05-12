@@ -96,7 +96,7 @@ module.exports = {
           "duration": "3-6个月", "confidence": "B",
           "milestones": ["首次获得香港居留身份"],
           "steps": [
-            { "id": "s2_1", "name": "优才新制(12项准则≥6项)审批3-6月 [B]", "confidence": "B" },
+            { "id": "s2_1", "name": "优才新制(12项准则≥6项)审批6-12月 [B]", "confidence": "B" },
             { "id": "s2_2", "name": "或专才(需香港雇主sponsor)审批4-6周 [A]", "confidence": "A" },
             { "id": "s2_3", "name": "或高才B(如本科为合资格大学+3年经验)审批4周 [A]", "confidence": "A" }
           ]

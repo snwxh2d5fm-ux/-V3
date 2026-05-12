@@ -65,10 +65,15 @@
   <block wx:elif="{{action === 'ocr'}}">
     <!-- 初始状态：流程示意图 -->
     <block wx:if="{{!ocrImagePath && !ocrResult}}">
+      <!-- 主操作按钮 — 前置到最前面 -->
+      <button class="btn btn-primary btn-block ocr-main-btn" bindtap="chooseImageForOCR">
+        📷 开始拍照识别
+      </button>
+
       <view class="card ocr-demo-card">
         <text class="mode-desc">拍摄含日期的证件或文件，AI自动识别关键日期并生成提醒</text>
 
-        <!-- 示意图：三步流程 -->
+        <!-- 示意图：三步流程（即将替换为GIF动图） -->
         <view class="demo-flow">
           <!-- Step 1: 证件示意图 -->
           <view class="demo-step">
@@ -156,9 +161,7 @@
         </view>
       </view>
 
-      <button class="btn btn-primary btn-block card" bindtap="chooseImageForOCR">
-        📷 开始拍照识别
-      </button>
+      <text class="ocr-demo-footer">💡 以上为静态示意图，GIF动图版本即将上线</text>
     </block>
 
     <!-- 已拍照：显示预览 -->

@@ -66,6 +66,12 @@ Page({
     // === 智能上传 ===
     smartUploadSuggestion: '',
 
+    // === 画廊模式 ===
+    showGallery: false,
+    showImageViewer: false,
+    previewIndex: 0,
+    filteredDocsWithImage: [],
+
     // === 历史列表（兼容旧版证件列表） ===
     categoryTabs: [
       { key: 'all',       label: '全部', cssIcon: 'all' },
@@ -502,6 +508,33 @@ Page({
   navigateToCombine() {
     wx.navigateTo({ url: '/pages/documents/combine/combine' });
   },
+
+  // ===== 画廊功能 =====
+  toggleGallery() {
+    var show = !this.data.showGallery;
+    if (show) {
+      var allDocs = this.data.allDocuments || [];
+      var docsWithImg = allDocs.filter(function(d) { return d.filePath && !d.archived; });
+      this.setData({ showGallery: show, filteredDocsWithImage: docsWithImg });
+    } else {
+      this.setData({ showGallery: false, showImageViewer: false });
+    }
+  },
+
+  previewImage(e) {
+    var idx = e.currentTarget.dataset.index;
+    this.setData({ showImageViewer: true, previewIndex: idx });
+  },
+
+  closeImageViewer() {
+    this.setData({ showImageViewer: false });
+  },
+
+  onSwiperChange(e) {
+    this.setData({ previewIndex: e.detail.current });
+  },
+
+  catchStop() {},
 
   goSelectIdentity() {
     wx.navigateTo({ url: '/pages/status-select/status-select' });

@@ -118,6 +118,35 @@
     <view class="action-row">
       <button class="btn-gold btn-flex" bindtap="navigateToAdd">+ 添加证件</button>
       <button class="btn-outline btn-flex" bindtap="onSmartCombine">智能组合</button>
+      <button class="btn-outline btn-flex" bindtap="toggleGallery">🖼 画廊</button>
+    </view>
+
+    <!-- ── 画廊模式：证件缩略图网格 ── -->
+    <view class="gallery-grid" wx:if="{{showGallery && filteredDocs.length > 0}}">
+      <view class="gallery-item fade-in" wx:for="{{filteredDocsWithImage}}" wx:key="id" bindtap="previewImage" data-index="{{index}}">
+        <image class="gallery-thumb" src="{{item.filePath}}" mode="aspectFill" lazy-load />
+        <view class="gallery-overlay">
+          <text class="gallery-label">{{item.displayName || '证件'}}</text>
+        </view>
+      </view>
+      <view class="gallery-empty" wx:if="{{filteredDocsWithImage.length === 0}}">
+        <text>暂无可预览的证件图片</text>
+      </view>
+    </view>
+
+    <!-- ── 全屏图片预览 ── -->
+    <view class="image-viewer" wx:if="{{showImageViewer}}" bindtap="closeImageViewer">
+      <view class="image-viewer__mask"></view>
+      <swiper class="image-viewer__swiper" current="{{previewIndex}}" bindchange="onSwiperChange" catchtap="catchStop">
+        <swiper-item wx:for="{{filteredDocsWithImage}}" wx:key="id">
+          <image class="image-viewer__img" src="{{item.filePath}}" mode="aspectFit" />
+        </swiper-item>
+      </swiper>
+      <view class="image-viewer__info" catchtap="catchStop">
+        <text class="image-viewer__title">{{filteredDocsWithImage[previewIndex].displayName || '证件'}}</text>
+        <text class="image-viewer__count">{{previewIndex + 1}} / {{filteredDocsWithImage.length}}</text>
+      </view>
+      <view class="image-viewer__close" bindtap="closeImageViewer">✕</view>
     </view>
 
     <!-- ── 分类标签 ── -->
@@ -205,7 +234,7 @@
         <view class="slot-list {{collapsedCategories[cat.categoryKey] ? 'slot-list--hide' : ''}}">
 
           <!-- 身份+学历卡槽：所属人切换 -->
-          <view class="owner-tabs owner-tabs--slot" wx:if="{{cat.categoryKey === 'identities' || cat.categoryKey === 'identity' || cat.categoryKey === 'education'}}">
+          <view class="owner-tabs owner-tabs--slot" wx:if="{{cat.categoryKey === 'identities' || cat.categoryKey === 'identity'}}">
             <view class="owner-tab {{identityOwner === item.value ? 'owner-tab--active' : ''}}"
                   wx:for="{{ownerOptions}}" wx:key="value"
                   bindtap="switchIdentityOwner" data-value="{{item.value}}">

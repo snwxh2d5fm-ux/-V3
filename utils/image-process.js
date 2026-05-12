@@ -174,9 +174,42 @@ function cropToDocument(imagePath) {
   });
 }
 
+
+/**
+ * 自动检测并旋转竖版证件（如香港身份证竖版）
+ * 通过图片宽高比判断：竖版图片(width<height)且比例<0.7时旋转90°
+ */
+function autoRotate(imagePath) {
+  return new Promise(function(resolve) {
+    wx.getImageInfo({
+      src: imagePath,
+      success: function(info) {
+        if (info.width < info.height && (info.width / info.height) < 0.7) {
+          var ctx = wx.createCanvasContext('rotate-canvas');
+          // 旋转90°: 交换宽高，translate+rotate
+          ctx.translate(info.height, 0);
+          ctx.rotate(Math.PI / 2);
+          ctx.drawImage(imagePath, 0, 0, info.width, info.height);
+          ctx.draw(false, function() {
+            wx.canvasToTempFilePath({
+              canvasId: 'rotate-canvas',
+              success: function(res) { resolve(res.tempFilePath); },
+              fail: function() { resolve(imagePath); }
+            });
+          });
+        } else {
+          resolve(imagePath);
+        }
+      },
+      fail: function() { resolve(imagePath); }
+    });
+  });
+}
+
 module.exports = {
   applyPrivacyMask,
   enhanceToScanned,
   cropToDocument,
+  autoRotate,
   getDefaultRegions
 };

@@ -139,13 +139,18 @@ Page({
     // 转为base64用于预览
     this.readImageBase64(imagePath);
 
-    // 压缩图片（降低上传/处理体积）
+    // 压缩+缩放图片（降低上传/处理体积，加速OCR）
     var compressedPath = imagePath;
     try {
-      var compressRes = await wxCompressImage(imagePath);
+      compressedPath = await this.shrinkImage(imagePath, 1500);
+    } catch (e) {
+      console.log('[OCR] 缩放跳过，使用原图:', e);
+    }
+    try {
+      var compressRes = await wxCompressImage(compressedPath);
       compressedPath = compressRes;
     } catch (e) {
-      console.log('[OCR] 压缩跳过，使用原图:', e);
+      console.log('[OCR] 压缩跳过:', e);
     }
 
     // 上传到云存储→获取fileID→传给云函数OCR
@@ -157,6 +162,27 @@ Page({
       wx.showToast({ title: '图片上传失败，请手动填写', icon: 'none' });
       this.setData({ step: 4, ocrProcessing: false });
     }
+  },
+
+  /** 缩放图片到maxPx以内，大幅加速OCR */
+  shrinkImage(src, maxPx) {
+    return new Promise(function(resolve) {
+      wx.getImageInfo({
+        src: src,
+        success: function(info) {
+          var w = info.width, h = info.height;
+          if (Math.max(w, h) <= maxPx) { resolve(src); return; }
+          var ratio = maxPx / Math.max(w, h);
+          var nw = Math.round(w * ratio), nh = Math.round(h * ratio);
+          // 用compressImage的质量100+指定尺寸间接缩放
+          wx.compressImage({ src: src, quality: 80, compressedWidth: nw, compressedHeight: nh,
+            success: function(r) { resolve(r.tempFilePath); },
+            fail: function() { resolve(src); }
+          });
+        },
+        fail: function() { resolve(src); }
+      });
+    });
   },
 
   /** Promise包装 wx.compressImage */
@@ -314,63 +340,106 @@ Page({
     }
   },
 
-    /** 正则从OCR文本提取字段（云函数字段为空时的兜底） */
+      /** 正则从OCR文本提取字段（云函数字段为空时的兜底） */
   extractFieldsFromText(text, docType) {
     var fields = {};
-    // 18位身份证号
+    // OCR文本预处理: tesseract常在中文字间加空格
+    var clean = text.replace(/\s+/g, '');
+    // === 身份证号 ===
     var idMatch = text.match(/\d{17}[\dXx]/);
     if (idMatch) fields.idNumber = idMatch[0].toUpperCase();
-    // 香港身份证: A123456(7)
+    // === 香港身份证 ===
     var hkid = text.match(/[A-Z]\d{6}\([0-9A]\)/);
     if (hkid) fields.hkIdNumber = hkid[0];
-    // 护照号
+    // === 护照号 ===
     var pp = text.match(/[A-Z]{1,2}\d{7,9}/);
     if (pp && !idMatch) fields.passportNumber = pp[0];
-    // 姓名 — 容错空格
-    var nm = text.match(/姓\s*名[：:\s]+([\u4e00-\u9fff]{2,4})/);
+    // === 姓名 — 多策略 ===
+    var nm = text.match(/姓\s*名\s*[：:＝]\s*([\u4e00-\u9fff]{2,4})/);
     if (nm) fields.name = nm[1];
     if (!fields.name) {
-      var nm2 = text.match(/Name[：:\s]+([A-Z][a-z]+\s+[A-Z][a-z]+)/i);
+      var nm2 = clean.match(/姓名([\u4e00-\u9fff]{2,4})/);
       if (nm2) fields.name = nm2[1];
     }
-    // 出生日期（中文格式）
-    var bm = text.match(/出生[^：:\n]*[：:\s]*(\d{4})\s*年\s*(\d{1,2})\s*月\s*(\d{1,2})\s*日/);
+    if (!fields.name) {
+      var nm3 = text.match(/Name\s*[：:＝]\s*([A-Z][a-z]+\s+[A-Z][a-z]+)/i);
+      if (nm3) fields.name = nm3[1];
+    }
+    // === 出生日期 ===
+    var bm = text.match(/(\d{4})\s*年\s*(\d{1,2})\s*月\s*(\d{1,2})\s*日/);
     if (bm) fields.birthDate = bm[1] + '-' + bm[2].padStart(2,'0') + '-' + bm[3].padStart(2,'0');
-    // 出生日期（ISO格式）
     if (!fields.birthDate) {
-      var bm2 = text.match(/出生[^：:\n]*[：:\s]*(\d{4})[-\/](\d{1,2})[-\/](\d{1,2})/);
+      var bm2 = text.match(/(\d{4})[-\/](\d{1,2})[-\/](\d{1,2})/);
       if (bm2) fields.birthDate = bm2[1] + '-' + bm2[2].padStart(2,'0') + '-' + bm2[3].padStart(2,'0');
     }
-    // 日期（通用格式）
-    if (!fields.birthDate) {
-      var bm3 = text.match(/(\d{4})[-\/](\d{1,2})[-\/](\d{1,2})/);
-      if (bm3) fields.birthDate = bm3[1] + '-' + bm3[2].padStart(2,'0') + '-' + bm3[3].padStart(2,'0');
-    }
-    // 性别
-    var gm = text.match(/[性別别][：:\s]*(男|女|MALE|FEMALE)/i);
+    // === 性别 ===
+    var gm = text.match(/[性別别]\s*[：:＝]*\s*(男|女|MALE|FEMALE)/i);
     if (gm) fields.gender = /男|MALE/i.test(gm[1]) ? '男' : '女';
-    // 有效期起
-    var vf = text.match(/(?:签发日期|Issue\s*Date|簽發日期)[：:\s]*(\d{4}[-\/]\d{1,2}[-\/]\d{1,2})/i);
-    if (vf) fields.validFrom = vf[1];
-    // 有效期至
-    var vt = text.match(/(?:有效期[限至]|Valid\s*To|Expir|有效期限)[：:\s]*(\d{4}[-\/]\d{1,2}[-\/]\d{1,2})/i);
-    if (vt) fields.validTo = vt[1];
+    if (!fields.gender && /男/.test(clean.slice(0,100))) fields.gender = '男';
+    if (!fields.gender && /女/.test(clean.slice(0,100))) fields.gender = '女';
+    // === 有效期至 — 多格式 ===
+    var vt = text.match(/(?:有效期[限至]|有效期限|Valid\s*To|Expir)[：:\s＝]*(\d{4}[-\/.]\d{1,2}[-\/.]\d{1,2})/i);
+    if (vt) fields.validTo = vt[1].replace(/\./g,'-');
     if (!fields.validTo) {
-      var vt2 = text.match(/(\d{4})年(\d{1,2})月(\d{1,2})日.*(?:有效|到期|至|期限)/);
-      if (vt2) fields.validTo = vt2[1] + '-' + vt2[2].padStart(2,'0') + '-' + vt2[3].padStart(2,'0');
+      var vt2 = text.match(/至\s*(\d{4}[-\/]\d{1,2}[-\/]\d{1,2})/);
+      if (vt2) fields.validTo = vt2[1];
     }
-    // 签发机关
-    var au = text.match(/(?:签发机关|簽發機關|Issuing\s*Authority)[：:\s]*(.+?)(?:\n|$)/i);
+    if (!fields.validTo) {
+      var vt3 = text.match(/(\d{4})\s*年\s*(\d{1,2})\s*月\s*(\d{1,2})\s*日.*(?:有效|到期|期限|长期)/);
+      if (vt3) fields.validTo = vt3[1] + '-' + vt3[2].padStart(2,'0') + '-' + vt3[3].padStart(2,'0');
+    }
+    // 无标签: 取第二个ISO日期（第一个通常是出生日期）
+    if (!fields.validTo) {
+      var allD = text.match(/\d{4}[-\/]\d{1,2}[-\/]\d{1,2}/g);
+      if (allD && allD.length >= 2) fields.validTo = allD[1];
+    }
+    
+    // === HK身份证日期: DD-MM-YYYY 格式 ===
+    if (!fields.birthDate) {
+      var hkDate = text.match(/(\d{1,2})[-\/](\d{1,2})[-\/](\d{4})/);
+      if (hkDate) {
+        var d = parseInt(hkDate[1]), m = parseInt(hkDate[2]), y = parseInt(hkDate[3]);
+        if (d <= 31 && m <= 12 && y >= 1900 && y <= 2030) {
+          fields.birthDate = y + '-' + hkDate[2].padStart(2,'0') + '-' + hkDate[1].padStart(2,'0');
+        }
+      }
+    }
+    // === 国徽面有效期: 2020.06.01-2030.06.01 或 2020-06-01至2030-06-01 ===
+    if (!fields.validTo) {
+      var evt = text.match(/(?:有效期限|有效期)[：:\s＝]*(?:长期|Long.?Term)/i);
+      if (evt) fields.validTo = '长期';
+    }
+    if (!fields.validTo) {
+      var evt2 = text.match(/(?:有效期限|有效期)[：:\s＝]*\s*(\d{4})[\.\-\/](\d{1,2})[\.\-\/](\d{1,2})\s*[-至~]\s*(\d{4})[\.\-\/](\d{1,2})[\.\-\/](\d{1,2})/);
+      if (evt2) {
+        fields.validFrom = evt2[1] + '-' + evt2[2].padStart(2,'0') + '-' + evt2[3].padStart(2,'0');
+        fields.validTo = evt2[4] + '-' + evt2[5].padStart(2,'0') + '-' + evt2[6].padStart(2,'0');
+      }
+    }
+    // 国徽面单日期: 有效期限 2030.06.01
+    if (!fields.validTo) {
+      var evt3 = text.match(/(?:有效期限|有效期)[：:\s＝]*\s*(\d{4})[\.\\/](\d{1,2})[\.\\/](\d{1,2})/);
+      if (evt3) fields.validTo = evt3[1] + '-' + evt3[2].padStart(2,'0') + '-' + evt3[3].padStart(2,'0');
+    }
+// === 有效期起 ===
+    var vf = text.match(/(?:签发日期|Issue\s*Date|簽發日期)[：:\s＝]*(\d{4}[-\/]\d{1,2}[-\/]\d{1,2})/i);
+    if (vf) fields.validFrom = vf[1];
+    // === 签发机关 ===
+    var au = text.match(/(?:签发机关|簽發機關|Issuing\s*Authority)\s*[：:＝]*\s*(.+?)(?:\n|$)/i);
     if (au) fields.issuingAuthority = au[1].trim();
-    // 地址
-    var ad = text.match(/(?:住址|地址)[：:\s]*(.+?)(?:\n|$|签发|有效|公民)/);
+    if (!fields.issuingAuthority) {
+      var au2 = clean.match(/([\u4e00-\u9fff]{2,}公安局[\u4e00-\u9fff分局]*(?:出入境[\u4e00-\u9fff]*)?)/);
+      if (au2) fields.issuingAuthority = au2[1];
+    }
+    // === 地址 ===
+    var ad = text.match(/(?:住址|地址)\s*[：:＝]*\s*(.+?)(?:\n|$|签发|有效|公民|民族)/);
     if (ad) fields.address = ad[1].trim();
-    // 学位（学历证书）
+    // === 学位 ===
     if (/博士|Doctor|Ph\.D/i.test(text)) fields.degree = '博士';
     else if (/硕士|Master|M\.S|M\.A/i.test(text)) fields.degree = '硕士';
     else if (/学士|本科|Bachelor|B\.S|B\.A/i.test(text)) fields.degree = '学士';
-    // 院校
-    var un = text.match(/([\u4e00-\u9fff]{2,}(?:大学|學院|学院|University|College)[\u4e00-\u9fffA-Za-z\s]*)/);
+    // === 院校 ===
+    var un = clean.match(/([\u4e00-\u9fff]{2,}(?:大学|學院|学院|University|College|Institute)[\u4e00-\u9fffA-Za-z]*)/);
     if (un) fields.school = un[1].trim();
     return fields;
   },/** OCR字段值变更 */

@@ -120,12 +120,37 @@ function executeRule(rule, extractedFields, context) {
  */
 async function runPreaudit(db, docId, extractedFields, context) {
   var docRules = await loadDocRules(db, docId);
+
+  // 云端规则未命中 → 用通用脱敏规则兜底（不依赖DOC-XXXX格式）
   if (!docRules) {
+    var genericRules = buildGenericRules(extractedFields, context);
+    var genericResults = [];
+    for (var g = 0; g < genericRules.length; g++) {
+      genericResults.push({
+        rule_id: genericRules[g].rule_id,
+        passed: genericRules[g].passed,
+        severity: genericRules[g].severity || 'P2',
+        confidence: 'C',
+        message: genericRules[g].message,
+        detail: ''
+      });
+    }
+    var p0f = [], p1f = [], p2f = [];
+    for (var jj = 0; jj < genericResults.length; jj++) {
+      var gg = genericResults[jj];
+      if (gg.passed) continue;
+      if (gg.severity === 'P0') p0f.push(gg.rule_id);
+      else if (gg.severity === 'P1') p1f.push(gg.rule_id);
+      else p2f.push(gg.rule_id);
+    }
+    var overall = p0f.length > 0 ? 'warning' : (p1f.length > 0 ? 'info' : 'pass');
     return {
       doc_id: docId,
-      status: 'unknown_doc',
-      summary: '未找到该文档类型的校验规则（doc_id=' + docId + '）。请确认识别库已导入。',
-      rules: [],
+      doc_name: '通用证件预审',
+      status: overall,
+      summary: '已检查 ' + genericRules.length + ' 项通用规则（识别库未命中DOC-XXXX格式，使用兜底规则）',
+      rules: genericResults,
+      stats: { total: genericRules.length, p0: p0f, p1: p1f, p2: p2f },
       milestone: null,
       disclaimer: buildDisclaimer()
     };
@@ -185,6 +210,53 @@ async function runPreaudit(db, docId, extractedFields, context) {
     milestone: milestoneInfo,
     disclaimer: buildDisclaimer()
   };
+}
+
+// ========== 通用兜底规则（DOC-XXXX未命中时使用） ==========
+
+function buildGenericRules(fields, ctx) {
+  var rules = [];
+  var now = ctx.currentDate || new Date().toISOString().slice(0, 10);
+
+  // G1: 检查是否至少有一个字段被识别
+  var fieldKeys = Object.keys(fields || {}).filter(function(k) { return fields[k]; });
+  if (fieldKeys.length === 0) {
+    rules.push({ rule_id: 'G-EMPTY', passed: false, severity: 'P0', message: '未提取到任何证件字段，请重新拍照' });
+  } else {
+    rules.push({ rule_id: 'G-EMPTY', passed: true, severity: 'P0', message: '已识别 ' + fieldKeys.length + ' 个字段' });
+  }
+
+  // G2: 有效期检查
+  var validTo = fields.validTo || fields.valid_to || '';
+  if (validTo && validTo.length >= 10) {
+    if (validTo < now) {
+      rules.push({ rule_id: 'G-EXPIRED', passed: false, severity: 'P0', message: '证件已过期（有效期至 ' + validTo + '）' });
+    } else {
+      rules.push({ rule_id: 'G-EXPIRED', passed: true, severity: 'P0', message: '证件在有效期内（至 ' + validTo + '）' });
+    }
+  } else if (fieldKeys.length > 0) {
+    rules.push({ rule_id: 'G-EXPIRED', passed: true, severity: 'P2', message: '未检测到有效期字段，建议手动填写' });
+  }
+
+  // G3: 证件号格式基础检查
+  var idNo = fields.idNumber || fields.id_number || fields.hkIdNumber || fields.hk_id_number || fields.passportNumber || fields.passport_number || '';
+  if (idNo) {
+    if (idNo.length >= 8) {
+      rules.push({ rule_id: 'G-ID-FORMAT', passed: true, severity: 'P1', message: '证件号格式正常（长度 ' + idNo.length + '）' });
+    } else {
+      rules.push({ rule_id: 'G-ID-FORMAT', passed: false, severity: 'P1', message: '证件号过短（长度 ' + idNo.length + '），请确认' });
+    }
+  }
+
+  // G4: 姓名检查
+  var name = fields.name || '';
+  if (name && name.length >= 2) {
+    rules.push({ rule_id: 'G-NAME', passed: true, severity: 'P2', message: '姓名已识别：' + name });
+  } else if (fieldKeys.length > 0) {
+    rules.push({ rule_id: 'G-NAME', passed: true, severity: 'P2', message: '未识别到姓名（非必需字段）' });
+  }
+
+  return rules;
 }
 
 // ========== 规则执行器映射 ==========

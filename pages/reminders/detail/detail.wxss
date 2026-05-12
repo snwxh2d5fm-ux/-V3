@@ -181,3 +181,25 @@
 
 .card { background: #FFF; border-radius: 16rpx; padding: 24rpx; margin: 16rpx 24rpx; box-shadow: 0 2rpx 8rpx rgba(0,0,0,0.04); }
 .btn-block { display: block; width: 100%; margin-top: 16rpx; }
+
+/* OCR主按钮 — 前置醒目 (Bug #7 修复) */
+.ocr-main-btn {
+  margin: 24rpx 24rpx 8rpx !important;
+  border-radius: 16rpx !important;
+  font-size: 32rpx !important;
+  font-weight: 700 !important;
+  line-height: 1.4 !important;
+  height: auto;
+  padding: 24rpx 0;
+  letter-spacing: 2rpx;
+}
+.ocr-main-btn::after { border: none !important; }
+
+/* GIF占位提示 */
+.ocr-demo-footer {
+  display: block;
+  text-align: center;
+  font-size: 22rpx;
+  color: #9CA3AF;
+  padding: 8rpx 0 16rpx;
+}

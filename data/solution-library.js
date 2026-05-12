@@ -467,7 +467,7 @@ const DECISION_COMPARISONS = {
   dp2_student_to_work: {
     options: [
       { option: 'A', label: 'IANG', passRate: '>95%', cycle: '2+2+3', risk: '低', note: '不绑雇主，毕业即可申请' },
-      { option: 'B', label: '优才', passRate: '~70%', cycle: '2+3+3', risk: '中', note: '12项准则≥6项，3-6月审批' },
+      { option: 'B', label: '优才', passRate: '~70%', cycle: '2+3+3', risk: '中', note: '12项准则≥6项，6-12月审批' },
       { option: 'C', label: '专才', passRate: '>90%', cycle: '视雇主', risk: '中', note: '需有香港雇主sponsor' },
       { option: 'D', label: '高才B/C', passRate: '>95%', cycle: '2+3+3', risk: '低', note: '须合资格大学学士' }
     ]
