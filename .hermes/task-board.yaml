@@ -57,12 +57,14 @@ tasks:
     title: 修复小红书登录态 + 恢复采集
     phase: phase1
     stage: data
-    status: pending
+    status: in_progress
     priority: P1
     assigned: 玄武
     notes: |
-      2026-05-12: 登录态修复完成，采集器图片质量修复(截图→原图下载)
-      已移交玄武执行，简报: 07_项目管理/玄武-小红书采集任务_20260512.md
+      2026-05-12: 采集器已部署至玄武(192.168.3.242) PID 8460
+      图片质量已修复(element.screenshot→download_original_image原图下载)
+      进度监控: cron 88b49886a265 (每10min×12次)
+      简报: ~/Downloads/港动人生/07_项目管理/玄武-小红书采集任务_20260512.md
 
   - id: P1-SAFETY-LOG
     title: 补全 ai-chat safety 日志字段
