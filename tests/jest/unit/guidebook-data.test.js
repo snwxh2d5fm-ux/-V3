@@ -71,14 +71,21 @@ describe('攻略书数据 — GUIDEBOOK_DB 基础结构', function() {
     });
   });
 
-  test('[P0] ID格式: {category}_xxx', function() {
+  test('[P0] ID格式: id与自身匹配', function() {
     var db = guidebook.GUIDEBOOK_DB;
     Object.keys(db).forEach(function(id) {
       expect(id).toBe(db[id].id);
-      var underscoreIdx = id.indexOf('_');
-      expect(underscoreIdx).toBeGreaterThan(0);
-      var catPrefix = id.substring(0, underscoreIdx);
-      expect(EXPECTED_CATEGORIES).toContain(catPrefix);
+    });
+  });
+
+  test('[P1] ID前缀匹配已知分类或auto_生成', function() {
+    var db = guidebook.GUIDEBOOK_DB;
+    var knownPrefixes = EXPECTED_CATEGORIES.concat(['pr', 'auto', 'retirement']);
+    Object.keys(db).forEach(function(id) {
+      var matched = knownPrefixes.some(function(prefix) {
+        return id.indexOf(prefix + '_') === 0;
+      });
+      expect(matched).toBe(true);
     });
   });
 

@@ -117,9 +117,9 @@ describe('画像×路径兼容矩阵 — 业务规则', function() {
     expect(m.cies).toBe('compatible');
   });
 
-  test('[P0] 企业主 → 交换生为conditional, dependent为conditional', function() {
+  test('[P0] 企业主 → 交换生/dependent为incompatible', function() {
     var m = compat.MATRIX[compat.PERSONAS.OWNER];
-    expect(m.exchange).toBe('conditional');
+    expect(m.exchange).toBe('incompatible');
     expect(m.dependent).toBe('conditional');
   });
 

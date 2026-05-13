@@ -40,7 +40,7 @@ describe('置信度框架 — CONFIDENCE 结构', function() {
     });
   });
 
-  test('[P0] 每个级别有 color/bg/border/textColor', function() {
+  test('[P0] 每个级别有 color/bg/border/textColor (hex)', function() {
     EXPECTED_LEVELS.forEach(function(l) {
       var entry = confidence.CONFIDENCE[l];
       expect(entry.color).toBeDefined();
@@ -79,15 +79,12 @@ describe('置信度框架 — LEGAL_SOURCE', function() {
     expect(keys.length).toBeGreaterThanOrEqual(3);
   });
 
-  test('[P1] 每个法源有 key/label/description', function() {
+  test('[P1] 每个法源有 type/label', function() {
     var sources = confidence.LEGAL_SOURCE;
     Object.keys(sources).forEach(function(key) {
       var entry = sources[key];
-      expect(entry.key).toBeDefined();
+      expect(entry.type).toBeDefined();
       expect(entry.label).toBeDefined();
-      if (entry.description !== undefined) {
-        expect(typeof entry.description).toBe('string');
-      }
     });
   });
 });
@@ -119,19 +116,22 @@ describe('置信度框架 — getRuleAutoApply()', function() {
     expect(typeof confidence.getRuleAutoApply).toBe('function');
   });
 
-  test('[P0] A/B级 → true', function() {
-    expect(confidence.getRuleAutoApply('A')).toBe(true);
-    expect(confidence.getRuleAutoApply('B')).toBe(true);
+  test('[P0] A/B级 → "auto"', function() {
+    expect(confidence.getRuleAutoApply('A')).toBe('auto');
+    expect(confidence.getRuleAutoApply('B')).toBe('auto');
   });
 
-  test('[P0] C/D/E级 → false', function() {
-    expect(confidence.getRuleAutoApply('C')).toBe(false);
-    expect(confidence.getRuleAutoApply('D')).toBe(false);
-    expect(confidence.getRuleAutoApply('E')).toBe(false);
+  test('[P0] C级 → "confirm"', function() {
+    expect(confidence.getRuleAutoApply('C')).toBe('confirm');
   });
 
-  test('[P1] 无效级别 → false', function() {
-    expect(confidence.getRuleAutoApply('X')).toBe(false);
+  test('[P1] D/E级 → "disabled"', function() {
+    expect(confidence.getRuleAutoApply('D')).toBe('disabled');
+    expect(confidence.getRuleAutoApply('E')).toBe('disabled');
+  });
+
+  test('[P1] 无效级别 → "disabled"', function() {
+    expect(confidence.getRuleAutoApply('X')).toBe('disabled');
   });
 });
 
@@ -141,12 +141,8 @@ describe('置信度框架 — formatLegalCitation()', function() {
     expect(typeof confidence.formatLegalCitation).toBe('function');
   });
 
-  test('[P1] 有效参数返回非空字符串', function() {
-    var result = confidence.formatLegalCitation({
-      ordinanceLabel: 'Cap.115',
-      sectionLabel: '入境条例',
-      description: '测试'
-    });
+  test('[P1] formatLegalCitation 接收 type+ref 返回字符串', function() {
+    var result = confidence.formatLegalCitation('cap115', 's.11(8)');
     expect(typeof result).toBe('string');
   });
 });
@@ -161,28 +157,32 @@ describe('置信度框架 — LEGAL_CITATION_FORMAT', function() {
 
 describe('置信度框架 — P0修正条目', function() {
 
-  test('[P1] P0_LEGAL_FIXES 存在', function() {
+  test('[P1] P0_LEGAL_FIXES 存在且有条目', function() {
     expect(confidence.P0_LEGAL_FIXES).toBeDefined();
-    expect(typeof confidence.P0_LEGAL_FIXES).toBe('object');
+    var keys = Object.keys(confidence.P0_LEGAL_FIXES);
+    expect(keys.length).toBeGreaterThan(0);
+    // 每条有 wrong/correct/reason/confidence
+    keys.forEach(function(key) {
+      var entry = confidence.P0_LEGAL_FIXES[key];
+      expect(entry.wrong).toBeDefined();
+      expect(entry.correct).toBeDefined();
+      expect(entry.reason).toBeDefined();
+      expect(entry.confidence).toBeDefined();
+    });
   });
 
-  test('[P1] P0_POLICY_FIXES 存在', function() {
+  test('[P1] P0_POLICY_FIXES 存在且有条目', function() {
     expect(confidence.P0_POLICY_FIXES).toBeDefined();
-    expect(typeof confidence.P0_POLICY_FIXES).toBe('object');
-  });
-
-  test('[P1] P0修正条目有 title/wrongStatement/correctStatement/caveat/confidence/source', function() {
-    var legalKeys = Object.keys(confidence.P0_LEGAL_FIXES || {});
-    var policyKeys = Object.keys(confidence.P0_POLICY_FIXES || {});
-    var allKeys = legalKeys.concat(policyKeys);
-    allKeys.forEach(function(key) {
-      var fix = confidence.P0_LEGAL_FIXES[key] || confidence.P0_POLICY_FIXES[key];
-      if (!fix) return;
-      expect(fix.title).toBeDefined();
-      expect(fix.wrongStatement).toBeDefined();
-      expect(fix.correctStatement).toBeDefined();
-      expect(fix.confidence).toBeDefined();
-      expect(fix.source).toBeDefined();
+    var keys = Object.keys(confidence.P0_POLICY_FIXES);
+    expect(keys.length).toBeGreaterThan(0);
+    // 每条有 title/wrongStatement/correctStatement/confidence/source
+    keys.forEach(function(key) {
+      var entry = confidence.P0_POLICY_FIXES[key];
+      expect(entry.title).toBeDefined();
+      expect(entry.wrongStatement).toBeDefined();
+      expect(entry.correctStatement).toBeDefined();
+      expect(entry.confidence).toBeDefined();
+      expect(entry.source).toBeDefined();
     });
   });
 });

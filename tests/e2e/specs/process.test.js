@@ -25,9 +25,9 @@ describe('§5 流程控 (process)', () => {
     expect(page.path).toContain('process');
   });
 
-  test('5.2 阶段元素存在', async () => {
-    const stage = await findElement(mp, '.stage-item, .stage, .milestone-item');
-    // 阶段元素预期存在
+  test('5.2 阶段指示器组件存在', async () => {
+    const stage = await findElement(mp, 'stage-indicator, .mc-ring__fg');
+    // stage-indicator自定义组件 + 环形进度条
     expect(!!stage).toBe(true);
   });
 
