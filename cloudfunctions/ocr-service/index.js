@@ -762,7 +762,7 @@ function mapPath(selectedPath) {
   var m = {
     'submitted_qmas': '优才', 'submitted_ttps': '高才通',
     'submitted_asmpt': '专才', 'submitted_iang': 'IANG',
-    'submitted_cies': '投资移民', 'submitted_techtas': '科技人才',
+    'submitted_cies': '投资类身份规划', 'submitted_techtas': '科技人才',
     'approved_employed': '在港就业', 'approved_business': '在港创业',
     'approved_studying': '在港学习', 'approved_mainland': '主要在内地'
   };

@@ -26,33 +26,10 @@ describe('§4 提醒器 (reminders)', () => {
   });
 
   test('4.3 提醒详情页可访问', async () => {
-    // 重新播种确保数据未被页面init覆盖
-    await mp.evaluate(() => {
-      wx.setStorageSync('__reminders__', {
-        items: [{
-          id: 'e2e-test',
-          title: 'E2E测试提醒',
-          label: 'E2E测试提醒',
-          deadline: '2026-12-31',
-          description: 'E2E测试用提醒',
-          type: 'manual',
-          confidence: 'B',
-          status: 'active',
-          priority: 'normal',
-          linkedDocIds: [],
-          dependsOn: null,
-          alerts: [],
-          source: { type: 'manual' },
-          createdAt: new Date().toISOString(),
-          updatedAt: new Date().toISOString()
-        }],
-        version: 1
-      });
-    });
     await reLaunch(mp, '/pages/reminders/detail/detail?id=e2e-test');
     await waitFor(mp, 2000);
     const page = await mp.currentPage();
-    expect(page.path).toContain('detail');
+    expect(page.path).toBe('pages/reminders/detail/detail');
   });
 
   test('4.4 无404错误页', async () => {

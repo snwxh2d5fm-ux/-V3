@@ -756,19 +756,8 @@ Page({
       }
     }
 
-    // 用户授权：本地存储确认
-    var that = this;
-    wx.showModal({
-      title: '授权本地存储',
-      content: '确认将此证件照片加密保存到您的设备本地？\n\n📁 存储位置：微信文件管理 > 住港伴\n🔒 不上传服务器，仅本地留存\n💡 保存后可从证件夹随时查看',
-      confirmText: '授权保存',
-      cancelText: '取消',
-      success: function(res) {
-        if (res.confirm) {
-          that.doActualSave(docCategory, ocrFields, manualForm, imagePath, docType);
-        }
-      }
-    });
+    // 直接保存，跳过授权弹窗
+    this.doActualSave(docCategory, ocrFields, manualForm, imagePath, docType);
   },
 
   doActualSave: async function(docCategory, ocrFields, manualForm, imagePath, docType) {

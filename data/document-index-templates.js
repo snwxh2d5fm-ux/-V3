@@ -13,7 +13,7 @@ const INDEX_TEMPLATES = {
   'unapplied_qmas_application': {
     templateId: 'unapplied_qmas_application',
     status: 'unapplied', path: 'qmas', mode: 'application',
-    totalRequired: 8,
+    totalRequired: 12,
     categories: [
       {
         categoryKey: 'identity', categoryName: '身份证明', categoryIcon: '🪪',
@@ -64,7 +64,7 @@ const INDEX_TEMPLATES = {
   'unapplied_ttps_a_application': {
     templateId: 'unapplied_ttps_a_application',
     status: 'unapplied', path: 'ttps_a', mode: 'application',
-    totalRequired: 5,
+    totalRequired: 6,
     categories: [
       {
         categoryKey: 'identity', categoryName: '身份证明', categoryIcon: '🪪',
@@ -123,7 +123,7 @@ const INDEX_TEMPLATES = {
   'any_ttps_c_application': {
     templateId: 'any_ttps_c_application',
     status: 'any', path: 'ttps_c', mode: 'application',
-    totalRequired: 4,
+    totalRequired: 6,
     categories: [
       {
         categoryKey: 'identity', categoryName: '身份证明', categoryIcon: '🪪',
@@ -153,7 +153,7 @@ const INDEX_TEMPLATES = {
   'any_asmpt_application': {
     templateId: 'any_asmpt_application',
     status: 'any', path: 'asmpt', mode: 'application',
-    totalRequired: 6,
+    totalRequired: 8,
     categories: [
       {
         categoryKey: 'identity', categoryName: '身份证明', categoryIcon: '🪪',
@@ -192,7 +192,7 @@ const INDEX_TEMPLATES = {
   'any_student_iang_application': {
     templateId: 'any_student_iang_application',
     status: 'any', path: 'student_iang', mode: 'application',
-    totalRequired: 6,
+    totalRequired: 10,
     categories: [
       {
         categoryKey: 'identity', categoryName: '身份证明', categoryIcon: '🪪',
@@ -233,7 +233,7 @@ const INDEX_TEMPLATES = {
   'any_parttime_qmas_application': {
     templateId: 'any_parttime_qmas_application',
     status: 'any', path: 'parttime_qmas', mode: 'application',
-    totalRequired: 7,
+    totalRequired: 10,
     categories: [
       {
         categoryKey: 'identity', categoryName: '身份证明', categoryIcon: '🪪',
@@ -274,7 +274,7 @@ const INDEX_TEMPLATES = {
   'any_techtas_application': {
     templateId: 'any_techtas_application',
     status: 'any', path: 'techtas', mode: 'application',
-    totalRequired: 5,
+    totalRequired: 7,
     categories: [
       {
         categoryKey: 'identity', categoryName: '身份证明', categoryIcon: '🪪',
@@ -313,7 +313,7 @@ const INDEX_TEMPLATES = {
   'any_cies_application': {
     templateId: 'any_cies_application',
     status: 'any', path: 'cies', mode: 'application',
-    totalRequired: 4,
+    totalRequired: 8,
     categories: [
       {
         categoryKey: 'identity', categoryName: '身份证明', categoryIcon: '🪪',
@@ -345,7 +345,7 @@ const INDEX_TEMPLATES = {
   'any_dependent_application': {
     templateId: 'any_dependent_application',
     status: 'any', path: 'dependent', mode: 'application',
-    totalRequired: 5,
+    totalRequired: 9,
     categories: [
       {
         categoryKey: 'identity', categoryName: '身份证明', categoryIcon: '🪪',
@@ -385,7 +385,7 @@ const INDEX_TEMPLATES = {
   'any_minor_student_application': {
     templateId: 'any_minor_student_application',
     status: 'any', path: 'minor_student', mode: 'application',
-    totalRequired: 5,
+    totalRequired: 11,
     categories: [
       {
         categoryKey: 'identity', categoryName: '身份证明', categoryIcon: '🪪',
@@ -425,7 +425,7 @@ const INDEX_TEMPLATES = {
   'any_exchange_application': {
     templateId: 'any_exchange_application',
     status: 'any', path: 'exchange', mode: 'application',
-    totalRequired: 4,
+    totalRequired: 8,
     categories: [
       {
         categoryKey: 'identity', categoryName: '身份证明', categoryIcon: '🪪',
@@ -462,7 +462,7 @@ const INDEX_TEMPLATES = {
   'any_retirement_application': {
     templateId: 'any_retirement_application',
     status: 'any', path: 'retirement', mode: 'application',
-    totalRequired: 4,
+    totalRequired: 8,
     categories: [
       {
         categoryKey: 'identity', categoryName: '身份证明', categoryIcon: '🪪',

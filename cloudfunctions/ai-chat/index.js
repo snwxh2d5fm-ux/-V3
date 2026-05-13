@@ -437,12 +437,12 @@ exports.main = async function (event, context) {
 
     // 构建用户画像上下文（四层权重）
     var userProfile = {};
-    if (sessionContext.userStatus) userProfile.userStatus = sessionContext.userStatus;
-    if (sessionContext.selectedPath) userProfile.selectedPath = sessionContext.selectedPath;
-    if (sessionContext.userSubStatus) userProfile.userSubStatus = sessionContext.userSubStatus;
-    if (sessionContext.assessmentTags) userProfile.assessmentTags = sessionContext.assessmentTags;
-    if (sessionContext.chatTopics) userProfile.chatTopics = sessionContext.chatTopics;
-    if (sessionContext.page) userProfile.page = sessionContext.page;
+    if (sessionContext && sessionContext.userStatus) userProfile.userStatus = sessionContext.userStatus;
+    if (sessionContext && sessionContext.selectedPath) userProfile.selectedPath = sessionContext.selectedPath;
+    if (sessionContext && sessionContext.userSubStatus) userProfile.userSubStatus = sessionContext.userSubStatus;
+    if (sessionContext && sessionContext.assessmentTags) userProfile.assessmentTags = sessionContext.assessmentTags;
+    if (sessionContext && sessionContext.chatTopics) userProfile.chatTopics = sessionContext.chatTopics;
+    if (sessionContext && sessionContext.page) userProfile.page = sessionContext.page;
 
     var requestBody = buildDeepSeekRequest(messages, chatMode, v5Corrections, requestStream, userProfile);
     var apiResponse = await callDeepSeek(requestBody);

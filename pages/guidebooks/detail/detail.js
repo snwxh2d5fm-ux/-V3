@@ -184,9 +184,16 @@ Page({
   loadDetail: function(id) {
     var that = this;
     that.setData({ loading: true, loadError: false });
-    if (app.globalData.__guideDetailCache__ && app.globalData.__guideDetailCache__[id]) {
-      that.renderGuide(app.globalData.__guideDetailCache__[id]);
-      that.loadRelated(app.globalData.__guideDetailCache__[id]);
+    var cached = app.globalData.__guideDetailCache__ && app.globalData.__guideDetailCache__[id];
+    // Bug #5 修复: 缓存为空壳(sections:[])时不渲染，走云端补全
+    if (cached && cached.sections && cached.sections.length > 0) {
+      that.renderGuide(cached);
+      that.loadRelated(cached);
+      return;
+    }
+    if (cached && (cached.faqAnswer || (cached.steps && cached.steps.length > 0))) {
+      that.renderGuide(cached);
+      that.loadRelated(cached);
       return;
     }
     var localGuide = guideData.getById(id);

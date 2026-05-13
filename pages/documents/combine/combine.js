@@ -46,7 +46,7 @@ Page({
       { value: 'ttps_b', label: '高才通 B类' },
       { value: 'asmpt', label: '专才 ASMTP' },
       { value: 'student_iang', label: '学生→IANG' },
-      { value: 'cies', label: '投资移民 CIES' },
+      { value: 'cies', label: '投资类身份规划 CIES' },
       { value: 'permanent', label: '永居申请' }
     ],
     showPathSwitcher: false,
@@ -113,7 +113,7 @@ Page({
         'qmas': '优才计划 (QMAS)',
         'ttps_a': '高才通 A类', 'ttps_b': '高才通 B类', 'ttps_c': '高才通 C类',
         'asmpt': '专才计划 (ASMTP)', 'student_iang': '学生→IANG',
-        'dependent': '受养人', 'cies': '投资移民 (CIES)', 'permanent': '永居申请'
+        'dependent': '受养人', 'cies': '投资类身份规划 (CIES)', 'permanent': '永居申请'
       };
       this.setData({ userPath: path, pathName: nameFromProcess || pathNames[path] || (path ? path : '未选择路径') });
       if (path) this.buildChecklist(path);

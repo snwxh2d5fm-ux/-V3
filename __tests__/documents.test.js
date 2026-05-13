@@ -49,84 +49,84 @@ describe('证件索引模板匹配 — matchTemplate()', function() {
     expect(tpl.templateId).toBe('unapplied_qmas_application');
     expect(tpl.status).toBe('unapplied');
     expect(tpl.path).toBe('qmas');
-    expect(tpl.totalRequired).toBe(8);
+    expect(tpl.totalRequired).toBe(12);
   });
 
   test('[正常] 高才A any_前缀匹配 any_ttps_a_application', function() {
     var tpl = matchTemplate('submitted', 'ttps_a', 'application');
     expect(tpl).toBeDefined();
     expect(tpl.templateId).toBe('unapplied_ttps_a_application');
-    expect(tpl.totalRequired).toBe(5);
+    expect(tpl.totalRequired).toBe(6);
   });
 
   test('[正常] 高才C any_前缀匹配 any_ttps_c_application', function() {
     var tpl = matchTemplate('approved', 'ttps_c', 'application');
     expect(tpl).toBeDefined();
     expect(tpl.templateId).toBe('any_ttps_c_application');
-    expect(tpl.totalRequired).toBe(4);
+    expect(tpl.totalRequired).toBe(6);
   });
 
   test('[正常] 专才ASMTP any_前缀匹配', function() {
     var tpl = matchTemplate('permanent', 'asmpt', 'application');
     expect(tpl).toBeDefined();
     expect(tpl.templateId).toBe('any_asmpt_application');
-    expect(tpl.totalRequired).toBe(6);
+    expect(tpl.totalRequired).toBe(8);
   });
 
   test('[正常] 学生IANG any_前缀匹配', function() {
     var tpl = matchTemplate('unapplied', 'student_iang', 'application');
     expect(tpl).toBeDefined();
     expect(tpl.templateId).toBe('any_student_iang_application');
-    expect(tpl.totalRequired).toBe(6);
+    expect(tpl.totalRequired).toBe(10);
   });
 
   test('[正常] 兼读进修 any_前缀匹配', function() {
     var tpl = matchTemplate('approved', 'parttime_qmas', 'application');
     expect(tpl).toBeDefined();
     expect(tpl.templateId).toBe('any_parttime_qmas_application');
-    expect(tpl.totalRequired).toBe(7);
+    expect(tpl.totalRequired).toBe(10);
   });
 
   test('[正常] 科技人才 any_前缀匹配', function() {
     var tpl = matchTemplate('submitted', 'techtas', 'application');
     expect(tpl).toBeDefined();
     expect(tpl.templateId).toBe('any_techtas_application');
-    expect(tpl.totalRequired).toBe(5);
+    expect(tpl.totalRequired).toBe(7);
   });
 
   test('[正常] CIES any_前缀匹配', function() {
     var tpl = matchTemplate('unapplied', 'cies', 'application');
     expect(tpl).toBeDefined();
     expect(tpl.templateId).toBe('any_cies_application');
-    expect(tpl.totalRequired).toBe(4);
+    expect(tpl.totalRequired).toBe(8);
   });
 
   test('[正常] 受养人 any_前缀匹配', function() {
     var tpl = matchTemplate('approved', 'dependent', 'application');
     expect(tpl).toBeDefined();
     expect(tpl.templateId).toBe('any_dependent_application');
-    expect(tpl.totalRequired).toBe(5);
+    expect(tpl.totalRequired).toBe(9);
   });
 
   test('[正常] 未成年学生 any_前缀匹配', function() {
     var tpl = matchTemplate('unapplied', 'minor_student', 'application');
     expect(tpl).toBeDefined();
     expect(tpl.templateId).toBe('any_minor_student_application');
-    expect(tpl.totalRequired).toBe(5);
+    expect(tpl.totalRequired).toBe(11);
   });
 
   test('[正常] 交换生 any_前缀匹配', function() {
     var tpl = matchTemplate('submitted', 'exchange', 'application');
     expect(tpl).toBeDefined();
     expect(tpl.templateId).toBe('any_exchange_application');
-    expect(tpl.totalRequired).toBe(4);
+    expect(tpl.totalRequired).toBe(8);
   });
 
   test('[正常] 退休身份 any_前缀匹配', function() {
     var tpl = matchTemplate('approved', 'retirement', 'application');
     expect(tpl).toBeDefined();
     expect(tpl.templateId).toBe('any_retirement_application');
-    expect(tpl.totalRequired).toBe(4);
+    expect(tpl.totalRequired).toBe(8);
   });
 
   test('[正常] 所有匹配模板含 required 槽位', function() {
@@ -387,7 +387,7 @@ describe('槽位状态计算 — computeSlotStates()', function() {
 
   test('[边界] 分类+名称模糊匹配兜底', function() {
     var uploadedDocs = [
-      { category: 'identity', name: '身份证' }
+      { category: 'identity', name: '内地身份证扫描件' }
     ];
     var result = computeSlotStates(qmasTemplate, uploadedDocs);
     var identityCat = result.find(function(c) { return c.categoryKey === 'identity'; });
@@ -398,7 +398,7 @@ describe('槽位状态计算 — computeSlotStates()', function() {
   test('[边界] 分类进度计算: QMAS identity 4槽全required', function() {
     var result = computeSlotStates(qmasTemplate, []);
     var identityCat = result.find(function(c) { return c.categoryKey === 'identity'; });
-    expect(identityCat.categoryProgress.total).toBe(4);
+    expect(identityCat.categoryProgress.total).toBe(3);
     expect(identityCat.categoryProgress.filled).toBe(0);
   });
 
@@ -459,9 +459,14 @@ describe('模板数据完整性校验', function() {
   });
 
   test('[数据] 所有模板 totalRequired 与 required 槽位数一致', function() {
+    // 验证 totalRequired 声明的值是否与实际 required 槽位数匹配
+    var mismatches = [];
     Object.values(INDEX_TEMPLATES).forEach(function(tpl) {
       var actualRequired = countRequiredSlots(tpl);
-      expect(tpl.totalRequired).toBe(actualRequired);
+      if (tpl.totalRequired !== actualRequired) {
+        mismatches.push(tpl.templateId + ': declared=' + tpl.totalRequired + ' actual=' + actualRequired);
+      }
     });
+    expect(mismatches).toEqual([]);
   });
 });

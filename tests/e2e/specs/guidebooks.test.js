@@ -68,7 +68,7 @@ describe('§6 攻略书 (guidebooks)', () => {
     await navigateTo(mp, '/pages/guidebooks/detail/detail?id=e2e-test');
     await waitFor(mp, 2000);
 
-    const usefulBtn = await findElement(mp, '.useful-btn, button[data-action="like"]');
+    const usefulBtn = await findElement(mp, '.fb-btn[data-rating="up"], .fb-up, .feedback-card .fb-btn');
     if (usefulBtn) {
       await usefulBtn.tap();
       await waitFor(mp, 500);

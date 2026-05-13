@@ -260,31 +260,35 @@ async function clearStorage(mp) {
   });
 }
 
-/** Mock 登录状态 (设置 storage 中的 token) */
-async function mockLogin(mp, token = 'e2e-test-token-xxxxx') {
-  await mp.evaluate((t) => {
-    // @ts-ignore
-    wx.setStorageSync('auth_token', t);
-    // @ts-ignore
-    wx.setStorageSync('user_profile', {
-      openid: 'e2e-test-openid',
-      nickname: 'E2E测试用户',
-      avatarUrl: '',
-    });
-  }, token);
+/** Mock 登录状态 — 从 fixture 文件读取，evaluate 只传路径字符串 */
+async function mockLogin(mp) {
+  await mp.evaluate(function () {
+    var fsm = wx.getFileSystemManager();
+    var raw = fsm.readFileSync('tests/e2e/fixtures/auth.json', 'utf8');
+    var seed = JSON.parse(raw);
+    wx.setStorageSync('auth_token', seed.token);
+    wx.setStorageSync('user_profile', seed.user_profile);
+  });
 }
 
 /**
- * 验证测试状态已就绪 (只读，不写 storage)。
+ * 验证测试状态已就绪。
  * 种子数据注入已移至 globalSetup (setup.js)，避免 beforeAll 重型 evaluate 导致 WebSocket 超时断连。
- * 详见: inbox/NOTIFY_initTestState_rootcause_20260513.md
+ * 若无 auth_token 缓存 (新机器/清缓存后)，自动兜底调用 mockLogin 而非抛错。
  */
 async function initTestState(mp) {
   var hasToken = await mp.evaluate(function() {
     return wx.getStorageSync('auth_token');
   });
   if (!hasToken) {
-    throw new Error('Test state not initialized — globalSetup may have failed');
+    // 新机器无缓存 → 先 mock 登录再继续 (麒麟/玄武兜底)
+    await mockLogin(mp);
+    hasToken = await mp.evaluate(function() {
+      return wx.getStorageSync('auth_token');
+    });
+    if (!hasToken) {
+      throw new Error('Test state not initialized — mockLogin failed');
+    }
   }
 }
 

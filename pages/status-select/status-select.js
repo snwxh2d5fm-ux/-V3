@@ -212,7 +212,7 @@ Page({
     var map = {
       '优才': 'submitted_qmas', '高才通': 'submitted_ttps',
       '高才': 'submitted_ttps', '专才': 'submitted_asmpt',
-      'IANG': 'submitted_iang', '投资移民': 'submitted_cies',
+      'IANG': 'submitted_iang', '投资类身份规划': 'submitted_cies',
       '科技人才': 'submitted_techtas',
       '在港就业': 'approved_employed', '在港创业': 'approved_business',
       '在港学习': 'approved_studying', '主要在内地': 'approved_mainland'

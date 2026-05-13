@@ -104,7 +104,7 @@ Page({
     var pathNames = {
       'qmas': '优才计划', 'ttps_a': '高才通A类', 'ttps_b': '高才通B类', 'ttps_c': '高才通C类',
       'asmpt': '专才计划', 'student_iang': '学生→IANG', 'dependent': '受养人',
-      'cies': 'CIES投资移民', 'permanent': '永居申请'
+      'cies': 'CIES投资类身份规划', 'permanent': '永居申请'
     };
     var visaYearsMap = { 'qmas': 2, 'ttps_a': 3, 'ttps_b': 2, 'ttps_c': 2, 'asmpt': 2, 'student_iang': 1 };
     this.setData({
@@ -123,6 +123,9 @@ Page({
       var todayStr = y + '-' + (m < 10 ? '0' + m : m) + '-' + (d < 10 ? '0' + d : d);
       this.setData({ activationDate: todayStr });
       this.generateTimeline();
+      // 自动生成后直接保存提醒到列表，不等用户手动点保存
+      var that = this;
+      setTimeout(function() { that.saveTimelineReminders(); }, 500);
     }
   },
 

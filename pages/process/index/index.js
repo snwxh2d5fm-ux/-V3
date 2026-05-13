@@ -298,19 +298,7 @@ Page({
     // 已确认过不再弹
     if (this.data.disclaimerConfirmed) return;
 
-    // 场景1: 长周期路径 (7-8年/8-9年)
-    var totalCycle = (activeProcess && activeProcess.totalCycle) || '';
-    if (totalCycle.indexOf('7-8') >= 0 || totalCycle.indexOf('8-9') >= 0) {
-      this.setData({
-        showDisclaimerPopup: true,
-        disclaimerType: 'long_cycle',
-        disclaimerTitle: '长周期路径提醒',
-        disclaimerBody: '此路径预计周期较长（' + totalCycle + '），需长期维持在港居住。续签次数多、周期长，存在一定风险。\n\n• 续签需证明持续在港定居或与港有实质联系\n• 长期不在港可能影响永居申请\n• 建议提前规划在港生活安排\n\n请确认你已了解该路径的长期承诺要求。'
-      });
-      return;
-    }
-
-    // 场景2: 用户自评数据（TotalCount > 6 暗示来自自评模板）
+    // 场景1: 用户自评数据（TotalCount > 6 暗示来自自评模板）
     if (materialTotalCount > 6 && progress === 0) {
       this.setData({
         showDisclaimerPopup: true,
@@ -321,7 +309,7 @@ Page({
       return;
     }
 
-    // 场景3: 0%完成度
+    // 场景2: 0%完成度
     if (progress === 0 && activeProcess) {
       this.setData({
         showDisclaimerPopup: true,
@@ -332,7 +320,7 @@ Page({
       return;
     }
 
-    // 场景4: 低完成度 (<30%)
+    // 场景3: 低完成度 (<30%)
     if (progress > 0 && progress < 30 && activeProcess) {
       this.setData({
         showDisclaimerPopup: true,

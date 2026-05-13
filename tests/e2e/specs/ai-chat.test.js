@@ -49,7 +49,7 @@ describe('§7 AI Chat', () => {
         await waitFor(mp, 3000);
 
         // 应收到回复
-        const response = await findElement(mp, '.message-bot, .ai-message, .reply');
+        const response = await findElement(mp, '.bubble.assistant, .message-wrapper.assistant, rich-text.bubble-text');
         expect(!!response).toBe(true);
       }
     }

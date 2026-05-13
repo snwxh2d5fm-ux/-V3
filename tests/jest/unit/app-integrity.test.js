@@ -9,7 +9,7 @@ const path = require('path');
 const fs = require('fs');
 
 const PROJECT_ROOT = path.resolve(__dirname, '../../..');
-const appJson = require(path.join(PROJECT_ROOT, 'app.json'));
+const appJson = require('../../../app.json');
 
 describe('app.json 完整性 (§10 降级)', () => {
 

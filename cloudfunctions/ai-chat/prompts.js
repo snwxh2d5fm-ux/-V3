@@ -51,7 +51,7 @@ const QUICK_REPLY_ACTION_GUIDE =
   '- select_path:ttps → 选择高才通TTPS路径\n' +
   '- select_path:asmpt → 选择专才ASMTP路径\n' +
   '- select_path:iang → 选择IANG路径\n' +
-  '- select_path:cies → 选择投资移民CIES路径\n' +
+  '- select_path:cies → 选择投资类身份规划CIES路径\n' +
   '- navigate:pages/guidebooks/index/index → 跳转攻略书\n' +
   '- navigate:pages/documents/index/index → 跳转证件夹\n\n' +
   '使用场景：\n' +

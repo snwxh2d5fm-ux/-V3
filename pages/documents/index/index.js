@@ -180,8 +180,10 @@ Page({
       var uploadedDocs = getAllDocuments();
       var slotCategories = computeSlotStates(template, uploadedDocs, this.data.identityOwner);
 
-      // 计算溢出区文档
+      // Bug #7修复: 溢出区按ownerType过滤
       var overflowDocs = uploadedDocs.filter(function(d) {
+        var docOwner = d.ownerType || 'self';
+        if (docOwner !== (that.data.identityOwner || 'self')) return false;
         return !slotCategories.some(function(cat) {
           return cat.slots.some(function(s) {
             return s.uploadedDocs && s.uploadedDocs.some(function(ud) { return ud.id === d.id; });
@@ -273,9 +275,8 @@ Page({
       return;
     }
 
-    // 跳转到添加页，预填槽位类型和所属人
-    const ownerParam = (this.data.identityOwner && this.data.identityOwner !== 'self') 
-      ? `&ownerType=${this.data.identityOwner}` : '';
+    // Bug #7修复: 始终传递ownerType，确保谁添加就标记为谁
+    const ownerParam = `&ownerType=${this.data.identityOwner || 'self'}`;
     wx.navigateTo({
       url: `/pages/documents/add/add?slotKey=${slotKey}&docName=${encodeURIComponent(slot.docName)}&guideId=${slot.guideId || ''}${ownerParam}`
     });
@@ -346,8 +347,10 @@ Page({
     var computeSlotStates = require('../../data/document-index-templates').computeSlotStates;
     var updated = computeSlotStates(template, allDocuments, identityOwner);
 
-    // 重新计算溢出区文档
+    // Bug #7修复: 溢出区也按ownerType过滤
     var overflowDocs = allDocuments.filter(function(d) {
+      var docOwner = d.ownerType || 'self';
+      if (docOwner !== (identityOwner || 'self')) return false;
       return !updated.some(function(cat) {
         return cat.slots.some(function(s) {
           return s.uploadedDocs && s.uploadedDocs.some(function(ud) { return ud.id === d.id; });

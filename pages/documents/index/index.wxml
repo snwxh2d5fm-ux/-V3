@@ -112,7 +112,7 @@
                 wx:if="{{slot.fillStatus === 'empty'}}">+</text>
           <text class="slot__btn continue"
                 bindtap="uploadToSlot" data-slot-key="{{slot.slotKey}}"
-                wx:elif="{{slot.uploadedCount < slot.maxCount || slot.maxCount === -1}}">+ 继续添加</text>
+                wx:elif="{{slot.uploadedCount < slot.maxCount || slot.maxCount === -1}}">+</text>
           <text class="slot__btn slot__btn--full"
                 wx:else>✓</text>
         </view>
