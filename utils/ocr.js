@@ -361,7 +361,7 @@ function finalizeResult(issues, score, w, h) {
     score: Math.max(0, score),
     issues: issues,
     dimensions: { width: w, height: h },
-    summary: score >= 80 ? 'good' : score >= 60 ? 'fair' : score >= 40 ? 'avg' : 'poor'
+    summary: score >= 80 ? '优秀' : score >= 60 ? '合格' : score >= 40 ? '一般' : '较差'
   };
 }
 

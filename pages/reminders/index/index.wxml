@@ -11,7 +11,8 @@
       <text class="page-header-sub">关键时间不遗漏 · {{stats.active}} 项待办</text>
     </view>
     <view class="header-right">
-      <!-- 列表视图入口 -->
+      <!-- 路径提醒生成入口 -->
+      <text class="header-icon-btn" bindtap="manualGenerateTimeline" wx:if="{{hasPath}}">📅</text>
       <text class="header-icon-btn" bindtap="navigateToList">📋</text>
     </view>
   </view>

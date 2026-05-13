@@ -1,3 +1,4 @@
+const { getGlobalStages, getActiveStageIndex } = require('../../../utils/stage-helper');
 /**
  * 住港伴 v4.4 — 攻略书主页 (Tab1·免费开放)
  * 
@@ -18,16 +19,8 @@ var guideData = require('../../../data/guidebook-data');
 
 Page({
   data: {
-    stageSteps: [
-      { id: 'evaluation', label: '资格评估', status: 'active' },
-      { id: 'preparation', label: '材料准备', status: 'pending' },
-      { id: 'submission', label: '线上申请', status: 'pending' },
-      { id: 'waiting', label: '等待获批', status: 'pending' },
-      { id: 'activation', label: '获批激活', status: 'pending' },
-      { id: 'settlement', label: '抵港生活', status: 'pending' },
-      { id: 'pr', label: '永居', status: 'pending' }
-    ],
-    stageProgress: 14,
+    stageSteps: [],
+    stageProgress: 0,
     userStatus: 'unapplied',
     selectedPath: null,
     statusLabel: '',
@@ -70,7 +63,8 @@ Page({
     this.loadGuides();
   },
 
-  onShow: function() { this.refreshRatings(); },
+  onShow: function() {
+    this.setData({ stageSteps: getGlobalStages(), stageProgress: Math.min(((getActiveStageIndex() + 1) / 7) * 100, 100) }); this.refreshRatings(); },
 
   loadGuides: function() {
     var that = this;

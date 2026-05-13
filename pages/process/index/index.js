@@ -1,5 +1,6 @@
 // 住港伴 v5 — 流程控首页（内联详情版）
 const app = getApp();
+const { getGlobalStages, getActiveStageIndex } = require('../../../utils/stage-helper');
 const constants = require('../../../data/constants');
 const templates = require('../../../data/templates.js');
 const { getAllProcessLines, getProcessLine, saveProcessLine } = require('../../../utils/storage');
@@ -49,6 +50,7 @@ Page({
   },
 
   onShow() {
+    this.setData({ stageSteps: getGlobalStages(), stageProgress: Math.min(((getActiveStageIndex() + 1) / 7) * 100, 100) });
     try {
       var userStatus = app.globalData.userStatus || wx.getStorageSync(constants.STORAGE_KEYS.USER_STATUS);
       this.setData({
@@ -261,6 +263,9 @@ Page({
   toggleTemplateSelect() { this.setData({ showTemplateSelect: !this.data.showTemplateSelect }); },
   catchStop() {},
   closeDisclaimer() { this.setData({ showDisclaimer: false }); },
+  showSelfAssessDisclaimer() {
+    this.setData({ showDisclaimer: true });
+  },
 
   // ===== 指标说明弹窗 =====
   showCycleHelp() {

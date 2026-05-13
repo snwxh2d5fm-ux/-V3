@@ -36,7 +36,16 @@
     <!-- FAQ 模式 -->
     <view class="card faq-card" wx:if="{{contentType === 'faq'}}">
       <view class="faq-q"><view class="faq-badge q">Q</view><text class="faq-q-text">{{guide.title}}</text></view>
-      <view class="faq-a"><view class="faq-badge a">A</view><text class="faq-a-text">{{guide.faqAnswer}}</text></view>
+      <view class="faq-a"><view class="faq-badge a">A</view>
+        <view class="faq-a-body">
+          <view wx:for="{{parsedSections}}" wx:key="*this">
+            <text class="seg-heading" wx:if="{{item.type === 'heading'}}">{{item.content}}</text>
+            <view class="seg-numbered" wx:elif="{{item.type === 'numbered'}}"><view class="num-dot"></view><text class="num-text">{{item.content}}</text></view>
+            <view class="seg-bullet" wx:elif="{{item.type === 'bullet'}}"><text class="bul-mark">•</text><text class="bul-text">{{item.content}}</text></view>
+            <text class="seg-body" wx:else>{{item.content}}</text>
+          </view>
+        </view>
+      </view>
     </view>
 
     <!-- 步骤模式 -->
@@ -68,6 +77,14 @@
             <text class="seg-para" wx:else>{{seg.content}}</text>
           </block>
         </view>
+      </view>
+    </block>
+
+    <!-- 长文模式回退: parsedSections为空时显示原始sections -->
+    <block wx:elif="{{contentType === 'article' && guide.sections && guide.sections.length > 0}}">
+      <view wx:for="{{guide.sections}}" wx:key="heading" wx:for-item="s">
+        <view class="section-bar"><view class="bar-accent"></view><text class="bar-title">{{s.heading}}</text></view>
+        <text class="seg-para">{{s.body}}</text>
       </view>
     </block>
 

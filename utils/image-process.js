@@ -259,11 +259,68 @@ function computeMaskRegions(docType, level) {
   return (types[docType] && types[docType][level]) || [];
 }
 
+
+/**
+ * #5: 合并多张证件照片到一张A4比例画布
+ * 场景：身份证正反面、多页户口本等合并预览
+ */
+function mergeToA4Preview(imagePaths, labels) {
+  return new Promise(function(resolve, reject) {
+    if (!imagePaths || imagePaths.length === 0) { resolve(null); return; }
+    if (imagePaths.length === 1) { resolve(imagePaths[0]); return; }
+
+    var ctx = wx.createCanvasContext('merge-canvas');
+    var a4w = 1200, a4h = 1700; // A4比例
+    var perImageH = a4h / imagePaths.length;
+
+    // 白色背景
+    ctx.setFillStyle('#FFFFFF');
+    ctx.fillRect(0, 0, a4w, a4h);
+
+    var loaded = 0;
+    imagePaths.forEach(function(path, i) {
+      wx.getImageInfo({
+        src: path,
+        success: function(info) {
+          var y = i * perImageH;
+          var sw = info.width, sh = info.height;
+          var scale = Math.min(a4w / sw, perImageH / sh);
+          var dw = sw * scale, dh = sh * scale;
+          var dx = (a4w - dw) / 2, dy = y + (perImageH - dh) / 2;
+          ctx.drawImage(path, dx, dy, dw, dh);
+          // 标签
+          if (labels && labels[i]) {
+            ctx.setFillStyle('#333');
+            ctx.setFontSize(24);
+            ctx.setTextAlign('center');
+            ctx.fillText(labels[i], a4w/2, y + 30);
+          }
+          loaded++;
+          if (loaded === imagePaths.length) {
+            ctx.draw(false, function() {
+              wx.canvasToTempFilePath({
+                canvasId: 'merge-canvas',
+                success: function(res) { resolve(res.tempFilePath); },
+                fail: function() { resolve(imagePaths[0]); }
+              });
+            });
+          }
+        },
+        fail: function() {
+          loaded++;
+          if (loaded === imagePaths.length) resolve(imagePaths[0]);
+        }
+      });
+    });
+  });
+}
+
 module.exports = {
   applyPrivacyMask,
   enhanceToScanned,
   cropToDocument,
   autoRotate,
   getDefaultRegions,
-  computeMaskRegions
+  computeMaskRegions,
+  mergeToA4Preview
 };

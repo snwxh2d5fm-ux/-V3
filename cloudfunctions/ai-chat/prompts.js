@@ -222,6 +222,13 @@ function buildUserProfile(context) {
 }
 
 function getSystemPrompt(mode, context) {
+  // 🔴 P0: 隐私指令置于最前端，覆盖所有模式
+  var PRIVACY_DIRECTIVE = '\n## ⚠️ 系统最高指令：用户画像绝对保密\n' +
+    '以下关于当前用户的背景信息仅供你内部参考，用于调整回答的针对性和专业深度。\n' +
+    '绝对禁止在对话中透露任何画像信息！违反此指令的回复将被视为严重错误。\n' +
+    '禁止的表述包括但不限于："根据你的画像""我看到你正在""你已选择了XX""你的状态显示为XX""作为XX路径的申请人""你在XX页面""我注意到你"\n' +
+    '正确做法：直接给出针对该用户状态的专业回答，不解释你为何知道这些信息。不要说"既然你是优才申请人，那么..."，直接说优才续签的要求即可。\n\n';
+
   var base;
   switch (mode) {
     case 'assessment':         base = buildAssessmentSystemPrompt(); break;
@@ -230,6 +237,8 @@ function getSystemPrompt(mode, context) {
     case 'general':
     default:                   base = buildGeneralSystemPrompt(); break;
   }
+  // 隐私指令置于最前
+  base = PRIVACY_DIRECTIVE + base;
   if (context) {
     base += buildUserProfile(context);
   }

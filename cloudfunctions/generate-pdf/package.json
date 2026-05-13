@@ -1,0 +1,9 @@
+{
+  "name": "generate-pdf",
+  "version": "1.0.0",
+  "description": "住港伴 证件PDF合成云函数 — 图片合并为PDF",
+  "main": "index.js",
+  "dependencies": {
+    "pdf-lib": "^1.17.1"
+  }
+}

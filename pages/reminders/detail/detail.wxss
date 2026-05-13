@@ -24,7 +24,7 @@
 /* 倒计时 */
 .countdown-badge { display: inline-block; padding: 6rpx 16rpx; border-radius: 20rpx; font-size: 24rpx; font-weight: 600; }
 .countdown-badge.urgent { background: var(--color-error-bg); color: var(--color-error); }
-.countdown-badge.warning { background: var(--color-bg-card)7ED; color: var(--color-warning); }
+.countdown-badge.warning { background: var(--color-warning-bg); color: var(--color-warning); }
 .countdown-badge.normal { background: var(--color-success-bg); color: var(--color-success); }
 
 /* 分区标题 */
@@ -214,7 +214,7 @@
 .tl-stage__dot--renewal { border-color: var(--color-info); background: var(--color-info-bg); }
 .tl-stage__dot--deadline { border-color: var(--color-error); background: var(--color-error-bg); }
 .tl-stage__dot--pr { border-color: #7C3AED; background: #F5F3FF; }
-.tl-stage__dot--material { border-color: var(--color-warning); background: var(--color-bg-card)7ED; }
+.tl-stage__dot--material { border-color: var(--color-warning); background: var(--color-warning-bg); }
 .tl-stage__line { position: absolute; left: 10rpx; top: 28rpx; bottom: 0; width: 2rpx; background: var(--gray-200); }
 .tl-stage__body { flex: 1; margin-left: 16rpx; padding: 8rpx 16rpx; border-radius: 12rpx; background: var(--gray-50); }
 .tl-stage__header { display: flex; align-items: center; gap: 8rpx; margin-bottom: 4rpx; }
@@ -225,6 +225,6 @@
 .tl-stage__badge--renewal { background: var(--color-info-bg); color: var(--color-info); }
 .tl-stage__badge--deadline { background: var(--color-error-bg); color: var(--color-error); }
 .tl-stage__badge--pr { background: #F5F3FF; color: #7C3AED; }
-.tl-stage__badge--material { background: var(--color-bg-card)7ED; color: var(--color-warning); }
+.tl-stage__badge--material { background: var(--color-warning-bg); color: var(--color-warning); }
 .tl-stage__date { font-size: 24rpx; color: var(--gray-500); }
 .tl-stage__desc { font-size: 22rpx; color: var(--gray-400); display: block; margin-top: 2rpx; }

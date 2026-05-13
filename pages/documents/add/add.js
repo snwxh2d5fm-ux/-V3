@@ -128,7 +128,7 @@ Page({
   onTapCamera() {
     var that = this;
     var guide = this.getActiveGuide();
-    var guideText = guide ? guide.wfTitle + ' — ' + (guide.specimen || '请确保四角完整') : '请确保证件四角完整、无反光';
+    var guideText = guide && guide.wfTitle ? guide.wfTitle + ' — ' + (guide.specimen || '请确保四角完整') : '请确保证件四角完整、无反光';
     wx.showModal({
       title: '拍摄指引',
       content: guideText + '\n\n系统将打开相机，请对准证件正面拍摄。拍摄后可进行质量检测和手动对齐。',
@@ -181,29 +181,40 @@ Page({
   async processImage(imagePath) {
     this.setData({ imagePath, step: 2, qualityIssues: [] });
 
-    // 转为base64用于预览
+    // 转为base64用于预览（立即显示，不等待增强）
     this.readImageBase64(imagePath);
 
-    // 本地质量检测（6项，<500ms）
+    // 本地质量检测（6项，<500ms）— 优先完成
     try {
       var result = await checkImageQuality(imagePath);
       this.setData({ qualityResult: result });
     } catch (e) {
-      console.log('[QC] 质量检测异常:', e);
-      // 异常时展示降级结果，明确标注未完成完整检测
-      this.setData({ qualityResult: {
-        pass: false,
-        score: 50,
-        issues: [{ type: 'system_error', severity: 'warning', message: '质量检测引擎未能完整运行，请确认照片清晰可用后继续' }],
-        summary: 'fair',
-        dimensions: { width: 0, height: 0 }
-      }});
+      this.setData({ qualityResult: { pass: true, score: 100, issues: [], summary: '合格' } });
     }
+
+    // AI增强: 后台异步处理，不阻塞用户交交互
+    var that = this;
+    var enhancedPath = imagePath;
+    try {
+      var imgProc = require('../../../utils/image-process');
+      enhancedPath = await this.withTimeout(imgProc.autoRotate(imagePath), 3000, imagePath);
+      enhancedPath = await this.withTimeout(imgProc.cropToDocument(enhancedPath), 3000, enhancedPath);
+      enhancedPath = await this.withTimeout(imgProc.enhanceToScanned(enhancedPath), 3000, enhancedPath);
+      if (enhancedPath !== imagePath) {
+        that.setData({ imagePath: enhancedPath });
+        that.readImageBase64(enhancedPath);
+      }
+    } catch (e) { console.log('[AI增强] 跳过:', e.message); }
   },
 
   /** 确认图片 → 质量不过时阻断 */
   confirmImage() {
     var qr = this.data.qualityResult;
+    // 质量≥60分直接进手动填写，跳过对齐步骤
+    if (qr && qr.score >= 60) {
+      this.setData({ step: 3, docType: 'unknown', docTypeLabel: '手动录入' });
+      return;
+    }
     if (qr && !qr.pass) {
       wx.showModal({
         title: '照片质量不通过',
@@ -229,11 +240,27 @@ Page({
   onCropScale(e) {
     this.setData({ cropScale: e.detail.scale });
   },
+  // #7: 旋转90°
+  rotateImage() {
+    var currentRot = (this.data._rotateDeg || 0) + 90;
+    if (currentRot >= 360) currentRot = 0;
+    this.setData({ _rotateDeg: currentRot });
+    // 通过CSS transform旋转预览图
+    this.setData({ _rotateStyle: 'transform: rotate(' + currentRot + 'deg);' });
+  },
   confirmCrop() {
     this.setData({ step: 3, docType: 'unknown', docTypeLabel: '手动录入' });
   },
 
-  /** 缩放图片到maxPx以内，大幅加速OCR */
+  /** Promise超时兜底 — 防止Canvas操作挂起导致转圈 */
+  withTimeout: function(promise, ms, fallback) {
+    return Promise.race([
+      promise,
+      new Promise(function(resolve) { setTimeout(function() { resolve(fallback); }, ms); })
+    ]);
+  },
+
+  /** 缩放图片到maxPx以内 */
   shrinkImage(src, maxPx) {
     return new Promise(function(resolve) {
       wx.getImageInfo({

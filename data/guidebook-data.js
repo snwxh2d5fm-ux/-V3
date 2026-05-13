@@ -508,6 +508,8 @@ var GUIDEBOOK_DB = {
 // Public API
 // ============================================================
 
+var DEFAULT_DISCLAIMER = '本攻略内容仅供参考，相关政策、法规和程序可能随时调整，请以入境处及相关部门最新公告为准。';
+
 /**
  * 获取所有攻略的卡片元数据（用于列表渲染）
  * @returns {Array} 每条攻略的 id/icon/title/desc/category/tags/confidence/rating/helpful/source/updated
@@ -536,7 +538,13 @@ function getAllCards() {
  * @returns {object|null} 完整攻略对象（含 sections/steps/faqAnswer 等）
  */
 function getById(id) {
-  return GUIDEBOOK_DB[id] || null;
+  var article = GUIDEBOOK_DB[id];
+  if (!article) return null;
+  // P1-5: 人工文章无disclaimer字段时自动补默认免责声明
+  if (!article.disclaimer) {
+    return Object.assign({}, article, { disclaimer: DEFAULT_DISCLAIMER });
+  }
+  return article;
 }
 
 /**
@@ -684,5 +692,6 @@ module.exports = {
   getByCategory: getByCategory,
   search: search,
   getRecommended: getRecommended,
-  GUIDEBOOK_DB: GUIDEBOOK_DB
+  GUIDEBOOK_DB: GUIDEBOOK_DB,
+  DEFAULT_DISCLAIMER: DEFAULT_DISCLAIMER
 };

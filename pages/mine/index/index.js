@@ -5,20 +5,13 @@
 const app = getApp();
 const { getAllDocuments, getAllReminders } = require('../../../utils/storage');
 const { getAuthorizedFields } = require('../../../utils/desensitize');
+const { getGlobalStages, getActiveStageIndex } = require('../../../utils/stage-helper');
 const constants = require('../../../data/constants');
 
 Page({
   data: {
-    stageSteps: [
-      { id: 'evaluation', label: '资格评估', status: 'active' },
-      { id: 'preparation', label: '材料准备', status: 'pending' },
-      { id: 'submission', label: '线上申请', status: 'pending' },
-      { id: 'waiting', label: '等待获批', status: 'pending' },
-      { id: 'activation', label: '获批激活', status: 'pending' },
-      { id: 'settlement', label: '抵港生活', status: 'pending' },
-      { id: 'pr', label: '永居', status: 'pending' }
-    ],
-    stageProgress: 14,
+    stageSteps: [],
+    stageProgress: 0,
     isLoggedIn: false,
     userInfo: null,
     userStatus: null,
@@ -46,6 +39,7 @@ Page({
   },
 
   onShow() {
+    this.setData({ stageSteps: getGlobalStages(), stageProgress: Math.min(((getActiveStageIndex() + 1) / 7) * 100, 100) });
     this.loadProfile();
   },
 

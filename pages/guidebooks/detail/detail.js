@@ -234,7 +234,7 @@ Page({
     }
     var confidence = guide.confidence || 'B';
     var confidenceInfo = constants.CONFIDENCE_LEVELS[confidence] || constants.CONFIDENCE_LEVELS.B;
-    var parsedSections = parseSections(guide.sections);
+    var parsedSections = ct === 'faq' ? (function(text) { if (!text) return []; return text.split(/\\n+/).filter(function(b){ return b.trim(); }).map(function(b){ b = b.trim(); var c = b.indexOf('：'); if (c < 0) c = b.indexOf(':'); if (c > 0 && c < 40) return { type: 'heading', content: b.substring(0, c+1) }; if (/^\\d+[.]/.test(b)) return { type: 'numbered', content: b }; if (/^[-]/.test(b)) return { type: 'bullet', content: b.replace(/^[-]\\s*/, '') }; return { type: 'body', content: b }; }); })(guide.faqAnswer) : parseSections(guide.sections);
 
     this.setData({
       guide: {
@@ -251,8 +251,7 @@ Page({
         content: guide.content || ''
       },
       parsedSections: parsedSections, contentType: ct, loading: false
-    });
-    wx.setNavigationBarTitle({ title: guide.title || '攻略详情' });
+    })
   },
 
   loadRelated: function(guide) {

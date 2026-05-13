@@ -7,6 +7,7 @@
 const app = getApp();
 const { getAllDocuments, saveDocuments } = require('../../../utils/storage');
 const { desensitizeFields, MODES } = require('../../../utils/desensitize');
+const { getGlobalStages } = require('../../../utils/stage-helper');
 const constants = require('../../../data/constants');
 
 Page({
@@ -22,16 +23,8 @@ Page({
     isLocked: false,
 
     // === 7阶段流程指示器 ===
-    stageSteps: [
-      { id: 'evaluation',  label: '资格评估', status: 'active' },
-      { id: 'preparation', label: '材料准备', status: 'pending' },
-      { id: 'submission',  label: '线上申请', status: 'pending' },
-      { id: 'waiting',     label: '等待获批', status: 'pending' },
-      { id: 'activation',  label: '获批激活', status: 'pending' },
-      { id: 'settlement',  label: '抵港生活', status: 'pending' },
-      { id: 'pr',          label: '永居',     status: 'pending' }
-    ],
-    stageProgress: 14,
+    stageSteps: [],
+    stageProgress: 0,
 
     // === 身份/路径/状态 ===
     userStatus: '',
@@ -106,6 +99,7 @@ Page({
      LIFECYCLE
      ============================================================ */
   onShow() {
+    var stages = getGlobalStages(); this.setData({ stageSteps: stages, stageProgress: Math.min(((getActiveStageIndex() + 1) / 7) * 100, 100) });
     const userStatus = app.globalData.userStatus ||
       wx.getStorageSync(constants.STORAGE_KEYS.USER_STATUS) || '';
     const selectedPath = app.globalData.selectedPath ||
@@ -339,14 +333,6 @@ Page({
 
     // 刷新身份分类槽位状态（包含全部slot重新计算）
     this.refreshIdentitySlots();
-
-    // 同步刷新documentCount和free限额提示
-    var docLimit = this.data.effectiveLimit ? this.data.effectiveLimit.maxDocuments : constants.FREE_LIMITS.MAX_DOCUMENTS;
-    this.setData({
-      documentCount: documents.length,
-      showLimitTip: this.data.isFreeUser && documents.length >= docLimit
-    });
-
     this.applyFilter();
   },
 
@@ -511,6 +497,33 @@ Page({
   navigateToDetail(e) {
     const id = e.currentTarget.dataset.id;
     wx.navigateTo({ url: `/pages/documents/detail/detail?id=${id}` });
+  },
+
+  // #4: 多证件槽位预览
+  previewSlotDocs(e) {
+    var slotKey = e.currentTarget.dataset.slotKey;
+    var slot = null;
+    (this.data.slotCategories || []).forEach(function(cat) {
+      (cat.slots || []).forEach(function(s) {
+        if (s.slotKey === slotKey) slot = s;
+      });
+    });
+    if (!slot || !slot.uploadedDocs || !slot.uploadedDocs.length) return;
+    var docs = slot.uploadedDocs;
+    if (docs.length === 1) {
+      wx.navigateTo({ url: '/pages/documents/detail/detail?id=' + docs[0].id });
+      return;
+    }
+    // 多张→弹窗选择
+    var names = docs.map(function(d, i) { return (i+1) + '. ' + (d.displayName || d.name || '证件'); }).join('\n');
+    var that = this;
+    wx.showActionSheet({
+      itemList: docs.map(function(d) { return d.displayName || d.name || '证件'; }),
+      success: function(res) {
+        var idx = res.tapIndex;
+        wx.navigateTo({ url: '/pages/documents/detail/detail?id=' + docs[idx].id });
+      }
+    });
   },
 
   navigateToCombine() {

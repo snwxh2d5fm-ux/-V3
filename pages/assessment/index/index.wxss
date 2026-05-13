@@ -104,7 +104,7 @@
 /* ===== 参考面板：标准 / 出处 / 案例 ===== */
 .ref-panel {
   margin-top: 20rpx; padding: 24rpx;
-  background: var(--color-bg-card)7ED; border: 1rpx solid #FED7AA;
+  background: var(--color-warning-bg); border: 1rpx solid #FED7AA;
   border-radius: 14rpx;
 }
 .ref-row {

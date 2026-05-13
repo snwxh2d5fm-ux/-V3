@@ -77,6 +77,7 @@
           <view class="mc-stat mc-stat--pending">
             <text class="mc-stat__num">{{materialTotalCount || 0}}</text>
             <text class="mc-stat__label">总计</text>
+            <text class="mc-stat__disclaimer" bindtap="showSelfAssessDisclaimer" wx:if="{{materialTotalCount >= 9}}">ⓘ 自评数据</text>
           </view>
           <button class="mc-btn" bindtap="goToDocuments">📁 去准备材料</button>
         </view>

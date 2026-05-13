@@ -94,6 +94,8 @@ Component({
 
       try {
         var pageCtx = this.properties.context || {};
+        // P1-1: K2隐私 — pageContext仅传脱敏页面标识，不传用户可见文本
+        var safePageContext = typeof pageCtx.pageContext === 'string' ? pageCtx.pageContext.substring(0, 80) : '';
         var res = await api.sendChatMessage(
           app.globalData.aiSessionId, text, 'general',
           {
@@ -106,7 +108,7 @@ Component({
               currentStageId: app.globalData.activeProcess.currentStageId
             } : null,
             page: pageCtx.page || '',
-            pageContext: pageCtx.pageContext || '',
+            pageContext: safePageContext,
             dataVersion: 'v5-20260508',
             confidenceCheck: true,
             v5Corrections: true

@@ -1,6 +1,7 @@
 <!--
-  住港伴 — 证件夹主页 (Tab2) · 统一UI v2
-  布局对齐攻略书/提醒器: stage-indicator → status-badge → page-header → 进度卡 → 卡槽列表
+  住港伴 — 证件夹主页 (Tab2) · 统一UI v2 · CLAUDE-LOCKED 2026-05-13
+  配色: 浅色主题, 文本用 var(--color-text-primary), 白色卡片 var(--color-bg-card)
+  ⚠️ 禁止回复为深色hero/金色标题/白色文字。修改前请读本文档。
 -->
 <view class="container">
   <stage-indicator stages="{{stageSteps}}" progress="{{stageProgress}}" />
@@ -61,13 +62,13 @@
   <!-- 画廊模式 -->
   <view class="gallery-grid" wx:if="{{showGallery && filteredDocsWithImage.length > 0}}">
     <view class="gallery-item" wx:for="{{filteredDocsWithImage}}" wx:key="id" bindtap="previewImage" data-index="{{index}}">
-      <image class="gallery-thumb" src="{{item.filePath}}" mode="aspectFill" />
+      <image class="gallery-thumb" src="{{item.filePath}}" mode="aspectFill" aria-label="{{item.displayName || '证件'}}" />
       <text class="gallery-label">{{item.displayName}}</text>
     </view>
   </view>
 
   <!-- ═══════════════════ 卡槽系统 ═══════════════════ -->
-  <view class="slot-section" wx:if="{{pageState === 'index_loaded'}}">
+  <view class="slot-section" wx:if="{{pageState === 'index_loaded' && slotCategories.length > 0}}">
     <view class="cat-section" wx:for="{{slotCategories}}" wx:key="categoryKey" wx:for-item="cat">
       <!-- 分类头 -->
       <view class="cat-head" bindtap="toggleCategory" data-key="{{cat.categoryKey}}">
@@ -88,20 +89,29 @@
       </view>
 
       <view class="slot-list {{collapsedCategories[cat.categoryKey] ? 'hide' : ''}}">
-        <!-- 单行槽位 -->
-        <view class="slot {{slot.fillStatus === 'filled' ? 'done' : slot.fillStatus === 'partial' ? 'partial' : 'empty'}}"
-              wx:for="{{cat.slots}}" wx:key="slotKey" wx:for-item="slot"
-              bindtap="{{slot.fillStatus === 'empty' ? 'uploadToSlot' : 'navigateToDetail'}}"
-              data-slot-key="{{slot.slotKey}}" data-id="{{slot.uploadedDocs[0] ? slot.uploadedDocs[0].id : ''}}">
-          <view class="slot__previews" wx:if="{{slot.uploadedDocs && slot.uploadedDocs.length > 0}}">
+        <!-- 单行槽位：主体预览区 + 独立+按钮 -->
+        <view class="slot {{slot.fillStatus === 'filled' ? 'done' : slot.fillStatus === 'partial' ? 'partial' : slot.fillStatus === 'expiring_soon' ? 'expiring' : slot.fillStatus === 'expired' ? 'expired' : 'empty'}}"
+              wx:for="{{cat.slots}}" wx:key="slotKey" wx:for-item="slot">
+          <!-- 左侧预览区 → 点击查看详情 -->
+          <view class="slot__previews" wx:if="{{slot.uploadedDocs && slot.uploadedDocs.length > 0}}"
+                bindtap="{{slot.uploadedDocs.length > 1 ? 'previewSlotDocs' : 'navigateToDetail'}}"
+                data-slot-key="{{slot.slotKey}}" data-id="{{slot.uploadedDocs[0] ? slot.uploadedDocs[0].id : ''}}">
             <image class="slot__pthumb" wx:for="{{slot.uploadedDocs}}" wx:key="id" wx:for-item="doc" wx:if="{{index < 3}}" src="{{doc.filePath}}" mode="aspectFill" />
             <text class="slot__pcount" wx:if="{{slot.uploadedDocs.length > 3}}">+{{slot.uploadedDocs.length - 3}}</text>
           </view>
-          <view class="slot__info">
+          <!-- 中间名称区 → 点击查看/添加 -->
+          <view class="slot__info"
+                bindtap="{{slot.fillStatus === 'empty' ? 'uploadToSlot' : (slot.uploadedDocs.length > 1 ? 'previewSlotDocs' : 'navigateToDetail')}}"
+                data-slot-key="{{slot.slotKey}}" data-id="{{slot.uploadedDocs[0] ? slot.uploadedDocs[0].id : ''}}">
             <text class="slot__name">{{slot.docName}}</text>
             <text class="slot__count" wx:if="{{slot.uploadedCount > 0}}">{{slot.uploadedCount}}份</text>
           </view>
-          <text class="slot__btn {{slot.fillStatus === 'empty' ? 'add' : 'done'}}">{{slot.fillStatus === 'empty' ? '+' : (slot.fillStatus === 'partial' || slot.maxCount !== 1 ? '+' : '✓')}}</text>
+          <!-- 右侧+按钮 → 始终触发添加 -->
+          <text class="slot__btn {{slot.fillStatus === 'empty' ? 'add' : 'done'}}"
+                bindtap="uploadToSlot" data-slot-key="{{slot.slotKey}}"
+                wx:if="{{slot.fillStatus === 'empty' || (slot.uploadedCount < slot.maxCount) || slot.maxCount === -1}}">+</text>
+          <text class="slot__btn slot__btn--full"
+                wx:else>✓</text>
         </view>
       </view>
     </view>

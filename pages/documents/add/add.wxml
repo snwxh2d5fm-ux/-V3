@@ -301,20 +301,21 @@
       </view>
 
       <!-- 可移动缩放的图片区域 -->
-      <movable-area class="crop-movable" scale-area>
+      <movable-area class="crop-movable" scale-area="true">
         <movable-view class="crop-view" direction="all" scale="true" scale-min="0.5" scale-max="3"
           x="{{cropX}}" y="{{cropY}}" bindchange="onCropChange" bindscale="onCropScale">
-          <image class="crop-img" src="{{imagePath}}" mode="widthFix" />
+          <image class="crop-img" src="{{imagePath}}" mode="widthFix" style="{{_rotateStyle}}" />
         </movable-view>
       </movable-area>
     </view>
 
-    <!-- 操作按钮 -->
-    <view class="action-row">
-      <button class="btn btn-outline flex-1" bindtap="retakePhoto">🔄 重拍</button>
-      <button class="btn btn-primary flex-1" bindtap="confirmCrop">✓ 对齐完成</button>
+    <!-- #7: 旋转+对齐操作按钮 -->
+    <view class="crop-tools">
+      <button class="crop-tool-btn" bindtap="rotateImage">↻ 旋转90°</button>
+      <button class="crop-tool-btn" bindtap="retakePhoto">🔄 重拍</button>
+      <button class="crop-tool-btn crop-tool-btn--primary" bindtap="confirmCrop">✓ 完成</button>
     </view>
-    <text class="crop-hint">💡 请确保证件四角在框内、文字清晰</text>
+    <text class="crop-hint">💡 旋转至正向 → 双指缩放 → 拖动对齐框线 → 确认</text>
   </block>
 
   <!-- ===== Step 3: 手动填写信息 ===== -->

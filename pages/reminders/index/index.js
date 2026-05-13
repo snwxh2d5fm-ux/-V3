@@ -7,23 +7,17 @@
 const app = getApp();
 const { getAllReminders, saveReminders, saveReminder, updateReminder } = require('../../../utils/storage');
 const { getCountdown, formatDate } = require('../../../utils/date-parser');
+const { getGlobalStages, getActiveStageIndex } = require('../../../utils/stage-helper');
 const constants = require('../../../data/constants');
 
 Page({
   data: {
     // PRD v4: 7阶段流程指示器
-    stageSteps: [
-      { id: 'evaluation', label: '资格评估', status: 'active' },
-      { id: 'preparation', label: '材料准备', status: 'pending' },
-      { id: 'submission', label: '线上申请', status: 'pending' },
-      { id: 'waiting', label: '等待获批', status: 'pending' },
-      { id: 'activation', label: '获批激活', status: 'pending' },
-      { id: 'settlement', label: '抵港生活', status: 'pending' },
-      { id: 'pr', label: '永居', status: 'pending' }
-    ],
-    stageProgress: 14,
+    stageSteps: [],
+    stageProgress: 0,
     // 视图模式
-    viewMode: 'timeline',    // 'timeline' | 'list'
+    viewMode: 'timeline',
+    hasPath: false,
 
     // 提醒数据
     allReminders: [],        // 全部提醒
@@ -57,6 +51,7 @@ Page({
   },
 
   onShow() {
+    this.setData({ stageSteps: getGlobalStages(), stageProgress: Math.min(((getActiveStageIndex() + 1) / 7) * 100, 100) });
     this.loadReminders().then((function() {
       this.checkAutoGenerate();
     }).bind(this));
@@ -70,6 +65,7 @@ Page({
     var session = wx.getStorageSync('__session__') || {};
     var selectedPath = (app && app.globalData && app.globalData.selectedPath) || session.selectedPath || '';
 
+    this.setData({ hasPath: !!selectedPath });
     if (!selectedPath) return; // 未选路径
 
     // 检查是否已有提醒
@@ -413,6 +409,15 @@ Page({
   },
 
   // ========== 详情页入口（原list页已合并至detail） ==========
+  // 手动触发生成路径时间线提醒
+  manualGenerateTimeline() {
+    var app = getApp();
+    var session = wx.getStorageSync('__session__') || {};
+    var path = (app && app.globalData && app.globalData.selectedPath) || session.selectedPath || '';
+    if (!path) { wx.showToast({ title: '请先选择身份路径', icon: 'none' }); return; }
+    wx.navigateTo({ url: '/pages/reminders/detail/detail?action=timeline&path=' + path });
+  },
+
   navigateToList() {
     wx.navigateTo({ url: '/pages/reminders/detail/detail' });
   },
