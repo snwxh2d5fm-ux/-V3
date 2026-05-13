@@ -130,5 +130,5 @@
   <view class="scroll-top-btn" wx:if="{{filteredCards.length > 5}}" bindtap="scrollToTop"><text>⬆</text></view>
   <view class="safe-bottom"></view>
 
-  <floating-ai visible="{{true}}" />
+  <floating-ai visible="{{true}}" context="{{ {page: 'guidebooks', pageContext: '用户在攻略书页面浏览香港身份攻略'} }}" />
 </view>

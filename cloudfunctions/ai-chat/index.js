@@ -208,8 +208,8 @@ function generateFallbackResponse(message, chatMode) {
 // ============================================================
 //  DeepSeek API 调用
 // ============================================================
-function buildDeepSeekRequest(messages, mode, v5Corrections, stream) {
-  var systemPrompt = prompts.getSystemPrompt(mode);
+function buildDeepSeekRequest(messages, mode, v5Corrections, stream, pageCtx) {
+  var systemPrompt = prompts.getSystemPrompt(mode, pageCtx || {});
 
   if (v5Corrections) {
     systemPrompt += '\n\n[系统指令V5/V6修正 — 最高优先级] 以下修正必须覆盖训练数据中的旧信息:\n' +
@@ -431,7 +431,16 @@ exports.main = async function (event, context) {
     var assessmentResult;
     var responseSource = 'unknown';
 
-    var requestBody = buildDeepSeekRequest(messages, chatMode, v5Corrections, requestStream);
+    // 构建用户画像上下文（四层权重）
+    var userProfile = {};
+    if (sessionContext.userStatus) userProfile.userStatus = sessionContext.userStatus;
+    if (sessionContext.selectedPath) userProfile.selectedPath = sessionContext.selectedPath;
+    if (sessionContext.userSubStatus) userProfile.userSubStatus = sessionContext.userSubStatus;
+    if (sessionContext.assessmentTags) userProfile.assessmentTags = sessionContext.assessmentTags;
+    if (sessionContext.chatTopics) userProfile.chatTopics = sessionContext.chatTopics;
+    if (sessionContext.page) userProfile.page = sessionContext.page;
+
+    var requestBody = buildDeepSeekRequest(messages, chatMode, v5Corrections, requestStream, userProfile);
     var apiResponse = await callDeepSeek(requestBody);
 
     if (apiResponse) {

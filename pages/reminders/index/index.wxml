@@ -166,7 +166,7 @@
   </view>
 
   <!-- ===== 浮动AI组件 ===== -->
-  <floating-ai visible="{{true}}" />
+  <floating-ai visible="{{true}}" context="{{ {page: 'reminders', pageContext: '用户在提醒器页面管理证件到期和续签日期'} }}" />
 
   <!-- ===== 底部添加按钮(FAB) ===== -->
   <view class="add-fab" bindtap="toggleAddMenu">

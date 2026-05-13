@@ -169,5 +169,5 @@
 
   <view class="safe-area-bottom"></view>
 
-  <floating-ai visible="{{true}}" />
+  <floating-ai visible="{{true}}" context="{{ {page: 'process', pageContext: '用户在流程控页面管理身份申请流程和材料进度'} }}" />
 </view>

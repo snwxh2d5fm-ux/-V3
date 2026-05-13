@@ -93,6 +93,7 @@ Component({
       this.scrollToBottom();
 
       try {
+        var pageCtx = this.properties.context || {};
         var res = await api.sendChatMessage(
           app.globalData.aiSessionId, text, 'general',
           {
@@ -104,6 +105,8 @@ Component({
               templateId: app.globalData.activeProcess.templateId,
               currentStageId: app.globalData.activeProcess.currentStageId
             } : null,
+            page: pageCtx.page || '',
+            pageContext: pageCtx.pageContext || '',
             dataVersion: 'v5-20260508',
             confidenceCheck: true,
             v5Corrections: true

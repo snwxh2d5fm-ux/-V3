@@ -1,366 +1,133 @@
 <!--
-  住港伴 — 证件夹主页 (Tab2) · PRD v4.1 深度 UX 优化版
-  设计方向：Luxury/refined — 深蓝基调+暖金点缀+卡片式槽位系统
-  布局：头图(统一深色) > 进度环 > 搜索/列表 > 增值/上传 > 卡槽(最底部)
+  住港伴 — 证件夹主页 (Tab2) · 统一UI v2
+  布局对齐攻略书/提醒器: stage-indicator → status-badge → page-header → 进度卡 → 卡槽列表
 -->
-<view class="vault">
+<view class="container">
+  <stage-indicator stages="{{stageSteps}}" progress="{{stageProgress}}" />
+  <status-badge />
 
-  <!-- ════════════════════════════════════
-       统一深色头图区
-       ════════════════════════════════════ -->
-  <view class="page-head">
-    <view class="page-head__top">
-      <status-badge />
-      <privacy-toggle mode="{{privacyMode}}" bind:change="onPrivacyModeChange" />
+  <view class="page-header">
+    <view class="header-left">
+      <text class="page-header__title">证件夹</text>
+      <text class="page-header__subtitle">{{hasSelectedPath ? selectedPathName + ' · 材料准备' : '按路径管理你的申请材料'}}</text>
     </view>
-    <view class="page-head__title" wx:if="{{hasSelectedPath}}">
-      <text class="page-head__path">{{selectedPathName}}</text>
-      <text class="page-head__stage">· 材料准备</text>
-    </view>
-    <text class="page-head__title page-head__title--plain" wx:else>证件夹</text>
-    <stage-indicator stages="{{stageSteps}}" progress="{{stageProgress}}" />
+    <privacy-toggle mode="{{privacyMode}}" bind:change="onPrivacyModeChange" />
   </view>
 
-  <!-- ═══ Skipped 用户引导 ═══ -->
+  <!-- Skipped 用户引导 -->
   <view class="skip-banner" wx:if="{{isSkipped}}">
-    <view class="skip-banner__icon">!</view>
+    <text class="skip-banner__icon">🔒</text>
     <view class="skip-banner__body">
       <text class="skip-banner__title">请先选择身份后解锁完整功能</text>
       <text class="skip-banner__desc">当前仅可上传证件图片，卡槽功能需完成身份选择后使用</text>
     </view>
-    <button class="btn-sm btn-gold" bindtap="goSelectIdentity">去选择</button>
+    <button class="btn-sm btn--gold" bindtap="goSelectIdentity">去选择</button>
   </view>
 
-  <!-- ═══ 账户锁定 (试用过期/会员到期) ═══ -->
-  <view class="lock-banner" wx:if="{{isLocked}}">
-    <view class="lock-banner__icon">🔒</view>
-    <view class="lock-banner__body">
-      <text class="lock-banner__title">账户已锁定</text>
-      <text class="lock-banner__desc">你的免费试用已到期或会员已过期，请续费解锁全部功能</text>
-    </view>
-    <button class="btn-sm btn-gold" bindtap="goUnlock">立即解锁</button>
-  </view>
-
-  <!-- ═══ 无路径引导 (EmptyPathState) ═══ -->
+  <!-- 无路径引导 -->
   <view class="empty-path" wx:if="{{pageState === 'no_path' && !isSkipped}}">
-    <view class="empty-path__hero">
-      <view class="empty-path__ring">
-        <text class="empty-path__ring-icon">?</text>
-      </view>
-    </view>
+    <text class="empty-path__icon">📁</text>
     <text class="empty-path__title">请先选择你的身份申请路径</text>
-    <text class="empty-path__desc">系统将根据你的路径自动匹配所需证件清单，引导你逐项准备</text>
-    <button class="btn-gold btn-block" bindtap="goSelectPath">前往选择路径</button>
+    <text class="empty-path__desc">系统将根据你的路径自动匹配所需证件清单</text>
+    <button class="btn--primary btn-block" bindtap="goSelectPath">前往选择路径</button>
   </view>
 
-  <!-- ════════════════════════════════════════════
-       证件索引视图 (index_loaded)
-       布局：进度环 → 搜索/列表 → 增值 → 卡槽(底)
-       ════════════════════════════════════════════ -->
-  <block wx:if="{{pageState === 'index_loaded' && slotCategories.length > 0}}">
-
-    <!-- ── ProgressHero 进度总览卡片 ── -->
-    <view class="progress-hero">
-      <view class="progress-hero__ring">
-        <view class="p-ring">
-          <view class="p-ring__track"></view>
-          <view class="p-ring__clip p-ring__clip--right">
-            <view class="p-ring__fill p-ring__fill--right"
-                  style="transform: rotate({{slotProgress.rightDeg}}deg)"></view>
-          </view>
-          <view class="p-ring__clip p-ring__clip--left">
-            <view class="p-ring__fill p-ring__fill--left"
-                  style="transform: rotate({{slotProgress.leftDeg}}deg)"></view>
-          </view>
-          <view class="p-ring__center">
-            <text class="p-ring__value">{{slotProgress.filled}}</text>
-            <text class="p-ring__sep">/</text>
-            <text class="p-ring__total">{{slotProgress.total}}</text>
-          </view>
+  <!-- 进度总览卡 — 统一风格 -->
+  <view class="progress-card" wx:if="{{pageState === 'index_loaded' && slotCategories.length > 0}}">
+    <view class="progress-card__ring">
+      <view class="p-ring">
+        <view class="p-ring__center">
+          <text class="p-ring__value">{{slotProgress.filled}}</text>
+          <text class="p-ring__sep">/</text>
+          <text class="p-ring__total">{{slotProgress.total}}</text>
         </view>
-        <text class="progress-hero__ring-label">必备材料完整度</text>
-      </view>
-      <view class="progress-hero__info">
-        <text class="progress-hero__stat" wx:if="{{slotProgress.filled < slotProgress.total}}">
-          · {{slotProgress.total - slotProgress.filled}} 项缺失
-        </text>
-        <text class="progress-hero__stat progress-hero__stat--done" wx:else>· 全部就绪</text>
-        <text class="progress-hero__hint" wx:if="{{slotProgress.filled < slotProgress.total}}">
-          点击下方空槽位，逐项上传
-        </text>
-        <text class="progress-hero__hint progress-hero__hint--done" wx:else>
-          材料已全部准备完成
-        </text>
+        <text class="p-ring__label">材料完整度</text>
       </view>
     </view>
-
-    <!-- ── 搜索栏 ── -->
-    <view class="search-bar">
-      <view class="search-bar__icon"></view>
-      <input class="search-bar__input"
-             placeholder="搜索证件名称、编号..."
-             value="{{searchQuery}}"
-             bindinput="onSearchInput" />
-      <text wx:if="{{searchQuery}}" class="search-bar__clear" bindtap="onClearSearch">✕</text>
+    <view class="progress-card__info">
+      <text class="progress-card__stat" wx:if="{{slotProgress.filled === slotProgress.total}}">🎉 全部就绪</text>
+      <text class="progress-card__stat" wx:else>📋 {{slotProgress.total - slotProgress.filled}} 项缺失</text>
+      <text class="progress-card__hint">点击下方空槽位逐项上传</text>
     </view>
+  </view>
 
-    <!-- ── 免费上限提示 ── -->
-    <view class="limit-tip" wx:if="{{showLimitTip}}">
-      <view class="limit-tip__icon">!</view>
-      <view class="limit-tip__body">
-        <text class="limit-tip__title">免费额度：{{documentCount}}/{{maxFreeDocs}}</text>
-        <text class="limit-tip__desc">升级会员可无限制添加，解锁加密云存储</text>
-      </view>
-      <button class="btn-sm btn-gold" bindtap="navigateToAdd">升级</button>
+  <!-- 操作按钮 -->
+  <view class="action-bar">
+    <button class="btn--primary btn-flex" bindtap="navigateToAdd">+ 添加证件</button>
+    <button class="btn--outline btn-flex" bindtap="toggleGallery">🖼 画廊</button>
+    <button class="btn--outline btn-flex" bindtap="onSmartCombine">📦 组合</button>
+  </view>
+
+  <!-- 画廊模式 -->
+  <view class="gallery-grid" wx:if="{{showGallery && filteredDocsWithImage.length > 0}}">
+    <view class="gallery-item" wx:for="{{filteredDocsWithImage}}" wx:key="id" bindtap="previewImage" data-index="{{index}}">
+      <image class="gallery-thumb" src="{{item.filePath}}" mode="aspectFill" />
+      <text class="gallery-label">{{item.displayName}}</text>
     </view>
+  </view>
 
-    <!-- ── 操作按钮组 ── -->
-    <view class="action-row">
-      <button class="btn-gold btn-flex" bindtap="navigateToAdd">+ 添加证件</button>
-      <button class="btn-outline btn-flex" bindtap="onSmartCombine">智能组合</button>
-      <button class="btn-outline btn-flex" bindtap="toggleGallery">🖼 画廊</button>
-    </view>
-
-    <!-- ── 画廊模式：证件缩略图网格 ── -->
-    <view class="gallery-grid" wx:if="{{showGallery && filteredDocs.length > 0}}">
-      <view class="gallery-item fade-in" wx:for="{{filteredDocsWithImage}}" wx:key="id" bindtap="previewImage" data-index="{{index}}">
-        <image class="gallery-thumb" src="{{item.filePath}}" mode="aspectFill" lazy-load />
-        <view class="gallery-overlay">
-          <text class="gallery-label">{{item.displayName || '证件'}}</text>
-        </view>
+  <!-- ═══════════════════ 卡槽系统 ═══════════════════ -->
+  <view class="slot-section" wx:if="{{pageState === 'index_loaded'}}">
+    <view class="cat-section" wx:for="{{slotCategories}}" wx:key="categoryKey" wx:for-item="cat">
+      <!-- 分类头 -->
+      <view class="cat-head" bindtap="toggleCategory" data-key="{{cat.categoryKey}}">
+        <text class="cat-head__name">{{cat.categoryName}}</text>
+        <text class="cat-head__count {{cat.categoryProgress.filled === cat.categoryProgress.total ? 'done' : ''}}">{{cat.categoryProgress.filled}}/{{cat.categoryProgress.total}}</text>
+        <text class="cat-head__arrow {{collapsedCategories[cat.categoryKey] ? '' : 'open'}}">›</text>
       </view>
-      <view class="gallery-empty" wx:if="{{filteredDocsWithImage.length === 0}}">
-        <text>暂无可预览的证件图片</text>
-      </view>
-    </view>
 
-    <!-- ── 全屏图片预览 ── -->
-    <view class="image-viewer" wx:if="{{showImageViewer}}" bindtap="closeImageViewer">
-      <view class="image-viewer__mask"></view>
-      <swiper class="image-viewer__swiper" current="{{previewIndex}}" bindchange="onSwiperChange" catchtap="catchStop">
-        <swiper-item wx:for="{{filteredDocsWithImage}}" wx:key="id">
-          <image class="image-viewer__img" src="{{item.filePath}}" mode="aspectFit" />
-        </swiper-item>
-      </swiper>
-      <view class="image-viewer__info" catchtap="catchStop">
-        <text class="image-viewer__title">{{filteredDocsWithImage[previewIndex].displayName || '证件'}}</text>
-        <text class="image-viewer__count">{{previewIndex + 1}} / {{filteredDocsWithImage.length}}</text>
+      <!-- 所属人切换 (身份类) -->
+      <view class="owner-tabs" wx:if="{{cat.categoryKey === 'identities' || cat.categoryKey === 'identity' || cat.categoryKey === 'education'}}">
+        <block wx:for="{{ownerOptions}}" wx:key="value">
+          <view class="owner-tab {{identityOwner === item.value ? 'active' : ''}}"
+                wx:if="{{cat.categoryKey !== 'education' || item.value !== 'child'}}"
+                bindtap="switchIdentityOwner" data-value="{{item.value}}">
+            <text>{{item.label}}</text>
+          </view>
+        </block>
       </view>
-      <view class="image-viewer__close" bindtap="closeImageViewer">✕</view>
-    </view>
 
-    <!-- ── 分类标签 ── -->
-    <scroll-view class="cat-tabs" scroll-x="true" enhanced show-scrollbar="{{false}}">
-      <view class="cat-tab {{activeCategory === item.key ? 'cat-tab--active' : ''}}"
-            wx:for="{{categoryTabs}}" wx:key="key"
-            bindtap="onCategoryTap" data-key="{{item.key}}">
-        <view class="cat-tab__icon cat-tab__icon--{{item.cssIcon}}"></view>
-        <text>{{item.label}}</text>
-      </view>
-    </scroll-view>
-
-    <!-- ── 历史证件列表 ── -->
-    <view class="doc-list" wx:if="{{filteredDocs.length > 0}}">
-      <view class="doc-list__head" wx:if="{{activeCategory !== 'all'}}">
-        共 {{filteredDocs.length}} 份
-      </view>
-      <view class="doc-item {{item.archived ? 'doc-item--archived' : ''}}"
-            wx:for="{{filteredDocs}}" wx:key="id"
-            bindtap="navigateToDetail" data-id="{{item.id}}">
-        <image class="doc-item__thumb" src="{{item.filePath}}" mode="aspectFill" wx:if="{{item.filePath}}" aria-label="{{item.displayName || '证件缩略图'}}"></image>
-        <view class="doc-item__icon doc-item__icon--{{item.cssIcon}}" wx:else></view>
-        <view class="doc-item__body">
-          <text class="doc-item__title">{{item.displayName}}</text>
-          <text class="doc-item__desc">{{item.displayDesc}}</text>
-        </view>
-        <view class="doc-item__tag doc-item__tag--{{item.statusTag.cls}}">{{item.statusTag.text}}</view>
-        <text class="doc-item__arrow">›</text>
-      </view>
-    </view>
-
-    <!-- 智能上传已移除 — 仅保留卡槽系统 -->
-
-    <!-- ── CloudStorageIndicator 云存储用量 ── -->
-    <view class="cloud-bar" wx:if="{{hasCloudStorage}}">
-      <text class="cloud-bar__icon">☁</text>
-      <view class="cloud-bar__body">
-        <text class="cloud-bar__label">云存储 {{cloudStorageUsed}}GB / {{cloudStorageTotal}}GB</text>
-        <view class="cloud-bar__track">
-          <view class="cloud-bar__fill" style="width: {{cloudStorageUsed / cloudStorageTotal * 100}}%"></view>
+      <view class="slot-list {{collapsedCategories[cat.categoryKey] ? 'hide' : ''}}">
+        <!-- 单行槽位 -->
+        <view class="slot {{slot.fillStatus === 'filled' ? 'done' : slot.fillStatus === 'partial' ? 'partial' : 'empty'}}"
+              wx:for="{{cat.slots}}" wx:key="slotKey" wx:for-item="slot"
+              bindtap="{{slot.fillStatus === 'empty' ? 'uploadToSlot' : 'navigateToDetail'}}"
+              data-slot-key="{{slot.slotKey}}" data-id="{{slot.uploadedDocs[0] ? slot.uploadedDocs[0].id : ''}}">
+          <view class="slot__previews" wx:if="{{slot.uploadedDocs && slot.uploadedDocs.length > 0}}">
+            <image class="slot__pthumb" wx:for="{{slot.uploadedDocs}}" wx:key="id" wx:for-item="doc" wx:if="{{index < 3}}" src="{{doc.filePath}}" mode="aspectFill" />
+            <text class="slot__pcount" wx:if="{{slot.uploadedDocs.length > 3}}">+{{slot.uploadedDocs.length - 3}}</text>
+          </view>
+          <view class="slot__info">
+            <text class="slot__name">{{slot.docName}}</text>
+            <text class="slot__count" wx:if="{{slot.uploadedCount > 0}}">{{slot.uploadedCount}}份</text>
+          </view>
+          <text class="slot__btn {{slot.fillStatus === 'empty' ? 'add' : 'done'}}">{{slot.fillStatus === 'empty' ? '+' : '✓'}}</text>
         </view>
       </view>
     </view>
+  </view>
 
-    <!-- ── StorageNoticeBar 本地存储提示 ── -->
-    <view class="storage-notice">
-      <text class="storage-notice__icon">💾</text>
-      <text class="storage-notice__text">以上图片均保存在你的本地设备，请务必保留好对应的原件以备后用</text>
-    </view>
-
-    <!-- ════════════════════════════════════════════
-         卡槽系统 · 页面最底部
-         ════════════════════════════════════════════ -->
-
-    <!-- ── CategoryList 分类槽位列表 ── -->
-    <view class="cat-list">
-      <view class="cat-section" wx:for="{{slotCategories}}" wx:key="categoryKey" wx:for-item="cat">
-
-        <view class="cat-head" bindtap="toggleCategory" data-key="{{cat.categoryKey}}">
-          <view class="cat-head__left">
-            <view class="cat-head__icon cat-head__icon--{{cat.categoryKey}}"></view>
-            <text class="cat-head__name">{{cat.categoryName}}</text>
-            <view class="cat-head__count {{cat.categoryProgress.filled === cat.categoryProgress.total ? 'cat-head__count--done' : ''}} {{cat.categoryProgress.filled > 0 && cat.categoryProgress.filled < cat.categoryProgress.total ? 'cat-head__count--partial' : ''}}">
-              {{cat.categoryProgress.filled}}/{{cat.categoryProgress.total}}
-            </view>
-          </view>
-          <view class="cat-head__right">
-            <text class="cat-head__status" wx:if="{{cat.categoryProgress.filled === cat.categoryProgress.total}}">完成</text>
-            <text class="cat-head__status cat-head__status--warn" wx:elif="{{cat.categoryProgress.filled > 0}}">进行中</text>
-            <text class="cat-head__status cat-head__status--muted" wx:else>待准备</text>
-            <view class="cat-head__arrow {{collapsedCategories[cat.categoryKey] ? '' : 'cat-head__arrow--open'}}"></view>
-          </view>
-        </view>
-
-        <view class="slot-list {{collapsedCategories[cat.categoryKey] ? 'slot-list--hide' : ''}}">
-
-          <!-- 身份+学历卡槽：所属人切换（学历仅本人+配偶） -->
-          <view class="owner-tabs owner-tabs--slot" wx:if="{{cat.categoryKey === 'identities' || cat.categoryKey === 'identity' || cat.categoryKey === 'education'}}">
-            <block wx:for="{{ownerOptions}}" wx:key="value">
-              <view class="owner-tab {{identityOwner === item.value ? 'owner-tab--active' : ''}}"
-                    wx:if="{{cat.categoryKey !== 'education' || item.value !== 'child'}}"
-                    bindtap="switchIdentityOwner" data-value="{{item.value}}">
-                <text class="owner-tab__label">{{item.label}}</text>
-              </view>
-            </block>
-          </view>
-
-          <!-- 单行槽位：预览缩略图(左) + 名称+标签 + 添加按钮(右) -->
-          <view class="slot {{slot.fillStatus === 'filled' ? 'slot--done' : slot.fillStatus === 'partial' ? 'slot--partial' : 'slot--empty'}}"
-                wx:for="{{cat.slots}}" wx:key="slotKey" wx:for-item="slot"
-                bindtap="{{slot.fillStatus === 'empty' ? 'uploadToSlot' : 'navigateToDetail'}}"
-                data-slot-key="{{slot.slotKey}}" data-id="{{slot.uploadedDocs[0] ? slot.uploadedDocs[0].id : ''}}">
-            <!-- 左侧：已有证件缩略预览 -->
-            <view class="slot__previews" wx:if="{{slot.uploadedDocs && slot.uploadedDocs.length > 0}}">
-              <image class="slot__pthumb" wx:for="{{slot.uploadedDocs}}" wx:key="id" wx:for-item="doc" wx:if="{{index < 3}}" src="{{doc.filePath}}" mode="aspectFill" />
-              <text class="slot__pcount" wx:if="{{slot.uploadedDocs.length > 3}}">+{{slot.uploadedDocs.length - 3}}</text>
-            </view>
-            <!-- 右侧名称+标签+添加按钮 -->
-            <view class="slot__info">
-              <view class="slot__tags">
-                <text class="slot__name">{{slot.docName}}</text>
-                <view class="slot__tag slot__tag--{{slot.requirement}}">{{slot.requirement === 'required' ? '必需' : (slot.requirement === 'recommended' ? '建议' : '可选')}}</view>
-              </view>
-              <text class="slot__count" wx:if="{{slot.uploadedCount > 0}}">{{slot.uploadedCount}}份</text>
-            </view>
-            <view class="slot__btn {{slot.fillStatus === 'empty' ? 'slot__btn--add' : 'slot__btn--done'}}">
-              {{slot.fillStatus === 'empty' ? '+' : slot.fillStatus === 'partial' ? '+' + slot.uploadedCount : '✓'}}
-            </view>
-          </view>
-
-          <view class="slot slot--warn"
-                wx:for="{{cat.slots}}" wx:key="slotKey" wx:for-item="slot"
-                wx:if="{{slot.fillStatus === 'expiring_soon' || slot.fillStatus === 'expired'}}"
-                bindtap="uploadToSlot" data-slot-key="{{slot.slotKey}}">
-            <view class="slot__indicator slot__indicator--expired"></view>
-            <view class="slot__body">
-              <text class="slot__name">{{slot.docName}}</text>
-              <text class="slot__meta slot__meta--warn">
-                {{slot.fillStatus === 'expiring_soon' ? '即将过期' : '已过期'}} — 请更新
-              </text>
-            </view>
-            <view class="slot__action slot__action--warn">!</view>
-          </view>
-
-        </view>
-      </view>
-    </view>
-
-    <!-- ── OverflowSection 其他文件溢出区 ── -->
-    <view class="overflow">
-      <view class="overflow__head">
-        <view class="overflow__icon"></view>
-        <text class="overflow__title">其他文件</text>
-        <text class="overflow__hint">(不限量)</text>
-      </view>
-      <text class="overflow__desc">不上传也行的备用文件，放在这里不占分类槽位</text>
-
-      <view class="overflow__list" wx:if="{{overflowDocs.length > 0}}">
-        <view class="slot slot--filled" wx:for="{{overflowDocs}}" wx:key="id" wx:for-item="doc"
-              bindtap="navigateToDetail" data-id="{{doc.id}}">
-          <view class="slot__indicator slot__indicator--muted"></view>
-          <view class="slot__body">
-            <text class="slot__name">{{doc.displayName || doc.name || '未命名'}}</text>
-            <text class="slot__meta">{{doc.createdAt || ''}}</text>
-          </view>
-          <view class="slot__action slot__action--muted">›</view>
-        </view>
-      </view>
-
-    </view>
-
-    <!-- ── ArchivedSection 已归档材料折叠区 ── -->
-    <view class="archive" wx:if="{{archivedCount > 0}}">
-      <view class="archive__head" bindtap="toggleArchive">
-        <view class="archive__head-left">
-          <text class="archive__icon">📦</text>
-          <text class="archive__label">已归档申请材料</text>
-          <text class="archive__count">({{archivedCount}})</text>
-        </view>
-        <view class="archive__arrow {{showArchived ? 'archive__arrow--open' : ''}}"></view>
-      </view>
-      <view class="archive__list" wx:if="{{showArchived}}">
-        <view class="slot slot--archived" wx:for="{{archivedDocs}}" wx:key="id" wx:for-item="doc"
-              bindtap="navigateToDetail" data-id="{{doc.id}}">
-          <view class="slot__indicator slot__indicator--muted"></view>
-          <view class="slot__body">
-            <text class="slot__name slot__name--muted">{{doc.displayName || doc.name || '已归档'}}</text>
-            <text class="slot__meta slot__meta--muted">已归档</text>
-          </view>
-          <view class="slot__action slot__action--muted">›</view>
-        </view>
-      </view>
-    </view>
-
-  </block><!-- /index_loaded -->
-
-  <!-- ════════════════════════════════════════════
-       页面级空状态 / 加载（无卡槽时）
-       ════════════════════════════════════════════ -->
-
-  <!-- 空状态 · 无证件 -->
+  <!-- 空状态 -->
   <view class="empty-state" wx:if="{{!loading && showEmptyGuide && pageState !== 'no_path'}}">
-    <view class="empty-state__hero">
-      <view class="empty-state__ring">
-        <text class="empty-state__ring-icon">+</text>
-      </view>
-    </view>
+    <text class="empty-state__icon">📁</text>
     <text class="empty-state__title">证件夹还是空的</text>
-    <text class="empty-state__desc">拍照添加你的第一份证件，AI 将自动识别关键信息</text>
-    <view class="empty-state__actions">
-      <button class="btn-gold btn-block" bindtap="navigateToAdd">拍照添加</button>
-      <button class="btn-outline btn-block" bindtap="navigateToAdd" data-manual="true">手动录入</button>
-    </view>
-    <view class="empty-state__tips">
-      <text class="empty-state__tips-title">温馨提示</text>
-      <text class="empty-state__tips-item">· 证件数据仅存储在手机本地，不上传云端</text>
-      <text class="empty-state__tips-item">· 支持身份证、护照、签证、学历证等各类证件</text>
-      <text class="empty-state__tips-item">· 智能组合功能帮你一键整理申请材料包</text>
-    </view>
+    <text class="empty-state__desc">拍照添加你的第一份证件，AI将检测照片质量</text>
+    <button class="btn--primary btn-block" bindtap="navigateToAdd">拍照添加</button>
   </view>
 
-  <!-- 空状态 · 搜索无结果 -->
-  <view class="empty-state" wx:if="{{!loading && !showEmptyGuide && filteredDocs.length === 0 && allDocuments.length > 0}}">
-    <view class="empty-state__hero empty-state__hero--sm">
-      <text class="empty-state__ring-icon empty-state__ring-icon--sm">🔍</text>
+  <!-- 全局图片预览 -->
+  <view class="image-viewer" wx:if="{{showImageViewer}}" bindtap="closeImageViewer">
+    <swiper class="image-viewer__swiper" current="{{previewIndex}}" bindchange="onSwiperChange" catchtap="catchStop">
+      <swiper-item wx:for="{{filteredDocsWithImage}}" wx:key="id">
+        <image class="image-viewer__img" src="{{item.filePath}}" mode="aspectFit" />
+      </swiper-item>
+    </swiper>
+    <view class="image-viewer__info">
+      <text>{{previewIndex + 1}} / {{filteredDocsWithImage.length}}</text>
     </view>
-    <text class="empty-state__title">未找到匹配的证件</text>
-    <text class="empty-state__desc">尝试更换搜索词或切换分类</text>
+    <view class="image-viewer__close" bindtap="closeImageViewer">✕</view>
   </view>
-
-  <!-- 加载骨架屏 -->
-  <ux-skeleton wx:if="{{loading}}" mode="card" count="{{4}}" animated="{{true}}" />
 
   <view class="safe-bottom"></view>
-
-  <floating-ai visible="{{true}}" />
+  <floating-ai visible="{{true}}" context="{{ {page: 'documents', pageContext: '用户在证件夹页面管理申请材料'} }}" />
 </view>

@@ -60,6 +60,6 @@
     住港伴 v4.0 · 隐私优先 · DeepSeek V4
   </view>
 
-  <floating-ai visible="{{true}}" />
+  <floating-ai visible="{{true}}" context="{{ {page: 'mine', pageContext: '用户在个人中心页面查看会员和设置'} }}" />
   <view class="safe-bottom"></view>
 </view>

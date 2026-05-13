@@ -161,14 +161,70 @@ function buildSolutionRecommendPrompt() {
     QUICK_REPLY_ACTION_GUIDE;
 }
 
-function getSystemPrompt(mode) {
-  switch (mode) {
-    case 'assessment':         return buildAssessmentSystemPrompt();
-    case 'qa':                 return buildQASystemPrompt();
-    case 'solution_recommend': return buildSolutionRecommendPrompt();
-    case 'general':
-    default:                   return buildGeneralSystemPrompt();
+/** 构建用户画像 — 四层权重体系注入系统提示词 */
+function buildUserProfile(context) {
+  if (!context || Object.keys(context).length === 0) return '';
+  var profile = '\n\n【👤 用户画像 — 四层权重体系】\n';
+  profile += '以下信息按优先级排列，请据此调整回答的针对性和深度：\n\n';
+
+  // L1: 用户手工选择的状态 — 决定"他是谁"（最高优先级）
+  var l1 = [];
+  if (context.userStatus) {
+    var statusLabels = { unapplied: '未申请', submitted: '已提交申请等待审批', approved: '已获批', permanent: '永居' };
+    l1.push('身份状态：' + (statusLabels[context.userStatus] || context.userStatus));
   }
+  if (context.selectedPath) {
+    var pathLabels = { qmas: '优才计划(QMAS)', ttps_a: '高才通A类', ttps_b: '高才通B类', ttps_c: '高才通C类', asmpt: '专才计划(ASMTP)', student_iang: '学生→IANG', dependent: '受养人', permanent: '永居申请' };
+    l1.push('申请路径：' + (pathLabels[context.selectedPath] || context.selectedPath));
+  }
+  if (context.userSubStatus) l1.push('职业身份：' + context.userSubStatus);
+  if (l1.length > 0) {
+    profile += '【L1·他是谁 — 手工选择·最高优先】\n';
+    profile += l1.join(' | ') + '\n\n';
+  }
+
+  // L2: 资格评估输入 — 决定"他怎么样"（内容标签）
+  if (context.assessmentTags && context.assessmentTags.length > 0) {
+    profile += '【L2·他怎么样 — 资格评估标签】\n';
+    profile += context.assessmentTags.join('、') + '\n\n';
+  }
+
+  // L3: AI对话关键词 — 体现"他想要什么"（意图提取）
+  if (context.chatTopics && context.chatTopics.length > 0) {
+    profile += '【L3·他想要什么 — 对话高频话题】\n';
+    profile += context.chatTopics.slice(0, 8).join('、') + '\n\n';
+  }
+
+  // L4: 页面场景 — 说明"他可能在什么场景遇到问题"
+  var pageHints = {
+    'guidebooks': '正在浏览攻略库，可能想了解某条具体路径或政策',
+    'process': '正在管理申请流程，可能关心时间节点、材料顺序、阶段进度',
+    'documents': '正在整理证件材料，可能关心材料标准、格式要求、拍照规范',
+    'reminders': '正在管理提醒和截止日期，可能关心续签窗口、到期处理',
+    'assessment': '正在进行资格评估，可能关心自己是否符合条件',
+    'mine': '正在查看个人中心，可能关心会员权益或订单问题'
+  };
+  if (context.page) {
+    profile += '【L4·他在哪里 — 当前页面场景】\n';
+    profile += '页面：' + context.page + ' — ' + (pageHints[context.page] || '通用场景') + '\n';
+  }
+
+  return profile;
+}
+
+function getSystemPrompt(mode, context) {
+  var base;
+  switch (mode) {
+    case 'assessment':         base = buildAssessmentSystemPrompt(); break;
+    case 'qa':                 base = buildQASystemPrompt(); break;
+    case 'solution_recommend': base = buildSolutionRecommendPrompt(); break;
+    case 'general':
+    default:                   base = buildGeneralSystemPrompt(); break;
+  }
+  if (context) {
+    base += buildUserProfile(context);
+  }
+  return base;
 }
 
 module.exports = {
