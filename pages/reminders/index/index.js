@@ -51,7 +51,7 @@ Page({
   },
 
   onShow() {
-    this.setData({ stageSteps: getGlobalStages(), stageProgress: Math.min(((getActiveStageIndex() + 1) / 7) * 100, 100) });
+    try { this.setData({ stageSteps: getGlobalStages(), stageProgress: Math.min(((getActiveStageIndex() + 1) / 7) * 100, 100) }); } catch(e) { this.setData({ stageProgress: 14 }); }
     this.loadReminders().then((function() {
       this.checkAutoGenerate();
     }).bind(this));
@@ -112,8 +112,9 @@ Page({
           // 保存路径上下文，跳转时间线页面
           app.globalData.selectedPath = path;
           wx.setStorageSync('__active_process_id__', path);
+          // Bug #9: 传递 _autogen 标记让detail页自动生成时间线
           wx.navigateTo({
-            url: '/pages/reminders/detail/detail?action=timeline&path=' + path
+            url: '/pages/reminders/detail/detail?action=timeline&path=' + path + '&_autogen=1'
           });
         }
       }

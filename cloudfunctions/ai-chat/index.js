@@ -417,11 +417,15 @@ exports.main = async function (event, context) {
     // 追加当前消息
     messages.push({ role: 'user', content: message });
 
-    // 如果有上下文信息，作为首条 system-level user 消息注入
-    if (sessionContext && Object.keys(sessionContext).length > 0) {
+    // Bug #17 修复: 不再注入原始sessionContext JSON（绕过隐私规则，画像已在system prompt中）
+    // 仅注入非画像的会话上下文（page行为信息），帮助模型理解当前浏览场景
+    if (sessionContext && (sessionContext.page || sessionContext.chatTopics)) {
+      var ctxHint = {};
+      if (sessionContext.page) ctxHint.page = sessionContext.page;
+      if (sessionContext.chatTopics) ctxHint.topic = sessionContext.chatTopics;
       messages.unshift({
         role: 'user',
-        content: '[系统注入] 用户已知信息：' + JSON.stringify(sessionContext, null, 2),
+        content: '[系统] 当前浏览场景：' + JSON.stringify(ctxHint),
       });
     }
 

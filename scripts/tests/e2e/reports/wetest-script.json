@@ -1,0 +1,297 @@
+{
+  "project": "住港伴V3",
+  "appid": "wx08c2222c1bf042fd",
+  "miniprogram_version": "trial",
+  "devices": [
+    {
+      "model": "iPhone 16 Pro Max",
+      "os": "iOS 18",
+      "platform": "ios"
+    },
+    {
+      "model": "iPhone 13",
+      "os": "iOS 17",
+      "platform": "ios"
+    },
+    {
+      "model": "iPhone SE (3rd)",
+      "os": "iOS 17",
+      "platform": "ios"
+    },
+    {
+      "model": "Samsung Galaxy S24 Ultra",
+      "os": "Android 14",
+      "platform": "android"
+    },
+    {
+      "model": "Xiaomi 14 Pro",
+      "os": "Android 14",
+      "platform": "android"
+    },
+    {
+      "model": "Huawei P60 Pro",
+      "os": "HarmonyOS 4",
+      "platform": "android"
+    },
+    {
+      "model": "OPPO Find X7",
+      "os": "Android 14",
+      "platform": "android"
+    },
+    {
+      "model": "vivo X100 Pro",
+      "os": "Android 14",
+      "platform": "android"
+    }
+  ],
+  "test_cases": [
+    {
+      "name": "启动与登录",
+      "steps": [
+        {
+          "action": "launch",
+          "description": "冷启动小程序"
+        },
+        {
+          "action": "wait",
+          "duration": 3000
+        },
+        {
+          "action": "screenshot",
+          "name": "01_launch"
+        },
+        {
+          "action": "assert",
+          "condition": "page_loaded",
+          "description": "页面正常加载"
+        }
+      ]
+    },
+    {
+      "name": "TabBar 导航",
+      "steps": [
+        {
+          "action": "click_tab",
+          "tab": "documents"
+        },
+        {
+          "action": "wait",
+          "duration": 1000
+        },
+        {
+          "action": "screenshot",
+          "name": "02_tab_documents"
+        },
+        {
+          "action": "click_tab",
+          "tab": "process"
+        },
+        {
+          "action": "wait",
+          "duration": 1000
+        },
+        {
+          "action": "screenshot",
+          "name": "03_tab_process"
+        },
+        {
+          "action": "click_tab",
+          "tab": "guidebooks"
+        },
+        {
+          "action": "wait",
+          "duration": 1000
+        },
+        {
+          "action": "screenshot",
+          "name": "04_tab_guidebooks"
+        },
+        {
+          "action": "click_tab",
+          "tab": "reminders"
+        },
+        {
+          "action": "wait",
+          "duration": 1000
+        },
+        {
+          "action": "screenshot",
+          "name": "05_tab_reminders"
+        },
+        {
+          "action": "click_tab",
+          "tab": "mine"
+        },
+        {
+          "action": "wait",
+          "duration": 1000
+        },
+        {
+          "action": "screenshot",
+          "name": "06_tab_mine"
+        }
+      ]
+    },
+    {
+      "name": "流程控 — 工具栏入口",
+      "steps": [
+        {
+          "action": "click_tab",
+          "tab": "process"
+        },
+        {
+          "action": "wait",
+          "duration": 2000
+        },
+        {
+          "action": "screenshot",
+          "name": "07_process_toolbar"
+        },
+        {
+          "action": "click",
+          "selector": "[data-action=\"guide\"]",
+          "optional": true
+        },
+        {
+          "action": "wait",
+          "duration": 2000
+        },
+        {
+          "action": "screenshot",
+          "name": "08_process_guide"
+        },
+        {
+          "action": "navigate_back"
+        }
+      ]
+    },
+    {
+      "name": "证件夹 — 添加与画廊",
+      "steps": [
+        {
+          "action": "click_tab",
+          "tab": "documents"
+        },
+        {
+          "action": "wait",
+          "duration": 2000
+        },
+        {
+          "action": "screenshot",
+          "name": "09_documents_list"
+        },
+        {
+          "action": "navigate",
+          "url": "/pages/documents/add/add"
+        },
+        {
+          "action": "wait",
+          "duration": 2000
+        },
+        {
+          "action": "screenshot",
+          "name": "10_documents_add"
+        }
+      ]
+    },
+    {
+      "name": "AI Chat — 对话测试",
+      "steps": [
+        {
+          "action": "navigate",
+          "url": "/pages/chat/index/index"
+        },
+        {
+          "action": "wait",
+          "duration": 3000
+        },
+        {
+          "action": "screenshot",
+          "name": "11_chat_page"
+        },
+        {
+          "action": "input",
+          "selector": "textarea, input",
+          "text": "优才计划申请条件"
+        },
+        {
+          "action": "wait",
+          "duration": 1000
+        },
+        {
+          "action": "click",
+          "selector": ".send-btn, [data-action=\"send\"]",
+          "optional": true
+        },
+        {
+          "action": "wait",
+          "duration": 5000
+        },
+        {
+          "action": "screenshot",
+          "name": "12_chat_response"
+        }
+      ]
+    },
+    {
+      "name": "异常场景 — 快速切换",
+      "steps": [
+        {
+          "action": "click_tab",
+          "tab": "guidebooks"
+        },
+        {
+          "action": "click_tab",
+          "tab": "documents"
+        },
+        {
+          "action": "click_tab",
+          "tab": "reminders"
+        },
+        {
+          "action": "click_tab",
+          "tab": "process"
+        },
+        {
+          "action": "click_tab",
+          "tab": "mine"
+        },
+        {
+          "action": "wait",
+          "duration": 500
+        },
+        {
+          "action": "screenshot",
+          "name": "13_rapid_switch"
+        }
+      ]
+    }
+  ],
+  "compatibility_checks": [
+    {
+      "name": "页面白屏检测",
+      "description": "所有截图不应为纯白/纯黑"
+    },
+    {
+      "name": "文字截断",
+      "description": "文本元素不应被截断或溢出"
+    },
+    {
+      "name": "按钮可点击区域",
+      "description": "按钮大小 ≥ 44x44pt (iOS HIG)"
+    },
+    {
+      "name": "安全区域适配",
+      "description": "内容不应被刘海/底部指示条遮挡"
+    },
+    {
+      "name": "字体渲染",
+      "description": "中文字体无乱码/豆腐块"
+    }
+  ],
+  "settings": {
+    "timeout_per_step": 30000,
+    "retry_on_failure": 1,
+    "screenshot_quality": 80
+  }
+}

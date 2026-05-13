@@ -52,6 +52,38 @@
   "packOptions": {
     "ignore": [
       {
+        "value": "cloudfunctions",
+        "type": "folder"
+      },
+      {
+        "value": "node_modules",
+        "type": "folder"
+      },
+      {
+        "value": "docs",
+        "type": "folder"
+      },
+      {
+        "value": "tests",
+        "type": "folder"
+      },
+      {
+        "value": "scripts",
+        "type": "folder"
+      },
+      {
+        "value": "inbox",
+        "type": "folder"
+      },
+      {
+        "value": "outbox",
+        "type": "folder"
+      },
+      {
+        "value": ".hermes",
+        "type": "folder"
+      },
+      {
         "value": "__tests__",
         "type": "folder"
       },

@@ -73,8 +73,9 @@ Page({
     const action = options.action || '';
     const id = options.id || '';
 
-    // Bug #9: 保存path参数供initTimeline使用
+    // Bug #9: 保存path参数供initTimeline使用 + _autogen标记触发自动生成
     this._options_path = options.path || '';
+    this._options_from_autogen = (options._autogen === '1');
 
     this.setData({ action });
 
@@ -98,7 +99,7 @@ Page({
   initTimeline() {
     var session = wx.getStorageSync('__session__') || {};
     var app = getApp();
-    // Bug #9: 优先从options.path读取（来自自动生成流程），否则fallback到globalData
+    // Bug #9 修复: 优先从options.path读取（来自自动生成流程），否则fallback到globalData
     var path = this._options_path || (app && app.globalData && app.globalData.selectedPath) || session.selectedPath || '';
     var pathNames = {
       'qmas': '优才计划', 'ttps_a': '高才通A类', 'ttps_b': '高才通B类', 'ttps_c': '高才通C类',
@@ -111,6 +112,18 @@ Page({
       timelinePathName: pathNames[path] || path,
       visaYears: String(visaYearsMap[path] || 2)
     });
+
+    // Bug #9 修复: 自动生成时间线 — 以今天作为默认激活日期
+    // 用户来自 auto-generate 流程已确认要生成，避免空状态
+    if (path && this._options_from_autogen) {
+      var today = new Date();
+      var y = today.getFullYear();
+      var m = today.getMonth() + 1;
+      var d = today.getDate();
+      var todayStr = y + '-' + (m < 10 ? '0' + m : m) + '-' + (d < 10 ? '0' + d : d);
+      this.setData({ activationDate: todayStr });
+      this.generateTimeline();
+    }
   },
 
   /** 根据激活日期+模板生成时间线 */

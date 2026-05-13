@@ -50,7 +50,7 @@ Page({
   },
 
   onShow() {
-    this.setData({ stageSteps: getGlobalStages(), stageProgress: Math.min(((getActiveStageIndex() + 1) / 7) * 100, 100) });
+    try { this.setData({ stageSteps: getGlobalStages(), stageProgress: Math.min(((getActiveStageIndex() + 1) / 7) * 100, 100) }); } catch(e) { this.setData({ stageProgress: 14 }); }
     try {
       var userStatus = app.globalData.userStatus || wx.getStorageSync(constants.STORAGE_KEYS.USER_STATUS);
       this.setData({
@@ -159,8 +159,8 @@ Page({
     var doneCount = allStages.filter(function(s) { return s.status === 'completed'; }).length;
     var progress = allStages.length > 0 ? Math.round((doneCount / allStages.length) * 100) : 0;
     this.setData({ materialDoneCount: doneCount, materialTotalCount: allStages.length });
-    // P0#13: 低完成度或长周期路径 → 出示免责声明
-    if (doneCount === 0 || (activeProcess && activeProcess.totalCycle && activeProcess.totalCycle.indexOf('8') >= 0)) {
+    // 仅0%完成度时出示免责声明
+    if (doneCount === 0) {
       var hasSeenDisclaimer = wx.getStorageSync('__disclaimer_seen__');
       if (!hasSeenDisclaimer) {
         wx.setStorageSync('__disclaimer_seen__', true);

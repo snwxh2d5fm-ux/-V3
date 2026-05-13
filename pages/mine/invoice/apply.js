@@ -172,6 +172,14 @@ Page({
           submitted: true,
           resultMsg: result.data && result.data.msg || '发票申请已提交'
         });
+        // Bug #14 修复: 发票申请成功后弹出确认反馈
+        wx.showModal({
+          title: '申请已提交',
+          content: '📮 已收到您的开票信息，预计7个工作日内可在您预留的手机短信或邮箱中查收。',
+          showCancel: false,
+          confirmText: '我知道了',
+          success: function() { wx.navigateBack(); }
+        });
       } else {
         that.setData({ submitting: false });
         // 已申请过：引导查看

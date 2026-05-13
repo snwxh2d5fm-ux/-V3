@@ -119,6 +119,10 @@ Page({
     } else {
       this.setData({ slotContext: false, slotGuide: null, slotDocName: '', skipCategory: false });
     }
+    // Bug #25: 计划书等文字类卡槽 → 默认手动录入
+    if (options.slotKey === 'plan_statement') {
+      this.setData({ inputMode: 'manual', step: 1, docCategory: 'approved' });
+    }
     this.setData({ privacyMode: app.getPrivacyMode() });
   },
 
@@ -210,23 +214,24 @@ Page({
   /** 确认图片 → 质量不过时阻断 */
   confirmImage() {
     var qr = this.data.qualityResult;
+    // Bug #6 修复: 质量检测未完成时阻断，防止跳过质检
+    if (!qr) {
+      wx.showToast({ title: '质量检测中，请稍候…', icon: 'none', duration: 1500 });
+      return;
+    }
     // 质量≥60分直接进手动填写，跳过对齐步骤
-    if (qr && qr.score >= 60) {
+    if (qr.score >= 60) {
       this.setData({ step: 3, docType: 'unknown', docTypeLabel: '手动录入' });
       return;
     }
     if (qr && !qr.pass) {
       wx.showModal({
         title: '照片质量不通过',
-        content: '检测到以下问题：\n' + qr.issues.filter(function(i) { return i.severity === 'warning'; }).map(function(i) { return '• ' + i.message; }).join('\n') + '\n\n建议重新拍摄以获得更好的识别效果。',
+        content: '检测到以下问题：\n' + qr.issues.filter(function(i) { return i.severity === 'warning'; }).map(function(i) { return '• ' + i.message; }).join('\n') + '\n\n请重新拍摄以获得更好的识别效果。',
+        showCancel: false,
         confirmText: '重新拍摄',
-        cancelText: '强制继续',
         success: (function(res) {
-          if (res.confirm) {
-            this.retakePhoto();
-          } else {
-            this.setData({ step: 2.5, cropX: 0, cropY: 0, cropScale: 1 });
-          }
+          this.retakePhoto();
         }).bind(this)
       });
       return;
@@ -549,9 +554,14 @@ Page({
     this.setData({ ocrFields, ocrFieldList });
   },
 
-  /** Step3 → Step4: 确认OCR结果，进入分类选择 */
+  /** Step3 → Step4: 确认OCR结果，进入分类选择。卡槽入口自动跳过 */
   confirmAndProceed() {
     var ocrFields = this.data.ocrFields;
+    // Bug #19 修复: 卡槽入口+auto-cat已确定 → 直接保存，跳过Step4分类选择
+    if (this.data.skipCategory && this.data.docCategory) {
+      this.confirmSave();
+      return;
+    }
     this.setData({
       step: 4,
       manualForm: {
@@ -1021,6 +1031,425 @@ function getSlotGuide(slotKey, docName) {
       { label: '流水时间段', width: 'full', pii: false },
       { label: '银行印章', width: 'mid', pii: false }
     ], showPhoto: false, showSeal: true },
+
+    // ═══ Bug #24: 新增30种卡槽专属指南 ═══
+    // 学历类
+    transcript: { icon: '📄', title: '成绩单材料标准', wfTitle: '学业成绩单', items: [
+      '学校官方成绩单原件拍摄',
+      '含学校抬头、学生姓名、学号',
+      '所有学期/学年成绩完整',
+      '学校教务处印章清晰',
+      '英文版需一并提供'
+    ], piiFields: ['姓名', '学号'], specimen: '学校抬头·教务处盖章',
+    wfFields: [
+      { label: '学校名称 (抬头)', width: 'full', pii: false },
+      { label: '学生姓名', width: 'short', pii: true },
+      { label: '学号', width: 'mid', pii: true },
+      { label: '专业 / 学院', width: 'mid', pii: false },
+      { label: '成绩列表', width: 'full', pii: false },
+      { label: '教务处印章 / 日期', width: 'mid', pii: false }
+    ], showPhoto: false, showSeal: true },
+    degree_auth: { icon: '🔖', title: '学信网认证材料标准', wfTitle: '学信网学历认证报告', items: [
+      '学信网生成的认证报告PDF/截图',
+      '报告编号和验证码清晰',
+      '含学位信息、毕业院校、专业',
+      '在线验证报告有效期需在有效期内'
+    ], piiFields: ['姓名', '证书编号'], specimen: '学信网学历认证报告',
+    wfFields: [
+      { label: '报告编号', width: 'long', pii: false },
+      { label: '姓名', width: 'short', pii: true },
+      { label: '毕业院校', width: 'full', pii: false },
+      { label: '专业 / 学历层次', width: 'mid', pii: false },
+      { label: '入学/毕业日期', width: 'mid', pii: false },
+      { label: '验证码', width: 'mid', pii: false }
+    ], showPhoto: true, showSeal: true },
+    language_cert: { icon: '🗣️', title: '语言成绩材料标准', wfTitle: '语言能力证明', items: [
+      '官方成绩单原件拍摄（IELTS/TOEFL/HSK等）',
+      '考生姓名、考试日期、分数清晰',
+      '证书编号完整可见'
+    ], piiFields: ['姓名', '考生编号'], specimen: '语言成绩单原件',
+    wfFields: [
+      { label: '考试机构', width: 'mid', pii: false },
+      { label: '考生姓名', width: 'short', pii: true },
+      { label: '考生编号', width: 'mid', pii: true },
+      { label: '考试日期', width: 'mid', pii: false },
+      { label: '总分 / 各科分数', width: 'full', pii: false },
+      { label: '证书编号 / 验证码', width: 'long', pii: false }
+    ], showPhoto: false, showSeal: true },
+    admission_letter: { icon: '📨', title: '录取通知书材料标准', wfTitle: '录取通知书', items: [
+      '学校官方录取通知书原件',
+      '含学校抬头、学生姓名、录取专业',
+      '入学日期和学制清晰',
+      '学校印章/签发人签字'
+    ], piiFields: ['姓名', '申请编号'], specimen: '学校抬头·官方印章',
+    wfFields: [
+      { label: '学校名称 (抬头)', width: 'full', pii: false },
+      { label: '学生姓名', width: 'short', pii: true },
+      { label: '录取专业 / 学位', width: 'mid', pii: false },
+      { label: '入学日期 / 学制', width: 'mid', pii: false },
+      { label: '申请编号', width: 'long', pii: true },
+      { label: '学校印章 / 签发人', width: 'mid', pii: false }
+    ], showPhoto: false, showSeal: true },
+    exchange_agreement: { icon: '🌐', title: '交换协议材料标准', wfTitle: '交换/交流项目协议', items: [
+      '双方学校签署的交换协议原件',
+      '含交换期间、学分互认条款',
+      '双方学校印章清晰'
+    ], piiFields: ['姓名', '学号'], specimen: '双方学校盖章',
+    wfFields: [
+      { label: '派出学校 (抬头)', width: 'full', pii: false },
+      { label: '接收学校', width: 'full', pii: false },
+      { label: '学生姓名 / 学号', width: 'mid', pii: true },
+      { label: '交换期间', width: 'mid', pii: false },
+      { label: '学分互认条款', width: 'full', pii: false },
+      { label: '双方印章', width: 'mid', pii: false }
+    ], showPhoto: false, showSeal: true },
+    parttime_enrollment: { icon: '📚', title: '兼读在读证明标准', wfTitle: '兼读课程在读证明', items: [
+      '学校出具的在读证明原件',
+      '含学校抬头、学生姓名、攻读学位',
+      '注明兼读制（Part-time）',
+      '学校印章清晰'
+    ], piiFields: ['姓名', '学号'], specimen: '学校抬头·注明兼读制',
+    wfFields: [
+      { label: '学校名称 (抬头)', width: 'full', pii: false },
+      { label: '学生姓名', width: 'short', pii: true },
+      { label: '攻读学位 / 专业', width: 'mid', pii: false },
+      { label: '就读状态 (兼读制)', width: 'mid', pii: false },
+      { label: '入学日期 / 预计毕业', width: 'full', pii: false },
+      { label: '教务处印章', width: 'mid', pii: false }
+    ], showPhoto: false, showSeal: true },
+    // 工作类
+    emp_letter: { icon: '📝', title: '雇主聘用书材料标准', wfTitle: '雇主聘用书 / 雇佣合约', items: [
+      '公司抬头纸原件拍摄',
+      '含职位、入职日期、薪资、工作职责',
+      '雇主签字+公司盖章',
+      '注明雇佣性质（全职/合约）'
+    ], piiFields: ['姓名', '身份证号', '薪资'], specimen: '公司抬头纸·公章+签字',
+    wfFields: [
+      { label: '公司名称 (抬头)', width: 'full', pii: false },
+      { label: '员工姓名', width: 'short', pii: true },
+      { label: '职位 / 部门', width: 'mid', pii: false },
+      { label: '入职日期 / 合约期', width: 'mid', pii: false },
+      { label: '月薪 / 年薪', width: 'mid', pii: true },
+      { label: '公司印章 / 签字', width: 'mid', pii: false }
+    ], showPhoto: false, showSeal: true },
+    emp_proof: { icon: '📋', title: '工作证明信材料标准', wfTitle: '工作证明信', items: [
+      '公司抬头纸原件',
+      '注明在职期间、职位、工作内容',
+      '人力资源部门或直属上级签字盖章',
+      '含公司联系方式以便核实'
+    ], piiFields: ['姓名', '身份证号'], specimen: '公司抬头纸·HR盖章',
+    wfFields: [
+      { label: '公司名称 (抬头)', width: 'full', pii: false },
+      { label: '员工姓名', width: 'short', pii: true },
+      { label: '身份证号码', width: 'long', pii: true },
+      { label: '在职期间 / 职位', width: 'mid', pii: false },
+      { label: '工作内容简述', width: 'full', pii: false },
+      { label: 'HR部门印章 / 日期', width: 'mid', pii: false }
+    ], showPhoto: false, showSeal: true },
+    emp_3y: { icon: '📊', title: '三年工作经验证明标准', wfTitle: '三年工作经验证明', items: [
+      '覆盖最近三年全部在职期间',
+      '如有多个雇主需分别提供',
+      '每段工作需注明起止日期和职位',
+      '社保记录/税单可作为辅助证明'
+    ], piiFields: ['姓名', '身份证号'], specimen: '连续三年工作记录',
+    wfFields: [
+      { label: '员工姓名', width: 'short', pii: true },
+      { label: '身份证号码', width: 'long', pii: true },
+      { label: '雇主名称 (第一段)', width: 'full', pii: false },
+      { label: '起止日期 / 职位', width: 'mid', pii: false },
+      { label: '社保/税务辅助证明', width: 'full', pii: false },
+      { label: '累计年限', width: 'short', pii: false }
+    ], showPhoto: false, showSeal: true },
+    recommendation: { icon: '✉️', title: '推荐信材料标准', wfTitle: '专家推荐信', items: [
+      '推荐人抬头纸或有推荐人联系方式',
+      '详述申请人专业能力和成就',
+      '推荐人签字+日期',
+      '推荐人名片或联系方式可验证'
+    ], piiFields: ['申请人姓名', '推荐人姓名'], specimen: '推荐人签字·含联系方式',
+    wfFields: [
+      { label: '推荐人姓名 / 职位', width: 'mid', pii: true },
+      { label: '申请人姓名', width: 'short', pii: true },
+      { label: '推荐人与申请人关系', width: 'mid', pii: false },
+      { label: '推荐内容详述', width: 'full', pii: false },
+      { label: '推荐人联系方式', width: 'full', pii: true },
+      { label: '签字 / 日期', width: 'mid', pii: false }
+    ], showPhoto: false, showSeal: false },
+    company_docs: { icon: '🏢', title: '公司注册文件标准', wfTitle: '公司注册证明书', items: [
+      '公司注册处发出的注册证明书',
+      '商业登记证清晰拍摄',
+      '公司名称、注册编号、成立日期清晰',
+      '如有公司章程一并提供'
+    ], piiFields: ['公司编号', '董事姓名'], specimen: '公司注册处·商业登记证',
+    wfFields: [
+      { label: '公司名称 (中/英)', width: 'full', pii: false },
+      { label: '公司注册编号', width: 'mid', pii: true },
+      { label: '成立日期', width: 'mid', pii: false },
+      { label: '公司类别', width: 'short', pii: false },
+      { label: '注册地址', width: 'full', pii: false },
+      { label: '公司注册处印章', width: 'mid', pii: false }
+    ], showPhoto: false, showSeal: true },
+    org_chart: { icon: '📐', title: '组织架构图标准', wfTitle: '公司组织架构图', items: [
+      '公司官方组织架构图',
+      '标明申请人所属部门及层级',
+      '如有公司印章更佳',
+      '中英文版本均可'
+    ], piiFields: ['申请人姓名', '部门'], specimen: '公司组织架构图',
+    wfFields: [
+      { label: '公司名称', width: 'full', pii: false },
+      { label: '申请人姓名 / 职位', width: 'mid', pii: true },
+      { label: '所属部门', width: 'mid', pii: false },
+      { label: '汇报层级', width: 'full', pii: false },
+      { label: '下属人数', width: 'short', pii: false },
+      { label: '签发日期 / 版本', width: 'mid', pii: false }
+    ], showPhoto: false, showSeal: false },
+    tech_achievement: { icon: '🏆', title: '科技成果/专利证明标准', wfTitle: '科技成果 / 专利证书', items: [
+      '专利证书/科技奖励证书原件',
+      '专利权人/获奖人姓名清晰',
+      '专利号/证书编号完整',
+      '授权日期和有效期'
+    ], piiFields: ['专利人姓名', '专利号'], specimen: '专利证书·授权日期',
+    wfFields: [
+      { label: '专利/成果名称', width: 'full', pii: false },
+      { label: '专利号 / 证书编号', width: 'long', pii: true },
+      { label: '专利权人 / 获奖人', width: 'mid', pii: true },
+      { label: '授权日期', width: 'mid', pii: false },
+      { label: '有效期', width: 'mid', pii: false },
+      { label: '授权机关印章', width: 'mid', pii: false }
+    ], showPhoto: false, showSeal: true },
+    // 资产类
+    income_proof: { icon: '📊', title: '收入证明标准', wfTitle: '个人收入证明', items: [
+      '公司或税务机关出具的收入证明',
+      '含姓名、身份证号、收入金额',
+      '时间段明确（最近6-12个月）',
+      '公司盖章或税务印章'
+    ], piiFields: ['姓名', '身份证号', '收入金额'], specimen: '公司/税务机关出具',
+    wfFields: [
+      { label: '出具机构 (抬头)', width: 'full', pii: false },
+      { label: '姓名', width: 'short', pii: true },
+      { label: '身份证号码', width: 'long', pii: true },
+      { label: '收入时间段', width: 'mid', pii: false },
+      { label: '总收入 / 月收入', width: 'mid', pii: true },
+      { label: '机构印章 / 日期', width: 'mid', pii: false }
+    ], showPhoto: false, showSeal: true },
+    tax_record: { icon: '📑', title: '税单材料标准', wfTitle: '个人所得税完税证明', items: [
+      '税务机关出具的完税证明',
+      '最近1-3个纳税年度',
+      '含纳税人姓名和身份证号',
+      '税务印章清晰'
+    ], piiFields: ['姓名', '身份证号'], specimen: '税务局出具·完税证明',
+    wfFields: [
+      { label: '税务机关名称', width: 'full', pii: false },
+      { label: '纳税人姓名', width: 'short', pii: true },
+      { label: '身份证号码', width: 'long', pii: true },
+      { label: '纳税年度', width: 'short', pii: false },
+      { label: '应纳税所得额', width: 'mid', pii: true },
+      { label: '税务印章 / 日期', width: 'mid', pii: false }
+    ], showPhoto: false, showSeal: true },
+    income_250w: { icon: '💵', title: '年收入250万证明标准', wfTitle: '年收入证明 (≥250万港币)', items: [
+      '最近一个完整纳税年度的收入证明',
+      '公司薪资证明+银行流水+税单三件套',
+      '收入金额需对应当年度港币≥250万',
+      '各文件收入数据需一致'
+    ], piiFields: ['姓名', '年收入金额'], specimen: '薪资证明+银行流水+税单·三件一致',
+    wfFields: [
+      { label: '姓名', width: 'short', pii: true },
+      { label: '身份证号码', width: 'long', pii: true },
+      { label: '年度', width: 'short', pii: false },
+      { label: '年收入总额 (港币)', width: 'mid', pii: true },
+      { label: '薪资/奖金/股权分解', width: 'full', pii: false },
+      { label: '公司/税务印章', width: 'mid', pii: false }
+    ], showPhoto: false, showSeal: true },
+    investment_proof: { icon: '📈', title: '投资证明标准', wfTitle: '投资资产证明', items: [
+      '证券公司/银行出具的投资资产证明',
+      '含账户名、资产类型、估值',
+      '最近日期的资产报告',
+      '金融机构印章'
+    ], piiFields: ['账户名', '账号'], specimen: '金融机构出具·近期估值',
+    wfFields: [
+      { label: '金融机构名称', width: 'full', pii: false },
+      { label: '账户持有人', width: 'short', pii: true },
+      { label: '账号', width: 'long', pii: true },
+      { label: '资产类型 / 估值', width: 'full', pii: false },
+      { label: '报告日期', width: 'mid', pii: false },
+      { label: '机构印章', width: 'mid', pii: false }
+    ], showPhoto: false, showSeal: true },
+    asset_proof: { icon: '🏠', title: '资产证明标准', wfTitle: '个人资产证明 (存款/房产)', items: [
+      '银行存款证明或房产证',
+      '含持有人姓名、资产价值',
+      '银行/房管局官方文件',
+      '存款证明需冻结期≥3个月'
+    ], piiFields: ['持有人', '账号/房产证号'], specimen: '银行/房管局官方文件',
+    wfFields: [
+      { label: '出具机构', width: 'full', pii: false },
+      { label: '资产持有人', width: 'short', pii: true },
+      { label: '账号 / 房产证号', width: 'long', pii: true },
+      { label: '资产估值 / 币种', width: 'mid', pii: false },
+      { label: '证明日期', width: 'mid', pii: false },
+      { label: '机构印章', width: 'mid', pii: false }
+    ], showPhoto: false, showSeal: true },
+    retirement_fund: { icon: '🏦', title: '退休金证明标准', wfTitle: '退休金/强积金证明', items: [
+      'MPF强积金或社保退休金证明',
+      '含姓名、账户信息、累积金额',
+      '最近日期的账户报告'
+    ], piiFields: ['姓名', '账户号'], specimen: '强积金/社保·近期报告',
+    wfFields: [
+      { label: '管理机构名称', width: 'full', pii: false },
+      { label: '持有人姓名', width: 'short', pii: true },
+      { label: '账户号码', width: 'mid', pii: true },
+      { label: '累积金额 / 币种', width: 'mid', pii: false },
+      { label: '报告日期', width: 'mid', pii: false },
+      { label: '机构印章', width: 'mid', pii: false }
+    ], showPhoto: false, showSeal: true },
+    pension_proof: { icon: '📋', title: '养老金证明标准', wfTitle: '养老金/社保领取证明', items: [
+      '社保局出具的养老金领取证明',
+      '含姓名、领取金额、发放记录',
+      '最近6-12个月发放记录'
+    ], piiFields: ['姓名', '身份证号'], specimen: '社保局出具·近期记录',
+    wfFields: [
+      { label: '社保局名称', width: 'full', pii: false },
+      { label: '领取人姓名', width: 'short', pii: true },
+      { label: '身份证号码', width: 'long', pii: true },
+      { label: '月领取金额', width: 'mid', pii: false },
+      { label: '发放时间段', width: 'mid', pii: false },
+      { label: '社保局印章', width: 'mid', pii: false }
+    ], showPhoto: false, showSeal: true },
+    funding_proof: { icon: '💳', title: '资金来源说明标准', wfTitle: '资金来源说明', items: [
+      '说明资产来源的书面文件',
+      '如有银行转账记录一并提供',
+      '注明金额、来源途径、用途',
+      '本人签字+日期'
+    ], piiFields: ['姓名', '账户号'], specimen: '书面说明·本人签字',
+    wfFields: [
+      { label: '声明人姓名', width: 'short', pii: true },
+      { label: '资金来源途径', width: 'full', pii: false },
+      { label: '金额 / 币种', width: 'mid', pii: false },
+      { label: '用途说明', width: 'full', pii: false },
+      { label: '银行流水附页', width: 'full', pii: false },
+      { label: '签字 / 日期', width: 'mid', pii: false }
+    ], showPhoto: false, showSeal: false },
+    // 申请材料类
+    plan_statement: { icon: '📝', title: '赴港计划书 (文字撰写)', wfTitle: '赴港计划书', items: [
+      '此为文字撰写类材料，非上传文件',
+      '内容：来港目的、职业规划、对港贡献',
+      '建议800-1500字，分段撰写',
+      '具名+日期'
+    ], piiFields: ['姓名'], specimen: '文字撰写·800-1500字',
+    wfFields: [
+      { label: '姓名 / 日期', width: 'short', pii: true },
+      { label: '来港目的', width: 'full', pii: false },
+      { label: '职业规划', width: 'full', pii: false },
+      { label: '对港贡献预期', width: 'full', pii: false },
+      { label: '在港安居计划', width: 'full', pii: false },
+      { label: '本人签字', width: 'mid', pii: false }
+    ], showPhoto: false, showSeal: false },
+    no_crime: { icon: '🛡️', title: '无犯罪记录证明标准', wfTitle: '无犯罪记录证明', items: [
+      '户籍所在地公安局/派出所出具',
+      '含姓名、身份证号、无犯罪记录声明',
+      '有效期一般为6个月',
+      '公安机关印章清晰'
+    ], piiFields: ['姓名', '身份证号'], specimen: '公安机关出具·6个月有效',
+    wfFields: [
+      { label: '出具机关名称', width: 'full', pii: false },
+      { label: '申请人姓名', width: 'short', pii: true },
+      { label: '身份证号码', width: 'long', pii: true },
+      { label: '证明内容', width: 'full', pii: false },
+      { label: '有效期至', width: 'mid', pii: false },
+      { label: '公安机关印章 / 日期', width: 'mid', pii: false }
+    ], showPhoto: false, showSeal: true },
+    student_visa: { icon: '🎫', title: '学生签证材料标准', wfTitle: '学生签证 / 入境许可', items: [
+      '入境处发出的学生签证标签/通知书',
+      '含学校名称、课程名称、签证有效期',
+      '签证编号清晰',
+      '如有e-Visa打印版一并提供'
+    ], piiFields: ['姓名', '签证编号', '学校'], specimen: '入境处学生签证标签',
+    wfFields: [
+      { label: '签证编号', width: 'long', pii: true },
+      { label: '学生姓名', width: 'short', pii: true },
+      { label: '学校 / 课程名称', width: 'full', pii: false },
+      { label: '签证有效期', width: 'mid', pii: false },
+      { label: '逗留条件', width: 'full', pii: false },
+      { label: '入境处印章', width: 'mid', pii: false }
+    ], showPhoto: false, showSeal: true },
+    // 关系/保证人/监护人类
+    sponsor_id: { icon: '🪪', title: '保证人身份证标准', wfTitle: '保证人身份证明文件', items: [
+      '保证人身份证/护照原件拍摄',
+      '姓名、证件号、有效期清晰',
+      '如非香港居民需同时提供签证页'
+    ], piiFields: ['保证人姓名', '证件号'], specimen: '保证人身份证·正面',
+    wfFields: [
+      { label: '保证人姓名', width: 'short', pii: true },
+      { label: '证件号码', width: 'long', pii: true },
+      { label: '证件类型', width: 'short', pii: false },
+      { label: '有效期', width: 'mid', pii: false },
+      { label: '与申请人关系', width: 'mid', pii: false },
+      { label: '签发机关', width: 'mid', pii: false }
+    ], showPhoto: true, showSeal: false },
+    sponsor_income: { icon: '💰', title: '保证人收入证明标准', wfTitle: '保证人收入证明', items: [
+      '保证人最近6-12个月收入证明',
+      '含姓名、收入金额、时间段',
+      '公司抬头+盖章或税务机关出具'
+    ], piiFields: ['保证人姓名', '收入金额'], specimen: '保证人收入证明',
+    wfFields: [
+      { label: '出具机构 (抬头)', width: 'full', pii: false },
+      { label: '保证人姓名', width: 'short', pii: true },
+      { label: '收入时间段', width: 'mid', pii: false },
+      { label: '月/年收入金额', width: 'mid', pii: true },
+      { label: '职位 / 工作单位', width: 'full', pii: false },
+      { label: '机构印章 / 日期', width: 'mid', pii: false }
+    ], showPhoto: false, showSeal: true },
+    sponsor_employment: { icon: '💼', title: '保证人在职证明标准', wfTitle: '保证人在职证明', items: [
+      '保证人雇主出具的在职证明',
+      '含职位、在职期间、工作性质',
+      '公司抬头纸+盖章+签字'
+    ], piiFields: ['保证人姓名', '公司名'], specimen: '公司抬头·公章+签字',
+    wfFields: [
+      { label: '公司名称 (抬头)', width: 'full', pii: false },
+      { label: '保证人姓名', width: 'short', pii: true },
+      { label: '职位 / 部门', width: 'mid', pii: false },
+      { label: '在职期间', width: 'mid', pii: false },
+      { label: '工作性质 (全职/合约)', width: 'short', pii: false },
+      { label: '公司印章 / 签字', width: 'mid', pii: false }
+    ], showPhoto: false, showSeal: true },
+    guardian_id: { icon: '🪪', title: '监护人身份证标准', wfTitle: '监护人身份证明文件', items: [
+      '监护人身份证/护照原件拍摄',
+      '姓名、证件号、有效期清晰',
+      '需可证明监护关系（如户口本/公证书）'
+    ], piiFields: ['监护人姓名', '证件号'], specimen: '监护人身份证·正面',
+    wfFields: [
+      { label: '监护人姓名', width: 'short', pii: true },
+      { label: '证件号码', width: 'long', pii: true },
+      { label: '证件类型', width: 'short', pii: false },
+      { label: '有效期', width: 'mid', pii: false },
+      { label: '与申请人关系', width: 'mid', pii: false },
+      { label: '签发机关', width: 'mid', pii: false }
+    ], showPhoto: true, showSeal: false },
+    guardian_consent: { icon: '📄', title: '监护人同意书标准', wfTitle: '监护人同意书 / 监护权证明', items: [
+      '法定监护人签署的同意书',
+      '明确同意未成年人在港学习/居留',
+      '含监护人姓名、联系方式、签字',
+      '如有监护权判决书/公证书一并提供'
+    ], piiFields: ['监护人姓名', '未成年人姓名'], specimen: '监护人签字·含联系方式',
+    wfFields: [
+      { label: '监护人姓名', width: 'short', pii: true },
+      { label: '未成年人姓名', width: 'short', pii: true },
+      { label: '监护关系', width: 'mid', pii: false },
+      { label: '同意事项说明', width: 'full', pii: false },
+      { label: '监护人联系方式', width: 'full', pii: true },
+      { label: '签字 / 日期', width: 'mid', pii: false }
+    ], showPhoto: false, showSeal: false },
+    guardian_income: { icon: '💰', title: '监护人收入证明标准', wfTitle: '监护人经济能力证明', items: [
+      '监护人最近6-12个月收入/资产证明',
+      '含姓名、收入金额、时间段',
+      '可提供薪资证明+银行流水'
+    ], piiFields: ['监护人姓名', '收入金额'], specimen: '收入证明+银行流水',
+    wfFields: [
+      { label: '出具机构 (抬头)', width: 'full', pii: false },
+      { label: '监护人姓名', width: 'short', pii: true },
+      { label: '收入/资产类型', width: 'mid', pii: false },
+      { label: '月/年收入金额', width: 'mid', pii: true },
+      { label: '时间段', width: 'mid', pii: false },
+      { label: '机构印章 / 日期', width: 'mid', pii: false }
+    ], showPhoto: false, showSeal: true },
     // 获批通知
     approval: { icon: '✅', title: '获批通知/e-Visa材料标准', wfTitle: '入境许可通知书 / e-Visa', items: [
       '入境处发出的正式通知原件',
@@ -1047,7 +1476,7 @@ function getSlotGuide(slotKey, docName) {
   return null;
 }
 
-/** Bug #2: 自由模式证件类型→拍摄指引映射 */
+/** Bug #2+#24: 自由模式证件类型→拍摄指引映射 (补全全部类型) */
 function getFreeDocGuide(docType) {
   var guides = {
     id_card: { icon: '🪪', wfTitle: '中华人民共和国居民身份证', items: ['背景：深色桌面，白色背景', '人像：正面居中，头部在虚线框内', '国徽：背面国徽清晰，居中拍摄', '边距：四角留出5mm空白，勿裁切'], piiFields: ['姓名', '身份证号', '出生日期'], specimen: '人像面+国徽面·无反光·圆角完整' },
@@ -1058,23 +1487,47 @@ function getFreeDocGuide(docType) {
     marriage: { icon: '💍', wfTitle: '中华人民共和国结婚证', items: ['背景：深色桌面', '内容：双页展开', '要求：印章+照片清晰'], piiFields: ['双方姓名', '证件号'], specimen: '双页展开·印章清晰' },
     birth_cert: { icon: '👶', wfTitle: '出生医学证明', items: ['背景：深色桌面', '内容：正面完整', '要求：编号+印章清晰'], piiFields: ['婴儿姓名', '出生日期'], specimen: '正面·无折叠' },
     degree: { icon: '🎓', wfTitle: '学位证书', items: ['背景：深色桌面', '内容：证书正面完整', '要求：证书编号+印章清晰'], piiFields: ['姓名', '证书编号'], specimen: '正面·印章清晰' },
+    transcript: { icon: '📄', wfTitle: '学业成绩单', items: ['背景：深色桌面', '内容：学校官方成绩单', '要求：教务处印章清晰'], piiFields: ['姓名', '学号'], specimen: '学校抬头·教务处盖章' },
     work_proof: { icon: '💼', wfTitle: '工作证明', items: ['背景：深色桌面', '内容：抬头纸+盖章', '要求：公章+签字清晰'], piiFields: ['姓名', '公司名'], specimen: '抬头纸+公章' },
+    emp_letter: { icon: '📝', wfTitle: '雇主聘用书', items: ['背景：深色桌面', '内容：公司抬头纸', '要求：含职位+薪资+公章'], piiFields: ['姓名', '薪资'], specimen: '公司抬头纸·公章+签字' },
+    recommendation: { icon: '✉️', wfTitle: '推荐信', items: ['背景：深色桌面', '内容：推荐人签字件', '要求：含联系方式'], piiFields: ['申请人', '推荐人'], specimen: '推荐人签字·含联系方式' },
     bank_statement: { icon: '💰', wfTitle: '银行流水', items: ['背景：深色桌面', '内容：最近12个月', '要求：银行印章清晰'], piiFields: ['账户名', '账号'], specimen: '银行流水原件' },
+    tax_record: { icon: '📑', wfTitle: '完税证明', items: ['背景：深色桌面', '内容：税务机关出具', '要求：税务印章清晰'], piiFields: ['姓名', '身份证号'], specimen: '税务局出具·近期' },
+    income_proof: { icon: '📊', wfTitle: '收入证明', items: ['背景：深色桌面', '内容：公司/机关出具', '要求：含时间段+金额'], piiFields: ['姓名', '收入金额'], specimen: '公司/税务机关出具' },
+    income_250w: { icon: '💵', wfTitle: '年收入≥250万证明', items: ['背景：深色桌面', '内容：薪资+流水+税单', '要求：三件收入数据一致'], piiFields: ['姓名', '年收入'], specimen: '三件一致·≥250万港币' },
+    company_docs: { icon: '🏢', wfTitle: '公司注册文件', items: ['背景：深色桌面', '内容：注册证明+商业登记证', '要求：印章清晰'], piiFields: ['公司编号'], specimen: '公司注册处·商业登记证' },
+    plan_statement: { icon: '📝', wfTitle: '赴港计划书 (文字)', items: ['此材料为文字撰写，非文件上传', '建议800-1500字', '内容：来港目的+职业规划+对港贡献'], piiFields: ['姓名'], specimen: '文字撰写·800-1500字' },
+    no_crime: { icon: '🛡️', wfTitle: '无犯罪记录证明', items: ['背景：深色桌面', '内容：公安局/派出所出具', '要求：6个月内有效'], piiFields: ['姓名', '身份证号'], specimen: '公安机关出具·6个月有效' },
+    student_visa: { icon: '🎫', wfTitle: '学生签证/入境许可', items: ['背景：深色桌面', '内容：入境处签证标签', '要求：含学校+有效期'], piiFields: ['姓名', '签证编号'], specimen: '入境处学生签证标签' },
+    admission_letter: { icon: '📨', wfTitle: '录取通知书', items: ['背景：深色桌面', '内容：学校正式录取通知', '要求：含专业+入学日期'], piiFields: ['姓名'], specimen: '学校抬头·官方印章' },
+    language_cert: { icon: '🗣️', wfTitle: '语言成绩单', items: ['背景：深色桌面', '内容：IELTS/TOEFL/HSK官方成绩单', '要求：分数+证书编号清晰'], piiFields: ['姓名', '考生编号'], specimen: '官方成绩单原件' },
     approval: { icon: '✅', wfTitle: '获批通知书', items: ['背景：深色桌面', '内容：通知完整页面', '要求：申请编号+日期清晰'], piiFields: ['姓名', '申请编号'], specimen: '获批原件' }
   };
   return guides[docType] || null;
 }
 
-/** 卡槽key → 证件分类自动映射 */
+/** 卡槽key → 证件分类自动映射 (Bug #24: 补全全部映射) */
 function slotToCategory(slotKey) {
   var map = {
+    // 身份
     'id_card': 'identity', 'hk_permit': 'identity', 'passport': 'identity', 'hk_id': 'identity', 'photo': 'identity',
+    // 学历
     'degree_cert': 'education', 'transcript': 'education', 'degree_auth': 'education', 'language_cert': 'education',
+    'admission_letter': 'education', 'exchange_agreement': 'education', 'parttime_enrollment': 'education',
+    // 工作
     'emp_letter': 'work', 'emp_proof': 'work', 'reference_letter': 'work', 'recommendation': 'work',
-    'salary_proof': 'work', 'org_chart': 'work', 'emp_3y': 'work',
-    'bank_statement': 'assets', 'tax_record': 'assets', 'income_250w': 'assets', 'income_proof': 'assets', 'company_docs': 'assets',
-    'visa_label': 'approved', 'approval': 'approved', 'plan_statement': 'approved', 'student_visa': 'approved', 'hk_visa': 'approved',
-    'no_crime': 'approved'
+    'salary_proof': 'work', 'org_chart': 'work', 'emp_3y': 'work', 'company_docs': 'work', 'tech_achievement': 'work',
+    // 资产
+    'bank_statement': 'assets', 'tax_record': 'assets', 'income_250w': 'assets', 'income_proof': 'assets',
+    'investment_proof': 'assets', 'asset_proof': 'assets', 'retirement_fund': 'assets', 'pension_proof': 'assets',
+    'funding_proof': 'assets',
+    // 获批/申请
+    'visa_label': 'approved', 'approval': 'approved', 'plan_statement': 'approved', 'student_visa': 'approved',
+    'hk_visa': 'approved', 'no_crime': 'approved',
+    // 关系/保证人/监护人
+    'marriage_cert': 'identity', 'birth_cert': 'identity', 'household': 'identity',
+    'sponsor_id': 'identity', 'sponsor_income': 'assets', 'sponsor_employment': 'work',
+    'guardian_id': 'identity', 'guardian_consent': 'approved', 'guardian_income': 'assets'
   };
   return map[slotKey] || '';
 }

@@ -94,8 +94,8 @@
     </view>
 
     <!-- Bug #13: 风险提醒/免责弹窗 -->
-    <view class="disclaimer-overlay" wx:if="{{showDisclaimerPopup}}">
-      <view class="disclaimer-card" catchtap="catchStop">
+    <view class="disclaimer2-overlay" wx:if="{{showDisclaimerPopup}}">
+      <view class="disclaimer2-card" catchtap="catchStop">
         <text class="disclaimer-icon">{{disclaimerType === 'long_cycle' ? '⚠️' : disclaimerType === 'self_assessed' ? '📋' : disclaimerType === 'zero_progress' ? '📭' : 'ℹ️'}}</text>
         <text class="disclaimer-title">{{disclaimerTitle}}</text>
         <text class="disclaimer-body">{{disclaimerBody}}</text>

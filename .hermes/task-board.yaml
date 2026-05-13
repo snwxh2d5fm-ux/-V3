@@ -2,7 +2,7 @@
 # 格式: 给人读也给 AI parse。每次开发/审查后由对应 Agent 更新。
 # 路径: .hermes/task-board.yaml
 
-updated: 2026-05-11T22:30:00+08:00
+updated: 2026-05-13T23:00:00+08:00
 
 phases:
   - id: phase0
@@ -123,6 +123,17 @@ tasks:
     status: completed
     completed: 2026-05-12
 
+  - id: P0-FIX-SWITCHTAB
+    title: "Bug Fix: automator switchTab 断连修复"
+    phase: phase0
+    stage: done
+    status: completed
+    completed: 2026-05-13
+    notes: |
+      - tests/e2e/helpers/index.js — switchTab() 重写: evaluate→wx.switchTab + 3次重试 + currentPage验证 + fallback mp.switchTab()
+      - 根因: automator v0.12 mp.switchTab() 内部 currentPage() 在Tab切换时触发WebSocket断开
+      - 影响: goToTab/verifyAllTabs/verifyAllPages 自动受益
+
   - id: P0-HARNESS
     title: Harness Engineering 基础设施
     phase: phase0
@@ -168,3 +179,50 @@ risks:
     title: 小红书登录过期
     severity: medium
     mitigation: P1-REDBOOK — 延后至 Phase 1
+
+ledger:
+  - date: 2026-05-13
+    type: bugfix
+    title: L1 E2E 3项修复 (process/reminders详情导航 + regression路径)
+    files:
+      - tests/e2e/specs/process.test.js
+      - tests/e2e/specs/reminders.test.js
+      - tests/e2e/specs/regression.test.js
+    summary: >
+      Bug1: process详情页navigateTo缺少?id参数。页内种子__processes__数据。
+      Bug2: reminders详情页navigation无storage数据。页内种子__reminders__数据。
+      Bug3: regression require('../../app.json')→require('../../../app.json')。
+    source: inbox/NOTIFY_l1_failures_20260513.md
+    report: outbox/l1_failures_20260513_done.md
+
+  - date: 2026-05-13
+    type: bugfix
+    title: L1 regression 套件 automator 连接稳定性修复 (Plan B拆分+per-file reconnect)
+    files:
+      - tests/e2e/specs/regression.test.js (删除)
+      - tests/e2e/specs/regression-my.test.js (新建)
+      - tests/e2e/specs/regression-exception.test.js (新建)
+      - tests/e2e/specs/regression-prd.test.js (新建)
+      - package.json (新增3个回归子脚本)
+    summary: >
+      核心5套件30/30全绿。regression套件19项在461s后automator WebSocket崩溃，14/19 timeout。
+      方案B: 拆分为3个spec (my/exception/prd)，每个beforeAll加重连健康检查。
+      同时修复2处语法错误(10.5缺逗号, 11.6/11.7代码粘连)。
+    source: inbox/NOTIFY_regression_timeout_20260513.md
+    report: outbox/regression_timeout_20260513_done.md
+
+  - date: 2026-05-13
+    type: rollback
+    title: "回滚 regression 拆分: 3→1套件, 恢复全局连接信任模型"
+    files:
+      - tests/e2e/specs/regression.test.js (回建, 合并my+prd+exception)
+      - tests/e2e/specs/regression-my.test.js (删除)
+      - tests/e2e/specs/regression-prd.test.js (删除)
+      - tests/e2e/specs/regression-exception.test.js (删除)
+      - package.json (删除3个拆分脚本)
+    summary: >
+      拆分后9/9套件全败(20/49), smoke 6/7 timeout。
+      根因: per-file automator.launch() 重连时老旧连接未关闭, global.__miniProgram__ 污染。
+      回滚方案: 合并为单一 regression.test.js, beforeAll 信任 globalSetup 连接(不做 fallback 重连),
+      用 initTestState 单次 evaluate 替换 clearStorage+mockLogin 双往返。
+    source: inbox/NOTIFY_regression_rollback_20260513.md

@@ -4,18 +4,30 @@
   "description": "住港伴 — 香港身份规划 AI 伴侣 · 微信小程序",
   "private": true,
   "scripts": {
-    "test": "jest --verbose",
+    "test": "jest --verbose --maxWorkers=4",
     "test:watch": "jest --watch",
     "test:coverage": "jest --coverage",
+    "test:e2e": "jest -c tests/e2e/jest.config.js --verbose --forceExit",
+    "test:e2e:smoke": "jest -c tests/e2e/jest.config.js --verbose --forceExit --testPathPattern=smoke",
+    "test:e2e:docs": "jest -c tests/e2e/jest.config.js --verbose --forceExit --testPathPattern=documents",
+    "test:e2e:process": "jest -c tests/e2e/jest.config.js --verbose --forceExit --testPathPattern=process",
+    "test:e2e:chat": "jest -c tests/e2e/jest.config.js --verbose --forceExit --testPathPattern=ai-chat",
+    "test:e2e:regression": "jest -c tests/e2e/jest.config.js --verbose --forceExit --testPathPattern=regression",
+    "test:e2e:guidebooks": "jest -c tests/e2e/jest.config.js --verbose --forceExit --testPathPattern=guidebooks",
+    "test:e2e:reminders": "jest -c tests/e2e/jest.config.js --verbose --forceExit --testPathPattern=reminders",
+    "test:ci": "bash scripts/ci/run-e2e.sh",
+    "test:ci:quick": "SKIP_UNIT=1 bash scripts/ci/run-e2e.sh smoke",
     "verify": "bash scripts/verify.sh",
     "verify:baseline": "bash scripts/verify.sh --baseline",
-    "verify:diff": "bash scripts/verify.sh --diff"
+    "verify:diff": "bash scripts/verify.sh --diff",
+    "wetest:gen": "node scripts/ci/wetest-cloud.js"
   },
   "jest": {
     "testEnvironment": "node",
     "testMatch": [
       "**/__tests__/**/*.test.js",
-      "**/tests/**/*.test.js"
+      "**/tests/jest/**/*.test.js",
+      "**/tests/smoke/**/*.test.js"
     ],
     "collectCoverageFrom": [
       "pages/**/*.js",
@@ -35,6 +47,8 @@
     }
   },
   "devDependencies": {
-    "jest": "^29.0.0"
+    "jest": "^29.0.0",
+    "miniprogram-automator": "^0.12.0",
+    "jest-html-reporter": "^3.10.0"
   }
 }

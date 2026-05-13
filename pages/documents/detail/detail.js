@@ -24,10 +24,12 @@ Page({
     try {
       const doc = getDocumentMeta(docId);
       if (doc) {
+        // Bug #27 修复: 先设currentPIILevel，parseOCRFields依赖它读取脱敏等级
+        var piiLevel = wx.getStorageSync(CONSTANTS.STORAGE_KEYS.PRIVACY_MODE) || 'L1';
+        this.setData({ currentPIILevel: piiLevel });
         this.setData({
           doc,
           ocrFields: this.parseOCRFields(doc),
-          currentPIILevel: wx.getStorageSync(CONSTANTS.STORAGE_KEYS.PRIVACY_MODE) || 'L1',
           isArchived: doc.status === 'archived'
         });
       }

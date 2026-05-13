@@ -106,10 +106,13 @@
             <text class="slot__name">{{slot.docName}}</text>
             <text class="slot__count" wx:if="{{slot.uploadedCount > 0}}">{{slot.uploadedCount}}份</text>
           </view>
-          <!-- 右侧+按钮 → 始终触发添加 -->
-          <text class="slot__btn {{slot.fillStatus === 'empty' ? 'add' : 'done'}}"
+          <!-- Bug #18 修复: 右侧按钮 → 未满显示"继续添加"，满则打✓ -->
+          <text class="slot__btn add"
                 bindtap="uploadToSlot" data-slot-key="{{slot.slotKey}}"
-                wx:if="{{slot.fillStatus === 'empty' || (slot.uploadedCount < slot.maxCount) || slot.maxCount === -1}}">+</text>
+                wx:if="{{slot.fillStatus === 'empty'}}">+</text>
+          <text class="slot__btn continue"
+                bindtap="uploadToSlot" data-slot-key="{{slot.slotKey}}"
+                wx:elif="{{slot.uploadedCount < slot.maxCount || slot.maxCount === -1}}">+ 继续添加</text>
           <text class="slot__btn slot__btn--full"
                 wx:else>✓</text>
         </view>

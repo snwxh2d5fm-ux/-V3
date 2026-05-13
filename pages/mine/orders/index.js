@@ -40,6 +40,12 @@ Page({
         };
       });
 
+      // Bug #14 修复: 过滤本地已删除订单，防止云端删除失败后重新出现
+      var deleted = wx.getStorageSync('__deleted_orders__') || [];
+      if (deleted.length > 0) {
+        orders = orders.filter(function(o) { return deleted.indexOf(o.orderId) < 0; });
+      }
+
       that.setData({
         loading: false,
         orders: orders,
@@ -75,12 +81,15 @@ Page({
           var local = wx.getStorageSync('__user_orders__') || [];
           local = local.filter(function(o) { return o.orderId !== orderId; });
           wx.setStorageSync('__user_orders__', local);
-          // 调用云端删除（持久化）
+          // Bug #14 修复: 云端删除持久化 + 本地删除标记防重现
           wx.cloud.callFunction({
             name: 'payment',
             data: { action: 'deleteOrder', orderId: orderId }
           }).catch(function() {
-            // 云端删除失败不影响本地操作
+            // 云端删除失败 → 写入本地黑名单，loadOrders时过滤
+            var deleted = wx.getStorageSync('__deleted_orders__') || [];
+            if (deleted.indexOf(orderId) < 0) deleted.push(orderId);
+            wx.setStorageSync('__deleted_orders__', deleted);
           });
           wx.showToast({ title: '已删除', icon: 'none' });
         }

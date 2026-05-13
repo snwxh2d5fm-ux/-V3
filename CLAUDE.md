@@ -1,7 +1,7 @@
 # 住港伴 (ZhuGangBan) — 微信小程序项目上下文
 
 > 香港身份规划 AI 伴侣 · WeChat Mini Program + CloudBase
-> 最后更新: 2026-05-12
+> 最后更新: 2026-05-13
 
 ## 项目定位
 帮助内地/海外人士规划香港身份的微信小程序。覆盖 12 条申请路径的资格评估、材料准备、流程追踪、到期提醒。
@@ -176,6 +176,24 @@ knowledge_chunks ─→ batch-generate-guidebooks → guidebook_articles
 - `execute_code` 的 `read_file` 返回带行号前缀的 content，直接 write 会污染文件
 - 优先用 `patch` 工具做修改
 - 如必须用 execute_code，读取用 `open()` 而非 `read_file()`
+
+### 测试体系 (2026-05-13)
+
+三层分层测试，详见 `测试分层清单_三层体系_20260513.md`：
+
+| 层级 | 方式 | 触发 | 耗时 | 覆盖 |
+|:----:|------|------|:---:|:---:|
+| L1 | `npm run test:e2e` (automator) | 每次 push | 5-10min | 72/90 (80%) |
+| L2 | WeTest 云真机 (`npm run wetest:gen`) | 每日/PR合并 | 15-30min | 6/90 (7%) |
+| L3 | 人工真机 | 发版前 | 36min | 12/90 (13%) |
+
+**L1 覆盖**: 流程控 9/9、攻略书 6/6、TabBar 6/6、我的+会员 7/7 全量，证件夹 8/10（排除拍照/OCR），提醒器 7/8，AI Chat 6/7。
+**L2 场景**: 冷启动耗时、暗色/亮色模式、网络断开、大图上传、令牌颜色多机型渲染。
+**L3 场景**: 相机/OCR(4)、微信登录授权(2)、VoiceOver朗读(3→L1补充属性检查)、系统级操作(2)。
+
+**spec 文件**: `tests/e2e/specs/*.test.js` (7文件)
+**操作手册**: `docs/e2e-testing-guide.md`
+**人力**: 原 90项×3min=4.5h/轮 → 现 36min/轮 (仅发版前)
 
 ## 本轮进展 (2026-05-12)
 1. **Harness Engineering H1+H2 全面升级**:

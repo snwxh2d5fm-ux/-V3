@@ -34,9 +34,19 @@ async function createPDF(opts) {
   var { fileIDs, title, owner, docNumber, validFrom, validTo } = opts;
 
   var imageBuffers = [];
+  var failedImages = [];
   for (var i = 0; i < fileIDs.length; i++) {
-    var res = await cloud.downloadFile({ fileID: fileIDs[i] });
-    imageBuffers.push(res.fileContent);
+    try {
+      var res = await cloud.downloadFile({ fileID: fileIDs[i] });
+      imageBuffers.push(res.fileContent);
+    } catch (e) {
+      console.error('[generate-pdf] 图片下载失败:', fileIDs[i], e.message);
+      failedImages.push({ index: i, fileID: fileIDs[i], error: e.message });
+      // 麒麟P0-2修复: 逐条隔离，一张失败不中断全部
+    }
+  }
+  if (imageBuffers.length === 0) {
+    return { code: 400, msg: '所有图片下载失败', failedCount: failedImages.length };
   }
 
   // 创建PDF文档

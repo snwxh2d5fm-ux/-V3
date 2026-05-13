@@ -21,6 +21,9 @@ __pycache__/
 *.pyc
 .venv/
 
+# === E2E 测试 ===
+tests/e2e/reports/
+
 # === 临时文件 ===
 *.swp
 *.swo

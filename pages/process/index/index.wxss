@@ -160,7 +160,7 @@
 .mc-btn::after { border: none; }
 
 /* 免责声明弹窗 (合并 P0#13 + Bug #13) */
-.disclaimer-overlay {
+.disclaimer-overlay, .disclaimer2-overlay {
   position: fixed; inset: 0; z-index: 600;
   background: rgba(0,0,0,0.55);
   display: flex; align-items: center; justify-content: center;

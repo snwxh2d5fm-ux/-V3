@@ -7,7 +7,7 @@
 const app = getApp();
 const { getAllDocuments, saveDocuments } = require('../../../utils/storage');
 const { desensitizeFields, MODES } = require('../../../utils/desensitize');
-const { getGlobalStages } = require('../../../utils/stage-helper');
+const { getGlobalStages, getActiveStageIndex } = require('../../../utils/stage-helper');
 const constants = require('../../../data/constants');
 
 Page({
@@ -99,7 +99,7 @@ Page({
      LIFECYCLE
      ============================================================ */
   onShow() {
-    var stages = getGlobalStages(); this.setData({ stageSteps: stages, stageProgress: Math.min(((getActiveStageIndex() + 1) / 7) * 100, 100) });
+    try { var stages = getGlobalStages(); this.setData({ stageSteps: stages, stageProgress: Math.min(((getActiveStageIndex() + 1) / 7) * 100, 100) }); } catch(e) { this.setData({ stageProgress: 14 }); }
     const userStatus = app.globalData.userStatus ||
       wx.getStorageSync(constants.STORAGE_KEYS.USER_STATUS) || '';
     const selectedPath = app.globalData.selectedPath ||
