@@ -42,14 +42,14 @@ Component({
     attached() {
       var saved = wx.getStorageSync('__ai_conversation__');
       if (saved && saved.length > 0) {
-        this.setData({ messages: saved });
+        this.setData({ messages: this.processMessagesForDisplay(saved) });
       } else {
         this.setData({
-          messages: [{
+          messages: this.processMessagesForDisplay([{
             role: 'assistant',
             content: '你好！我是住港伴AI专员 v4.1 🤖\n\n我可以帮你：\n• 🎯 自评香港身份路径（12条路径·12项准则）\n• 📋 解答入境政策问题\n• 📖 推荐申请攻略\n• 📄 整理材料清单\n\n直接问我，或点击下方快捷入口～',
             timestamp: Date.now()
-          }]
+          }])
         });
       }
     }
@@ -126,14 +126,14 @@ Component({
           quickReplies: quickReplies, timestamp: Date.now()
         };
 
-        var newMessages = this.data.messages.concat([assistantMsg]);
+        var newMessages = this.processMessagesForDisplay(this.data.messages.concat([assistantMsg]));
         this.setData({ messages: newMessages, quickReplies: quickReplies, loading: false });
         this.saveHistory(newMessages);
         this.scrollToBottom();
       } catch (err) {
         console.error('[FloatingAI] 发送失败:', err);
         var errorMsg = { role: 'assistant', content: '网络开小差了，请稍后再试 😅', timestamp: Date.now() };
-        var newMessages = this.data.messages.concat([errorMsg]);
+        var newMessages = this.processMessagesForDisplay(this.data.messages.concat([errorMsg]));
         this.setData({ messages: newMessages, loading: false });
         this.saveHistory(newMessages);
         this.scrollToBottom();
@@ -234,6 +234,84 @@ Component({
     saveHistory(messages) {
       var toSave = messages.slice(-50);
       wx.setStorageSync('__ai_conversation__', toSave);
+    },
+
+    // Bug #7: 解析Markdown内容为rich-text nodes
+    parseMarkdownToNodes(text) {
+      if (!text) return [];
+      var nodes = [];
+      var lines = text.split('\n');
+      for (var i = 0; i < lines.length; i++) {
+        var line = lines[i];
+        var trimmed = line.trim();
+        if (!trimmed) {
+          nodes.push({ name: 'br' });
+          continue;
+        }
+        // 列表项: - xxx 或 * xxx
+        if (/^[-*]\s+/.test(trimmed)) {
+          var itemText = trimmed.replace(/^[-*]\s+/, '');
+          nodes.push({
+            name: 'p',
+            attrs: { style: 'padding-left:8px;margin:2px 0;font-size:15px;line-height:1.6' },
+            children: [{ name: 'span', attrs: { style: 'color:#3B82F6;margin-right:4px' }, children: [{ type: 'text', text: '●' }] }]
+              .concat(this.parseInlineMarkdown(itemText))
+          });
+          continue;
+        }
+        // 数字列表: 1. xxx
+        if (/^\d+[\.\、]\s*/.test(trimmed)) {
+          var numMatch = trimmed.match(/^(\d+)[\.\、]\s*/);
+          var numText = trimmed.substring(numMatch[0].length);
+          nodes.push({
+            name: 'p',
+            attrs: { style: 'padding-left:8px;margin:2px 0;font-size:15px;line-height:1.6' },
+            children: [{ name: 'span', attrs: { style: 'color:#3B82F6;margin-right:4px;font-weight:600' }, children: [{ type: 'text', text: numMatch[1] + '.' }] }]
+              .concat(this.parseInlineMarkdown(numText))
+          });
+          continue;
+        }
+        // 普通段落
+        nodes.push({
+          name: 'p',
+          attrs: { style: 'margin:2px 0;font-size:15px;line-height:1.7' },
+          children: this.parseInlineMarkdown(trimmed)
+        });
+      }
+      return nodes;
+    },
+
+    /** 解析行内Markdown: **粗体** */
+    parseInlineMarkdown(text) {
+      var children = [];
+      var boldRegex = /\*\*([^*]+)\*\*/g;
+      var lastIndex = 0;
+      var match;
+      while ((match = boldRegex.exec(text)) !== null) {
+        if (match.index > lastIndex) {
+          children.push({ type: 'text', text: text.substring(lastIndex, match.index) });
+        }
+        children.push({ name: 'span', attrs: { style: 'font-weight:700;color:#1F2937' }, children: [{ type: 'text', text: match[1] }] });
+        lastIndex = boldRegex.lastIndex;
+      }
+      if (lastIndex < text.length) {
+        children.push({ type: 'text', text: text.substring(lastIndex) });
+      }
+      if (children.length === 0) {
+        children.push({ type: 'text', text: text });
+      }
+      return children;
+    },
+
+    /** 对话消息预处理：为每条assistant消息生成parsedNodes */
+    processMessagesForDisplay(messages) {
+      return messages.map(function(msg) {
+        if (msg.role === 'assistant') {
+          msg.parsedNodes = this.parseMarkdownToNodes(msg.content);
+          msg.hasParsedContent = true;
+        }
+        return msg;
+      }.bind(this));
     },
 
     clearConversation() {

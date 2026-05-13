@@ -57,8 +57,71 @@ Page({
   },
 
   onShow() {
-    this.loadReminders();
+    this.loadReminders().then((function() {
+      this.checkAutoGenerate();
+    }).bind(this));
     this.refreshMembership();
+  },
+
+  // Bug #9: 选择路径后自动检测是否需要生成提醒
+  checkAutoGenerate() {
+    var that = this;
+    var app = getApp();
+    var session = wx.getStorageSync('__session__') || {};
+    var selectedPath = (app && app.globalData && app.globalData.selectedPath) || session.selectedPath || '';
+
+    if (!selectedPath) return; // 未选路径
+
+    // 检查是否已有提醒
+    var allReminders = getAllReminders();
+    if (allReminders.length > 0) return; // 已有提醒，不打扰
+
+    // 检查是否已询问过（避免重复弹窗）
+    var askedKey = '__auto_reminder_asked_' + selectedPath;
+    if (wx.getStorageSync(askedKey)) return;
+
+    var pathNames = {
+      'qmas': '优才计划', 'ttps_a': '高才通A类', 'ttps_b': '高才通B类', 'ttps_c': '高才通C类',
+      'asmpt': '专才计划', 'student_iang': '学生→IANG', 'dependent': '受养人',
+      'cies': 'CIES投资移民', 'permanent': '永居申请'
+    };
+    var pathName = pathNames[selectedPath] || selectedPath;
+
+    wx.showModal({
+      title: '检测到路径选择',
+      content: '你已选择「' + pathName + '」路径。是否基于该路径自动生成关键日期提醒？\n\n包含：递交日期、获批提醒、续签节点、永居窗口等。',
+      confirmText: '立即生成',
+      cancelText: '稍后再说',
+      success: function(res) {
+        if (res.confirm) {
+          that.doAutoGenerate(selectedPath, pathName);
+        }
+        wx.setStorageSync(askedKey, true);
+      }
+    });
+  },
+
+  // Bug #9: 执行自动生成
+  doAutoGenerate: function(path, pathName) {
+    var that = this;
+    var app = getApp();
+
+    wx.showModal({
+      title: '设置激活日期',
+      content: '请先设置你的申请递交/激活日期作为时间线基准。可在提醒详情页手动调整。\n\n是否现在前往设置？',
+      confirmText: '前往设置',
+      cancelText: '取消',
+      success: function(res) {
+        if (res.confirm) {
+          // 保存路径上下文，跳转时间线页面
+          app.globalData.selectedPath = path;
+          wx.setStorageSync('__active_process_id__', path);
+          wx.navigateTo({
+            url: '/pages/reminders/detail/detail?action=timeline&path=' + path
+          });
+        }
+      }
+    });
   },
 
   onPullDownRefresh() {

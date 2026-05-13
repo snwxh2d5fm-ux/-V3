@@ -165,9 +165,16 @@ function buildSolutionRecommendPrompt() {
 function buildUserProfile(context) {
   if (!context || Object.keys(context).length === 0) return '';
   var profile = '\n\n【👤 用户画像 — 四层权重体系】\n';
-  profile += '以下信息按优先级排列，请据此调整回答的针对性和深度：\n\n';
+  profile += '以下信息仅供内部参考，用于调整回答的针对性和深度。\n';
+  profile += '【⚠️ 最高优先级·隐私保护规则】（违反则视为严重错误）：\n';
+  profile += '绝对禁止在回答中直接或间接透露用户画像信息。禁止使用以下任何表述：\n';
+  profile += '❌ "根据你的画像""我看到你正在""你已选择了""你的状态显示为""作为XX路径的申请人"\n';
+  profile += '❌ "你在XX页面""你浏览了""我注意到你的身份状态是""你当前的状态是"\n';
+  profile += '❌ 禁止将用户所处的申请阶段/路径选择/页面位置作为对话内容直接引用\n';
+  profile += '✅ 正确做法：基于画像信息调整回答深度和针对性，但永远不解释为什么知道，只说专业内容本身。\n';
+  profile += '✅ 例如：如果用户状态为"已获批"，直接说续签/永居相关内容，而不说"既然你已获批..."。\n\n';
 
-  // L1: 用户手工选择的状态 — 决定"他是谁"（最高优先级）
+  // L1: 用户手工选择的状态 — 三维叠加决定"他是谁"（最高优先级）
   var l1 = [];
   if (context.userStatus) {
     var statusLabels = { unapplied: '未申请', submitted: '已提交申请等待审批', approved: '已获批', permanent: '永居' };
@@ -178,9 +185,11 @@ function buildUserProfile(context) {
     l1.push('申请路径：' + (pathLabels[context.selectedPath] || context.selectedPath));
   }
   if (context.userSubStatus) l1.push('职业身份：' + context.userSubStatus);
+  // 三维叠加判定：身份状态+路径选择+职业身份三者结合才能准确判定用户画像
   if (l1.length > 0) {
-    profile += '【L1·他是谁 — 手工选择·最高优先】\n';
-    profile += l1.join(' | ') + '\n\n';
+    profile += '【L1·他是谁 — 三维叠加判定（身份状态×路径选择×职业身份）·最高优先】\n';
+    profile += l1.join(' | ') + '\n';
+    profile += '判定逻辑：以上三个维度叠加才能准确定位用户画像。例如"已提交+优才+在职"与"已提交+高才通A+企业家"是完全不同的用户群体，需分别调整回答策略。\n\n';
   }
 
   // L2: 资格评估输入 — 决定"他怎么样"（内容标签）

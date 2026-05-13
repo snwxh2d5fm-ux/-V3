@@ -302,6 +302,7 @@ Page({
     if (path) {
       app.globalData.selectedPath = path;
       wx.setStorageSync('__active_process_id__', path);
+      wx.setStorageSync('__selected_path__', path);
     }
   }
 });

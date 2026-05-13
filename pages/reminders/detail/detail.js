@@ -73,6 +73,9 @@ Page({
     const action = options.action || '';
     const id = options.id || '';
 
+    // Bug #9: 保存path参数供initTimeline使用
+    this._options_path = options.path || '';
+
     this.setData({ action });
 
     if (id) {
@@ -95,7 +98,8 @@ Page({
   initTimeline() {
     var session = wx.getStorageSync('__session__') || {};
     var app = getApp();
-    var path = (app && app.globalData && app.globalData.selectedPath) || session.selectedPath || '';
+    // Bug #9: 优先从options.path读取（来自自动生成流程），否则fallback到globalData
+    var path = this._options_path || (app && app.globalData && app.globalData.selectedPath) || session.selectedPath || '';
     var pathNames = {
       'qmas': '优才计划', 'ttps_a': '高才通A类', 'ttps_b': '高才通B类', 'ttps_c': '高才通C类',
       'asmpt': '专才计划', 'student_iang': '学生→IANG', 'dependent': '受养人',

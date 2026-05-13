@@ -15,6 +15,7 @@ Page({
     inputMode: '',               // 'camera' | 'album' | 'manual'
     imagePath: '',               // 临时图片路径
     imageBase64: '',             // base64预览
+    imageRotated: 0,             // 旋转角度 0/90/180/270
 
     // OCR结果
     docType: 'unknown',          // 识别到的证件类型
@@ -33,6 +34,10 @@ Page({
     // 质量检测
     qualityIssues: [],           // 图片质量问题(旧)
     qualityResult: null,         // 质量检测结果(新·6项)
+
+    // 扫描件效果
+    scanMode: false,             // 是否启用扫描件增强
+    scanProcessing: false,       // 扫描件处理中
 
     // 分类选项 — 对齐PRD七大类
     categories: [
@@ -70,6 +75,23 @@ Page({
     slotGuide: null,
     skipCategory: false,
 
+    // 自由模式证件类型选择 (Bug #2: 非卡槽入口显示线框图)
+    freeDocType: '',
+    freeDocTypeOptions: [
+      { value: 'id_card', label: '身份证', icon: '🪪' },
+      { value: 'hk_permit', label: '港澳通行证', icon: '🛂' },
+      { value: 'passport', label: '护照', icon: '🛂' },
+      { value: 'hk_id', label: '香港身份证', icon: '🆔' },
+      { value: 'household', label: '户口本', icon: '📖' },
+      { value: 'marriage', label: '结婚证', icon: '💍' },
+      { value: 'birth_cert', label: '出生证', icon: '👶' },
+      { value: 'degree', label: '学位证', icon: '🎓' },
+      { value: 'work_proof', label: '工作证明', icon: '💼' },
+      { value: 'bank_statement', label: '银行流水', icon: '💰' },
+      { value: 'approval', label: '获批通知', icon: '✅' }
+    ],
+    freeDocGuide: null,           // 自由模式下选中证件类型的拍摄指引
+
     // 保存状态
     saving: false,
     privacyMode: 'local'
@@ -102,8 +124,24 @@ Page({
 
   // ========== Step 1: 选择输入方式 ==========
 
-  /** 拍照 */
+  /** 拍照 — Bug#4: 先展示拍摄引导，再调相机 */
   onTapCamera() {
+    var that = this;
+    var guide = this.getActiveGuide();
+    var guideText = guide ? guide.wfTitle + ' — ' + (guide.specimen || '请确保四角完整') : '请确保证件四角完整、无反光';
+    wx.showModal({
+      title: '拍摄指引',
+      content: guideText + '\n\n系统将打开相机，请对准证件正面拍摄。拍摄后可进行质量检测和手动对齐。',
+      confirmText: '开始拍摄',
+      cancelText: '返回',
+      success: function(res) {
+        if (res.confirm) {
+          that.doTakeCamera();
+        }
+      }
+    });
+  },
+  doTakeCamera() {
     this.setData({ inputMode: 'camera' });
     wx.chooseMedia({
       count: 1,
@@ -152,12 +190,36 @@ Page({
       this.setData({ qualityResult: result });
     } catch (e) {
       console.log('[QC] 质量检测异常:', e);
-      this.setData({ qualityResult: { pass: true, score: 100, issues: [], summary: '基础' } });
+      // 异常时展示降级结果，明确标注未完成完整检测
+      this.setData({ qualityResult: {
+        pass: false,
+        score: 50,
+        issues: [{ type: 'system_error', severity: 'warning', message: '质量检测引擎未能完整运行，请确认照片清晰可用后继续' }],
+        summary: 'fair',
+        dimensions: { width: 0, height: 0 }
+      }});
     }
   },
 
-  /** 确认图片 → 进入对齐裁切 */
+  /** 确认图片 → 质量不过时阻断 */
   confirmImage() {
+    var qr = this.data.qualityResult;
+    if (qr && !qr.pass) {
+      wx.showModal({
+        title: '照片质量不通过',
+        content: '检测到以下问题：\n' + qr.issues.filter(function(i) { return i.severity === 'warning'; }).map(function(i) { return '• ' + i.message; }).join('\n') + '\n\n建议重新拍摄以获得更好的识别效果。',
+        confirmText: '重新拍摄',
+        cancelText: '强制继续',
+        success: (function(res) {
+          if (res.confirm) {
+            this.retakePhoto();
+          } else {
+            this.setData({ step: 2.5, cropX: 0, cropY: 0, cropScale: 1 });
+          }
+        }).bind(this)
+      });
+      return;
+    }
     this.setData({ step: 2.5, cropX: 0, cropY: 0, cropScale: 1 });
   },
 
@@ -509,10 +571,63 @@ Page({
   /** 重新识别（返回重拍） */
   retakePhoto() {
     this.setData({
-      step: 1, inputMode: '', imagePath: '', imageBase64: '',
+      step: 1, inputMode: '', imagePath: '', imageBase64: '', imageRotated: 0, scanMode: false,
       docType: 'unknown', ocrFields: {}, rawOCRText: '',
-      confidence: 0, confidencePercent: '0', ocrFieldList: [], qualityIssues: []
+      confidence: 0, confidencePercent: '0', ocrFieldList: [], qualityIssues: [], qualityResult: null
     });
+  },
+
+  // ===== Bug #5: 旋转+扫描件工具栏 =====
+
+  /** 顺时针旋转90° */
+  onRotateImage() {
+    var currentRot = this.data.imageRotated || 0;
+    var newRot = (currentRot + 90) % 360;
+    this.setData({ imageRotated: newRot });
+    wx.showToast({ title: '已旋转 ' + newRot + '°', icon: 'none', duration: 800 });
+  },
+
+  /** 扫描件效果增强 */
+  onToggleScanMode() {
+    var that = this;
+    if (this.data.scanProcessing) return;
+    this.setData({ scanProcessing: true });
+    wx.showLoading({ title: '扫描增强中...' });
+    try {
+      var imageProcess = require('../../../utils/image-process');
+      imageProcess.enhanceToScanned(this.data.imagePath).then(function(enhancedPath) {
+        wx.hideLoading();
+        that.setData({ scanMode: !that.data.scanMode, scanProcessing: false });
+        if (enhancedPath && enhancedPath !== that.data.imagePath) {
+          that.setData({ imagePath: enhancedPath });
+        }
+        wx.showToast({ title: '扫描增强完成', icon: 'success', duration: 1000 });
+      }).catch(function() {
+        wx.hideLoading();
+        that.setData({ scanMode: !that.data.scanMode, scanProcessing: false });
+        wx.showToast({ title: '增强失败，使用原图', icon: 'none' });
+      });
+    } catch (e) {
+      wx.hideLoading();
+      this.setData({ scanProcessing: false });
+      wx.showToast({ title: '扫描增强暂不可用', icon: 'none' });
+    }
+  },
+
+  // ===== Bug #2: 自由模式证件类型选择 =====
+
+  /** 选择拍摄的证件类型（非卡槽模式下显示对应线框图+指引） */
+  onSelectFreeDocType(e) {
+    var value = e.currentTarget.dataset.value;
+    var guide = getFreeDocGuide(value);
+    this.setData({ freeDocType: value, freeDocGuide: guide });
+  },
+
+  /** 获取当前有效的拍摄指引（卡槽优先，否则自由模式） */
+  getActiveGuide() {
+    if (this.data.slotContext && this.data.slotGuide) return this.data.slotGuide;
+    if (this.data.freeDocGuide) return this.data.freeDocGuide;
+    return null;
   },
 
   // ========== Step 4: 确认保存 ==========
@@ -721,18 +836,27 @@ Page({
   }
 });
 
-/** 卡槽→证件指引映射：从不同卡槽进入展示不同要求 */
+/** 卡槽→证件指引映射：从不同卡槽进入展示不同要求 (Bug #24: 增强专属模板) */
 function getSlotGuide(slotKey, docName) {
   var name = (docName || '').toLowerCase();
   var guides = {
-    // 身份证
+    // 身份证 — 双面模板：人像面+国徽面
     id_card: { icon: '🪪', title: '身份证材料标准', wfTitle: '中华人民共和国居民身份证', items: [
       '正反面均需拍摄，四角完整可见',
       '平放深色桌面，正对拍摄，不倾斜',
       '确保证件号、姓名、照片清晰可读',
       '勿使用复印件或屏幕截图',
       '圆角边框不得裁切或遮挡'
-    ], piiFields: ['姓名', '身份证号', '出生日期', '地址'], specimen: '正面(人像面)+背面(国徽面)·四角完整·无反光·彩色' },
+    ], piiFields: ['姓名', '身份证号', '出生日期', '地址'], specimen: '正面(人像面)+背面(国徽面)·四角完整·无反光·彩色',
+    wfFields: [
+      { label: '姓名', width: 'short', pii: true },
+      { label: '性别 / 民族', width: 'mid', pii: false },
+      { label: '出生日期', width: 'mid', pii: true },
+      { label: '住址', width: 'full', pii: true },
+      { label: '公民身份号码', width: 'long', pii: true },
+      { label: '签发机关', width: 'mid', pii: false },
+      { label: '有效期限', width: 'mid', pii: false }
+    ], showPhoto: true, showSeal: false },
     // 学位证
     degree: { icon: '🎓', title: '学位证/毕业证材料标准', wfTitle: '学士学位证书', items: [
       '证书原件彩色拍摄，不可拍摄复印件',
@@ -740,20 +864,104 @@ function getSlotGuide(slotKey, docName) {
       '如有英文版本一并拍摄',
       '海外学历需同时拍摄认证文件',
       '证书四角完整，印章清晰可辨'
-    ], piiFields: ['姓名', '证书编号', '毕业日期'], specimen: '学位证正面+背面' },
+    ], piiFields: ['姓名', '证书编号', '毕业日期'], specimen: '学位证正面+背面',
+    wfFields: [
+      { label: '学位证书编号', width: 'long', pii: true },
+      { label: '姓名', width: 'short', pii: true },
+      { label: '性别 / 出生日期', width: 'mid', pii: false },
+      { label: '所学专业', width: 'mid', pii: false },
+      { label: '学位授予单位', width: 'full', pii: false },
+      { label: '授予日期', width: 'mid', pii: false }
+    ], showPhoto: true, showSeal: true },
     // 港澳通行证
     hk_permit: { icon: '🛂', title: '港澳通行证材料标准', wfTitle: '往来港澳通行证', items: [
       '个人信息页+签注页均需拍摄',
       '证件号（C开头）、姓名、有效期需清晰',
       '签注页需显示D签注类型和有效期',
       '反光环境下从侧面打光避免正面强光'
-    ], piiFields: ['姓名', '证件号', '出生日期', '有效期'], specimen: '通行证个人信息页+签注页' },
+    ], piiFields: ['姓名', '证件号', '出生日期', '有效期'], specimen: '通行证个人信息页+签注页',
+    wfFields: [
+      { label: '姓名', width: 'short', pii: true },
+      { label: '通行证号码', width: 'long', pii: true },
+      { label: '出生日期', width: 'mid', pii: true },
+      { label: '签发机关', width: 'mid', pii: false },
+      { label: '签发日期 / 有效期限', width: 'full', pii: false },
+      { label: '签注类型 / 逗留条件', width: 'mid', pii: false }
+    ], showPhoto: true, showSeal: false },
     // 护照
     passport: { icon: '🛂', title: '护照材料标准', wfTitle: '中华人民共和国护照', items: [
       '个人信息页完整拍摄（含照片、护照号、签名）',
       '确保护照号（E/G开头）和有效期清晰',
       '如有签证页一并拍摄'
-    ], piiFields: ['姓名', '护照号', '出生日期', '国籍'], specimen: '护照个人信息页' },
+    ], piiFields: ['姓名', '护照号', '出生日期', '国籍'], specimen: '护照个人信息页',
+    wfFields: [
+      { label: '姓名 (中/英)', width: 'mid', pii: true },
+      { label: '护照号码', width: 'mid', pii: true },
+      { label: '国籍 / 性别', width: 'short', pii: false },
+      { label: '出生日期 / 地点', width: 'full', pii: true },
+      { label: '签发日期 / 有效期至', width: 'full', pii: false },
+      { label: '签发机关', width: 'mid', pii: false }
+    ], showPhoto: true, showSeal: false },
+    // 香港身份证
+    hk_id: { icon: '🆔', title: '香港身份证材料标准', wfTitle: '香港永久性居民身份证', items: [
+      '正面拍摄，四角完整',
+      '证件号（字母+6位数字+括号校验码）清晰',
+      '照片、姓名、出生日期清晰可辨',
+      '芯片面朝上，无遮挡'
+    ], piiFields: ['姓名', '身份证号', '出生日期'], specimen: '香港身份证正面·彩色',
+    wfFields: [
+      { label: '姓名 (中/英)', width: 'mid', pii: true },
+      { label: '身份证号码', width: 'long', pii: true },
+      { label: '出生日期', width: 'mid', pii: true },
+      { label: '签发日期', width: 'mid', pii: false },
+      { label: '符号标记', width: 'short', pii: false }
+    ], showPhoto: true, showSeal: false },
+    // 户口本
+    household: { icon: '📖', title: '户口本材料标准', wfTitle: '居民户口簿', items: [
+      '户主页+本人页均需拍摄',
+      '四角完整，印章清晰',
+      '姓名、身份证号、与户主关系清晰',
+      '户口登记机关印章可见'
+    ], piiFields: ['姓名', '身份证号', '住址'], specimen: '户主页+本人页·四角完整',
+    wfFields: [
+      { label: '户主姓名', width: 'short', pii: true },
+      { label: '户号', width: 'mid', pii: false },
+      { label: '住址', width: 'full', pii: true },
+      { label: '本人姓名', width: 'short', pii: true },
+      { label: '公民身份号码', width: 'long', pii: true },
+      { label: '与户主关系', width: 'short', pii: false },
+      { label: '登记机关 (印章)', width: 'mid', pii: false }
+    ], showPhoto: false, showSeal: true },
+    // 结婚证
+    marriage: { icon: '💍', title: '结婚证材料标准', wfTitle: '中华人民共和国结婚证', items: [
+      '双页展开或正反页拍摄',
+      '结婚证字号、双方姓名清晰',
+      '登记机关印章完整',
+      '照片清晰可见'
+    ], piiFields: ['双方姓名', '证件号', '登记日期'], specimen: '结婚证双页展开·印章清晰',
+    wfFields: [
+      { label: '持证人姓名', width: 'short', pii: true },
+      { label: '登记日期', width: 'mid', pii: false },
+      { label: '结婚证字号', width: 'long', pii: true },
+      { label: '双方姓名', width: 'full', pii: true },
+      { label: '双方证件号码', width: 'full', pii: true },
+      { label: '登记机关 (印章)', width: 'mid', pii: false }
+    ], showPhoto: true, showSeal: true },
+    // 出生证
+    birth_cert: { icon: '👶', title: '出生证材料标准', wfTitle: '出生医学证明', items: [
+      '正面完整拍摄，四角可见',
+      '婴儿姓名、出生日期、父母信息清晰',
+      '医院印章和编号清晰',
+      '无折叠、无反光'
+    ], piiFields: ['婴儿姓名', '父母姓名', '出生日期'], specimen: '出生证正面·四角完整',
+    wfFields: [
+      { label: '婴儿姓名', width: 'short', pii: true },
+      { label: '出生医学证明编号', width: 'long', pii: false },
+      { label: '出生日期 / 时间', width: 'mid', pii: true },
+      { label: '母亲姓名 / 证件号', width: 'full', pii: true },
+      { label: '父亲姓名 / 证件号', width: 'full', pii: true },
+      { label: '签发医院 (印章)', width: 'mid', pii: false }
+    ], showPhoto: false, showSeal: true },
     // 工作证明
     work: { icon: '💼', title: '工作证明/推荐信材料标准', wfTitle: '在職證明 / 工作证明', items: [
       '公司抬头纸原件拍摄',
@@ -761,7 +969,15 @@ function getSlotGuide(slotKey, docName) {
       '包含入职日期、职位、薪资信息',
       '推荐信需推荐人联系方式',
       '英文版需一并提供'
-    ], piiFields: ['姓名', '身份证号', '薪资', '公司名'], specimen: '公司抬头纸+公章+签字' },
+    ], piiFields: ['姓名', '身份证号', '薪资', '公司名'], specimen: '公司抬头纸+公章+签字',
+    wfFields: [
+      { label: '公司名称 (抬头)', width: 'full', pii: false },
+      { label: '员工姓名', width: 'short', pii: true },
+      { label: '身份证号码', width: 'long', pii: true },
+      { label: '入职日期 / 职位', width: 'mid', pii: false },
+      { label: '薪资 (月薪/年薪)', width: 'mid', pii: true },
+      { label: '公章 / 签字', width: 'mid', pii: false }
+    ], showPhoto: false, showSeal: true },
     // 银行流水
     bank: { icon: '💰', title: '银行流水/资产证明材料标准', wfTitle: '银行流水 / 资产证明', items: [
       '银行官方流水单原件拍摄',
@@ -769,14 +985,30 @@ function getSlotGuide(slotKey, docName) {
       '账户名、账号、银行名称清晰',
       '余额和流水记录完整可见',
       '加盖银行印章的版本'
-    ], piiFields: ['账户持有人', '账号', '金额'], specimen: '最近12个月银行流水' },
+    ], piiFields: ['账户持有人', '账号', '金额'], specimen: '最近12个月银行流水',
+    wfFields: [
+      { label: '银行名称', width: 'mid', pii: false },
+      { label: '账户持有人', width: 'short', pii: true },
+      { label: '账号', width: 'long', pii: true },
+      { label: '币种 / 余额', width: 'mid', pii: true },
+      { label: '流水时间段', width: 'full', pii: false },
+      { label: '银行印章', width: 'mid', pii: false }
+    ], showPhoto: false, showSeal: true },
     // 获批通知
     approval: { icon: '✅', title: '获批通知/e-Visa材料标准', wfTitle: '入境许可通知书 / e-Visa', items: [
       '入境处发出的正式通知原件',
       '申请编号、批准日期、签证类型清晰',
       'e-Visa可拍摄打印版或手机截图',
       '含逗留条件和期限的页面'
-    ], piiFields: ['姓名', '申请编号', '签证类型'], specimen: '获批通知书/e-Visa PDF' },
+    ], piiFields: ['姓名', '申请编号', '签证类型'], specimen: '获批通知书/e-Visa PDF',
+    wfFields: [
+      { label: '入境许可编号', width: 'long', pii: true },
+      { label: '申请人姓名', width: 'short', pii: true },
+      { label: '签证类型 / 逗留条件', width: 'mid', pii: false },
+      { label: '批准日期', width: 'mid', pii: false },
+      { label: '逗留期限至', width: 'mid', pii: false },
+      { label: '入境处印章/编号', width: 'full', pii: false }
+    ], showPhoto: false, showSeal: true }
   };
 
   // 模糊匹配: 根据docName关键词匹配到对应引导
@@ -786,18 +1018,36 @@ function getSlotGuide(slotKey, docName) {
   // slotKey 兜底匹配
   if (slotKey && guides[slotKey]) return guides[slotKey];
   return null;
+}
+
+/** Bug #2: 自由模式证件类型→拍摄指引映射 */
+function getFreeDocGuide(docType) {
+  var guides = {
+    id_card: { icon: '🪪', wfTitle: '中华人民共和国居民身份证', items: ['背景：深色桌面，白色背景', '人像：正面居中，头部在虚线框内', '国徽：背面国徽清晰，居中拍摄', '边距：四角留出5mm空白，勿裁切'], piiFields: ['姓名', '身份证号', '出生日期'], specimen: '人像面+国徽面·无反光·圆角完整' },
+    hk_permit: { icon: '🛂', wfTitle: '往来港澳通行证', items: ['背景：深色桌面', '信息页：个人信息+签注页完整', '边距：四角完整，勿裁切'], piiFields: ['姓名', '证件号', '有效期'], specimen: '个人信息页·无反光' },
+    passport: { icon: '🛂', wfTitle: '中华人民共和国护照', items: ['背景：深色桌面', '信息页：含照片个人信息页', '边距：护照四边完整'], piiFields: ['姓名', '护照号', '出生日期'], specimen: '个人信息页·无反光' },
+    hk_id: { icon: '🆔', wfTitle: '香港永久性居民身份证', items: ['背景：深色桌面', '正面：芯片面朝上', '边距：四角完整'], piiFields: ['姓名', '身份证号'], specimen: '正面·芯片可见' },
+    household: { icon: '📖', wfTitle: '居民户口簿', items: ['背景：深色桌面', '内容：户主页+本人页', '边距：四角完整'], piiFields: ['姓名', '身份证号', '住址'], specimen: '户主页+本人页' },
+    marriage: { icon: '💍', wfTitle: '中华人民共和国结婚证', items: ['背景：深色桌面', '内容：双页展开', '要求：印章+照片清晰'], piiFields: ['双方姓名', '证件号'], specimen: '双页展开·印章清晰' },
+    birth_cert: { icon: '👶', wfTitle: '出生医学证明', items: ['背景：深色桌面', '内容：正面完整', '要求：编号+印章清晰'], piiFields: ['婴儿姓名', '出生日期'], specimen: '正面·无折叠' },
+    degree: { icon: '🎓', wfTitle: '学位证书', items: ['背景：深色桌面', '内容：证书正面完整', '要求：证书编号+印章清晰'], piiFields: ['姓名', '证书编号'], specimen: '正面·印章清晰' },
+    work_proof: { icon: '💼', wfTitle: '工作证明', items: ['背景：深色桌面', '内容：抬头纸+盖章', '要求：公章+签字清晰'], piiFields: ['姓名', '公司名'], specimen: '抬头纸+公章' },
+    bank_statement: { icon: '💰', wfTitle: '银行流水', items: ['背景：深色桌面', '内容：最近12个月', '要求：银行印章清晰'], piiFields: ['账户名', '账号'], specimen: '银行流水原件' },
+    approval: { icon: '✅', wfTitle: '获批通知书', items: ['背景：深色桌面', '内容：通知完整页面', '要求：申请编号+日期清晰'], piiFields: ['姓名', '申请编号'], specimen: '获批原件' }
+  };
+  return guides[docType] || null;
+}
 
 /** 卡槽key → 证件分类自动映射 */
 function slotToCategory(slotKey) {
   var map = {
-    'id_card': 'identity', 'hk_permit': 'identity', 'passport': 'identity', 'hk_id': 'identity',
-    'degree_cert': 'education', 'transcript': 'education', 'degree_auth': 'education',
-    'emp_letter': 'work', 'reference_letter': 'work', 'salary_proof': 'work',
-    'bank_statement': 'assets', 'tax_record': 'assets', 'income_250w': 'assets',
-    'visa_label': 'approved', 'approval': 'approved', 'plan_statement': 'approved',
-    'photo': 'identity', 'student_visa': 'approved', 'hk_visa': 'approved'
+    'id_card': 'identity', 'hk_permit': 'identity', 'passport': 'identity', 'hk_id': 'identity', 'photo': 'identity',
+    'degree_cert': 'education', 'transcript': 'education', 'degree_auth': 'education', 'language_cert': 'education',
+    'emp_letter': 'work', 'emp_proof': 'work', 'reference_letter': 'work', 'recommendation': 'work',
+    'salary_proof': 'work', 'org_chart': 'work', 'emp_3y': 'work',
+    'bank_statement': 'assets', 'tax_record': 'assets', 'income_250w': 'assets', 'income_proof': 'assets', 'company_docs': 'assets',
+    'visa_label': 'approved', 'approval': 'approved', 'plan_statement': 'approved', 'student_visa': 'approved', 'hk_visa': 'approved',
+    'no_crime': 'approved'
   };
   return map[slotKey] || '';
-}
-
 }

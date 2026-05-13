@@ -109,6 +109,7 @@ Page({
     const userStatus = app.globalData.userStatus ||
       wx.getStorageSync(constants.STORAGE_KEYS.USER_STATUS) || '';
     const selectedPath = app.globalData.selectedPath ||
+      wx.getStorageSync('__selected_path__') ||
       wx.getStorageSync('__active_process_id__') || '';
     const isSkipped = userStatus === 'skipped';
     const hasSelectedPath = !!selectedPath;
@@ -336,8 +337,15 @@ Page({
       showLimitTip: this.data.isFreeUser && documents.length >= (this.data.effectiveLimit ? this.data.effectiveLimit.maxDocuments : constants.FREE_LIMITS.MAX_DOCUMENTS)
     });
 
-    // 刷新身份分类槽位状态
+    // 刷新身份分类槽位状态（包含全部slot重新计算）
     this.refreshIdentitySlots();
+
+    // 同步刷新documentCount和free限额提示
+    var docLimit = this.data.effectiveLimit ? this.data.effectiveLimit.maxDocuments : constants.FREE_LIMITS.MAX_DOCUMENTS;
+    this.setData({
+      documentCount: documents.length,
+      showLimitTip: this.data.isFreeUser && documents.length >= docLimit
+    });
 
     this.applyFilter();
   },

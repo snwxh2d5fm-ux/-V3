@@ -122,6 +122,8 @@
   border-top-right-radius: 6rpx;
 }
 .msg-text { white-space: pre-wrap; }
+/* Bug #7: rich-text Markdown渲染 */
+.msg-rich-text { white-space: pre-wrap; font-size: var(--font-md); line-height: 1.7; color: var(--gray-800); word-break: break-word; }
 
 /* 快捷回复 */
 .msg-quick-replies {

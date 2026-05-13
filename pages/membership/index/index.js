@@ -108,7 +108,7 @@ Page({
           planId: 'premium', planName: '尊享会员', level: 'premium',
           priceMonthly: 69990, priceYearly: 699900,
           priceMonthlyYuan: '699.90', priceYearlyYuan: '6,999', savingsPercent: 20,
-          features: ['专业会员全部权益', '专家整理建议', '专属时间线规划', '优先信息整理', '线下活动优先', '高级信息工具'],
+          features: ['专业会员全部权益', '香港AI创业孵化', '跨境电商资源整合', '政府创业补贴政策资讯'],
           highlighted: false, badge: '尊享'
         }
       ];

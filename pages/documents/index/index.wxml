@@ -101,7 +101,7 @@
             <text class="slot__name">{{slot.docName}}</text>
             <text class="slot__count" wx:if="{{slot.uploadedCount > 0}}">{{slot.uploadedCount}}份</text>
           </view>
-          <text class="slot__btn {{slot.fillStatus === 'empty' ? 'add' : 'done'}}">{{slot.fillStatus === 'empty' ? '+' : '✓'}}</text>
+          <text class="slot__btn {{slot.fillStatus === 'empty' ? 'add' : 'done'}}">{{slot.fillStatus === 'empty' ? '+' : (slot.fillStatus === 'partial' || slot.maxCount !== 1 ? '+' : '✓')}}</text>
         </view>
       </view>
     </view>

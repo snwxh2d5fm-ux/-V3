@@ -216,4 +216,121 @@ Page({
     }
   },
 
+  /** Bug #8: 导出证件照片为PDF */
+  exportToPDF() {
+    var that = this;
+    var doc = this.data.doc;
+    if (!doc || !doc.filePath) {
+      wx.showToast({ title: '无可用图片', icon: 'none' });
+      return;
+    }
+
+    wx.showLoading({ title: '生成PDF中...' });
+
+    // 收集该证件所有照片（通过元数据查找同一docId的关联文件）
+    var allDocs = [];
+    try {
+      var storage = require('../../../utils/storage');
+      allDocs = storage.getAllDocuments();
+    } catch (e) { allDocs = []; }
+
+    var docPhotos = [doc.filePath];
+    // 搜索同一卡槽/同一证件的关联照片
+    allDocs.forEach(function(d) {
+      if (d.id !== doc.id && d.slotKey === doc.slotKey && d.filePath && docPhotos.indexOf(d.filePath) < 0) {
+        docPhotos.push(d.filePath);
+      }
+    });
+
+    var imagePaths = docPhotos.slice(0, 10); // 最多10页
+
+    // 方案：上传图片到云存储 → 调云函数合成PDF → 下载打开
+    var app = getApp();
+    if (!app.globalData.cloudReady) {
+      wx.hideLoading();
+      // 降级方案：直接用微信分享图片
+      wx.showModal({
+        title: 'PDF导出',
+        content: '云端服务暂不可用。是否以图片方式分享？',
+        confirmText: '分享图片',
+        cancelText: '取消',
+        success: function(res) {
+          if (res.confirm) {
+            wx.previewImage({ urls: imagePaths, current: imagePaths[0] });
+          }
+        }
+      });
+      return;
+    }
+
+    // 上传图片到云存储
+    var uploadPromises = imagePaths.map(function(path, idx) {
+      return new Promise(function(resolve, reject) {
+        var cloudPath = '_pdf_temp/' + Date.now() + '_' + idx + '.jpg';
+        wx.cloud.uploadFile({
+          cloudPath: cloudPath,
+          filePath: path,
+          success: function(r) { resolve(r.fileID); },
+          fail: function(err) { reject(err); }
+        });
+      });
+    });
+
+    Promise.all(uploadPromises).then(function(fileIDs) {
+      return wx.cloud.callFunction({
+        name: 'generate-pdf',
+        data: {
+          action: 'create',
+          fileIDs: fileIDs,
+          title: doc.name || doc.docType || '证件',
+          owner: doc.ownerName || (doc.ownerType === 'self' ? '本人' : doc.ownerType === 'spouse' ? '配偶' : '子女'),
+          docNumber: doc.docNumber || '',
+          validFrom: doc.validFrom || '',
+          validTo: doc.validTo || ''
+        }
+      });
+    }).then(function(res) {
+      wx.hideLoading();
+      var result = res.result || {};
+      if (result.code === 0 && result.data && result.data.pdfFileID) {
+        // 下载PDF并打开
+        wx.cloud.downloadFile({
+          fileID: result.data.pdfFileID,
+          success: function(dfRes) {
+            wx.openDocument({
+              filePath: dfRes.tempFilePath,
+              fileType: 'pdf',
+              showMenu: true,
+              success: function() {
+                wx.showToast({ title: 'PDF已打开', icon: 'success' });
+              },
+              fail: function() {
+                wx.showToast({ title: '请用其他应用打开', icon: 'none' });
+              }
+            });
+          },
+          fail: function() {
+            wx.showToast({ title: '下载失败', icon: 'none' });
+          }
+        });
+      } else {
+        wx.showToast({ title: (result.msg || '生成失败'), icon: 'none' });
+      }
+    }).catch(function(err) {
+      wx.hideLoading();
+      console.error('[PDF] 导出失败:', err);
+      wx.showModal({
+        title: 'PDF导出',
+        content: '生成PDF失败。是否以图片方式查看？',
+        confirmText: '查看图片',
+        cancelText: '取消',
+        success: function(res) {
+          if (res.confirm) {
+            wx.previewImage({ urls: imagePaths, current: imagePaths[0] });
+          }
+        }
+      });
+    });
+  }
+
 });

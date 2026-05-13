@@ -59,6 +59,7 @@ exports.main = async (event, context) => {
       case 'createInvoice':      return await createInvoice(openid, event);
       case 'getInvoices':        return await getInvoices(openid, event);
       case 'getInvoiceDetail':   return await getInvoiceDetail(openid, event);
+      case 'deleteOrder':        return await deleteOrder(openid, event);
       default:
         return { code: 400, msg: '无效操作' };
     }
@@ -360,6 +361,27 @@ async function getOrderStatus(openid, event) {
     };
   } catch (e) {
     return { code: 404, msg: '订单不存在' };
+  }
+}
+
+async function deleteOrder(openid, event) {
+  const { orderId } = event;
+  if (!orderId) return { code: 400, msg: '缺少 orderId' };
+  try {
+    // 验证订单归属
+    const qResult = await db.collection('orders').where({ _id: orderId, _openid: openid }).get();
+    if (!qResult.data || qResult.data.length === 0) {
+      return { code: 404, msg: '订单不存在或无权操作' };
+    }
+    var order = qResult.data[0];
+    // 已完成订单不允许删除
+    if (order.status === 'completed') {
+      return { code: 400, msg: '已支付订单不可删除' };
+    }
+    await db.collection('orders').doc(orderId).remove();
+    return { code: 0, msg: '已删除' };
+  } catch (e) {
+    return { code: 500, msg: '删除失败' };
   }
 }
 

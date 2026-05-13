@@ -250,95 +250,119 @@ function checkImageQuality(imagePath) {
         var ratio = w / h;
         if (ratio < 0.5 || ratio > 2.0) { issues.push({ type: 'aspect_ratio', severity: 'warning', message: '图片比例异常' }); score -= 10; }
 
-        // ③ 反光检测: canvas采样顶部15%区域，亮度>220即疑似反光 (0-15分)
-        var ctx = wx.createCanvasContext('qc-canvas');
-        ctx.drawImage(imagePath, 0, 0, w, h);
-        ctx.draw(false, function() {
-          wx.canvasGetImageData({
-            canvasId: 'qc-canvas',
-            x: 0, y: 0, width: Math.min(w, 100), height: Math.min(h, 100),
-            success: function(imgData) {
-              var data = imgData.data;
-              var brightPixels = 0, totalPixels = 0;
-              // 采样顶部20%行
-              var sampleH = Math.min(Math.floor(h * 0.2), imgData.height);
-              for (var y = 0; y < sampleH; y++) {
-                for (var x = 0; x < imgData.width; x++) {
-                  var idx = (y * imgData.width + x) * 4;
-                  var r = data[idx], g = data[idx+1], b = data[idx+2];
-                  var brightness = 0.299 * r + 0.587 * g + 0.114 * b;
-                  if (brightness > 220) brightPixels++;
-                  totalPixels++;
-                }
+        // 尝试使用 OffscreenCanvas 做像素采样（基础库≥2.16.0可用）
+        var sampleW = Math.min(w, 100);
+        var sampleH = Math.min(h, 100);
+        var hasOffscreen = typeof wx.createOffscreenCanvas === 'function';
+
+        if (!hasOffscreen) {
+          // 不支持离屏Canvas: 仅用分辨率+比例判断
+          resolve(finalizeResult(issues, score, w, h));
+          return;
+        }
+
+        try {
+          var offCanvas = wx.createOffscreenCanvas({ type: '2d', width: sampleW, height: sampleH });
+          var ctx2d = offCanvas.getContext('2d');
+          var img = offCanvas.createImage();
+          img.src = imagePath;
+          img.onload = function() {
+            ctx2d.drawImage(img, 0, 0, sampleW, sampleH);
+            var imgData = ctx2d.getImageData(0, 0, sampleW, sampleH);
+            var data = imgData.data;
+
+            // ③ 反光检测 (0-15分)
+            var brightPixels = 0, totalPixels = 0;
+            var sampleHRows = Math.min(Math.floor(sampleH * 0.2), sampleH);
+            for (var y = 0; y < sampleHRows; y++) {
+              for (var x = 0; x < sampleW; x++) {
+                var idx = (y * sampleW + x) * 4;
+                var brightness = 0.299 * data[idx] + 0.587 * data[idx+1] + 0.114 * data[idx+2];
+                if (brightness > 220) brightPixels++;
+                totalPixels++;
               }
-              var glareRatio = totalPixels > 0 ? brightPixels / totalPixels : 0;
-              if (glareRatio > 0.3) { issues.push({ type: 'glare', severity: 'warning', message: '检测到疑似反光(' + Math.round(glareRatio*100) + '%高亮)，请调整角度' }); score -= 15; }
-
-              // ④ 模糊度: Laplacian梯度 (0-20分)
-              if (imgData.width > 20 && imgData.height > 20) {
-                var gradSum = 0, gradCount = 0;
-                for (var gy = 1; gy < imgData.height - 1; gy += 4) {
-                  for (var gx = 1; gx < imgData.width - 1; gx += 4) {
-                    var ci = (gy * imgData.width + gx) * 4;
-                    var li = ((gy-1) * imgData.width + gx) * 4, ri = ((gy+1) * imgData.width + gx) * 4;
-                    var ui = (gy * imgData.width + (gx-1)) * 4, di = (gy * imgData.width + (gx+1)) * 4;
-                    var lg = Math.abs(data[ci] - data[li]) + Math.abs(data[ci] - data[ri]) + Math.abs(data[ci] - data[ui]) + Math.abs(data[ci] - data[di]);
-                    gradSum += lg; gradCount++;
-                  }
-                }
-                var avgGrad = gradCount > 0 ? gradSum / gradCount : 0;
-                if (avgGrad < 8) { issues.push({ type: 'blur', severity: 'warning', message: '图片较模糊，建议重新拍摄' }); score -= 20; }
-              }
-
-              // ⑤ 圆角/边缘完整性 (0-15分) — 四角暗区检测
-              var corners = [
-                { x: 0, y: 0 }, { x: imgData.width - 10, y: 0 },
-                { x: 0, y: imgData.height - 10 }, { x: imgData.width - 10, y: imgData.height - 10 }
-              ];
-              var cornerLost = 0;
-              for (var ci = 0; ci < 4; ci++) {
-                var cx = Math.max(0, Math.min(corners[ci].x, imgData.width-10));
-                var cy = Math.max(0, Math.min(corners[ci].y, imgData.height-10));
-                var cornerSum = 0, cornerCount = 0;
-                for (var dy = 0; dy < 10 && (cy+dy) < imgData.height; dy++) {
-                  for (var dx = 0; dx < 10 && (cx+dx) < imgData.width; dx++) {
-                    var ci2 = ((cy+dy) * imgData.width + (cx+dx)) * 4;
-                    cornerSum += (data[ci2] + data[ci2+1] + data[ci2+2]) / 3;
-                    cornerCount++;
-                  }
-                }
-                if (cornerCount > 0 && cornerSum / cornerCount > 240) cornerLost++;
-              }
-              if (cornerLost >= 2) { issues.push({ type: 'corner', severity: 'warning', message: '证件圆角不完整或边缘缺失' }); score -= 15; }
-
-              // ⑥ 倾斜度 (0-10分) — 四边亮度均匀性
-              var edges = { top: 0, bottom: 0, left: 0, right: 0 };
-              var ew = Math.min(imgData.width, 20), eh = Math.min(imgData.height, 20);
-              for (var ex = 0; ex < ew; ex++) { var et1 = (0 * imgData.width + ex) * 4; var eb1 = ((imgData.height-1) * imgData.width + ex) * 4; edges.top += data[et1]; edges.bottom += data[eb1]; }
-              edges.top /= ew; edges.bottom /= ew;
-              var tiltScore = Math.abs(edges.top - edges.bottom);
-              if (tiltScore > 40) { issues.push({ type: 'tilt', severity: 'info', message: '证件可能有倾斜，建议正对拍摄' }); score -= 10; }
-
-              resolve({
-                pass: issues.filter(function(i) { return i.severity === 'warning'; }).length === 0,
-                score: Math.max(0, score),
-                issues: issues,
-                dimensions: { width: w, height: h },
-                summary: score >= 80 ? '优' : score >= 60 ? '良' : score >= 40 ? '一般' : '差'
-              });
-            },
-            fail: function() {
-              // canvas取像素失败：仅用分辨率+比例判断
-              resolve({ pass: issues.length === 0, score: Math.max(0, 100 - issues.length * 15), issues: issues, dimensions: { width: w, height: h }, summary: '基础' });
             }
-          });
-        });
+            var glareRatio = totalPixels > 0 ? brightPixels / totalPixels : 0;
+            if (glareRatio > 0.3) { issues.push({ type: 'glare', severity: 'warning', message: '检测到疑似反光(' + Math.round(glareRatio*100) + '%高亮)，请调整角度' }); score -= 15; }
+
+            // ④ 模糊度: Laplacian梯度 (0-20分)
+            if (sampleW > 20 && sampleH > 20) {
+              var gradSum = 0, gradCount = 0;
+              for (var gy = 1; gy < sampleH - 1; gy += 4) {
+                for (var gx = 1; gx < sampleW - 1; gx += 4) {
+                  var ci = (gy * sampleW + gx) * 4;
+                  var li = ((gy-1) * sampleW + gx) * 4, ri = ((gy+1) * sampleW + gx) * 4;
+                  var ui = (gy * sampleW + (gx-1)) * 4, di = (gy * sampleW + (gx+1)) * 4;
+                  var lg = Math.abs(data[ci] - data[li]) + Math.abs(data[ci] - data[ri]) + Math.abs(data[ci] - data[ui]) + Math.abs(data[ci] - data[di]);
+                  gradSum += lg; gradCount++;
+                }
+              }
+              var avgGrad = gradCount > 0 ? gradSum / gradCount : 0;
+              if (avgGrad < 8) { issues.push({ type: 'blur', severity: 'warning', message: '图片较模糊，建议重新拍摄' }); score -= 20; }
+            }
+
+            // ⑤ 圆角/边缘完整性 (0-15分)
+            var corners = [
+              { x: 0, y: 0 }, { x: sampleW - 10, y: 0 },
+              { x: 0, y: sampleH - 10 }, { x: sampleW - 10, y: sampleH - 10 }
+            ];
+            var cornerLost = 0;
+            for (var ci = 0; ci < 4; ci++) {
+              var cx = Math.max(0, Math.min(corners[ci].x, sampleW-10));
+              var cy = Math.max(0, Math.min(corners[ci].y, sampleH-10));
+              var cornerSum = 0, cornerCount = 0;
+              for (var dy = 0; dy < 10 && (cy+dy) < sampleH; dy++) {
+                for (var dx = 0; dx < 10 && (cx+dx) < sampleW; dx++) {
+                  var ci2 = ((cy+dy) * sampleW + (cx+dx)) * 4;
+                  cornerSum += (data[ci2] + data[ci2+1] + data[ci2+2]) / 3;
+                  cornerCount++;
+                }
+              }
+              if (cornerCount > 0 && cornerSum / cornerCount > 240) cornerLost++;
+            }
+            if (cornerLost >= 2) { issues.push({ type: 'corner', severity: 'warning', message: '证件圆角不完整或边缘缺失' }); score -= 15; }
+
+            // ⑥ 倾斜度 (0-10分)
+            var edges = { top: 0, bottom: 0 };
+            var ew = Math.min(sampleW, 20);
+            for (var ex = 0; ex < ew; ex++) {
+              var et1 = (0 * sampleW + ex) * 4;
+              var eb1 = ((sampleH-1) * sampleW + ex) * 4;
+              edges.top += data[et1];
+              edges.bottom += data[eb1];
+            }
+            edges.top /= ew; edges.bottom /= ew;
+            var tiltScore = Math.abs(edges.top - edges.bottom);
+            if (tiltScore > 40) { issues.push({ type: 'tilt', severity: 'info', message: '证件可能有倾斜，建议正对拍摄' }); score -= 10; }
+
+            resolve(finalizeResult(issues, score, w, h));
+          };
+          img.onerror = function() {
+            resolve(finalizeResult(issues, score, w, h));
+          };
+        } catch (e) {
+          console.warn('[QC] 离线Canvas创建失败，使用基础检测');
+          issues.push({ type: 'canvas_unavailable', severity: 'info', message: '高级检测(反光/模糊/倾斜)暂不可用，仅完成基础分辨率检测' });
+          resolve(finalizeResult(issues, score, w, h));
+        }
       },
       fail: function() {
-        resolve({ pass: false, score: 0, issues: [{ type: 'load_error', severity: 'error', message: '无法读取图片' }] });
+        resolve({ pass: false, score: 0, issues: [{ type: 'load_error', severity: 'error', message: '无法读取图片' }], summary: '加载失败' });
       }
     });
   });
+}
+
+/** 组装最终质量检测结果 */
+function finalizeResult(issues, score, w, h) {
+  var warningIssues = issues.filter(function(i) { return i.severity === 'warning'; });
+  return {
+    pass: warningIssues.length === 0,
+    score: Math.max(0, score),
+    issues: issues,
+    dimensions: { width: w, height: h },
+    summary: score >= 80 ? 'good' : score >= 60 ? 'fair' : score >= 40 ? 'avg' : 'poor'
+  };
 }
 
 module.exports = {

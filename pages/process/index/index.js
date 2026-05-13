@@ -33,11 +33,19 @@ Page({
     progress: 0,
     materialDoneCount: 0,
     materialTotalCount: 0,
-    expandedPhaseIdx: 0,   // 当前展开的阶段
+    expandedPhaseIdx: 0,
+    showDisclaimer: false,
 
     // 空状态·模板选择
     showTemplateSelect: false,
-    templates: templates.processTemplates
+    templates: templates.processTemplates,
+
+    // Bug #13: 风险提醒弹窗
+    showDisclaimerPopup: false,
+    disclaimerType: '',
+    disclaimerTitle: '',
+    disclaimerBody: '',
+    disclaimerConfirmed: false
   },
 
   onShow() {
@@ -48,6 +56,9 @@ Page({
         isUnapplied: userStatus === 'unapplied'
       });
       this.loadActiveProcess();
+      // Bug #13: 检查是否需要风险提醒
+      var that = this;
+      setTimeout(function() { that.checkDisclaimerNeeded(); }, 500);
     } catch (e) {
       console.error('[流程控] onShow 异常:', e);
       this.setData({
@@ -146,6 +157,14 @@ Page({
     var doneCount = allStages.filter(function(s) { return s.status === 'completed'; }).length;
     var progress = allStages.length > 0 ? Math.round((doneCount / allStages.length) * 100) : 0;
     this.setData({ materialDoneCount: doneCount, materialTotalCount: allStages.length });
+    // P0#13: 低完成度或长周期路径 → 出示免责声明
+    if (doneCount === 0 || (activeProcess && activeProcess.totalCycle && activeProcess.totalCycle.indexOf('8') >= 0)) {
+      var hasSeenDisclaimer = wx.getStorageSync('__disclaimer_seen__');
+      if (!hasSeenDisclaimer) {
+        wx.setStorageSync('__disclaimer_seen__', true);
+        this.setData({ showDisclaimer: true });
+      }
+    }
 
     // 当前阶段：资格评估完成后 → 材料准备解锁
     // 资格评估的状态：有 activeProcess 即表示已完成
@@ -241,6 +260,7 @@ Page({
   // 模板选择
   toggleTemplateSelect() { this.setData({ showTemplateSelect: !this.data.showTemplateSelect }); },
   catchStop() {},
+  closeDisclaimer() { this.setData({ showDisclaimer: false }); },
 
   // ===== 指标说明弹窗 =====
   showCycleHelp() {
@@ -261,6 +281,73 @@ Page({
 
   closeHelpPopup() {
     this.setData({ showHelpPopup: false });
+  },
+
+  // Bug #13: 风险提醒弹窗逻辑
+  checkDisclaimerNeeded() {
+    var that = this;
+    var activeProcess = this.data.activeProcess;
+    var progress = this.data.progress || 0;
+    var materialTotalCount = this.data.materialTotalCount || 0;
+
+    // 已确认过不再弹
+    if (this.data.disclaimerConfirmed) return;
+
+    // 场景1: 长周期路径 (7-8年/8-9年)
+    var totalCycle = (activeProcess && activeProcess.totalCycle) || '';
+    if (totalCycle.indexOf('7-8') >= 0 || totalCycle.indexOf('8-9') >= 0) {
+      this.setData({
+        showDisclaimerPopup: true,
+        disclaimerType: 'long_cycle',
+        disclaimerTitle: '长周期路径提醒',
+        disclaimerBody: '此路径预计周期较长（' + totalCycle + '），需长期维持在港居住。续签次数多、周期长，存在一定风险。\n\n• 续签需证明持续在港定居或与港有实质联系\n• 长期不在港可能影响永居申请\n• 建议提前规划在港生活安排\n\n请确认你已了解该路径的长期承诺要求。'
+      });
+      return;
+    }
+
+    // 场景2: 用户自评数据（TotalCount > 6 暗示来自自评模板）
+    if (materialTotalCount > 6 && progress === 0) {
+      this.setData({
+        showDisclaimerPopup: true,
+        disclaimerType: 'self_assessed',
+        disclaimerTitle: '数据来源说明',
+        disclaimerBody: '此数据由用户自行评估填写，并非香港入境事务处官方认可。\n\n请在提交前核准所有标准与信息。所有官方申请标准请以入境处官网（immd.gov.hk）最新公布为准。'
+      });
+      return;
+    }
+
+    // 场景3: 0%完成度
+    if (progress === 0 && activeProcess) {
+      this.setData({
+        showDisclaimerPopup: true,
+        disclaimerType: 'zero_progress',
+        disclaimerTitle: '流程尚未开始',
+        disclaimerBody: '当前材料完整度为 0%，流程尚未正式开始。\n\n请先完成资格评估和路径选择，系统将为你自动生成专属流程进度看板。\n\n完成后各阶段材料清单将自动解锁。'
+      });
+      return;
+    }
+
+    // 场景4: 低完成度 (<30%)
+    if (progress > 0 && progress < 30 && activeProcess) {
+      this.setData({
+        showDisclaimerPopup: true,
+        disclaimerType: 'low_progress',
+        disclaimerTitle: '材料准备进度提醒',
+        disclaimerBody: '当前材料完整度仅为 ' + progress + '%，还有大部分材料待完成。\n\n各个阶段的材料清单基于你所选路径的官方要求生成。建议按阶段逐项准备，确保材料齐全后再提交申请。'
+      });
+      return;
+    }
+  },
+
+  confirmDisclaimer() {
+    this.setData({
+      showDisclaimerPopup: false,
+      disclaimerConfirmed: true
+    });
+  },
+
+  closeDisclaimerPopup() {
+    this.setData({ showDisclaimerPopup: false });
   },
 
   selectTemplate(e) {
@@ -315,6 +402,7 @@ Page({
     app.globalData.activeProcessId = processLine.id;
     app.globalData.activeProcess = processLine;
     wx.setStorageSync('__active_process_id__', processLine.id);
+    wx.setStorageSync('__selected_path__', template.pathType || templateId);
 
     // 追踪：流程创建
     tracker.track('process_created', {

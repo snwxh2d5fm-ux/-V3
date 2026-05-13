@@ -68,12 +68,20 @@ Page({
       confirmColor: '#DC2626',
       success: function(res) {
         if (res.confirm) {
+          // 先从本地UI移除
           var orders = that.data.orders.filter(function(o) { return o.orderId !== orderId; });
           that.setData({ orders: orders, empty: orders.length === 0 });
           // 同步删除本地缓存
           var local = wx.getStorageSync('__user_orders__') || [];
           local = local.filter(function(o) { return o.orderId !== orderId; });
           wx.setStorageSync('__user_orders__', local);
+          // 调用云端删除（持久化）
+          wx.cloud.callFunction({
+            name: 'payment',
+            data: { action: 'deleteOrder', orderId: orderId }
+          }).catch(function() {
+            // 云端删除失败不影响本地操作
+          });
           wx.showToast({ title: '已删除', icon: 'none' });
         }
       }

@@ -29,60 +29,58 @@
         <text class="specimen-text">标本参照：{{slotGuide.specimen}}</text>
       </view>
 
-      <!-- R4: 证件线框示意图 — 脱敏案例库驱动 -->
-      <view class="doc-wireframe" wx:if="{{slotContext}}">
+      <!-- R4+Bug#24: 卡槽专属动态线框示意图 — 脱敏案例库驱动 -->
+      <view class="doc-wireframe" wx:if="{{slotContext && slotGuide}}">
         <view class="wf-card">
-          <!-- 线框头部 -->
           <view class="wf-header">
             <view class="wf-logo-line"></view>
             <text class="wf-title">{{slotGuide.wfTitle || slotDocName || '证件参照'}}</text>
           </view>
-          <!-- 照片/图章区 (左侧) -->
           <view class="wf-body">
-            <view class="wf-photo">
+            <!-- 照片/图章区 (左侧，按需显示) -->
+            <view class="wf-photo" wx:if="{{slotGuide.showPhoto !== false}}">
               <view class="wf-photo__frame"></view>
               <text class="wf-photo__tag">照片</text>
             </view>
-            <!-- PII字段线框区 (右侧) -->
+            <!-- PII字段线框区 (动态，按 slotGuide.wfFields 渲染) -->
             <view class="wf-fields">
-              <view class="wf-field">
-                <view class="wf-line wf-line--short"></view>
-                <text class="wf-label">姓名</text>
-                <text class="wf-pii-tag">脱敏</text>
-              </view>
-              <view class="wf-field">
-                <view class="wf-line wf-line--long"></view>
-                <text class="wf-label">证件号码</text>
-                <text class="wf-pii-tag">脱敏</text>
-              </view>
-              <view class="wf-field">
-                <view class="wf-line wf-line--mid"></view>
-                <text class="wf-label">出生日期</text>
-                <text class="wf-pii-tag">脱敏</text>
-              </view>
-              <view class="wf-field">
-                <view class="wf-line wf-line--full"></view>
-                <text class="wf-label">签发机关/地址</text>
-                <text class="wf-pii-tag">脱敏</text>
-              </view>
-              <view class="wf-field">
-                <view class="wf-line wf-line--mid"></view>
-                <text class="wf-label">有效期限</text>
-              </view>
+              <block wx:if="{{slotGuide.wfFields && slotGuide.wfFields.length > 0}}">
+                <view class="wf-field" wx:for="{{slotGuide.wfFields}}" wx:key="label">
+                  <view class="wf-line wf-line--{{item.width || 'mid'}}"></view>
+                  <text class="wf-label">{{item.label}}</text>
+                  <text class="wf-pii-tag" wx:if="{{item.pii}}">脱敏</text>
+                </view>
+              </block>
+              <!-- 无专属字段时用默认 -->
+              <block wx:else>
+                <view class="wf-field">
+                  <view class="wf-line wf-line--short"></view>
+                  <text class="wf-label">姓名</text>
+                  <text class="wf-pii-tag">脱敏</text>
+                </view>
+                <view class="wf-field">
+                  <view class="wf-line wf-line--long"></view>
+                  <text class="wf-label">证件号码</text>
+                  <text class="wf-pii-tag">脱敏</text>
+                </view>
+                <view class="wf-field">
+                  <view class="wf-line wf-line--mid"></view>
+                  <text class="wf-label">有效期限</text>
+                </view>
+              </block>
             </view>
           </view>
-          <!-- 底部印章区 -->
-          <view class="wf-footer">
+          <!-- 底部印章区 (按需显示) -->
+          <view class="wf-footer" wx:if="{{slotGuide.showSeal !== false}}">
             <view class="wf-seal"></view>
             <text class="wf-footer-label">发证机关印章</text>
           </view>
         </view>
-        <!-- 四角对齐标尺 -->
         <view class="wf-ruler-tl"></view>
         <view class="wf-ruler-tr"></view>
         <view class="wf-ruler-bl"></view>
         <view class="wf-ruler-br"></view>
-        <text class="wf-hint">📐 请将证件对准四角标尺，确保边框完整、无裁切</text>
+        <text class="wf-hint">请将证件对准四角标尺，确保边框完整、无裁切</text>
       </view>
     </view>
 
@@ -105,8 +103,69 @@
       </view>
     </view>
 
-    <!-- 通用证件拍摄指引（无卡槽上下文时显示） -->
+    <!-- Bug #2: 自由模式证件类型选择 (非卡槽入口) -->
     <view class="capture-guide" wx:if="{{!slotContext}}">
+      <view class="capture-guide__title">📐 选择证件类型查看拍摄要求</view>
+      <scroll-view class="doc-type-scroll" scroll-x enhanced show-scrollbar="{{false}}">
+        <view class="doc-type-chip {{freeDocType === item.value ? 'active' : ''}}"
+              wx:for="{{freeDocTypeOptions}}" wx:key="value"
+              bindtap="onSelectFreeDocType" data-value="{{item.value}}">
+          <text class="doc-type-chip__icon">{{item.icon}}</text>
+          <text class="doc-type-chip__label">{{item.label}}</text>
+        </view>
+      </scroll-view>
+    </view>
+
+    <!-- Bug #2: 自由模式选中证件类型后的线框图+拍摄指引 -->
+    <view class="doc-wireframe" wx:if="{{!slotContext && freeDocGuide}}">
+      <view class="wf-card">
+        <view class="wf-header">
+          <view class="wf-logo-line"></view>
+          <text class="wf-title">{{freeDocGuide.wfTitle || '证件参照'}}</text>
+        </view>
+        <view class="wf-body">
+          <view class="wf-photo">
+            <view class="wf-photo__frame"></view>
+            <text class="wf-photo__tag">照片</text>
+          </view>
+          <view class="wf-fields">
+            <view class="wf-field">
+              <view class="wf-line wf-line--short"></view>
+              <text class="wf-label">姓名</text>
+              <text class="wf-pii-tag">脱敏</text>
+            </view>
+            <view class="wf-field">
+              <view class="wf-line wf-line--long"></view>
+              <text class="wf-label">证件号码</text>
+              <text class="wf-pii-tag">脱敏</text>
+            </view>
+            <view class="wf-field">
+              <view class="wf-line wf-line--mid"></view>
+              <text class="wf-label">有效期限</text>
+            </view>
+          </view>
+        </view>
+        <view class="wf-footer">
+          <view class="wf-seal"></view>
+          <text class="wf-footer-label">发证机关印章</text>
+        </view>
+      </view>
+      <view class="wf-ruler-tl"></view>
+      <view class="wf-ruler-tr"></view>
+      <view class="wf-ruler-bl"></view>
+      <view class="wf-ruler-br"></view>
+      <!-- 自由模式拍摄要求列表 -->
+      <view class="free-guide-items" wx:if="{{freeDocGuide.items && freeDocGuide.items.length > 0}}">
+        <view class="free-guide-item" wx:for="{{freeDocGuide.items}}" wx:key="*this">
+          <text class="free-guide-dot">●</text>
+          <text>{{item}}</text>
+        </view>
+      </view>
+      <text class="wf-hint">📐 请将证件对准四角标尺，确保边框完整、无裁切</text>
+    </view>
+
+    <!-- 通用拍摄要求（未选择证件类型时显示） -->
+    <view class="capture-guide" wx:if="{{!slotContext && !freeDocGuide}}">
       <view class="capture-guide__title">📐 拍摄要求</view>
       <view class="capture-guide__list">
         <view class="capture-guide__item">
@@ -138,19 +197,7 @@
           <text>不要使用复印件或屏幕截图</text>
         </view>
       </view>
-    </view>
-
-    <!-- 证件分类说明（无卡槽上下文时显示） -->
-    <view class="capture-guide" wx:if="{{!slotContext}}">
-      <view class="capture-guide__title">📂 支持证件类型</view>
-      <view class="capture-guide__list">
-        <view class="capture-guide__item"><text>🆔 身份证 / 护照 / 港澳通行证 / 香港身份证</text></view>
-        <view class="capture-guide__item"><text>🎓 学位证 / 毕业证 / 成绩单</text></view>
-        <view class="capture-guide__item"><text>💼 工作证明 / 推荐信 / 在职证明</text></view>
-        <view class="capture-guide__item"><text>💰 银行流水 / 税单 / 存款证明</text></view>
-        <view class="capture-guide__item"><text>✅ 获批通知 / 签证 / e-Visa</text></view>
-      </view>
-      <text class="capture-guide__note">💡 拍照后系统将自动检测照片质量。文字识别将在智能审核阶段由专业模型完成。</text>
+      <text class="capture-guide__note">💡 点击上方证件类型查看专属拍摄要求。拍照后系统将自动检测照片质量。</text>
     </view>
 
     <view class="privacy-notice">
@@ -165,9 +212,9 @@
       <text class="page-header-sub">确认照片清晰可用</text>
     </view>
 
-    <!-- 图片预览 + 脱敏遮罩 -->
+    <!-- 图片预览 + 脱敏遮罩 + 旋转样式 -->
     <view class="image-preview" wx:if="{{imagePath}}">
-      <image src="{{imagePath}}" mode="aspectFit" class="preview-img" aria-label="证件图片预览" />
+      <image src="{{imagePath}}" mode="aspectFit" class="preview-img" style="transform: rotate({{imageRotated}}deg)" aria-label="证件图片预览" />
       <!-- 隐私模式遮罩图层 -->
       <view class="privacy-overlay" wx:if="{{privacyMode !== 'local'}}">
         <view class="privacy-bar privacy-bar--name"></view>
@@ -181,26 +228,54 @@
       </view>
     </view>
 
-    <!-- 质量检测结果 -->
+    <!-- Bug #5: 旋转+扫描件工具栏 -->
+    <view class="img-toolbar">
+      <view class="img-tool" bindtap="onRotateImage">
+        <text class="img-tool__icon">🔄</text>
+        <text class="img-tool__label">旋转</text>
+      </view>
+      <view class="img-tool {{scanProcessing ? 'disabled' : ''}}" bindtap="onToggleScanMode">
+        <text class="img-tool__icon">{{scanMode ? '📄' : '📋'}}</text>
+        <text class="img-tool__label">{{scanMode ? '已增强' : '扫描件'}}</text>
+      </view>
+    </view>
+
+    <!-- Bug #6: 质量检测结果 — 增强可见性 -->
     <view class="quality-card" wx:if="{{qualityResult}}">
+      <view class="quality-header">
+        <text class="quality-header__title">📊 照片质量检测</text>
+        <text class="quality-header__status {{qualityResult.pass ? 'pass' : 'fail'}}">{{qualityResult.pass ? '✅ 通过' : '⚠️ 不通过'}}</text>
+      </view>
       <view class="quality-score-row">
-        <text class="quality-score-label">照片质量</text>
+        <text class="quality-score-label">综合评分</text>
         <text class="quality-score quality-score--{{qualityResult.summary}}">{{qualityResult.summary}}</text>
       </view>
       <view class="quality-bar">
         <view class="quality-bar__fill quality-bar__fill--{{qualityResult.summary}}" style="width:{{qualityResult.score}}%"></view>
       </view>
-      <text class="quality-score-hint">综合评分 {{qualityResult.score}}/100</text>
+      <text class="quality-score-hint">{{qualityResult.score}}/100 分 · {{qualityResult.dimensions.width}}×{{qualityResult.dimensions.height}}</text>
       <view class="quality-issue" wx:for="{{qualityResult.issues}}" wx:key="type">
         <text class="quality-issue__icon">{{item.severity === 'warning' ? '⚠️' : 'ℹ️'}}</text>
         <text class="quality-issue__msg">{{item.message}}</text>
       </view>
+      <view class="quality-action" wx:if="{{!qualityResult.pass}}">
+        <text class="quality-action__text">⬆️ 建议重新拍摄以获得更好的识别效果</text>
+      </view>
+    </view>
+
+    <!-- Bug #6: 质量检测加载中/无结果时的提示 -->
+    <view class="quality-card quality-card--pending" wx:if="{{!qualityResult}}">
+      <text class="quality-pending__icon">⏳</text>
+      <text class="quality-pending__text">正在检测照片质量...</text>
     </view>
 
     <!-- 操作按钮 -->
     <view class="action-row">
       <button class="btn btn-outline flex-1" bindtap="retakePhoto">🔄 重拍</button>
       <button class="btn btn-primary flex-1" bindtap="confirmImage">✓ 确认，下一步</button>
+    </view>
+    <view class="step-hint" wx:if="{{qualityResult && !qualityResult.pass}}">
+      <text class="step-hint-txt">质量不通过时点击确认将弹出提醒</text>
     </view>
   </block>
 

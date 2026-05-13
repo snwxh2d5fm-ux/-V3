@@ -54,6 +54,10 @@
     <button class="action-item" bindtap="{{isArchived ? 'restoreDocument' : 'archiveDocument'}}">
       <text>{{isArchived ? '↩️ 恢复' : '📦 归档'}}</text>
     </button>
+    <!-- Bug #8: PDF导出按钮 -->
+    <button class="action-item" bindtap="exportToPDF" wx:if="{{doc && doc.filePath}}">
+      <text>📄 导出PDF</text>
+    </button>
     <button class="action-item danger" bindtap="deleteDocument">
       <text>🗑️ 删除</text>
     </button>

@@ -33,7 +33,9 @@
           <view class="msg-avatar" wx:if="{{item.role === 'assistant'}}"><image class="msg-avatar-img" src="/images/ai-avatar.png" mode="aspectFill" aria-label="AI住港伴专员"></image></view>
           <!-- 消息气泡 -->
           <view class="msg-bubble {{item.role}}">
-            <text class="msg-text">{{item.content}}</text>
+            <!-- Bug #7: assistant消息使用rich-text渲染Markdown -->
+            <rich-text wx:if="{{item.role === 'assistant' && item.hasParsedContent}}" nodes="{{item.parsedNodes}}" class="msg-rich-text"></rich-text>
+            <text wx:else class="msg-text">{{item.content}}</text>
             <!-- 快捷回复按钮 -->
             <view class="msg-quick-replies" wx:if="{{item.quickReplies && item.quickReplies.length > 0}}">
               <text class="qr-btn" wx:for="{{item.quickReplies}}" wx:for-item="qr" wx:key="id"
