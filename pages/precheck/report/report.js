@@ -41,8 +41,17 @@ Page({
           return d && d.stats && d.stats.blocked === 0 && d.stats.warned > 0;
         });
 
+        // Bug #13: 计算材料完整度百分比
+        var totalChecks = formattedDocs.length * 6;
+        var passedChecks = formattedDocs.reduce(function(sum, d) {
+          var s = d.stats || {};
+          return sum + (s.passed || 0);
+        }, 0);
+        var score = totalChecks > 0 ? Math.round((passedChecks / totalChecks) * 100) : 0;
+
         self.setData({
           loading: false,
+          score: score,
           report: {
             total: res.total,
             blocked: res.blocked,
