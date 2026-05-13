@@ -142,7 +142,21 @@ function desensitize(text, mode = MODES.DESENSITIZED, overrides = {}) {
   };
 }
 
-function desensitizeFields(fields, mode = MODES.DESENSITIZED, authorizedFields = []) {
+// Bug #12: 按证件类型定义PII字段映射
+const PII_FIELDS_BY_DOC_TYPE = {
+  id_card: ['name', 'idNumber', 'birthDate', 'address'],
+  passport: ['name', 'passportNumber', 'birthDate'],
+  hk_permit: ['name', 'idNumber', 'birthDate'],
+  hk_id: ['name', 'hkIdNumber', 'birthDate'],
+  degree: ['name', 'certNumber'],
+  marriage: ['name', 'spouseName', 'certNumber'],
+  birth_cert: ['name', 'birthDate'],
+  bank_statement: ['name', 'accountNumber'],
+  work_proof: ['name', 'company'],
+  household: ['name', 'idNumber', 'address']
+};
+
+function desensitizeFields(fields, mode = MODES.DESENSITIZED, authorizedFields = [], docType = '') {
   const result = {};
   const fieldMap = {
     'name': { key: 'chineseName', fallback: '【姓名】' },
@@ -154,8 +168,14 @@ function desensitizeFields(fields, mode = MODES.DESENSITIZED, authorizedFields =
     'address': { key: 'address', fallback: '【地址信息】' },
     'company': { key: 'companyName', fallback: '【公司名称】' },
     'employer': { key: 'companyName', fallback: '【公司名称】' },
-    'birthDate': { key: 'exactDate', fallback: '【日期】' }
+    'birthDate': { key: 'exactDate', fallback: '【日期】' },
+    'certNumber': { key: 'certNumber', fallback: '【证书编号】' },
+    'spouseName': { key: 'spouseName', fallback: '【配偶姓名】' },
+    'accountNumber': { key: 'accountNumber', fallback: '【账号】' }
   };
+
+  // Bug #12: 按证件类型确定需要脱敏的字段列表
+  var piiFieldKeys = docType ? (PII_FIELDS_BY_DOC_TYPE[docType] || null) : null;
 
   Object.entries(fields).forEach(([key, value]) => {
     if (authorizedFields.includes(key)) {
@@ -172,6 +192,11 @@ function desensitizeFields(fields, mode = MODES.DESENSITIZED, authorizedFields =
       } else {
         result[key] = value;
       }
+      return;
+    }
+    // Bug #12: docType指定时，非PII字段原值保留
+    if (piiFieldKeys && !piiFieldKeys.includes(key)) {
+      result[key] = value;
       return;
     }
     const mapping = fieldMap[key];
@@ -250,6 +275,6 @@ module.exports = {
   MODES, ENGINE_VERSION,
   desensitize, desensitizeFields, generateDesensitizedPreview,
   getAuthorizedFields, authorizeField, revokeField, revokeAllFields,
-  PII_PATTERNS,
+  PII_PATTERNS, PII_FIELDS_BY_DOC_TYPE,
   protectLegalCitation
 };

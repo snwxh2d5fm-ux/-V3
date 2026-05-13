@@ -124,28 +124,19 @@
           <text class="wf-title">{{freeDocGuide.wfTitle || '证件参照'}}</text>
         </view>
         <view class="wf-body">
-          <view class="wf-photo">
+          <view class="wf-photo" wx:if="{{freeDocGuide.showPhoto !== false}}">
             <view class="wf-photo__frame"></view>
             <text class="wf-photo__tag">照片</text>
           </view>
           <view class="wf-fields">
-            <view class="wf-field">
-              <view class="wf-line wf-line--short"></view>
-              <text class="wf-label">姓名</text>
-              <text class="wf-pii-tag">脱敏</text>
-            </view>
-            <view class="wf-field">
-              <view class="wf-line wf-line--long"></view>
-              <text class="wf-label">证件号码</text>
-              <text class="wf-pii-tag">脱敏</text>
-            </view>
-            <view class="wf-field">
-              <view class="wf-line wf-line--mid"></view>
-              <text class="wf-label">有效期限</text>
+            <view class="wf-field" wx:for="{{freeDocGuide.wfFields}}" wx:key="label">
+              <view class="wf-line wf-line--{{item.width || 'mid'}}"></view>
+              <text class="wf-label">{{item.label}}</text>
+              <text class="wf-pii-tag" wx:if="{{item.pii}}">脱敏</text>
             </view>
           </view>
         </view>
-        <view class="wf-footer">
+        <view class="wf-footer" wx:if="{{freeDocGuide.showSeal !== false}}">
           <view class="wf-seal"></view>
           <text class="wf-footer-label">发证机关印章</text>
         </view>
@@ -215,16 +206,10 @@
     <!-- 图片预览 + 脱敏遮罩 + 旋转样式 -->
     <view class="image-preview" wx:if="{{imagePath}}">
       <image src="{{imagePath}}" mode="aspectFit" class="preview-img" style="transform: rotate({{imageRotated}}deg)" aria-label="证件图片预览" />
-      <!-- 隐私模式遮罩图层 -->
+      <!-- 隐私模式遮罩图层 (Bug #12: 按证件类型动态渲染) -->
       <view class="privacy-overlay" wx:if="{{privacyMode !== 'local'}}">
-        <view class="privacy-bar privacy-bar--name"></view>
-        <view class="privacy-bar privacy-bar--id"></view>
-        <view class="privacy-bar privacy-bar--birth"></view>
-        <view class="privacy-bar privacy-bar--addr"></view>
-        <text class="privacy-label privacy-label--name">***</text>
-        <text class="privacy-label privacy-label--id">****</text>
-        <text class="privacy-label privacy-label--birth">****</text>
-        <text class="privacy-label privacy-label--addr">****</text>
+        <view class="privacy-bar" wx:for="{{privacyBars}}" wx:key="label" style="top:{{item.top}};left:{{item.left}};width:{{item.width}};height:{{item.height}}"></view>
+        <text class="privacy-label" wx:for="{{privacyBars}}" wx:key="label" style="top:{{item.top}};left:{{item.left}};width:{{item.width}}">{{item.label}}</text>
       </view>
     </view>
 
@@ -421,6 +406,14 @@
   </block>
 
   <view class="safe-bottom"></view>
+
+  <!-- Bug #8: 隐藏Canvas用于图片旋转/缩放/裁剪/增强/脱敏 -->
+  <canvas canvas-id="rotate-canvas" style="position:fixed;top:-9999rpx;left:-9999rpx;width:480rpx;height:480rpx"></canvas>
+  <canvas canvas-id="resize-canvas" style="position:fixed;top:-9999rpx;left:-9999rpx;width:480rpx;height:480rpx"></canvas>
+  <canvas canvas-id="crop-canvas" style="position:fixed;top:-9999rpx;left:-9999rpx;width:480rpx;height:480rpx"></canvas>
+  <canvas canvas-id="scan-canvas" style="position:fixed;top:-9999rpx;left:-9999rpx;width:480rpx;height:480rpx"></canvas>
+  <canvas canvas-id="mask-canvas" style="position:fixed;top:-9999rpx;left:-9999rpx;width:480rpx;height:480rpx"></canvas>
+  <canvas canvas-id="merge-canvas" style="position:fixed;top:-9999rpx;left:-9999rpx;width:480rpx;height:480rpx"></canvas>
 
   <floating-ai visible="{{true}}" />
 </view>

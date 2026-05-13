@@ -153,8 +153,10 @@ Page({
       cloudStorageTotal: app.globalData.cloudStorageTotal || 0
     });
 
-    // 有路径 → 加载卡槽模板；无路径 → 引导选择
-    if (hasSelectedPath && userStatus !== 'skipped') {
+    // Bug #10: 检测路径变更 → 仅在路径变化或首次加载时重载模板
+    var pathChanged = (selectedPath !== this._lastPath);
+    this._lastPath = selectedPath;
+    if (hasSelectedPath && userStatus !== 'skipped' && pathChanged) {
       this.loadSlotTemplate(userStatus, selectedPath);
     }
 
@@ -169,13 +171,68 @@ Page({
    * 加载路径专属卡槽模板 (PRD §3.4.1)
    */
   loadSlotTemplate(userStatus, selectedPath) {
+    var that = this;
     try {
       const { matchTemplate, computeSlotStates } = require('../../../data/document-index-templates');
-      const template = matchTemplate(userStatus, selectedPath, 'application');
+      var template = matchTemplate(userStatus, selectedPath, 'application');
       if (!template) {
         this.setData({ slotCategories: [], slotTemplate: null });
         return;
       }
+
+      // Bug #10: 检查本地缓存（24h有效）
+      var cacheKey = '__slot_template__' + selectedPath;
+      try {
+        var cached = wx.getStorageSync(cacheKey);
+        if (cached && cached.updatedAt && (Date.now() - cached.updatedAt < 86400000)) {
+          template = cached.template;
+        }
+      } catch (e) { /* ignore */ }
+
+      // Bug #10: 异步云端同步 solution-engine — 云端数据优先，合并+新增槽位
+      wx.cloud.callFunction({
+        name: 'solution-engine',
+        data: { action: 'getDetail', pathId: selectedPath }
+      }).then(function(res) {
+        if (res.result && res.result.code === 0 && res.result.data && res.result.data.requirements) {
+          var cloudReqs = res.result.data.requirements;
+          if (template.categories) {
+            template.categories.forEach(function(cat) {
+              if (cat.slots) {
+                // 1) 标记已有槽位是否在云端确认
+                cat.slots.forEach(function(slot) {
+                  var dn = (slot.docName || '').toLowerCase();
+                  var cloudMatch = cloudReqs.find(function(r) {
+                    var rl = (r || '').toLowerCase();
+                    return dn.indexOf(rl) >= 0 || rl.indexOf(dn) >= 0;
+                  });
+                  if (cloudMatch) slot.cloudVerified = true;
+                });
+                // 2) 云端独有槽位（本地无匹配）→ 追加到分类
+                var existingNames = cat.slots.map(function(s) { return (s.docName || '').toLowerCase(); });
+                cloudReqs.forEach(function(req) {
+                  var rl = (req || '').toLowerCase();
+                  var alreadyExists = existingNames.some(function(en) {
+                    return en.indexOf(rl) >= 0 || rl.indexOf(en) >= 0;
+                  });
+                  if (!alreadyExists) {
+                    cat.slots.push({
+                      slotKey: 'cloud_' + rl.replace(/[^a-z0-9]/g, '_'),
+                      docName: req,
+                      guideId: '',
+                      requirement: 'recommended',
+                      cloudVerified: true,
+                      cloudAdded: true
+                    });
+                  }
+                });
+              }
+            });
+          }
+          try { wx.setStorageSync(cacheKey, { template: template, updatedAt: Date.now() }); } catch (e) {}
+          that._refreshSlotView(template);
+        }
+      }).catch(function() { /* 降级为纯本地模板 */ });
 
       var uploadedDocs = getAllDocuments();
       var slotCategories = computeSlotStates(template, uploadedDocs, this.data.identityOwner);
@@ -235,6 +292,41 @@ Page({
       console.error('[证件夹] 模板加载失败:', e);
       this.setData({ slotCategories: [], slotTemplate: null, pageState: 'index_loaded' });
     }
+  },
+
+  /** Bug #10: 云端 solution-engine 数据到达后刷新槽位视图 */
+  _refreshSlotView(template) {
+    var uploadedDocs = getAllDocuments();
+    const { computeSlotStates } = require('../../../data/document-index-templates');
+    var slotCategories = computeSlotStates(template, uploadedDocs, this.data.identityOwner);
+
+    var filledTotal = slotCategories.reduce(function(sum, cat) {
+      return sum + (cat.categoryProgress && cat.categoryProgress.filled || 0);
+    }, 0);
+    var requiredTotal = slotCategories.reduce(function(sum, cat) {
+      return sum + (cat.categoryProgress && cat.categoryProgress.total || 0);
+    }, 0);
+    var percentage = requiredTotal > 0 ? Math.round((filledTotal / requiredTotal) * 100) : 0;
+    var deg = (percentage / 100) * 360;
+    var rightDeg = Math.min(deg, 180);
+    var leftDeg = Math.max(0, deg - 180);
+
+    var allSlots = slotCategories.reduce(function(arr, c) { return arr.concat(c.slots); }, []);
+    var emptyRequired = allSlots.filter(function(s) {
+      return s.requirement === 'required' && s.fillStatus === 'empty';
+    });
+    var smartUploadSuggestion = '';
+    if (emptyRequired.length > 0) {
+      var pick = emptyRequired[Math.floor(Math.random() * emptyRequired.length)];
+      smartUploadSuggestion = pick.docName;
+    }
+
+    this.setData({
+      slotTemplate: template,
+      slotCategories: slotCategories,
+      slotProgress: { filled: filledTotal, total: requiredTotal, percentage: percentage, rightDeg: rightDeg, leftDeg: leftDeg },
+      smartUploadSuggestion: smartUploadSuggestion
+    });
   },
 
   /** 切换身份卡槽所属人 */

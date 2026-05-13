@@ -424,18 +424,11 @@
 .crop-corner--tr { top: -4rpx; right: -4rpx; border-top: 6rpx solid #3B82F6; border-right: 6rpx solid #3B82F6; }
 .crop-corner--bl { bottom: -4rpx; left: -4rpx; border-bottom: 6rpx solid #3B82F6; border-left: 6rpx solid #3B82F6; }
 .crop-corner--br { bottom: -4rpx; right: -4rpx; border-bottom: 6rpx solid #3B82F6; border-right: 6rpx solid #3B82F6; }
-/* ═══ 预览脱敏遮罩图层 ═══ */
+/* ═══ 预览脱敏遮罩图层 (Bug #12: 动态位置，去掉硬编码) ═══ */
 .privacy-overlay { position: absolute; top: 0; left: 0; right: 0; bottom: 0; z-index: 2; pointer-events: none; }
 .privacy-bar { position: absolute; background: rgba(0,0,0,0.65); border-radius: 4rpx; }
-.privacy-bar--name { top: 12%; left: 8%; width: 28%; height: 5%; }
-.privacy-bar--id { top: 20%; left: 8%; width: 45%; height: 4%; }
-.privacy-bar--birth { top: 28%; left: 8%; width: 25%; height: 4%; }
-.privacy-bar--addr { top: 36%; left: 8%; width: 55%; height: 5%; }
-.privacy-label { position: absolute; color: var(--color-bg-card); font-size: 18rpx; text-align: center; opacity: 0.8; }
-.privacy-label--name { top: 11.5%; left: 8%; width: 28%; }
-.privacy-label--id { top: 19.5%; left: 8%; width: 45%; }
-.privacy-label--birth { top: 27.5%; left: 8%; width: 25%; }
-.privacy-label--addr { top: 35.5%; left: 8%; width: 55%; }
+.privacy-label { position: absolute; color: var(--color-bg-card); font-size: 18rpx; text-align: center; opacity: 0.8;
+  /* 用top偏移微调使标签居中对齐遮罩条 */ transform: translateY(-110%); }
 
 /* 按钮行 */
 .btn-flex {

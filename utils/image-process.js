@@ -315,6 +315,117 @@ function mergeToA4Preview(imagePaths, labels) {
   });
 }
 
+/**
+ * Bug #8: 按角度旋转图片（canvas像素级旋转）
+ * @param {string} imagePath - 图片路径
+ * @param {number} degrees - 旋转角度 0/90/180/270
+ * @returns {Promise<string>} 旋转后的临时图片路径
+ */
+function rotateImage(imagePath, degrees) {
+  return new Promise(function(resolve) {
+    var rad = (degrees || 0) % 360;
+    if (rad === 0) { resolve(imagePath); return; }
+    if (rad !== 90 && rad !== 180 && rad !== 270) { resolve(imagePath); return; }
+
+    wx.getImageInfo({
+      src: imagePath,
+      success: function(info) {
+        var ctx = wx.createCanvasContext('rotate-canvas');
+        var w = info.width, h = info.height;
+
+        if (rad === 90) {
+          // 右旋90: translate+rotate后重绘
+          ctx.translate(h, 0);
+          ctx.rotate(Math.PI / 2);
+          ctx.drawImage(imagePath, 0, 0, w, h);
+        } else if (rad === 180) {
+          ctx.translate(w, h);
+          ctx.rotate(Math.PI);
+          ctx.drawImage(imagePath, 0, 0, w, h);
+        } else if (rad === 270) {
+          ctx.translate(0, w);
+          ctx.rotate(-Math.PI / 2);
+          ctx.drawImage(imagePath, 0, 0, w, h);
+        }
+
+        ctx.draw(false, function() {
+          wx.canvasToTempFilePath({
+            canvasId: 'rotate-canvas',
+            success: function(res) { resolve(res.tempFilePath); },
+            fail: function() { resolve(imagePath); }
+          });
+        });
+      },
+      fail: function() { resolve(imagePath); }
+    });
+  });
+}
+
+/**
+ * Bug #8: 缩放图片到指定最大尺寸
+ * @param {string} imagePath
+ * @param {number} maxWidth
+ * @param {number} maxHeight
+ * @returns {Promise<string>}
+ */
+function resizeImage(imagePath, maxWidth, maxHeight) {
+  return new Promise(function(resolve) {
+    wx.getImageInfo({
+      src: imagePath,
+      success: function(info) {
+        var w = info.width, h = info.height;
+        var scale = Math.min((maxWidth || 2048) / w, (maxHeight || 2048) / h, 1);
+        if (scale >= 1) { resolve(imagePath); return; }
+
+        var ctx = wx.createCanvasContext('resize-canvas');
+        ctx.drawImage(imagePath, 0, 0, w * scale, h * scale);
+        ctx.draw(false, function() {
+          wx.canvasToTempFilePath({
+            canvasId: 'resize-canvas',
+            success: function(res) { resolve(res.tempFilePath); },
+            fail: function() { resolve(imagePath); }
+          });
+        });
+      },
+      fail: function() { resolve(imagePath); }
+    });
+  });
+}
+
+/**
+ * Bug #8: Canvas像素级裁剪
+ * @param {string} imagePath
+ * @param {number} x - 裁剪起点x (0-1比例)
+ * @param {number} y - 裁剪起点y (0-1比例)
+ * @param {number} cropWidth - 裁剪宽度 (0-1比例)
+ * @param {number} cropHeight - 裁剪高度 (0-1比例)
+ * @returns {Promise<string>}
+ */
+function cropImage(imagePath, x, y, cropWidth, cropHeight) {
+  return new Promise(function(resolve) {
+    if (!cropWidth || !cropHeight) { resolve(imagePath); return; }
+    wx.getImageInfo({
+      src: imagePath,
+      success: function(info) {
+        var w = info.width, h = info.height;
+        var sx = (x || 0) * w, sy = (y || 0) * h;
+        var sw = cropWidth * w, sh = cropHeight * h;
+
+        var ctx = wx.createCanvasContext('crop-canvas');
+        ctx.drawImage(imagePath, sx, sy, sw, sh, 0, 0, sw, sh);
+        ctx.draw(false, function() {
+          wx.canvasToTempFilePath({
+            canvasId: 'crop-canvas',
+            success: function(res) { resolve(res.tempFilePath); },
+            fail: function() { resolve(imagePath); }
+          });
+        });
+      },
+      fail: function() { resolve(imagePath); }
+    });
+  });
+}
+
 module.exports = {
   applyPrivacyMask,
   enhanceToScanned,
@@ -322,5 +433,8 @@ module.exports = {
   autoRotate,
   getDefaultRegions,
   computeMaskRegions,
-  mergeToA4Preview
+  mergeToA4Preview,
+  rotateImage,
+  resizeImage,
+  cropImage
 };

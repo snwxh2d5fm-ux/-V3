@@ -94,7 +94,16 @@ Page({
 
     // 保存状态
     saving: false,
-    privacyMode: 'local'
+    privacyMode: 'local',
+
+    // Bug #12: 隐私覆盖条（按证件类型动态渲染）
+    privacyBars: [
+      { top: '12%', left: '8%', width: '28%', height: '4.5%', label: '姓名' },
+      { top: '20%', left: '8%', width: '45%', height: '4%', label: '证号' },
+      { top: '28%', left: '8%', width: '22%', height: '4%', label: '出生' },
+      { top: '36%', left: '8%', width: '55%', height: '5%', label: '地址' }
+    ],
+    _currentDocType: ''
   },
 
   onLoad(options) {
@@ -211,17 +220,13 @@ Page({
     } catch (e) { console.log('[AI增强] 跳过:', e.message); }
   },
 
-  /** 确认图片 → 质量不过时阻断 */
+  /** 确认图片 → Bug #8: 应用旋转+缩放变换后再推进步骤 */
   confirmImage() {
+    var that = this;
     var qr = this.data.qualityResult;
     // Bug #6 修复: 质量检测未完成时阻断，防止跳过质检
     if (!qr) {
       wx.showToast({ title: '质量检测中，请稍候…', icon: 'none', duration: 1500 });
-      return;
-    }
-    // 质量≥60分直接进手动填写，跳过对齐步骤
-    if (qr.score >= 60) {
-      this.setData({ step: 3, docType: 'unknown', docTypeLabel: '手动录入' });
       return;
     }
     if (qr && !qr.pass) {
@@ -236,7 +241,29 @@ Page({
       });
       return;
     }
-    this.setData({ step: 2.5, cropX: 0, cropY: 0, cropScale: 1 });
+
+    // Bug #8: 应用旋转变换（canvas像素级）
+    var imagePath = this.data.imagePath;
+    var rotateDeg = this._rotateDeg || 0;
+    if (rotateDeg > 0) {
+      wx.showLoading({ title: '处理中...' });
+      var imgProc = require('../../../utils/image-process');
+      imgProc.rotateImage(imagePath, rotateDeg).then(function(rotatedPath) {
+        that.setData({ imagePath: rotatedPath, imageRotated: 0 });
+        that._rotateDeg = 0;
+        // 然后缩放
+        return imgProc.resizeImage(rotatedPath, 2048, 2048);
+      }).then(function(finalPath) {
+        wx.hideLoading();
+        that.setData({ imagePath: finalPath, step: 3, docType: 'unknown', docTypeLabel: '手动录入' });
+      }).catch(function() {
+        wx.hideLoading();
+        that.setData({ step: 3, docType: 'unknown', docTypeLabel: '手动录入' });
+      });
+    } else {
+      // 无需旋转，直接进下一步（跳过step 2.5对齐页面）
+      this.setData({ step: 3, docType: 'unknown', docTypeLabel: '手动录入' });
+    }
   },
 
   onCropChange(e) {
@@ -254,7 +281,26 @@ Page({
     this.setData({ _rotateStyle: 'transform: rotate(' + currentRot + 'deg);' });
   },
   confirmCrop() {
-    this.setData({ step: 3, docType: 'unknown', docTypeLabel: '手动录入' });
+    var that = this;
+    wx.showLoading({ title: '处理中...' });
+    var imgProc = require('../../../utils/image-process');
+    var imagePath = this.data.imagePath;
+    // Bug #8: 先旋转，再裁剪，最后缩放
+    var rotateDeg = this._rotateDeg || 0;
+    var chain = rotateDeg > 0 ? imgProc.rotateImage(imagePath, rotateDeg) : Promise.resolve(imagePath);
+    chain.then(function(p) {
+      // 应用crop参数（frame区域在80-600rpx内）
+      return imgProc.cropImage(p, 0.05, 0.08, 0.90, 0.84);
+    }).then(function(p) {
+      return imgProc.resizeImage(p, 2048, 2048);
+    }).then(function(finalPath) {
+      wx.hideLoading();
+      that.setData({ imagePath: finalPath, imageRotated: 0, step: 3, docType: 'unknown', docTypeLabel: '手动录入' });
+      that._rotateDeg = 0;
+    }).catch(function() {
+      wx.hideLoading();
+      that.setData({ step: 3, docType: 'unknown', docTypeLabel: '手动录入' });
+    });
   },
 
   /** Promise超时兜底 — 防止Canvas操作挂起导致转圈 */
@@ -614,14 +660,16 @@ Page({
     });
   },
 
-  // ===== Bug #5: 旋转+扫描件工具栏 =====
+  // ===== Bug #5+#8: 旋转+扫描件工具栏 =====
 
-  /** 顺时针旋转90° */
+  /** 顺时针旋转90° — Bug #8: 存储旋转角度，confirmImage 时通过 canvas 实际旋转像素 */
   onRotateImage() {
-    var currentRot = this.data.imageRotated || 0;
-    var newRot = (currentRot + 90) % 360;
-    this.setData({ imageRotated: newRot });
-    wx.showToast({ title: '已旋转 ' + newRot + '°', icon: 'none', duration: 800 });
+    var currentDeg = this._rotateDeg || 0;
+    var newDeg = (currentDeg + 90) % 360;
+    this._rotateDeg = newDeg;
+    // CSS 预览旋转（视觉反馈，最终像素旋转在 confirmImage 中）
+    this.setData({ imageRotated: newDeg });
+    wx.showToast({ title: '已旋转 ' + newDeg + '°', icon: 'none', duration: 800 });
   },
 
   /** 扫描件效果增强 */
@@ -657,7 +705,9 @@ Page({
   onSelectFreeDocType(e) {
     var value = e.currentTarget.dataset.value;
     var guide = getFreeDocGuide(value);
-    this.setData({ freeDocType: value, freeDocGuide: guide });
+    // Bug #12: 按证件类型设置隐私覆盖条
+    var overlay = DOC_PRIVACY_OVERLAY[value] || DOC_PRIVACY_OVERLAY['id_card'];
+    this.setData({ freeDocType: value, freeDocGuide: guide, privacyBars: overlay.bars, _currentDocType: value });
   },
 
   /** 获取当前有效的拍摄指引（卡槽优先，否则自由模式） */
@@ -1465,35 +1515,270 @@ function getSlotGuide(slotKey, docName) {
   return null;
 }
 
-/** Bug #2+#24: 自由模式证件类型→拍摄指引映射 (补全全部类型) */
+/** Bug #2+#24: 自由模式证件类型→拍摄指引映射 (补全全部类型 + Bug #11 wfFields) */
 function getFreeDocGuide(docType) {
   var guides = {
-    id_card: { icon: '🪪', wfTitle: '中华人民共和国居民身份证', items: ['背景：深色桌面，白色背景', '人像：正面居中，头部在虚线框内', '国徽：背面国徽清晰，居中拍摄', '边距：四角留出5mm空白，勿裁切'], piiFields: ['姓名', '身份证号', '出生日期'], specimen: '人像面+国徽面·无反光·圆角完整' },
-    hk_permit: { icon: '🛂', wfTitle: '往来港澳通行证', items: ['背景：深色桌面', '信息页：个人信息+签注页完整', '边距：四角完整，勿裁切'], piiFields: ['姓名', '证件号', '有效期'], specimen: '个人信息页·无反光' },
-    passport: { icon: '🛂', wfTitle: '中华人民共和国护照', items: ['背景：深色桌面', '信息页：含照片个人信息页', '边距：护照四边完整'], piiFields: ['姓名', '护照号', '出生日期'], specimen: '个人信息页·无反光' },
-    hk_id: { icon: '🆔', wfTitle: '香港永久性居民身份证', items: ['背景：深色桌面', '正面：芯片面朝上', '边距：四角完整'], piiFields: ['姓名', '身份证号'], specimen: '正面·芯片可见' },
-    household: { icon: '📖', wfTitle: '居民户口簿', items: ['背景：深色桌面', '内容：户主页+本人页', '边距：四角完整'], piiFields: ['姓名', '身份证号', '住址'], specimen: '户主页+本人页' },
-    marriage: { icon: '💍', wfTitle: '中华人民共和国结婚证', items: ['背景：深色桌面', '内容：双页展开', '要求：印章+照片清晰'], piiFields: ['双方姓名', '证件号'], specimen: '双页展开·印章清晰' },
-    birth_cert: { icon: '👶', wfTitle: '出生医学证明', items: ['背景：深色桌面', '内容：正面完整', '要求：编号+印章清晰'], piiFields: ['婴儿姓名', '出生日期'], specimen: '正面·无折叠' },
-    degree: { icon: '🎓', wfTitle: '学位证书', items: ['背景：深色桌面', '内容：证书正面完整', '要求：证书编号+印章清晰'], piiFields: ['姓名', '证书编号'], specimen: '正面·印章清晰' },
-    transcript: { icon: '📄', wfTitle: '学业成绩单', items: ['背景：深色桌面', '内容：学校官方成绩单', '要求：教务处印章清晰'], piiFields: ['姓名', '学号'], specimen: '学校抬头·教务处盖章' },
-    work_proof: { icon: '💼', wfTitle: '工作证明', items: ['背景：深色桌面', '内容：抬头纸+盖章', '要求：公章+签字清晰'], piiFields: ['姓名', '公司名'], specimen: '抬头纸+公章' },
-    emp_letter: { icon: '📝', wfTitle: '雇主聘用书', items: ['背景：深色桌面', '内容：公司抬头纸', '要求：含职位+薪资+公章'], piiFields: ['姓名', '薪资'], specimen: '公司抬头纸·公章+签字' },
-    recommendation: { icon: '✉️', wfTitle: '推荐信', items: ['背景：深色桌面', '内容：推荐人签字件', '要求：含联系方式'], piiFields: ['申请人', '推荐人'], specimen: '推荐人签字·含联系方式' },
-    bank_statement: { icon: '💰', wfTitle: '银行流水', items: ['背景：深色桌面', '内容：最近12个月', '要求：银行印章清晰'], piiFields: ['账户名', '账号'], specimen: '银行流水原件' },
-    tax_record: { icon: '📑', wfTitle: '完税证明', items: ['背景：深色桌面', '内容：税务机关出具', '要求：税务印章清晰'], piiFields: ['姓名', '身份证号'], specimen: '税务局出具·近期' },
-    income_proof: { icon: '📊', wfTitle: '收入证明', items: ['背景：深色桌面', '内容：公司/机关出具', '要求：含时间段+金额'], piiFields: ['姓名', '收入金额'], specimen: '公司/税务机关出具' },
-    income_250w: { icon: '💵', wfTitle: '年收入≥250万证明', items: ['背景：深色桌面', '内容：薪资+流水+税单', '要求：三件收入数据一致'], piiFields: ['姓名', '年收入'], specimen: '三件一致·≥250万港币' },
-    company_docs: { icon: '🏢', wfTitle: '公司注册文件', items: ['背景：深色桌面', '内容：注册证明+商业登记证', '要求：印章清晰'], piiFields: ['公司编号'], specimen: '公司注册处·商业登记证' },
-    plan_statement: { icon: '📝', wfTitle: '赴港计划书 (文字)', items: ['此材料为文字撰写，非文件上传', '建议800-1500字', '内容：来港目的+职业规划+对港贡献'], piiFields: ['姓名'], specimen: '文字撰写·800-1500字' },
-    no_crime: { icon: '🛡️', wfTitle: '无犯罪记录证明', items: ['背景：深色桌面', '内容：公安局/派出所出具', '要求：6个月内有效'], piiFields: ['姓名', '身份证号'], specimen: '公安机关出具·6个月有效' },
-    student_visa: { icon: '🎫', wfTitle: '学生签证/入境许可', items: ['背景：深色桌面', '内容：入境处签证标签', '要求：含学校+有效期'], piiFields: ['姓名', '签证编号'], specimen: '入境处学生签证标签' },
-    admission_letter: { icon: '📨', wfTitle: '录取通知书', items: ['背景：深色桌面', '内容：学校正式录取通知', '要求：含专业+入学日期'], piiFields: ['姓名'], specimen: '学校抬头·官方印章' },
-    language_cert: { icon: '🗣️', wfTitle: '语言成绩单', items: ['背景：深色桌面', '内容：IELTS/TOEFL/HSK官方成绩单', '要求：分数+证书编号清晰'], piiFields: ['姓名', '考生编号'], specimen: '官方成绩单原件' },
-    approval: { icon: '✅', wfTitle: '获批通知书', items: ['背景：深色桌面', '内容：通知完整页面', '要求：申请编号+日期清晰'], piiFields: ['姓名', '申请编号'], specimen: '获批原件' }
+    id_card: { icon: '🪪', wfTitle: '中华人民共和国居民身份证', items: ['背景：深色桌面，白色背景', '人像：正面居中，头部在虚线框内', '国徽：背面国徽清晰，居中拍摄', '边距：四角留出5mm空白，勿裁切'], piiFields: ['姓名', '身份证号', '出生日期'], specimen: '人像面+国徽面·无反光·圆角完整', showPhoto: true, showSeal: false,
+      wfFields: [
+        { label: '姓名', width: 'short', pii: true },
+        { label: '性别 / 民族', width: 'mid', pii: false },
+        { label: '出生日期', width: 'mid', pii: true },
+        { label: '住址', width: 'full', pii: true },
+        { label: '公民身份号码', width: 'long', pii: true },
+        { label: '签发机关', width: 'mid', pii: false },
+        { label: '有效期限', width: 'mid', pii: false }
+      ] },
+    hk_permit: { icon: '🛂', wfTitle: '往来港澳通行证', items: ['背景：深色桌面', '信息页：个人信息+签注页完整', '边距：四角完整，勿裁切'], piiFields: ['姓名', '证件号', '有效期'], specimen: '个人信息页·无反光', showPhoto: true, showSeal: false,
+      wfFields: [
+        { label: '姓名', width: 'short', pii: true },
+        { label: '通行证号码', width: 'long', pii: true },
+        { label: '出生日期', width: 'mid', pii: true },
+        { label: '签发机关', width: 'mid', pii: false },
+        { label: '签发日期 / 有效期限', width: 'full', pii: false },
+        { label: '签注类型 / 逗留条件', width: 'mid', pii: false }
+      ] },
+    passport: { icon: '🛂', wfTitle: '中华人民共和国护照', items: ['背景：深色桌面', '信息页：含照片个人信息页', '边距：护照四边完整'], piiFields: ['姓名', '护照号', '出生日期'], specimen: '个人信息页·无反光', showPhoto: true, showSeal: false,
+      wfFields: [
+        { label: '姓名 (中/英)', width: 'mid', pii: true },
+        { label: '护照号码', width: 'mid', pii: true },
+        { label: '国籍 / 性别', width: 'short', pii: false },
+        { label: '出生日期 / 地点', width: 'full', pii: true },
+        { label: '签发日期 / 有效期至', width: 'full', pii: false },
+        { label: '签发机关', width: 'mid', pii: false }
+      ] },
+    hk_id: { icon: '🆔', wfTitle: '香港永久性居民身份证', items: ['背景：深色桌面', '正面：芯片面朝上', '边距：四角完整'], piiFields: ['姓名', '身份证号'], specimen: '正面·芯片可见', showPhoto: true, showSeal: false,
+      wfFields: [
+        { label: '姓名 (中/英)', width: 'mid', pii: true },
+        { label: '身份证号码', width: 'long', pii: true },
+        { label: '出生日期', width: 'mid', pii: true },
+        { label: '签发日期', width: 'mid', pii: false },
+        { label: '符号标记', width: 'short', pii: false }
+      ] },
+    household: { icon: '📖', wfTitle: '居民户口簿', items: ['背景：深色桌面', '内容：户主页+本人页', '边距：四角完整'], piiFields: ['姓名', '身份证号', '住址'], specimen: '户主页+本人页', showPhoto: false, showSeal: true,
+      wfFields: [
+        { label: '户主姓名', width: 'short', pii: true },
+        { label: '户号', width: 'mid', pii: false },
+        { label: '住址', width: 'full', pii: true },
+        { label: '本人姓名', width: 'short', pii: true },
+        { label: '公民身份号码', width: 'long', pii: true },
+        { label: '与户主关系', width: 'short', pii: false },
+        { label: '登记机关 (印章)', width: 'mid', pii: false }
+      ] },
+    marriage: { icon: '💍', wfTitle: '中华人民共和国结婚证', items: ['背景：深色桌面', '内容：双页展开', '要求：印章+照片清晰'], piiFields: ['双方姓名', '证件号'], specimen: '双页展开·印章清晰', showPhoto: true, showSeal: true,
+      wfFields: [
+        { label: '持证人姓名', width: 'short', pii: true },
+        { label: '登记日期', width: 'mid', pii: false },
+        { label: '结婚证字号', width: 'long', pii: true },
+        { label: '双方姓名', width: 'full', pii: true },
+        { label: '双方证件号码', width: 'full', pii: true },
+        { label: '登记机关 (印章)', width: 'mid', pii: false }
+      ] },
+    birth_cert: { icon: '👶', wfTitle: '出生医学证明', items: ['背景：深色桌面', '内容：正面完整', '要求：编号+印章清晰'], piiFields: ['婴儿姓名', '出生日期'], specimen: '正面·无折叠', showPhoto: false, showSeal: true,
+      wfFields: [
+        { label: '婴儿姓名', width: 'short', pii: true },
+        { label: '出生医学证明编号', width: 'long', pii: false },
+        { label: '出生日期 / 时间', width: 'mid', pii: true },
+        { label: '母亲姓名 / 证件号', width: 'full', pii: true },
+        { label: '父亲姓名 / 证件号', width: 'full', pii: true },
+        { label: '签发医院 (印章)', width: 'mid', pii: false }
+      ] },
+    degree: { icon: '🎓', wfTitle: '学位证书', items: ['背景：深色桌面', '内容：证书正面完整', '要求：证书编号+印章清晰'], piiFields: ['姓名', '证书编号'], specimen: '正面·印章清晰', showPhoto: true, showSeal: true,
+      wfFields: [
+        { label: '学位证书编号', width: 'long', pii: true },
+        { label: '姓名', width: 'short', pii: true },
+        { label: '性别 / 出生日期', width: 'mid', pii: false },
+        { label: '所学专业', width: 'mid', pii: false },
+        { label: '学位授予单位', width: 'full', pii: false },
+        { label: '授予日期', width: 'mid', pii: false }
+      ] },
+    transcript: { icon: '📄', wfTitle: '学业成绩单', items: ['背景：深色桌面', '内容：学校官方成绩单', '要求：教务处印章清晰'], piiFields: ['姓名', '学号'], specimen: '学校抬头·教务处盖章', showPhoto: false, showSeal: true,
+      wfFields: [
+        { label: '学校名称 (抬头)', width: 'full', pii: false },
+        { label: '学生姓名', width: 'short', pii: true },
+        { label: '学号', width: 'mid', pii: true },
+        { label: '专业 / 学院', width: 'mid', pii: false },
+        { label: '成绩列表', width: 'full', pii: false },
+        { label: '教务处印章 / 日期', width: 'mid', pii: false }
+      ] },
+    work_proof: { icon: '💼', wfTitle: '工作证明', items: ['背景：深色桌面', '内容：抬头纸+盖章', '要求：公章+签字清晰'], piiFields: ['姓名', '公司名'], specimen: '抬头纸+公章', showPhoto: false, showSeal: true,
+      wfFields: [
+        { label: '公司名称 (抬头)', width: 'full', pii: false },
+        { label: '员工姓名', width: 'short', pii: true },
+        { label: '身份证号码', width: 'long', pii: true },
+        { label: '入职日期 / 职位', width: 'mid', pii: false },
+        { label: '工作内容简述', width: 'full', pii: false },
+        { label: '公司印章 / 日期', width: 'mid', pii: false }
+      ] },
+    emp_letter: { icon: '📝', wfTitle: '雇主聘用书', items: ['背景：深色桌面', '内容：公司抬头纸', '要求：含职位+薪资+公章'], piiFields: ['姓名', '薪资'], specimen: '公司抬头纸·公章+签字', showPhoto: false, showSeal: true,
+      wfFields: [
+        { label: '公司名称 (抬头)', width: 'full', pii: false },
+        { label: '员工姓名', width: 'short', pii: true },
+        { label: '职位 / 部门', width: 'mid', pii: false },
+        { label: '入职日期 / 合约期', width: 'mid', pii: false },
+        { label: '月薪 / 年薪', width: 'mid', pii: true },
+        { label: '公司印章 / 签字', width: 'mid', pii: false }
+      ] },
+    recommendation: { icon: '✉️', wfTitle: '推荐信', items: ['背景：深色桌面', '内容：推荐人签字件', '要求：含联系方式'], piiFields: ['申请人', '推荐人'], specimen: '推荐人签字·含联系方式', showPhoto: false, showSeal: false,
+      wfFields: [
+        { label: '推荐人姓名 / 职位', width: 'mid', pii: true },
+        { label: '申请人姓名', width: 'short', pii: true },
+        { label: '推荐人与申请人关系', width: 'mid', pii: false },
+        { label: '推荐内容详述', width: 'full', pii: false },
+        { label: '推荐人联系方式', width: 'full', pii: true },
+        { label: '签字 / 日期', width: 'mid', pii: false }
+      ] },
+    bank_statement: { icon: '💰', wfTitle: '银行流水', items: ['背景：深色桌面', '内容：最近12个月', '要求：银行印章清晰'], piiFields: ['账户名', '账号'], specimen: '银行流水原件', showPhoto: false, showSeal: true,
+      wfFields: [
+        { label: '银行名称', width: 'mid', pii: false },
+        { label: '账户持有人', width: 'short', pii: true },
+        { label: '账号', width: 'long', pii: true },
+        { label: '币种 / 余额', width: 'mid', pii: true },
+        { label: '流水时间段', width: 'full', pii: false },
+        { label: '银行印章', width: 'mid', pii: false }
+      ] },
+    tax_record: { icon: '📑', wfTitle: '完税证明', items: ['背景：深色桌面', '内容：税务机关出具', '要求：税务印章清晰'], piiFields: ['姓名', '身份证号'], specimen: '税务局出具·近期', showPhoto: false, showSeal: true,
+      wfFields: [
+        { label: '税务机关名称', width: 'full', pii: false },
+        { label: '纳税人姓名', width: 'short', pii: true },
+        { label: '身份证号码', width: 'long', pii: true },
+        { label: '纳税年度', width: 'short', pii: false },
+        { label: '应纳税所得额', width: 'mid', pii: true },
+        { label: '税务印章 / 日期', width: 'mid', pii: false }
+      ] },
+    income_proof: { icon: '📊', wfTitle: '收入证明', items: ['背景：深色桌面', '内容：公司/机关出具', '要求：含时间段+金额'], piiFields: ['姓名', '收入金额'], specimen: '公司/税务机关出具', showPhoto: false, showSeal: true,
+      wfFields: [
+        { label: '出具机构 (抬头)', width: 'full', pii: false },
+        { label: '姓名', width: 'short', pii: true },
+        { label: '身份证号码', width: 'long', pii: true },
+        { label: '收入时间段', width: 'mid', pii: false },
+        { label: '总收入 / 月收入', width: 'mid', pii: true },
+        { label: '机构印章 / 日期', width: 'mid', pii: false }
+      ] },
+    income_250w: { icon: '💵', wfTitle: '年收入≥250万证明', items: ['背景：深色桌面', '内容：薪资+流水+税单', '要求：三件收入数据一致'], piiFields: ['姓名', '年收入'], specimen: '三件一致·≥250万港币', showPhoto: false, showSeal: true,
+      wfFields: [
+        { label: '姓名', width: 'short', pii: true },
+        { label: '身份证号码', width: 'long', pii: true },
+        { label: '年度', width: 'short', pii: false },
+        { label: '年收入总额 (港币)', width: 'mid', pii: true },
+        { label: '薪资/奖金/股权分解', width: 'full', pii: false },
+        { label: '公司/税务印章', width: 'mid', pii: false }
+      ] },
+    company_docs: { icon: '🏢', wfTitle: '公司注册文件', items: ['背景：深色桌面', '内容：注册证明+商业登记证', '要求：印章清晰'], piiFields: ['公司编号'], specimen: '公司注册处·商业登记证', showPhoto: false, showSeal: true,
+      wfFields: [
+        { label: '公司名称 (中/英)', width: 'full', pii: false },
+        { label: '公司注册编号', width: 'mid', pii: true },
+        { label: '成立日期', width: 'mid', pii: false },
+        { label: '公司类别', width: 'short', pii: false },
+        { label: '注册地址', width: 'full', pii: false },
+        { label: '公司注册处印章', width: 'mid', pii: false }
+      ] },
+    plan_statement: { icon: '📝', wfTitle: '赴港计划书 (文字)', items: ['此材料为文字撰写，非文件上传', '建议800-1500字', '内容：来港目的+职业规划+对港贡献'], piiFields: ['姓名'], specimen: '文字撰写·800-1500字', showPhoto: false, showSeal: false,
+      wfFields: [
+        { label: '姓名 / 日期', width: 'short', pii: true },
+        { label: '来港目的', width: 'full', pii: false },
+        { label: '职业规划', width: 'full', pii: false },
+        { label: '对港贡献预期', width: 'full', pii: false },
+        { label: '在港安居计划', width: 'full', pii: false },
+        { label: '本人签字', width: 'mid', pii: false }
+      ] },
+    no_crime: { icon: '🛡️', wfTitle: '无犯罪记录证明', items: ['背景：深色桌面', '内容：公安局/派出所出具', '要求：6个月内有效'], piiFields: ['姓名', '身份证号'], specimen: '公安机关出具·6个月有效', showPhoto: false, showSeal: true,
+      wfFields: [
+        { label: '出具机关名称', width: 'full', pii: false },
+        { label: '申请人姓名', width: 'short', pii: true },
+        { label: '身份证号码', width: 'long', pii: true },
+        { label: '证明内容', width: 'full', pii: false },
+        { label: '有效期至', width: 'mid', pii: false },
+        { label: '公安机关印章 / 日期', width: 'mid', pii: false }
+      ] },
+    student_visa: { icon: '🎫', wfTitle: '学生签证/入境许可', items: ['背景：深色桌面', '内容：入境处签证标签', '要求：含学校+有效期'], piiFields: ['姓名', '签证编号'], specimen: '入境处学生签证标签', showPhoto: false, showSeal: true,
+      wfFields: [
+        { label: '签证编号', width: 'long', pii: true },
+        { label: '学生姓名', width: 'short', pii: true },
+        { label: '学校 / 课程名称', width: 'full', pii: false },
+        { label: '签证有效期', width: 'mid', pii: false },
+        { label: '逗留条件', width: 'full', pii: false },
+        { label: '入境处印章', width: 'mid', pii: false }
+      ] },
+    admission_letter: { icon: '📨', wfTitle: '录取通知书', items: ['背景：深色桌面', '内容：学校正式录取通知', '要求：含专业+入学日期'], piiFields: ['姓名'], specimen: '学校抬头·官方印章', showPhoto: false, showSeal: true,
+      wfFields: [
+        { label: '学校名称 (抬头)', width: 'full', pii: false },
+        { label: '学生姓名', width: 'short', pii: true },
+        { label: '录取专业 / 学位', width: 'mid', pii: false },
+        { label: '入学日期 / 学制', width: 'mid', pii: false },
+        { label: '申请编号', width: 'long', pii: true },
+        { label: '学校印章 / 签发人', width: 'mid', pii: false }
+      ] },
+    language_cert: { icon: '🗣️', wfTitle: '语言成绩单', items: ['背景：深色桌面', '内容：IELTS/TOEFL/HSK官方成绩单', '要求：分数+证书编号清晰'], piiFields: ['姓名', '考生编号'], specimen: '官方成绩单原件', showPhoto: false, showSeal: true,
+      wfFields: [
+        { label: '考试机构', width: 'mid', pii: false },
+        { label: '考生姓名', width: 'short', pii: true },
+        { label: '考生编号', width: 'mid', pii: true },
+        { label: '考试日期', width: 'mid', pii: false },
+        { label: '总分 / 各科分数', width: 'full', pii: false },
+        { label: '证书编号 / 验证码', width: 'long', pii: false }
+      ] },
+    approval: { icon: '✅', wfTitle: '获批通知书', items: ['背景：深色桌面', '内容：通知完整页面', '要求：申请编号+日期清晰'], piiFields: ['姓名', '申请编号'], specimen: '获批原件', showPhoto: false, showSeal: true,
+      wfFields: [
+        { label: '入境许可编号', width: 'long', pii: true },
+        { label: '申请人姓名', width: 'short', pii: true },
+        { label: '签证类型 / 逗留条件', width: 'mid', pii: false },
+        { label: '批准日期', width: 'mid', pii: false },
+        { label: '逗留期限至', width: 'mid', pii: false },
+        { label: '入境处印章/编号', width: 'full', pii: false }
+      ] }
   };
   return guides[docType] || null;
 }
+
+/** Bug #12: 按证件类型定义隐私覆盖条位置（基于真实证件PII字段布局） */
+var DOC_PRIVACY_OVERLAY = {
+  id_card: { bars: [
+    { top: '12%', left: '8%', width: '28%', height: '4.5%', label: '姓名' },
+    { top: '20%', left: '8%', width: '45%', height: '4%', label: '证号' },
+    { top: '28%', left: '8%', width: '22%', height: '4%', label: '出生' },
+    { top: '36%', left: '8%', width: '55%', height: '5%', label: '地址' }
+  ]},
+  passport: { bars: [
+    { top: '10%', left: '40%', width: '28%', height: '4%', label: '姓名' },
+    { top: '26%', left: '40%', width: '35%', height: '4%', label: '护照号' },
+    { top: '32%', left: '40%', width: '25%', height: '4%', label: '出生地点' }
+  ]},
+  hk_permit: { bars: [
+    { top: '12%', left: '35%', width: '25%', height: '4%', label: '姓名' },
+    { top: '22%', left: '35%', width: '45%', height: '4%', label: '证件号' },
+    { top: '30%', left: '35%', width: '22%', height: '4%', label: '出生' }
+  ]},
+  hk_id: { bars: [
+    { top: '10%', left: '5%', width: '25%', height: '4%', label: '姓名' },
+    { top: '18%', left: '5%', width: '40%', height: '4%', label: '证号' },
+    { top: '24%', left: '5%', width: '20%', height: '4%', label: '出生' }
+  ]},
+  degree: { bars: [
+    { top: '12%', left: '25%', width: '20%', height: '4%', label: '姓名' },
+    { top: '28%', left: '25%', width: '40%', height: '4%', label: '证书编号' }
+  ]},
+  marriage: { bars: [
+    { top: '8%', left: '20%', width: '20%', height: '4%', label: '姓名' },
+    { top: '22%', left: '20%', width: '40%', height: '4%', label: '证号' }
+  ]},
+  birth_cert: { bars: [
+    { top: '10%', left: '15%', width: '20%', height: '4%', label: '姓名' },
+    { top: '22%', left: '15%', width: '25%', height: '4%', label: '出生' }
+  ]},
+  bank_statement: { bars: [
+    { top: '8%', left: '20%', width: '25%', height: '4%', label: '账户名' },
+    { top: '20%', left: '20%', width: '30%', height: '4%', label: '账号' }
+  ]},
+  work_proof: { bars: [
+    { top: '12%', left: '15%', width: '22%', height: '4%', label: '姓名' },
+    { top: '22%', left: '15%', width: '40%', height: '4%', label: '公司' }
+  ]},
+  household: { bars: [
+    { top: '8%', left: '10%', width: '22%', height: '4%', label: '姓名' },
+    { top: '20%', left: '10%', width: '45%', height: '4%', label: '证号' },
+    { top: '28%', left: '10%', width: '55%', height: '5%', label: '地址' }
+  ]}
+};
 
 /** 卡槽key → 证件分类自动映射 (Bug #24: 补全全部映射) */
 function slotToCategory(slotKey) {

@@ -1,9 +1,9 @@
-/* ═══ 统一UI: 轻量浅色头 + 进度卡 ═══ */
+/* ═══ 统一UI: Bug #2 蓝色渐变头对齐全局标准 + 进度卡 ═══ */
 .container { min-height: 100vh; background: var(--color-bg-page); padding-bottom: env(safe-area-inset-bottom); }
-.page-header { display: flex; align-items: center; justify-content: space-between; padding: 24rpx 28rpx 12rpx; }
+.page-header { display: flex; align-items: center; justify-content: space-between; padding: 24rpx 28rpx 12rpx; background: linear-gradient(135deg, var(--blue-dark), var(--blue)); }
 .header-left { flex: 1; }
-.page-header__title { font-size: 34rpx; font-weight: 800; color: var(--color-text-primary); display: block; }
-.page-header__subtitle { font-size: 24rpx; color: #6B7280; display: block; margin-top: 4rpx; }
+.page-header__title { font-size: 34rpx; font-weight: 800; color: #FFF; display: block; }
+.page-header__subtitle { font-size: 24rpx; color: rgba(255,255,255,0.75); display: block; margin-top: 4rpx; }
 
 /* 进度总览卡 */
 .progress-card { display: flex; align-items: center; gap: 24rpx; margin: 12rpx 24rpx; padding: 24rpx; border-radius: 16rpx; background: var(--color-bg-card); box-shadow: 0 2rpx 8rpx rgba(0,0,0,0.04); }
