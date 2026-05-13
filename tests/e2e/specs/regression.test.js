@@ -14,8 +14,8 @@ const {
   waitFor, switchTab, reLaunch,
 } = require('../helpers');
 
-const PROJECT_PATH = path.resolve(__dirname, '../..');
-const appJson = require(path.resolve(__dirname, '../../../app.json'));
+const PROJECT_PATH = path.resolve(__dirname, '../../..');
+const appJson = require(path.resolve(PROJECT_PATH, 'app.json'));
 
 let mp;
 

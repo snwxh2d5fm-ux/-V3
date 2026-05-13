@@ -6,7 +6,7 @@
 
 const {
   goToTab, navigateTo, findElement,
-  initTestState, waitFor,
+  initTestState, waitFor, reLaunch,
 } = require('../helpers');
 
 let mp;
@@ -14,29 +14,6 @@ let mp;
 beforeAll(async () => {
   mp = global.__miniProgram__;
   await initTestState(mp);
-  // 种子测试提醒数据，确保详情页有数据可加载
-  await mp.evaluate(() => {
-    wx.setStorageSync('__reminders__', {
-      items: [{
-        id: 'e2e-test',
-        title: 'E2E测试提醒',
-        label: 'E2E测试提醒',
-        deadline: '2026-12-31',
-        description: 'E2E测试用提醒',
-        type: 'manual',
-        confidence: 'B',
-        status: 'active',
-        priority: 'normal',
-        linkedDocIds: [],
-        dependsOn: null,
-        alerts: [],
-        source: { type: 'manual' },
-        createdAt: new Date().toISOString(),
-        updatedAt: new Date().toISOString()
-      }],
-      version: 1
-    });
-  });
   await goToTab(mp, 'reminders');
   await waitFor(mp, 2000);
 });
@@ -72,7 +49,7 @@ describe('§4 提醒器 (reminders)', () => {
         version: 1
       });
     });
-    await navigateTo(mp, '/pages/reminders/detail/detail?id=e2e-test');
+    await reLaunch(mp, '/pages/reminders/detail/detail?id=e2e-test');
     await waitFor(mp, 2000);
     const page = await mp.currentPage();
     expect(page.path).toContain('detail');

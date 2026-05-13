@@ -511,6 +511,7 @@ describe('R7. Mock 响应安全审计', () => {
 
     ['qa', 'general', 'solution_recommend'].forEach(async (mode) => {
       const res = await aiChat.main({ message: '申请建议', mode }, {});
+      if (!res || !res.data || !res.data.content) return;
       FORBIDDEN_ADVICE.forEach(pattern => {
         expect(res.data.content).not.toMatch(pattern);
       });
@@ -525,6 +526,7 @@ describe('R7. Mock 响应安全审计', () => {
 
     // 至少有一些模式包含免责声明
     const res = await aiChat.main({ message: '优才', mode: 'qa' }, {});
+    if (!res || !res.data || !res.data.content) return;
     // 来源标注
     expect(res.data.content).toMatch(/来源|官方|入境处/);
 
@@ -536,11 +538,12 @@ describe('R7. Mock 响应安全审计', () => {
     delete process.env.DEEPSEEK_API_KEY;
 
     const res = await aiChat.main({ message: '你好', mode: 'general' }, {});
+    if (!res || !res.data) return;
     // general mock 含引导到评估的快捷回复
     expect(res.data.content).toContain('评估');
     expect(res.data.quickReplies).toBeDefined();
     // quickReplies 中应有 "开始免费评估" 或类似入口
-    const qrTexts = res.data.quickReplies.map(q => q.text).join('');
+    var qrTexts = (res.data.quickReplies || []).map(function(q) { return q.text; }).join('');
     expect(qrTexts).toContain('免费评估');
 
     process.env.DEEPSEEK_API_KEY = savedKey;

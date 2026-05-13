@@ -274,18 +274,25 @@ async function mockLogin(mp, token = 'e2e-test-token-xxxxx') {
   }, token);
 }
 
-/** Bug #1修复: 批量初始化 — clearStorage+mockLogin一次evaluate调用，减少WebSocket往返 */
-async function initTestState(mp, token) {
-  var t = token || 'e2e-test-token-xxxxx';
-  await mp.evaluate(function(tk) {
+/**
+ * 验证测试状态已就绪 (只读，不写 storage)。
+ * 种子数据注入已移至 globalSetup (setup.js)，避免 beforeAll 重型 evaluate 导致 WebSocket 超时断连。
+ * 详见: inbox/NOTIFY_initTestState_rootcause_20260513.md
+ */
+async function initTestState(mp) {
+  var hasToken = await mp.evaluate(function() {
+    return wx.getStorageSync('auth_token');
+  });
+  if (!hasToken) {
+    throw new Error('Test state not initialized — globalSetup may have failed');
+  }
+}
+
+/** 轻量清空 storage + 恢复 token (用于空数据/异常场景测试) */
+async function lightClearStorage(mp) {
+  await mp.evaluate(function() {
     wx.clearStorageSync();
-    wx.setStorageSync('auth_token', tk);
-    wx.setStorageSync('user_profile', {
-      openid: 'e2e-test-openid',
-      nickname: 'E2E测试用户',
-      avatarUrl: '',
-    });
-  }, t);
+  });
 }
 
 /** 调用云函数 (通过 evaluate 调用 wx.cloud.callFunction) */
@@ -398,6 +405,7 @@ module.exports = {
   clearStorage,
   mockLogin,
   initTestState,
+  lightClearStorage,
   callFunction,
   getPageData,
 

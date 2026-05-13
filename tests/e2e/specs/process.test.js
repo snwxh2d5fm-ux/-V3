@@ -6,7 +6,7 @@
 
 const {
   goToTab, navigateTo, findElement, findElements,
-  initTestState, waitFor,
+  initTestState, waitFor, reLaunch,
 } = require('../helpers');
 
 let mp;
@@ -14,22 +14,6 @@ let mp;
 beforeAll(async () => {
   mp = global.__miniProgram__;
   await initTestState(mp);
-  // 种子测试流程数据，确保详情页有数据可加载
-  await mp.evaluate(() => {
-    wx.setStorageSync('__processes__', {
-      lines: [{
-        id: 'e2e-test-process',
-        templateId: 'student_iang',
-        stages: [
-          { id: 's1', name: '资格评估', status: 'completed', unlocked: true, steps: [{name:'学校录取'},{name:'签证获批'}], completedSteps: [0,1] },
-          { id: 's2', name: '获批激活', status: 'current', unlocked: true, steps: [{name:'入境激活'},{name:'办理身份证'},{name:'银行开户'}], completedSteps: [0] },
-          { id: 's3', name: '中期维持', status: 'pending', unlocked: false, steps: [{name:'全日制学习'},{name:'IANG申请'}], completedSteps: [] }
-        ],
-        currentStage: '获批激活'
-      }],
-      version: 1
-    });
-  });
   await goToTab(mp, 'process');
   await waitFor(mp, 2000);
 });
@@ -71,7 +55,7 @@ describe('§5 流程控 (process)', () => {
         version: 1
       });
     });
-    await navigateTo(mp, '/pages/process/detail/detail?id=e2e-test-process');
+    await reLaunch(mp, '/pages/process/detail/detail?id=e2e-test-process');
     await waitFor(mp, 2000);
     const page = await mp.currentPage();
     expect(page.path).toContain('detail');
