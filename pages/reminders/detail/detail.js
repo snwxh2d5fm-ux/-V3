@@ -132,7 +132,7 @@ Page({
   /** 根据激活日期+模板生成时间线 */
   generateTimeline() {
     var activation = this.data.activationDate;
-    if (!activation) { wx.showToast({ title: '请填写激活签证日期', icon: 'none' }); return; }
+    if (!activation) { wx.showToast({ title: '请填写预期提交申请时间', icon: 'none' }); return; }
 
     var path = this.data.timelinePath;
     var template = TIMELINE_TEMPLATES[path] || TIMELINE_TEMPLATES['qmas'];
@@ -193,8 +193,8 @@ Page({
     });
   },
 
-  onActivationDateChange(e) { this.setData({ activationDate: e.detail.value }); },
-  onHkidDateChange(e) { this.setData({ hkidDate: e.detail.value }); },
+  onActivationDateChange(e) { this.setData({ activationDate: (e.detail && e.detail.value) || e.detail }); },
+  onHkidDateChange(e) { this.setData({ hkidDate: (e.detail && e.detail.value) || e.detail }); },
   onVisaYearsChange(e) { this.setData({ visaYears: e.detail.value }); },
 
   // ========== 加载提醒详情 ==========

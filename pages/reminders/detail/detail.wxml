@@ -246,15 +246,20 @@
 
       <!-- 结构化输入 -->
       <view class="tl-input-row">
-        <text class="tl-label">📅 签证激活日期 (必填)</text>
-        <input class="form-input" type="text" placeholder="YYYY-MM-DD 如2026-08-15" value="{{activationDate}}" bindinput="onActivationDateChange" />
+        <text class="tl-label">📅 预期提交申请时间</text>
+        <picker mode="date" value="{{activationDate}}" bindchange="onActivationDateChange">
+          <view class="date-picker">{{activationDate || '请选择预期提交日期'}}</view>
+        </picker>
+        <text class="tl-hint">时间线将从今天起，以你选择的预期提交日为关键节点</text>
       </view>
       <view class="tl-input-row">
         <text class="tl-label">🆔 办理身份证日期 (选填)</text>
-        <input class="form-input" type="text" placeholder="选填 YYYY-MM-DD" value="{{hkidDate}}" bindinput="onHkidDateChange" />
+        <picker mode="date" value="{{hkidDate}}" bindchange="onHkidDateChange">
+          <view class="date-picker date-picker--alt">{{hkidDate || '选填'}}</view>
+        </picker>
       </view>
 
-      <button class="btn btn-primary btn-block" bindtap="generateTimeline" style="margin-top:12rpx">🔮 生成时间线</button>
+      <button class="btn btn-primary btn-block" bindtap="generateTimeline" style="margin-top:20rpx">🔮 生成时间线</button>
     </view>
 
     <!-- 时间线列表 -->

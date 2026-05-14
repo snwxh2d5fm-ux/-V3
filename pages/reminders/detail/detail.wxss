@@ -205,8 +205,11 @@
 }
 
 /* ═══ 路径感知时间线 ═══ */
-.tl-input-row { margin-bottom: 12rpx; }
-.tl-label { font-size: 26rpx; font-weight: 600; color: var(--gray-700); display: block; margin-bottom: 6rpx; }
+.tl-input-row { margin-bottom: 20rpx; }
+.tl-label { font-size: 26rpx; font-weight: 600; color: var(--gray-700); display: block; margin-bottom: 10rpx; }
+.date-picker { width: 100%; padding: 28rpx 24rpx; border: 2rpx solid var(--color-primary); border-radius: 16rpx; font-size: 32rpx; color: var(--color-primary); font-weight: 600; background: var(--color-bg-card); text-align: center; box-sizing: border-box; }
+.date-picker--alt { border-color: var(--gray-200); color: var(--gray-500); font-weight: 400; }
+.tl-hint { font-size: 22rpx; color: var(--gray-400); display: block; margin-top: 8rpx; text-align: center; }
 .timeline-list { padding: 16rpx 24rpx; }
 .tl-stage { display: flex; position: relative; padding-bottom: 28rpx; }
 .tl-stage__dot { width: 20rpx; height: 20rpx; border-radius: 50%; border: 4rpx solid var(--gray-200); flex-shrink: 0; margin-top: 6rpx; z-index: 1; background: var(--color-bg-card); }

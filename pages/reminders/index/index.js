@@ -103,8 +103,8 @@ Page({
     var app = getApp();
 
     wx.showModal({
-      title: '设置激活日期',
-      content: '请先设置你的申请递交/激活日期作为时间线基准。可在提醒详情页手动调整。\n\n是否现在前往设置？',
+      title: '预期提交申请时间',
+      content: '请设置你计划提交申请的预期时间。时间线将从今天开始，以你的预期提交日为关键节点。\n\n可在提醒详情页手动调整。',
       confirmText: '前往设置',
       cancelText: '取消',
       success: function(res) {
