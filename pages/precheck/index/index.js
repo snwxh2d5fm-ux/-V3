@@ -9,7 +9,12 @@ Page({
     selectedProcess: '',
     loading: false,
     checkResult: null,
-    stageStatus: null
+    stageStatus: null,
+    // 预审进度
+    showProgress: false,
+    progressPercent: 0,
+    progressText: '',
+    progressStep: ''
   },
 
   onLoad: function() {
@@ -45,50 +50,88 @@ Page({
       return;
     }
 
-    this.setData({ loading: true });
-
-    // 获取用户已上传的文档
     var userDocs = storage.getAllDocuments();
     if (!userDocs || !userDocs.length) {
       wx.showToast({ title: '证件夹为空，请先上传材料', icon: 'none' });
-      this.setData({ loading: false });
       return;
     }
 
-    // 构建批量子审请求（含ocrFields兜底）
-    var batchDocs = userDocs.map(function(d) {
-      return {
-        doc_id: d.docId || d.id || '',
-        extracted_fields: d.ocrData || d.extractedFields || d.ocrFields || {}
-      };
-    }).filter(function(d) { return d.doc_id; });
+    // 显示进度面板
+    var totalDocs = userDocs.length;
+    var estimateMin = Math.max(1, Math.ceil(totalDocs * 0.3));
+    self.setData({
+      showProgress: true,
+      progressPercent: 0,
+      progressStep: 'OCR识别',
+      progressText: '正在授权读取证件…'
+    });
 
-    if (!batchDocs.length) {
-      wx.showToast({ title: '添加证件后即可使用预审', icon: 'none' });
-      this.setData({ loading: false });
-      return;
-    }
+    // Step 1: OCR识别 — 对无ocrData的文档逐个调用ocr-service
+    var ocrPromises = [];
+    var needOCR = userDocs.filter(function(d) { return !d.ocrData; });
 
-    preaudit.batchCheck(batchDocs, {
-      userPath: self.data.selectedProcess
-    }).then(function(res) {
-      self.setData({ loading: false });
-      if (res && res.ok) {
-        self.setData({ checkResult: res });
-        wx.navigateTo({
-          url: '/pages/precheck/check/check?processId=' + self.data.selectedProcess +
-               '&total=' + (res.total || 0) + '&blocked=' + (res.blocked || 0) + '&warning=' + (res.warning || 0)
-        });
+    userDocs.forEach(function(d, idx) {
+      if (d.ocrData) {
+        ocrPromises.push(Promise.resolve(d));
       } else {
-        var msg = (res && res.msg) || '预审服务暂不可用';
-        wx.showModal({
-          title: '预审提示',
-          content: msg + '\n\n请确认已上传证件并重试。',
-          showCancel: false
-        });
+        ocrPromises.push(
+          wx.cloud.callFunction({
+            name: 'ocr-service',
+            data: { action: 'recognize', imagePath: d.filePath || '', docType: d.type || 'id_card' }
+          }).then(function(res) {
+            var result = res.result || {};
+            if (result.code === 0 && result.data) {
+              d.ocrData = result.data.fields || result.data;
+            }
+            var pct = Math.round(((idx + 1) / totalDocs) * 60);
+            self.setData({
+              progressPercent: pct,
+              progressText: 'OCR识别 ' + (idx + 1) + '/' + totalDocs
+            });
+            return d;
+          }).catch(function() {
+            var pct = Math.round(((idx + 1) / totalDocs) * 60);
+            self.setData({ progressPercent: pct, progressText: 'OCR识别 ' + (idx + 1) + '/' + totalDocs + ' (部分跳过)' });
+            return d;
+          })
+        );
       }
+    });
+
+    Promise.all(ocrPromises).then(function(docs) {
+      // Step 2: 预审
+      self.setData({ progressStep: '规则预审', progressPercent: 65, progressText: '正在逐项核验材料…' });
+
+      var batchDocs = docs.map(function(d) {
+        return {
+          doc_id: d.docId || d.id || '',
+          extracted_fields: d.ocrData || d.extractedFields || d.ocrFields || {}
+        };
+      }).filter(function(d) { return d.doc_id; });
+
+      if (!batchDocs.length) {
+        self.setData({ showProgress: false });
+        wx.showToast({ title: '添加证件后即可使用预审', icon: 'none' });
+        return;
+      }
+
+      return preaudit.batchCheck(batchDocs, { userPath: self.data.selectedProcess }).then(function(res) {
+        self.setData({ showProgress: false, progressPercent: 100 });
+        if (res && res.ok) {
+          wx.navigateTo({
+            url: '/pages/precheck/check/check?processId=' + self.data.selectedProcess +
+                 '&total=' + (res.total || 0) + '&blocked=' + (res.blocked || 0) + '&warning=' + (res.warning || 0)
+          });
+        } else {
+          wx.showModal({
+            title: '预审提示',
+            content: (res && res.msg) || '预审服务暂不可用',
+            showCancel: false
+          });
+        }
+      });
     }).catch(function(err) {
-      self.setData({ loading: false });
+      self.setData({ showProgress: false });
       console.error('[效率宝] 预审失败:', err);
       wx.showModal({
         title: '预审失败',

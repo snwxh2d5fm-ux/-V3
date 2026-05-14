@@ -11,9 +11,23 @@
       <text class="po-meta">{{item.stages.length}}阶段 · {{item.estimatedMonths}}个月</text>
     </view>
   </view>
-  <button class="btn btn--primary btn--block btn--lg confirm-btn" bindtap="runCheck" disabled="{{!selectedProcess}}">
-    开始预审
+  <button class="btn btn--primary btn--block btn--lg confirm-btn" bindtap="runCheck" disabled="{{!selectedProcess || showProgress}}">
+    {{showProgress ? '预审中… ' + progressPercent + '%' : '开始预审'}}
   </button>
+
+  <!-- 预审进度面板 -->
+  <view class="progress-overlay" wx:if="{{showProgress}}">
+    <view class="progress-card">
+      <text class="progress-card__title">🔍 正在预审您的材料</text>
+      <text class="progress-card__step">{{progressStep}}</text>
+      <text class="progress-card__text">{{progressText}}</text>
+      <view class="progress-bar">
+        <view class="progress-bar__fill" style="width:{{progressPercent}}%"></view>
+      </view>
+      <text class="progress-card__estimate">预计还需 {{progressPercent < 60 ? '约1分钟' : '约30秒'}}</text>
+      <text class="progress-card__note">材料仅在本地处理，不上传服务器</text>
+    </view>
+  </view>
   <view class="card card--outlined precheck-intro">
     <text class="intro-title">💡 预审功能说明</text>
     <text class="intro-text">• 完整性检查：逐项核验材料是否准备齐全\n• 格式合规：检查文档格式是否符合入境处标准\n• 一致性检查：跨文档比对姓名、日期、公司名\n• 矫正标注：标注问题位置并提供修正建议\n• 所有检查在本地完成，不上传原始材料</text>
