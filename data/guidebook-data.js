@@ -1,3 +1,4 @@
+/** @deprecated 2026-05-14 — 已被 PRD v6.1 life_guide_tasks CloudBase 集合替代。Phase 4 时将移除以释放包体积。 */
 /**
  * 住港伴 v4.4 — 攻略书共享数据模块
  * 

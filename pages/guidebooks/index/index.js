@@ -1,179 +1,312 @@
-const { getGlobalStages, getActiveStageIndex } = require('../../../utils/stage-helper');
 /**
- * 住港伴 v4.4 — 攻略书主页 (Tab1·免费开放)
- * 
- * 数据架构:
- *   data/guidebook-data.js (权威数据源)
- *     ├── getAllCards() → 卡片元数据（列表渲染）
- *     ├── getRecommended(status) → 身份状态推荐
- *     └── getById(id) → 完整文章（detail页调用）
- * 
- * 透传机制 (index → detail):
- *   点击卡片 → app.globalData.__guideDetailCache__[id] = fullData
- *          → wx.navigateTo('/pages/guidebooks/detail/detail?id=' + id)
- *          → detail页优先从 globalData 取，次选 require('guidebook-data').getById(id)
+ * 住港伴 v6 — 攻略书主页 (港漂通关手册)
+ *
+ * 三Tab框架: 生活指南 | 场景速查 | 我的进度
+ * 数据源: queryLifeGuideTasks 云函数 → lifeGuideCache 缓存层
  */
-var app = getApp();
-var constants = require('../../../data/constants');
-var guideData = require('../../../data/guidebook-data');
+var cache = require('../../../utils/lifeGuideCache');
+var storage = require('../../../utils/onboarding-storage');
 
 Page({
   data: {
-    stageSteps: [],
-    stageProgress: 0,
-    userStatus: 'unapplied',
-    selectedPath: null,
-    statusLabel: '',
-    searchKeyword: '',
-    searchFocused: false,
-    activeCategory: 'all',
-    categories: [
-      { id: 'all', icon: '📚', label: '全部', count: 47 },
-      { id: 'qmas', icon: '🎯', label: '优才', count: 8 },
-      { id: 'ttps', icon: '🏃', label: '高才通', count: 4 },
-      { id: 'asmpt', icon: '💼', label: '专才', count: 3 },
-      { id: 'iang', icon: '🎓', label: 'IANG', count: 4 },
-      { id: 'landing', icon: '🛬', label: '赴港落地', count: 5 },
-      { id: 'renewal', icon: '🔄', label: '续签', count: 5 },
-      { id: 'pr_sprint', icon: '🏁', label: '永居冲刺', count: 5 },
-      { id: 'life', icon: '🏠', label: '在港生活', count: 12 },
-      { id: 'other', icon: '📌', label: '其他', count: 1 }
+    activeTab: 0,
+    tabs: [
+      { id: 0, label: '生活指南' },
+      { id: 1, label: '场景速查' },
+      { id: 2, label: '我的进度' }
     ],
-    guideCards: [],
-    filteredCards: [],
-    recommendedCards: [],
-    recommendedReason: '',
-    hotTags: ['优才', '高才通', '专才', 'IANG', '计划书', '材料清单', '续签', '永居', '受养人', '身份证', '银行开户'],
-    sortBy: 'default',
+    phases: [],
+    tasks: [],
+    summary: { totalRequired: 0, totalTasks: 0 },
+    progress: null,
+    renewalDossier: null,
+    readiness: null,
+    activeCategory: '全部',
+    browseTasks: [],
     loading: true,
     loadError: false,
-    cloudSource: false,
-    scrollTop: 0
+    showPathSetup: false,
+    showMilestone: false,
+    milestoneMsg: '',
+    dataSource: '',
+    housingWizardDone: false,
+    showHousingWizard: false,
+    wizardStep: 0,
+    wizardBudget: '',
+    wizardWork: '',
+    wizardHasKids: false,
+    wizardResults: [],
+    currentPhase: 0
   },
 
-  onLoad: function() {
-    var session = wx.getStorageSync(constants.STORAGE_KEYS.SESSION) || {};
-    var userStatus = session.userStatus || app.globalData.userStatus || 'unapplied';
-    var statusLabels = { unapplied: '未申请', submitted: '已交件·等待审批', approved: '已获批', permanent: '永居' };
-    this.setData({
-      userStatus: userStatus,
-      selectedPath: session.selectedPath || null,
-      statusLabel: statusLabels[userStatus] || ''
-    });
-    this.loadGuides();
+  onLoad: function() { this.init(); },
+  onShow: function() { if (this.data.progress) this.refreshProgress(); },
+  onPullDownRefresh: function() {
+    var self = this;
+    cache.invalidateCache();
+    this.init().finally(function() { wx.stopPullDownRefresh(); });
   },
 
-  onShow: function() {
-    try { this.setData({ stageSteps: getGlobalStages(), stageProgress: Math.min(((getActiveStageIndex() + 1) / 7) * 100, 100) }); } catch(e) { this.setData({ stageProgress: 14 }); } this.refreshRatings(); },
+  init: function() {
+    var self = this;
+    self.setData({ loading: true, loadError: false });
 
-  loadGuides: function() {
-    var that = this;
-    that.setData({ loading: true, loadError: false });
-    var ratingCache = wx.getStorageSync('guide_ratings') || {};
-    var cards = guideData.getAllCards();
-    cards = cards.map(function(c) { c.helpful = ratingCache[c.id] || c.helpful; return c; });
-    var rec = guideData.getRecommended(that.data.userStatus, that.data.selectedPath);
-    var recCards = rec.cards.map(function(c) { c.helpful = ratingCache[c.id] || c.helpful; return c; });
-    that.setData({ guideCards: cards, recommendedCards: recCards, recommendedReason: rec.reason, loading: false });
-    that.applyFilters();
-    that.tryCloudLoad(ratingCache);
-  },
+    var progress = storage.getProgress();
+    if (!progress) {
+      self.setData({ loading: false, showPathSetup: true });
+      return;
+    }
 
-  tryCloudLoad: function(ratingCache) {
-    var that = this;
-    if (!app.globalData.cloudReady && !wx.cloud) return;
-    wx.cloud.callFunction({ name: 'guidebook', data: { action: 'getArticles', page: 1, pageSize: 200, sortBy: 'default' } }).then(function(res) {
-      if (res.result && res.result.code === 0 && res.result.data && res.result.data.articles && res.result.data.articles.length > 0) {
-        var localIds = {};
-        var localTitles = [];
-        that.data.guideCards.forEach(function(c) {
-          localIds[c.id] = true;
-          localTitles.push((c.title || '').replace(/[【】\s]/g, ''));
+    var params = progress.pathParams;
+    cache.fetchByPath(params.visaType, params.familyStatus, params.arrivalScenario, params.existingAssets)
+      .then(function(result) {
+        if (!result || !result.data) {
+          self.setData({ loading: false, loadError: true });
+          return;
+        }
+        var tasks = result.data.tasks || result.data.data || result.data || [];
+        var merged = self.mergeProgress(tasks, progress);
+        self.setData({
+          pathConfigured: true, phases: merged.phases, tasks: merged.tasks,
+          summary: merged.summary, progress: progress,
+          renewalDossier: progress.renewalDossier || {},
+          currentPhase: progress.currentPhase || 0,
+          dataSource: result.fromCache ? 'cache' : (result.stale ? 'stale' : 'cloud'),
+          loading: false, loadError: false
         });
-        var cloudArticles = res.result.data.articles.map(function(a) { a.helpful = ratingCache[a.id] || a.helpful || 0; return a; });
-        // Bug #5 修复: 过滤掉无内容的云文章（仅标题，内容空白）
-        cloudArticles = cloudArticles.filter(function(a) {
-          return a.mergedContent || a.content || (a.sections && a.sections.length > 0) || (a.steps && a.steps.length > 0) || a.faqAnswer;
-        });
-        var merged = that.data.guideCards.slice();
-        var added = 0;
-        cloudArticles.forEach(function(a) {
-          if (localIds[a.id]) return;
-          // 标题去重：云端标题与本地标题相似度≥80%视为重复
-          var ct = (a.title || '').replace(/[【】\s]/g, '');
-          var isDup = localTitles.some(function(lt) {
-            if (!ct || !lt) return false;
-            var longer = ct.length > lt.length ? ct : lt;
-            var shorter = ct.length > lt.length ? lt : ct;
-            if (shorter.length < 4) return false;
-            return longer.indexOf(shorter) >= 0 || shorter.indexOf(longer) >= 0;
-          });
-          if (isDup) return;
-          merged.push(a);
-          added++;
-          localTitles.push(ct);
-        });
-        that.setData({ guideCards: merged, cloudSource: added > 0 });
-        that.applyFilters();
-      }
-    }).catch(function(e) { console.log('[攻略书] 云端加载失败:', e.message); });
-  },
-
-  refreshRatings: function() {
-    var ratingCache = wx.getStorageSync('guide_ratings') || {};
-    var cards = this.data.guideCards.map(function(c) { c.helpful = ratingCache[c.id] || c.helpful; return c; });
-    if (cards.length > 0) { this.setData({ guideCards: cards }); this.applyFilters(); }
-  },
-
-  onSearchInput: function(e) { this.setData({ searchKeyword: e.detail.value }); this.applyFilters(); },
-  onSearchFocus: function() { this.setData({ searchFocused: true }); },
-  onSearchBlur: function() { this.setData({ searchFocused: false }); },
-  clearSearch: function() { this.setData({ searchKeyword: '' }); this.applyFilters(); },
-  switchCategory: function(e) { this.setData({ activeCategory: e.currentTarget.dataset.category }); this.applyFilters(); },
-  switchSort: function(e) { this.setData({ sortBy: e.currentTarget.dataset.sort }); this.applyFilters(); },
-
-  applyFilters: function() {
-    var cards = this.data.guideCards.slice();
-    var kw = this.data.searchKeyword, cat = this.data.activeCategory, sort = this.data.sortBy;
-    if (cat !== 'all') cards = cards.filter(function(c) { return c.category === cat; });
-    if (kw.trim()) {
-      var lower = kw.trim().toLowerCase();
-      var catMap = { qmas: '优才', ttps: '高才通', asmpt: '专才', iang: 'iang', landing: '赴港落地', renewal: '续签', pr_sprint: '永居', life: '在港生活' };
-      cards = cards.filter(function(c) {
-        var catName = catMap[c.category] || '';
-        return (c.title || '').toLowerCase().indexOf(lower) >= 0
-            || (c.desc || '').toLowerCase().indexOf(lower) >= 0
-            || catName.toLowerCase().indexOf(lower) >= 0
-            || (c.source || '').toLowerCase().indexOf(lower) >= 0
-            || (c.tags || []).some(function(t) { return t.toLowerCase().indexOf(lower) >= 0; });
+      })
+      .catch(function(e) {
+        console.error('[Guidebooks]', e);
+        self.setData({ loading: false, loadError: true });
       });
-    }
-    if (sort === 'helpful') cards.sort(function(a, b) { return (b.helpful || 0) - (a.helpful || 0); });
-    else if (sort === 'latest') cards.sort(function(a, b) { return (b.updated || '').localeCompare(a.updated || ''); });
-    this.setData({ filteredCards: cards });
   },
 
-  navigateToDetail: function(e) {
-    var id = e.currentTarget.dataset.id;
-    if (!id) return;
-    var fullData = guideData.getById(id);
-    // 若本地DB有完整数据 → 缓存并跳转
-    if (fullData) {
-      var ratingCache = wx.getStorageSync('guide_ratings') || {};
-      var data = {};
-      var keys = Object.keys(fullData);
-      for (var i = 0; i < keys.length; i++) { data[keys[i]] = fullData[keys[i]]; }
-      data.helpful = ratingCache[id] || fullData.helpful;
-      if (!app.globalData.__guideDetailCache__) app.globalData.__guideDetailCache__ = {};
-      app.globalData.__guideDetailCache__[id] = data;
+  mergeProgress: function(tasks, progress) {
+    var progressTasks = progress.tasks || {};
+    var phaseNames = { 0:'抵港前准备',1:'落地生存',2:'行政开户',3:'安居乐业',4:'出行融入',5:'子女教育',6:'财务税务',7:'续签准备' };
+    var phaseMap = {};
+
+    tasks.forEach(function(t) {
+      var pt = progressTasks[t._id];
+      t._completed = pt ? (pt.status === 'completed' || pt.status === 'skipped') : false;
+      t._materialCollected = pt ? !!pt.materialCollected : false;
+      t._skipped = pt ? pt.status === 'skipped' : (t.autoSkipped || false);
+      t._skipReason = pt ? (pt.skipReason || '') : (t.skipReason || '');
+
+      var p = t.phase;
+      if (!phaseMap[p]) {
+        phaseMap[p] = { phase: p, name: phaseNames[p] || '', totalRequired: 0, totalTasks: 0, requiredCompleted: 0, unlocked: true };
+      }
+      phaseMap[p].totalTasks++;
+      if (t.urgency === '必修' && !t._skipped) phaseMap[p].totalRequired++;
+      if (t.urgency === '必修' && t._completed) phaseMap[p].requiredCompleted++;
+    });
+
+    var phases = Object.keys(phaseMap).map(function(k) { return phaseMap[k]; }).sort(function(a,b){ return a.phase-b.phase; });
+    // Lock phases based on progress.phases[].unlocked instead of numeric phase comparison
+    if (progress.currentPhase !== undefined) {
+      phases.forEach(function(ph) { if (!(progress.phases && progress.phases[ph.phase] && progress.phases[ph.phase].unlocked)) ph.unlocked = false; });
+    }
+
+    return { tasks: tasks, phases: phases, summary: { totalRequired: Object.values(phaseMap).reduce(function(s,p){return s+p.totalRequired;},0), totalTasks: tasks.length } };
+  },
+
+  refreshProgress: function() {
+    var progress = storage.getProgress();
+    if (!progress) return;
+    var self = this;
+    var tasks = this.data.tasks;
+    var progressTasks = progress.tasks || {};
+    tasks.forEach(function(t) { var pt = progressTasks[t._id]; if (pt) { t._completed = pt.status === 'completed' || pt.status === 'skipped'; t._materialCollected = !!pt.materialCollected; t._skipped = pt.status === 'skipped'; } });
+    var merged = self.mergeProgress(tasks, progress);
+    this.setData({ tasks: merged.tasks, phases: merged.phases, progress: progress, renewalDossier: progress.renewalDossier || {} });
+  },
+
+  // ── Path setup dialog ──
+  onPathConfirm: function(e) {
+    var params = e.detail;
+    storage.initOnboarding(params);
+    this.setData({ showPathSetup: false });
+    this.init();
+  },
+
+  // ── Tab switching ──
+  switchTab: function(e) {
+    var tabId = parseInt(e.currentTarget.dataset.tab);
+    this.setData({ activeTab: tabId });
+    if (tabId === 1 && this.data.browseTasks.length === 0) this.loadBrowse('全部');
+  },
+
+  // ── Tab 0: Task toggle ──
+  onTaskToggle: function(e) {
+    var taskId = e.currentTarget.dataset.id;
+    var task = this.data.tasks.find(function(t) { return t._id === taskId; });
+    if (!task || task._completed) return;
+    storage.completeTask(taskId);
+    this.refreshProgress();
+    this.checkPhaseComplete(task.phase);
+  },
+
+  checkPhaseComplete: function(phase) {
+    var phaseTasks = this.data.tasks.filter(function(t) { return t.phase === phase && !t._skipped; });
+    var required = phaseTasks.filter(function(t) { return t.urgency === '必修'; });
+    var completed = required.filter(function(t) { return t._completed; });
+    var milestones = { 1:{n:4,m:'🎉 生存模式通关！'}, 2:{n:5,m:'🎉 行政关卡通关！'}, 3:{n:5,m:'🏠 家已安好。'}, 4:{n:5,m:'🚗 你不再是游客了。'}, 5:{n:4,m:'📚 孩子的学校已就位。'}, 6:{n:4,m:'💰 财务系统已运转。'}, 7:{n:3,m:'✅ 续签就绪。'} };
+    var m = milestones[phase];
+    if (m && completed.length >= m.n) {
+      storage.completePhase(phase);
+      this.setData({ showMilestone: true, milestoneMsg: m.m });
+      var self = this;
+      setTimeout(function() { self.setData({ showMilestone: false }); }, 2500);
+    }
+  },
+
+  // ── Tab 1: Scene browse ──
+  loadBrowse: function(category) {
+    var self = this;
+    self.setData({ activeCategory: category });
+    var promise = category === '全部' ? cache.fetchAllTasks() : cache.fetchTasks('bySceneTags', { tags: [category] });
+    promise.then(function(r) { if (r) self.setData({ browseTasks: r.data || (r.data ? r.data.data : []) }); });
+  },
+  onCategoryTap: function(e) { this.loadBrowse(e.currentTarget.dataset.category); },
+
+  // ── Tab 2: Export ──
+  onExportDossier: function() {
+    var text = storage.exportChecklist();
+    if (text) wx.setClipboardData({ data: text, success: function() { wx.showToast({ title: '已复制到剪贴板', icon: 'success' }); } });
+  },
+
+  // ── Phase tap: expand/collapse ──
+  onPhaseTap: function(e) {
+    var phase = parseInt(e.currentTarget.dataset.phase);
+    var phases = this.data.phases;
+    var self = this;
+    phases = phases.map(function(p) {
+      if (p.phase === phase && p.unlocked !== false) { p.expanded = !p.expanded; }
+      return p;
+    });
+    this.setData({ phases: phases });
+    // Auto-expand current phase on first view
+    var progress = this.data.progress;
+    if (progress && progress.currentPhase !== undefined && phase === progress.currentPhase) {
+      // always expanded
+    }
+  },
+
+  onTaskExpand: function(e) {
+    var taskId = e.currentTarget.dataset.id;
+    var tasks = this.data.tasks;
+    tasks.forEach(function(t) { if (t._id === taskId) t._expanded = !t._expanded; });
+    this.setData({ tasks: tasks });
+  },
+
+  onStepCheck: function(e) {
+    var taskId = e.currentTarget.dataset.taskId;
+    var stepSeq = parseInt(e.currentTarget.dataset.step);
+    var tasks = this.data.tasks;
+    var task = tasks.find(function(t) { return t._id === taskId; });
+    if (!task) return;
+    task['_step' + stepSeq] = !task['_step' + stepSeq];
+    // Check if all steps done
+    var allDone = task.steps.every(function(s) { return task['_step' + s.seq]; });
+    task._allStepsDone = allDone;
+    this.setData({ tasks: tasks });
+    // If all steps done, auto-complete the task
+    if (allDone && !task._completed) {
+      this.onTaskToggle(e);
+    }
+  },
+
+  onMaterialPrompt: function(e) {
+    var taskId = e.currentTarget.dataset.id;
+    var self = this;
+    wx.chooseImage({
+      count: 1,
+      sizeType: ['compressed'],
+      sourceType: ['camera', 'album'],
+      success: function(res) {
+        var task = self.data.tasks.find(function(t) { return t._id === taskId; });
+        if (task && task.renewal_evidence) {
+          var ev = task.renewal_evidence;
+          storage.completeTaskWithMaterial(taskId, res.tempFilePaths[0], ev.doc_type || '', ev.doc_category || '');
+          self.refreshProgress();
+          wx.showToast({ title: '材料已收集', icon: 'success' });
+        }
+      }
+    });
+  },
+
+  // ── Path setup (4-step wizard) ──
+  setupStep: 0,
+  setupData: { visaType: '', familyStatus: '', arrivalScenario: '', housingIntent: '', existingAssets: [] },
+
+  onSetupNext: function(e) {
+    var step = this.data.setupStep;
+    var data = this.data.setupData;
+    var value = e.currentTarget.dataset.value;
+
+    if (step === 0) data.visaType = value;
+    else if (step === 1) data.familyStatus = value;
+    else if (step === 2) data.arrivalScenario = value;
+    else if (step === 3) data.housingIntent = value;
+    else if (step === 4) {
+      // Asset toggles
+      var asset = value;
+      var assets = data.existingAssets.slice();
+      var idx = assets.indexOf(asset);
+      if (idx >= 0) assets.splice(idx, 1);
+      else assets.push(asset);
+      data.existingAssets = assets;
+      this.setData({ setupData: data });
+      return;
+    }
+
+    this.setData({ setupStep: step + 1, setupData: data });
+  },
+
+  onSetupBack: function() {
+    var step = this.data.setupStep;
+    if (step > 0) this.setData({ setupStep: step - 1 });
+  },
+
+  onSetupConfirm: function() {
+    var params = this.data.setupData;
+    storage.initOnboarding(params);
+    this.setData({ showPathSetup: false, setupStep: 0 });
+    this.init();
+  },
+
+  onSetupQuick: function() {
+    var params = { visaType: 'ttps-bc', familyStatus: 'single', arrivalScenario: 'fresh', housingIntent: 'undecided', existingAssets: [] };
+    storage.initOnboarding(params);
+    this.setData({ showPathSetup: false, setupStep: 0 });
+    this.init();
+  },
+
+  onRetry: function() { this.init(); },
+
+  // ── Housing wizard ──
+  onHousingBannerTap: function() { this.setData({ showHousingWizard: true, wizardStep: 0, wizardBudget: '', wizardWork: '', wizardHasKids: false }); },
+  onWizardNext: function(e) {
+    var step = this.data.wizardStep;
+    var value = e.currentTarget.dataset.value;
+    if (step === 0) this.data.wizardBudget = value;
+    else if (step === 1) this.data.wizardWork = value;
+    else if (step === 2) this.data.wizardHasKids = value === 'yes';
+
+    if (step === 2) {
+      var districtData = require('../../../data/district-data');
+      var results = districtData.matchDistricts(this.data.wizardBudget, this.data.wizardWork, this.data.wizardHasKids);
+      this.setData({ wizardStep: 3, wizardResults: results });
     } else {
-      // 云端卡片：不建毒缓存，detail页直接从云端获取完整内容
+      this.setData({ wizardStep: step + 1 });
     }
-    wx.navigateTo({ url: '/pages/guidebooks/detail/detail?id=' + id });
   },
-
-  searchByTag: function(e) { this.setData({ searchKeyword: e.currentTarget.dataset.tag }); this.applyFilters(); },
-  scrollToTop: function() { this.setData({ scrollTop: 0 }); wx.pageScrollTo({ scrollTop: 0, duration: 300 }); },
-  onPullDownRefresh: function() { this.loadGuides(); wx.stopPullDownRefresh(); },
-  onShareAppMessage: function() { return { title: '住港伴攻略书 — 香港身份办理全流程攻略', path: '/pages/guidebooks/index/index' }; }
+  onWizardDone: function() {
+    storage.completeTask('onboard-300');
+    this.setData({ showHousingWizard: false, housingWizardDone: true });
+    this.refreshProgress();
+    wx.showToast({ title: '找房向导完成 ✓', icon: 'success' });
+  },
+  onWizardClose: function() { this.setData({ showHousingWizard: false }); }
 });

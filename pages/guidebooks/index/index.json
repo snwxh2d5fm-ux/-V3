@@ -1,9 +1,6 @@
 {
-  "navigationBarTitleText": "攻略书",
+  "navigationBarTitleText": "港漂通关手册",
   "enablePullDownRefresh": true,
-  "backgroundColor": "#F3F4F6",
-  "usingComponents": {
-    "ux-skeleton": "/components/ux-skeleton/ux-skeleton",
-    "ux-error-boundary": "/components/ux-error-boundary/ux-error-boundary"
-  }
+  "backgroundColor": "#f8f9fa",
+  "usingComponents": {}
 }

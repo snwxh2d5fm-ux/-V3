@@ -1,134 +1,270 @@
-<!-- 住港伴 v4.3 — 攻略书主页 (Tab1·PRD v4对齐)
-     改造: 新增身份状态横幅 + 为你推荐区 -->
+<!-- 攻略书 v6 — 港漂通关手册 三Tab框架 -->
 <view class="container">
-  <stage-indicator stages="{{stageSteps}}" progress="{{stageProgress}}" />
-  <status-badge />
-
-  <view class="page-header">
-    <view class="header-left">
-      <text class="page-header__title">攻略书</text>
-      <text class="page-header__subtitle">海量免费攻略，根据您的状态AI为您私密定制推荐</text>
+  <view class="tab-bar">
+    <view wx:for="{{tabs}}" wx:key="id" class="tab-item {{activeTab===item.id?'active':''}}"
+          data-tab="{{item.id}}" bindtap="switchTab">
+      <text>{{item.label}}</text>
+      <view wx:if="{{activeTab===item.id}}" class="tab-indicator"></view>
     </view>
   </view>
 
-  <!-- 身份状态感知横幅 -->
-  <view class="status-banner" wx:if="{{statusLabel}}">
-    <view class="status-banner-wrap">
-      <text class="status-banner-icon">{{userStatus === 'unapplied' ? '📋' : (userStatus === 'submitted' ? '⏳' : (userStatus === 'approved' ? '🛬' : '🏁'))}}</text>
-      <view class="status-banner-content">
-        <text class="status-banner-label">当前状态：{{statusLabel}}</text>
-        <text class="status-banner-hint">攻略推荐已为你定制</text>
-      </view>
-    </view>
-    <view class="status-banner-source" wx:if="{{cloudSource}}">
-      <text class="source-dot"></text><text>实时</text>
-    </view>
+  <view wx:if="{{loading}}" class="loading-wrap">
+    <view class="skeleton-line" wx:for="{{[1,2,3,4,5]}}" wx:key="*this"></view>
   </view>
 
-  <!-- 搜索栏 -->
-  <view class="search-bar {{searchFocused ? 'focused' : ''}}">
-    <text class="search-bar-icon">🔍</text>
-    <input class="search-bar-input" placeholder="搜索攻略、问题、关键词..." value="{{searchKeyword}}" bindinput="onSearchInput" bindfocus="onSearchFocus" bindblur="onSearchBlur" confirm-type="search" />
-    <text class="search-clear" wx:if="{{searchKeyword}}" bindtap="clearSearch">✕</text>
+  <view wx:elif="{{loadError}}" class="error-wrap">
+    <text class="error-icon">📡</text>
+    <text class="error-text">加载失败，请检查网络</text>
+    <view class="btn-retry" bindtap="onRetry">重试</view>
   </view>
 
-  <!-- 热门搜索标签 -->
-  <view class="hot-tags" wx:if="{{!searchKeyword}}">
-    <text class="hot-tag-label">🔥 热门：</text>
-    <text class="hot-tag" wx:for="{{hotTags}}" wx:key="*this" bindtap="searchByTag" data-tag="{{item}}">{{item}}</text>
-  </view>
-
-  <!-- 分类导航 -->
-  <scroll-view class="category-scroll" scroll-x="true" enhanced="true" show-scrollbar="{{false}}">
-    <view class="category-list">
-      <view class="cat-item {{activeCategory === item.id ? 'active' : ''}}" wx:for="{{categories}}" wx:key="id" bindtap="switchCategory" data-category="{{item.id}}">
-        <text class="cat-icon">{{item.icon}}</text>
-        <text class="cat-label">{{item.label}}</text>
-        <text class="cat-count">{{item.count}}</text>
-      </view>
+  <!-- Tab 0: 生活指南 -->
+  <view wx:elif="{{activeTab===0}}" class="tab-content">
+    <view class="dossier-bar" wx:if="{{renewalDossier}}" bindtap="switchTab" data-tab="2">
+      <text class="dossier-label">📋 续签档案</text>
+      <text class="dossier-stat"><text>🏠{{renewalDossier.address.completeness||0}}</text>/4</text>
+      <text class="dossier-stat"><text>💼{{renewalDossier.employment.completeness||0}}</text>/3</text>
+      <text class="dossier-stat"><text>👨‍👩‍👧{{renewalDossier.family.applicable===false?'N/A':''+((renewalDossier.family.completeness||0))}}</text></text>
+      <text class="dossier-arrow">›</text>
     </view>
-  </scroll-view>
 
-  <!-- 加载骨架屏 -->
-  <ux-skeleton wx:if="{{loading}}" mode="card" count="{{3}}" animated="{{true}}" />
-
-  <!-- 加载失败 -->
-  <ux-error-boundary wx:elif="{{loadError}}" type="data" retryable="{{true}}" bind:retry="loadGuides" />
-
-  <!-- 攻略卡片流 -->
-  <view class="guide-flow" wx:else>
-    <!-- 身份推荐区 -->
-    <view class="recommended-section" wx:if="{{recommendedCards.length > 0 && !searchKeyword && activeCategory === 'all'}}">
-      <view class="section-header">
-        <text class="section-title">🌟 为你推荐</text>
-        <text class="section-reason" wx:if="{{recommendedReason}}">{{recommendedReason}}</text>
-      </view>
-      <view class="recommended-cards">
-        <view class="guide-card fade-in" wx:for="{{recommendedCards}}" wx:key="id" bindtap="navigateToDetail" data-id="{{item.id}}">
-          <view class="confidence-badge {{item.confidence}}">[{{item.confidence}}]</view>
-          <view class="guide-card-body">
-            <text class="guide-card-icon">{{item.icon || '📄'}}</text>
-            <view class="guide-card-info">
-              <text class="guide-card-title">{{item.title}}</text>
-              <text class="guide-card-desc">{{item.desc || item.summary || ''}}</text>
-              <view class="guide-card-meta">
-                <text class="guide-card-source">📎 {{item.source || item.sourcePlatform || '攻略书'}}</text>
-                <text class="guide-card-updated">{{item.updated || item.updatedAt || ''}}</text>
-              </view>
+    <scroll-view scroll-y class="phase-list">
+      <view wx:for="{{phases}}" wx:key="phase"
+            class="phase-card {{item.unlocked===false?'locked':''}} {{item.expanded?'expanded':''}}">
+        <view class="phase-header" data-phase="{{item.phase}}" bindtap="onPhaseTap">
+          <view class="phase-left">
+            <text class="phase-icon">{{item.unlocked===false?'🔒':(item.requiredCompleted>=item.totalRequired?'✅':'●')}}</text>
+            <view class="phase-info">
+              <text class="phase-name">关卡{{item.phase}}: {{item.name}}</text>
+              <text class="phase-progress">{{item.requiredCompleted}}/{{item.totalRequired}} 必修</text>
             </view>
           </view>
-          <view class="guide-card-footer"><view class="guide-rating"><text class="rating-stars">⭐ {{item.rating || '4.0'}}</text></view><view class="guide-actions"><text class="guide-helpful">👍 {{item.helpful || 0}}</text><text class="guide-arrow">→</text></view></view>
+          <text wx:if="{{item.unlocked!==false}}" class="phase-toggle">{{item.expanded?'▲':'▼'}}</text>
+        </view>
+
+        <view wx:if="{{item.unlocked!==false && item.expanded}}" class="task-list">
+          <block wx:for="{{tasks}}" wx:key="_id" wx:for-item="task">
+            <view wx:if="{{task.phase===item.phase}}" class="task-card {{task._completed?(task._materialCollected?'done-full':'done-steps'):(task._skipped?'skipped':'')}}">
+              <view wx:if="{{!task._expanded}}" class="task-collapsed" data-id="{{task._id}}" catchtap="onTaskExpand">
+                <view class="task-status">
+                  <text wx:if="{{task._completed && task._materialCollected}}">✓✓</text>
+                  <text wx:elif="{{task._completed}}">⚠️</text>
+                  <text wx:elif="{{task._skipped}}">⊘</text>
+                  <text wx:else>○</text>
+                </view>
+                <view class="task-body">
+                  <text class="task-title">{{task.title}}</text>
+                  <text class="task-subtitle">{{task.subtitle}}</text>
+                </view>
+                <view class="task-meta">
+                  <text class="task-urgency urgency-{{task.urgency==='必修'?'required':(task.urgency==='建议'?'suggest':'optional')}}">{{task.urgency}}</text>
+                  <text class="task-time">{{task.time_estimate}}</text>
+                </view>
+              </view>
+
+              <view wx:if="{{task._expanded}}" class="task-expanded">
+                <view class="expanded-header" data-id="{{task._id}}" catchtap="onTaskExpand">
+                  <text class="expanded-title">{{task.title}}</text>
+                  <text class="expand-close">收起 ▲</text>
+                </view>
+                <view class="steps-list">
+                  <view wx:for="{{task.steps}}" wx:key="seq" wx:for-item="step" class="step-item">
+                    <view class="step-check {{task['_step'+step.seq]?'checked':''}}"
+                          data-task-id="{{task._id}}" data-step="{{step.seq}}" catchtap="onStepCheck">
+                      <text>{{task['_step'+step.seq]?'✓':'○'}}</text>
+                    </view>
+                    <view class="step-info">
+                      <text class="step-title">{{step.title}}</text>
+                      <text class="step-content">{{step.content}}</text>
+                    </view>
+                  </view>
+                </view>
+                <view wx:if="{{task.renewal_evidence && task.renewal_evidence.produces && !task._materialCollected}}"
+                      class="material-prompt" data-id="{{task._id}}" catchtap="onMaterialPrompt">
+                  <text>📎 收集: {{task.renewal_evidence.doc_type}}</text>
+                </view>
+              </view>
+            </view>
+          </block>
         </view>
       </view>
-      <view class="section-divider"></view>
-    </view>
+    </scroll-view>
+  </view>
 
-    <!-- 排序栏 -->
-    <view class="sort-bar">
-      <text class="sort-label">共 {{filteredCards.length}} 篇攻略</text>
-      <view class="sort-options">
-        <text class="sort-option {{sortBy === 'default' ? 'active' : ''}}" bindtap="switchSort" data-sort="default">推荐</text>
-        <text class="sort-option {{sortBy === 'helpful' ? 'active' : ''}}" bindtap="switchSort" data-sort="helpful">👍最多</text>
-        <text class="sort-option {{sortBy === 'latest' ? 'active' : ''}}" bindtap="switchSort" data-sort="latest">最新</text>
+  <!-- Tab 1: 场景速查 -->
+  <view wx:elif="{{activeTab===1}}" class="tab-content">
+    <scroll-view scroll-x class="category-scroll">
+      <view wx:for="{{['全部','银行','通讯','交通','住房','医疗','教育','税务','证件','运动','搬家','保险','社区']}}"
+            wx:key="*this" class="category-tag {{activeCategory===item?'active':''}}"
+            data-category="{{item}}" bindtap="onCategoryTap"><text>{{item}}</text></view>
+    </scroll-view>
+    <scroll-view scroll-y class="browse-list">
+      <view wx:for="{{browseTasks}}" wx:key="_id" class="browse-card">
+        <text class="browse-title">{{item.title}}</text>
+        <text class="browse-sub">{{item.subtitle}}</text>
+        <view class="browse-meta">
+          <text class="tag-sm">{{item.urgency}}</text>
+          <text class="tag-sm">{{item.time_estimate}}</text>
+          <text wx:for="{{item.scene_tags||item.sceneTags}}" wx:key="*this" wx:for-item="tag" class="tag-sm scene">#{{tag}}</text>
+        </view>
       </view>
-    </view>
+      <view wx:if="{{browseTasks.length===0 && !loading}}" class="empty-hint">
+        <text>选择分类标签开始浏览</text>
+      </view>
+    </scroll-view>
+  </view>
 
-    <!-- 空搜索结果 -->
-    <view class="empty-state" wx:if="{{filteredCards.length === 0}}">
-      <text class="empty-icon">🔍</text>
-      <text class="empty-text" wx:if="{{searchKeyword}}">未找到与"{{searchKeyword}}"相关的攻略</text>
-      <text class="empty-text" wx:else>该分类暂无攻略</text>
-      <text class="empty-hint" wx:if="{{searchKeyword}}">试试其他关键词，如"证件照"、"银行开户"</text>
-    </view>
-
-    <!-- 卡片列表 -->
-    <view class="guide-card fade-in" wx:for="{{filteredCards}}" wx:key="id" bindtap="navigateToDetail" data-id="{{item.id}}">
-      <view class="confidence-badge {{item.confidence}}">[{{item.confidence}}]</view>
-      <view class="guide-card-body">
-        <text class="guide-card-icon">{{item.icon || '📄'}}</text>
-        <view class="guide-card-info">
-          <text class="guide-card-title">{{item.title}}</text>
-          <text class="guide-card-desc">{{item.desc || item.summary || ''}}</text>
-          <view class="guide-card-meta">
-            <text class="guide-card-source">📎 {{item.source || item.sourcePlatform || '攻略书'}}</text>
-            <text class="guide-card-updated">{{item.updated || item.updatedAt || ''}}</text>
-          </view>
-          <view class="guide-card-tags" wx:if="{{item.tags && item.tags.length > 0}}">
-            <text class="guide-tag" wx:for="{{item.tags}}" wx:key="*this" wx:for-item="tag">{{tag}}</text>
+  <!-- Tab 2: 我的进度 -->
+  <view wx:elif="{{activeTab===2}}" class="tab-content">
+    <scroll-view scroll-y class="progress-scroll">
+      <view class="stats-panel">
+        <text class="stats-title">📊 通关进度</text>
+        <view class="phase-bars">
+          <view wx:for="{{phases}}" wx:key="phase" class="phase-row">
+            <text class="phase-row-name">{{item.phase}}. {{item.name}}</text>
+            <view class="phase-bar-bg"><view class="phase-bar-fill" style="width:{{item.totalRequired?(item.requiredCompleted/item.totalRequired*100):0}}%"></view></view>
+            <text class="phase-row-num">{{item.requiredCompleted}}/{{item.totalRequired}}</text>
           </view>
         </view>
       </view>
-      <view class="guide-card-footer"><view class="guide-rating"><text class="rating-stars">⭐ {{item.rating || '4.0'}}</text></view><view class="guide-actions"><text class="guide-helpful">👍 {{item.helpful || 0}}</text><text class="guide-arrow">→</text></view></view>
-    </view>
 
-    <view class="guide-footer">
-      <text class="guide-footer-text">— 住港伴攻略书 · 持续更新中 —</text>
-      <text class="guide-footer-hint">💡 攻略内容基于入境处公开信息及用户实操经验整理，仅供参考</text>
+      <view class="dossier-panel" wx:if="{{renewalDossier}}">
+        <view class="dossier-header">
+          <text class="dossier-title">📋 续签档案</text>
+          <text class="dossier-btn" bindtap="onExportDossier">📄 导出</text>
+        </view>
+        <block wx:for="{{['address','employment','family','visa']}}" wx:key="*this" wx:for-item="cat">
+          <view class="dossier-section" wx:if="{{renewalDossier[cat]}}">
+            <text class="dossier-cat">
+              <text wx:if="{{cat==='address'}}">🏠 居住证明</text>
+              <text wx:elif="{{cat==='employment'}}">💼 工作证明</text>
+              <text wx:elif="{{cat==='family'}}">👨‍👩‍👧 家庭证明</text>
+              <text wx:else>📄 签证记录</text>
+              <text wx:if="{{renewalDossier[cat].applicable===false}}"> (N/A)</text>
+            </text>
+            <view wx:if="{{renewalDossier[cat].items}}" class="dossier-items">
+              <view wx:for="{{renewalDossier[cat].items}}" wx:key="taskId" wx:for-item="ditem" class="dossier-item">
+                <text>✅ {{ditem.docType||ditem.doc_type||'材料'}}</text>
+              </view>
+            </view>
+            <text wx:else class="dossier-empty">暂无材料</text>
+          </view>
+        </block>
+      </view>
+    </scroll-view>
+  </view>
+
+  <!-- 路径设置弹窗(首次使用) -->
+  <view wx:if="{{showPathSetup}}" class="overlay">
+    <view class="setup-dialog">
+      <text class="setup-title">🏁 定制你的通关路线</text>
+
+      <!-- Step 0: Visa type -->
+      <view wx:if="{{setupStep===0}}" class="setup-step">
+        <text class="setup-q">Q1: 你的签证类型？</text>
+        <view wx:for="{{[{v:'qmas',l:'优才'},{v:'ttps-a',l:'高才通A类'},{v:'ttps-bc',l:'高才通BC类'},{v:'asmpt',l:'专才'},{v:'iang',l:'IANG/学生'},{v:'dependent',l:'受养人'}]}}" wx:key="v"
+              class="setup-option" data-value="{{item.v}}" bindtap="onSetupNext">
+          <text>{{item.l}}</text>
+        </view>
+      </view>
+
+      <!-- Step 1: Family -->
+      <view wx:if="{{setupStep===1}}" class="setup-step">
+        <text class="setup-q">Q2: 你的家庭状态？</text>
+        <view wx:for="{{[{v:'single',l:'单身'},{v:'couple',l:'情侣'},{v:'preschool',l:'带娃(学龄前)'},{v:'school-age',l:'带娃(中小学)'},{v:'teen',l:'带娃(中学以上)'}]}}" wx:key="v"
+              class="setup-option" data-value="{{item.v}}" bindtap="onSetupNext">
+          <text>{{item.l}}</text>
+        </view>
+        <view class="setup-back" bindtap="onSetupBack"><text>← 返回上一步</text></view>
+      </view>
+
+      <!-- Step 2: Arrival -->
+      <view wx:if="{{setupStep===2}}" class="setup-step">
+        <text class="setup-q">Q3: 你目前的状态？</text>
+        <view wx:for="{{[{v:'pre-arrival',l:'还未抵港'},{v:'fresh',l:'刚抵港(1周内)'},{v:'delayed',l:'已抵港一段时间'}]}}" wx:key="v"
+              class="setup-option" data-value="{{item.v}}" bindtap="onSetupNext">
+          <text>{{item.l}}</text>
+        </view>
+        <view class="setup-back" bindtap="onSetupBack"><text>← 返回上一步</text></view>
+      </view>
+
+      <!-- Step 3: Housing intent -->
+      <view wx:if="{{setupStep===3}}" class="setup-step">
+        <text class="setup-q">Q4: 你打算租房还是买房？</text>
+        <view wx:for="{{[{v:'rent',l:'租房'},{v:'buy',l:'买房'},{v:'undecided',l:'还没想好'}]}}" wx:key="v"
+              class="setup-option" data-value="{{item.v}}" bindtap="onSetupNext">
+          <text>{{item.l}}</text>
+        </view>
+        <view class="setup-back" bindtap="onSetupBack"><text>← 返回上一步</text></view>
+      </view>
+
+      <!-- Step 4: Existing assets + Confirm -->
+      <view wx:if="{{setupStep===4}}" class="setup-step">
+        <text class="setup-q">Q5: 你已经有？(可多选，没有就跳过)</text>
+        <view wx:for="{{[{v:'hkid',l:'香港身份证'},{v:'bank-account',l:'银行户口'},{v:'rental',l:'已签租约'},{v:'driving-license',l:'香港驾照'}]}}" wx:key="v"
+              class="setup-option setup-check {{setupData.existingAssets.indexOf(item.v)>=0?'selected':''}}"
+              data-value="{{item.v}}" bindtap="onSetupNext">
+          <text>{{setupData.existingAssets.indexOf(item.v)>=0?'☑':'☐'}} {{item.l}}</text>
+        </view>
+        <view class="setup-back" bindtap="onSetupBack"><text>← 返回上一步</text></view>
+        <view class="btn-primary setup-confirm" bindtap="onSetupConfirm">
+          <text>开始通关之旅 →</text>
+        </view>
+      </view>
+
+      <!-- Quick start (always visible at bottom) -->
+      <view wx:if="{{setupStep===0}}" class="setup-quick">
+        <text class="setup-quick-text" bindtap="onSetupQuick">跳过定制，快速开始 →</text>
+      </view>
     </view>
   </view>
 
-  <view class="scroll-top-btn" wx:if="{{filteredCards.length > 5}}" bindtap="scrollToTop"><text>⬆</text></view>
-  <view class="safe-bottom"></view>
+  <!-- 里程碑弹窗 -->
+  <view wx:if="{{showMilestone}}" class="milestone-overlay">
+    <view class="milestone-card">
+      <text class="milestone-icon">🎉</text>
+      <text class="milestone-text">{{milestoneMsg}}</text>
+      <text class="milestone-sub">续签材料 {{progress?progress.renewalDossier.address.items.length||0:0}} 份已收集</text>
+    </view>
+  </view>
 
-  <floating-ai visible="{{true}}" context="{{ {page: 'guidebooks', pageContext: '用户在攻略书页面浏览香港身份攻略'} }}" />
+  <!-- 找房向导入口 (关卡3) -->
+  <view wx:if="{{showHousingWizard}}" class="overlay">
+    <view class="wizard-dialog">
+      <text class="wizard-title">🏠 找房向导</text>
+      <view wx:if="{{wizardStep===0}}">
+        <text class="wizard-q">每月租房预算？</text>
+        <view wx:for="{{[{v:'b1',l:'$10,000-15,000'},{v:'b2',l:'$15,000-25,000'},{v:'b3',l:'$25,000-40,000'},{v:'b4',l:'$40,000-60,000'},{v:'b5',l:'$60,000+'}]}}" wx:key="v"
+              class="wizard-opt" data-value="{{item.v}}" bindtap="onWizardNext">{{item.l}}</view>
+      </view>
+      <view wx:if="{{wizardStep===1}}">
+        <text class="wizard-q">主要工作/上学区域？</text>
+        <view wx:for="{{[{v:'hong-kong-island',l:'港岛'},{v:'kowloon',l:'九龙'},{v:'new-territories',l:'新界'},{v:'remote',l:'远程/不固定'}]}}" wx:key="v"
+              class="wizard-opt" data-value="{{item.v}}" bindtap="onWizardNext">{{item.l}}</view>
+      </view>
+      <view wx:if="{{wizardStep===2}}">
+        <text class="wizard-q">有学龄孩子？</text>
+        <view class="wizard-opt" data-value="yes" bindtap="onWizardNext">有</view>
+        <view class="wizard-opt" data-value="no" bindtap="onWizardNext">无</view>
+      </view>
+      <view wx:if="{{wizardStep===3}}">
+        <text class="wizard-q">推荐区域 Top {{wizardResults.length}}</text>
+        <scroll-view scroll-y class="wizard-results">
+          <view wx:for="{{wizardResults}}" wx:key="district" class="wizard-result-card">
+            <text class="result-name">{{item.district}}</text>
+            <text class="result-stat">呎租: HK${{item.avgRentPsf}}/ft² · {{item.vibe}}</text>
+            <text class="result-stat">通勤: 中环{{item.commute.central}}min</text>
+            <text wx:if="{{item.schoolNet.primary>0}}" class="result-stat">校网: {{item.schoolNet.primary}} · 家庭友好: {{'⭐'.repeat(item.familyFriendly)}}</text>
+          </view>
+        </scroll-view>
+        <view class="wizard-done" bindtap="onWizardDone">完成向导 ✓</view>
+      </view>
+      <view wx:if="{{wizardStep<3}}" class="wizard-close" bindtap="onWizardClose">跳过</view>
+    </view>
+  </view>
+
+  <!-- 找房向导入口横幅 -->
+  <view wx:if="{{activeTab===0 && currentPhase===3 && !housingWizardDone}}" class="housing-banner" bindtap="onHousingBannerTap">
+    <text>🏠 不确定住哪个区？先做找房向导（30秒）</text>
+  </view>
 </view>
