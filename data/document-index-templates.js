@@ -547,6 +547,12 @@ function matchTemplate(status, path, mode) {
 }
 
 /**
+ * 仅本人可见的分类 — 这些材料天然属于申请人本人，配偶/子女无需提供
+ * 工作经历、资产证明、申请材料（赴港计划书/无犯罪记录等）均只显示本人材料
+ */
+var SELF_ONLY_CATEGORIES = ['employment', 'financial', 'application'];
+
+/**
  * 计算槽位运行时状态
  * @param {object} template - 索引模板
  * @param {Array} uploadedDocs - 已上传证件列表
@@ -555,12 +561,15 @@ function matchTemplate(status, path, mode) {
  */
 function computeSlotStates(template, uploadedDocs, ownerType) {
   return template.categories.map(function(cat) {
+    // 仅本人分类：始终按 'self' 过滤，不受身份切换影响
+    var effectiveOwner = (SELF_ONLY_CATEGORIES.indexOf(cat.categoryKey) !== -1) ? 'self' : ownerType;
+
     var slots = cat.slots.map(function(slot) {
       var uploaded = uploadedDocs.filter(function(d) {
         // 0) 所属人过滤：旧数据无 ownerType 视为 'self'
-        if (ownerType) {
+        if (effectiveOwner) {
           var docOwner = d.ownerType || 'self';
-          if (docOwner !== ownerType) return false;
+          if (docOwner !== effectiveOwner) return false;
         }
         // 1) 精确 slotKey 匹配（从卡槽点击添加的）
         if (d.slotKey && slot.slotKey && d.slotKey === slot.slotKey) return true;

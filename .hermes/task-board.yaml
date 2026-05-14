@@ -240,3 +240,30 @@ ledger:
       变更: 7文件 (pages/documents/* × 4 + utils/* × 2 + tokens.wxss + app.wxss)
       闸门: verify.sh 39/39 ✅ | workflow-verify 36/36 ✅ | JS语法全部通过 ✅
       source: inbox/NOTIFY_执行13项Bug剩余6项.md
+
+  - date: 2026-05-14
+    type: deploy_request
+    title: cloud漏初始化修复 — ai-chat/index.js 补 wx-server-sdk import
+    from: claude
+    state: deployed
+    summary: >
+      +13行：补充缺失的 wx-server-sdk 初始化。优先复用 global.cloud（测试mock），
+      生产环境走 require('wx-server-sdk')。修复前 cloud.callFunction('rag-search')和
+      cloud.callFunction('content-moderation') 因 cloud 未定义而静默失败。
+      用户"符生"问"我打算今天准备材料"→ AI报错，根因即此。
+    verification: node -c ✅ | Jest 16/16 suites 421/425 pass ✅
+    source: inbox/DEPLOY_NOW.md
+
+  - date: 2026-05-14
+    type: deploy_request
+    title: 证件夹 — 工作经历/资产证明/申请材料仅本人可见 (SELF_ONLY_CATEGORIES)
+    from: claude
+    state: pending_hermes_9gate
+    files:
+      - data/document-index-templates.js
+    summary: >
+      +9行：新增 SELF_ONLY_CATEGORIES = ['employment','financial','application'] 常量。
+      computeSlotStates() 中按分类使用 effectiveOwner，三类材料始终按 self 过滤。
+      配偶/子女切换时这三个分类不受影响，身份/学历/关系等分类继续正常跟随切换器。
+    verification: node -c ✅ | Jest 14/14 unit tests pass ✅
+    source: inbox/DEPLOY_NOW.md
