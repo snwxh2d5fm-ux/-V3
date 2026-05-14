@@ -1,10 +1,48 @@
 <view class="container">
-  <view class="page-header"><text class="page-header__title">预审报告</text></view>
+  <view class="page-header"><text class="page-header__title">预审详情</text></view>
+
+  <!-- 材料完整度概览 -->
   <view class="card">
     <text class="report-score">材料完整度：{{score}}%</text>
+    <view class="report-stats" wx:if="{{report}}">
+      <text class="report-stat">📄 {{report.total || 0}} 份材料</text>
+      <text class="report-stat">🔴 阻断 {{report.blocked || 0}} 项</text>
+      <text class="report-stat">🟡 警告 {{report.warning || 0}} 项</text>
+    </view>
     <text class="report-note">基于规则引擎匹配，非AI主观判断</text>
-    <text class="report-disclaimer">以上预审结果仅供参考，不构成法律建议。最终审核以入境处决定为准。</text>
   </view>
+
+  <!-- 逐项检查结果 -->
+  <view class="card" wx:if="{{report && report.docs}}">
+    <view class="check-item" wx:for="{{report.docs}}" wx:key="doc_name">
+      <view class="check-item__head">
+        <text class="check-item__icon">{{item.status_icon || '📄'}}</text>
+        <text class="check-item__name">{{item.name || item.doc_name || '未知文档'}}</text>
+        <text class="check-item__status">{{item.summary || '未检出'}}</text>
+      </view>
+      <!-- 阻断项 -->
+      <view class="check-item__detail" wx:if="{{item.blocked_items && item.blocked_items.length > 0}}">
+        <text class="check-item__label check-item__label--block">🔴 阻断</text>
+        <text wx:for="{{item.blocked_items}}" wx:key="*this">{{item}}</text>
+      </view>
+      <!-- 警告项 -->
+      <view class="check-item__detail" wx:if="{{item.warned_items && item.warned_items.length > 0}}">
+        <text class="check-item__label check-item__label--warn">🟡 警告</text>
+        <text wx:for="{{item.warned_items}}" wx:key="*this">{{item}}</text>
+      </view>
+      <!-- 通过项 -->
+      <view class="check-item__detail" wx:if="{{item.passed_items && item.passed_items.length > 0}}">
+        <text class="check-item__label check-item__label--pass">✅ 通过</text>
+        <text wx:for="{{item.passed_items}}" wx:key="*this">{{item}}</text>
+      </view>
+    </view>
+  </view>
+
+  <view class="card" wx:if="{{!report || !report.docs || report.docs.length === 0}}">
+    <text class="report-note">暂无预审数据。请确保已上传证件材料后再进行预审。</text>
+  </view>
+
+  <text class="report-disclaimer">以上预审结果仅供参考，不构成法律建议。最终审核以入境处决定为准。</text>
 
   <floating-ai visible="{{true}}" />
 </view>

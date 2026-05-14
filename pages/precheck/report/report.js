@@ -6,6 +6,7 @@ Page({
   data: {
     blocked: 0,
     totalDocs: 0,
+    score: 0,
     report: null,
     loading: true,
     disclaimer: ''
@@ -31,7 +32,7 @@ Page({
     preaudit.batchCheck(batchDocs).then(function(res) {
       if (res.ok && res.docs) {
         var formattedDocs = res.docs.map(function(d) {
-          return preaudit.formatForDisplay(d);
+          return preaudit.formatForDisplay(d) || { stats: { passed: 0, blocked: 0, warned: 0 }, summary: '预审数据异常', status_icon: '❓' };
         });
 
         var blockedDocs = formattedDocs.filter(function(d) {
@@ -66,11 +67,11 @@ Page({
             : ''
         });
       } else {
-        self.setData({ loading: false });
+        self.setData({ loading: false, score: 0 });
       }
     }).catch(function(err) {
       console.error('[效率宝] 报告生成失败:', err);
-      self.setData({ loading: false });
+      self.setData({ loading: false, score: 0 });
     });
   },
 
