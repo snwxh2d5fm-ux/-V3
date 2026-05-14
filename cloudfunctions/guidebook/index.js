@@ -303,6 +303,15 @@ function enrichArticle(article) {
   const confLevel = article.confidence || 'C';
   const badge = CONFIDENCE_BADGE[confLevel] || CONFIDENCE_BADGE.C;
 
+  // 体系性修复: content/mergedContent → sections 格式转换
+  var sections = article.sections || [];
+  if (!sections.length) {
+    var body = article.mergedContent || article.content || '';
+    if (body) {
+      sections = buildSections(body, article.title || '');
+    }
+  }
+
   return {
     id: article._id,
     articleId: article._id,
@@ -310,6 +319,8 @@ function enrichArticle(article) {
     summary: article.summary || '',
     content: article.content || '',
     mergedContent: article.mergedContent || '',
+    sections: sections,
+    contentType: (article.steps && article.steps.length) ? 'steps' : (article.faqAnswer ? 'faq' : 'article'),
     category,
     domain,
     topics: article.topics || [],
@@ -343,6 +354,48 @@ function enrichArticle(article) {
     isFaq: article.isFaq || false,
     faqAnswer: article.faqAnswer || ''
   };
+}
+
+// 将原始文本按自然段落拆分，识别标题标记构建 sections
+function buildSections(body, title) {
+  var sections = [];
+  var paragraphs = body.split(/\n\n+/);
+  var currentHeading = '';
+  var currentBody = '';
+
+  for (var i = 0; i < paragraphs.length; i++) {
+    var p = paragraphs[i].trim();
+    if (!p) continue;
+
+    // 检测标题行: 【xxx】/ 一、/ 1. / ## / 以短行开头
+    var isHeading = /^【[^】]+】/.test(p) ||
+                    /^[一二三四五六七八九十]、/.test(p) ||
+                    /^\d+[.、]/.test(p) && p.length < 40 ||
+                    /^第[一二三四五六七八九十\d]+[步章]/.test(p) ||
+                    p.length < 30 && !/[。；，]$/.test(p);
+
+    if (isHeading) {
+      if (currentBody) {
+        sections.push({ heading: currentHeading || title, body: currentBody.trim() });
+        currentBody = '';
+      }
+      currentHeading = p;
+    } else {
+      if (!currentHeading) currentHeading = title;
+      currentBody += (currentBody ? '\n\n' : '') + p;
+    }
+  }
+
+  if (currentBody) {
+    sections.push({ heading: currentHeading || title, body: currentBody.trim() });
+  }
+
+  // 无自然分段 → 全文一段
+  if (!sections.length) {
+    sections = [{ heading: title, body: body }];
+  }
+
+  return sections;
 }
 
 function totalRatings(article) {
