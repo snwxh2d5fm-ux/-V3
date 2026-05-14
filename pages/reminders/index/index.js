@@ -477,9 +477,9 @@ Page({
     nodes.forEach(function(node) {
       var date = new Date(today);
       date.setDate(date.getDate() + Math.abs(node.offsetDays || 7));
-      var ds = date.getFullYear() + '-' +
-        String(date.getMonth() + 1).padStart(2, '0') + '-' +
-        String(date.getDate()).padStart(2, '0');
+      var m = date.getMonth() + 1;
+      var d = date.getDate();
+      var ds = date.getFullYear() + '-' + (m < 10 ? '0' + m : m) + '-' + (d < 10 ? '0' + d : d);
 
       var iconMap = { milestone: '✅', deadline: '📅', renewal: '🔄', pr: '🏁', material: '📋' };
       saveReminder({
