@@ -60,7 +60,7 @@ Page({
     }
 
     var params = progress.pathParams;
-    cache.fetchByPath(params.visaType, params.familyStatus, params.arrivalScenario, params.existingAssets)
+    cache.fetchByPath(params.visaType, params.familyStatus, params.arrivalScenario, params.housingIntent, params.existingAssets)
       .then(function(result) {
         if (!result || !result.data) {
           self.setData({ loading: false, loadError: true });
