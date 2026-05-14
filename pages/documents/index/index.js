@@ -199,7 +199,7 @@ Page({
           if (template.categories) {
             template.categories.forEach(function(cat) {
               if (cat.slots) {
-                // 1) 标记已有槽位是否在云端确认
+                // 标记已有槽位是否在云端确认
                 cat.slots.forEach(function(slot) {
                   var dn = (slot.docName || '').toLowerCase();
                   var cloudMatch = cloudReqs.find(function(r) {
@@ -207,24 +207,6 @@ Page({
                     return dn.indexOf(rl) >= 0 || rl.indexOf(dn) >= 0;
                   });
                   if (cloudMatch) slot.cloudVerified = true;
-                });
-                // 2) 云端独有槽位（本地无匹配）→ 追加到分类
-                var existingNames = cat.slots.map(function(s) { return (s.docName || '').toLowerCase(); });
-                cloudReqs.forEach(function(req) {
-                  var rl = (req || '').toLowerCase();
-                  var alreadyExists = existingNames.some(function(en) {
-                    return en.indexOf(rl) >= 0 || rl.indexOf(en) >= 0;
-                  });
-                  if (!alreadyExists) {
-                    cat.slots.push({
-                      slotKey: 'cloud_' + rl.replace(/[^a-z0-9]/g, '_'),
-                      docName: req,
-                      guideId: '',
-                      requirement: 'recommended',
-                      cloudVerified: true,
-                      cloudAdded: true
-                    });
-                  }
                 });
               }
             });
