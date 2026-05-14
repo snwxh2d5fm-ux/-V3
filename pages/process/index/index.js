@@ -160,13 +160,7 @@ Page({
     var progress = allStages.length > 0 ? Math.round((doneCount / allStages.length) * 100) : 0;
     this.setData({ materialDoneCount: doneCount, materialTotalCount: allStages.length });
     // 仅0%完成度时出示免责声明
-    if (doneCount === 0) {
-      var hasSeenDisclaimer = wx.getStorageSync('__disclaimer_seen__');
-      if (!hasSeenDisclaimer) {
-        wx.setStorageSync('__disclaimer_seen__', true);
-        this.setData({ showDisclaimer: true });
-      }
-    }
+    // showDisclaimer 已移除 — 自评弹窗统一由 checkDisclaimerNeeded 管理
 
     // 当前阶段：资格评估完成后 → 材料准备解锁
     // 资格评估的状态：有 activeProcess 即表示已完成
@@ -288,57 +282,26 @@ Page({
     this.setData({ showHelpPopup: false });
   },
 
-  // Bug #13: 风险提醒弹窗逻辑
+  // 仅保留自评数据说明弹窗，其余弹窗全部移除
   checkDisclaimerNeeded() {
-    var that = this;
     var activeProcess = this.data.activeProcess;
     var progress = this.data.progress || 0;
     var materialTotalCount = this.data.materialTotalCount || 0;
-
-    // 已确认过不再弹
     if (this.data.disclaimerConfirmed) return;
 
-    // 场景1: 用户自评数据（TotalCount > 6 暗示来自自评模板）
+    // 用户自评数据说明
     if (materialTotalCount > 6 && progress === 0) {
       this.setData({
         showDisclaimerPopup: true,
         disclaimerType: 'self_assessed',
         disclaimerTitle: '数据来源说明',
-        disclaimerBody: '此数据由用户自行评估填写，并非香港入境事务处官方认可。\n\n请在提交前核准所有标准与信息。所有官方申请标准请以入境处官网（immd.gov.hk）最新公布为准。'
+        disclaimerBody: '此数据由用户自行评估填写，并非香港入境事务处官方认可。\n\n请在提交前核准所有标准与信息。\n\n所有官方申请标准请以入境处官网（immd.gov.hk）最新公布为准。'
       });
-      return;
-    }
-
-    // 场景2: 0%完成度
-    if (progress === 0 && activeProcess) {
-      this.setData({
-        showDisclaimerPopup: true,
-        disclaimerType: 'zero_progress',
-        disclaimerTitle: '流程尚未开始',
-        disclaimerBody: '当前材料完整度为 0%，流程尚未正式开始。\n\n请先完成资格评估和路径选择，系统将为你自动生成专属流程进度看板。\n\n完成后各阶段材料清单将自动解锁。'
-      });
-      return;
-    }
-
-    // 场景3: 低完成度 (<30%)
-    if (progress > 0 && progress < 30 && activeProcess) {
-      this.setData({
-        showDisclaimerPopup: true,
-        disclaimerType: 'low_progress',
-        disclaimerTitle: '材料准备进度提醒',
-        disclaimerBody: '当前材料完整度仅为 ' + progress + '%，还有大部分材料待完成。\n\n各个阶段的材料清单基于你所选路径的官方要求生成。建议按阶段逐项准备，确保材料齐全后再提交申请。'
-      });
-      return;
     }
   },
-
   confirmDisclaimer() {
-    this.setData({
-      showDisclaimerPopup: false,
-      disclaimerConfirmed: true
-    });
+    this.setData({ showDisclaimerPopup: false, disclaimerConfirmed: true });
   },
-
   closeDisclaimerPopup() {
     this.setData({ showDisclaimerPopup: false });
   },
