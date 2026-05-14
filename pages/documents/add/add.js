@@ -96,14 +96,13 @@ Page({
     saving: false,
     privacyMode: 'local',
 
-    // Bug #12: 隐私覆盖条（按证件类型动态渲染）
-    privacyBars: [
-      { top: '12%', left: '8%', width: '28%', height: '4.5%', label: '姓名' },
-      { top: '20%', left: '8%', width: '45%', height: '4%', label: '证号' },
-      { top: '28%', left: '8%', width: '22%', height: '4%', label: '出生' },
-      { top: '36%', left: '8%', width: '55%', height: '5%', label: '地址' }
-    ],
-    _currentDocType: ''
+    // Bug #12修复: 隐私覆盖条根据证件类型动态渲染
+    privacyBars: [],
+    _currentDocType: '',
+    _slotKey: '',
+    _slotDocName: '',
+    _slotGuideId: '',
+    _rotateDeg: 0
   },
 
   onLoad(options) {
@@ -132,7 +131,11 @@ Page({
     if (options.slotKey === 'plan_statement') {
       this.setData({ inputMode: 'manual', step: 1, docCategory: 'approved' });
     }
-    this.setData({ privacyMode: app.getPrivacyMode() });
+    // Bug #12: 根据slotKey/docType设置对应的PII遮挡条
+    this.setData({
+      privacyMode: app.getPrivacyMode(),
+      privacyBars: getPrivacyBars('', this._slotKey || '')
+    });
   },
 
   // ========== Step 1: 选择输入方式 ==========
@@ -1814,4 +1817,96 @@ function slotToCategory(slotKey) {
     'guardian_id': 'identity', 'guardian_consent': 'approved', 'guardian_income': 'assets'
   };
   return map[slotKey] || '';
+}
+
+/** Bug #12: 根据证件类型返回PII遮挡条位置 (基于真实证件规格) */
+function getPrivacyBars(docType, slotKey) {
+  var bars = {
+    // ▸ 身份证 (85.6×54mm 横向, 照片左·信息右)
+    id_card: [
+      { top: '10%', left: '42%', width: '52%', height: '4%', label: '姓名' },
+      { top: '16%', left: '42%', width: '25%', height: '3.5%', label: '性别' },
+      { top: '22%', left: '42%', width: '35%', height: '3.5%', label: '民族' },
+      { top: '28%', left: '42%', width: '48%', height: '3.5%', label: '出生' },
+      { top: '35%', left: '8%', width: '88%', height: '8%', label: '住址' },
+      { top: '48%', left: '8%', width: '88%', height: '5%', label: '住址(续)' },
+      { top: '58%', left: '42%', width: '50%', height: '5%', label: '公民身份号码' }
+    ],
+    // ▸ 港澳通行证 (卡式, 照片左·长城底纹)
+    hk_permit: [
+      { top: '12%', left: '42%', width: '16%', height: '4%', label: '姓名' },
+      { top: '12%', left: '60%', width: '34%', height: '4%', label: '拼音' },
+      { top: '25%', left: '50%', width: '40%', height: '4%', label: '通行证号' },
+      { top: '38%', left: '42%', width: '25%', height: '4%', label: '出生日期' },
+      { top: '52%', left: '50%', width: '40%', height: '4%', label: '有效期限' }
+    ],
+    // ▸ 护照 (125×88mm, 资料页第2页, 照片左·MRZ底)
+    passport: [
+      { top: '8%', left: '35%', width: '55%', height: '4%', label: '姓名' },
+      { top: '16%', left: '35%', width: '30%', height: '3.5%', label: '护照号(E+8位)' },
+      { top: '24%', left: '35%', width: '20%', height: '3%', label: '性别' },
+      { top: '30%', left: '35%', width: '50%', height: '4%', label: '出生日期/地点' }
+    ],
+    // ▸ 香港身份证 (2018版, 照片左置)
+    hk_id: [
+      { top: '15%', left: '42%', width: '24%', height: '3.5%', label: '中文姓名' },
+      { top: '15%', left: '68%', width: '28%', height: '3.5%', label: '英文姓名' },
+      { top: '28%', left: '42%', width: '52%', height: '4%', label: '身份证号码' },
+      { top: '42%', left: '42%', width: '30%', height: '4%', label: '出生日期' }
+    ],
+    // ▸ 户口本 (首页+本人页)
+    household: [
+      { top: '8%', left: '25%', width: '18%', height: '3.5%', label: '户主姓名' },
+      { top: '8%', left: '50%', width: '44%', height: '8%', label: '住址' },
+      { top: '18%', left: '25%', width: '18%', height: '3.5%', label: '本人姓名' },
+      { top: '30%', left: '50%', width: '44%', height: '4%', label: '公民身份号码' }
+    ],
+    // ▸ 结婚证 (双页展开)
+    marriage: [
+      { top: '40%', left: '10%', width: '24%', height: '5%', label: '持证人' },
+      { top: '25%', left: '10%', width: '30%', height: '4%', label: '登记日期' },
+      { top: '50%', left: '10%', width: '40%', height: '4%', label: '结婚证字号' },
+      { top: '58%', left: '10%', width: '80%', height: '5%', label: '双方姓名' },
+      { top: '65%', left: '10%', width: '80%', height: '5%', label: '双方身份证号' }
+    ],
+    // ▸ 出生证 (第七版)
+    birth_cert: [
+      { top: '15%', left: '30%', width: '24%', height: '4%', label: '婴儿姓名' },
+      { top: '25%', left: '30%', width: '35%', height: '3.5%', label: '出生日期/时间' },
+      { top: '48%', left: '8%', width: '40%', height: '4%', label: '母亲姓名' },
+      { top: '48%', left: '52%', width: '44%', height: '4%', label: '母亲身份证号' },
+      { top: '56%', left: '8%', width: '40%', height: '4%', label: '父亲姓名' },
+      { top: '56%', left: '52%', width: '44%', height: '4%', label: '父亲身份证号' }
+    ],
+    // ▸ 学位证 (A4竖版)
+    degree: [
+      { top: '18%', left: '12%', width: '18%', height: '3.5%', label: '姓名' },
+      { top: '18%', left: '35%', width: '55%', height: '3.5%', label: '证书编号' },
+      { top: '24%', left: '12%', width: '30%', height: '3.5%', label: '出生日期' }
+    ],
+    // ▸ 工作证明 (A4)
+    work: [
+      { top: '18%', left: '12%', width: '18%', height: '3.5%', label: '姓名' },
+      { top: '18%', left: '40%', width: '52%', height: '3.5%', label: '身份证号' },
+      { top: '32%', left: '40%', width: '52%', height: '3.5%', label: '薪资' }
+    ],
+    // ▸ 银行流水
+    bank: [
+      { top: '10%', left: '12%', width: '22%', height: '3.5%', label: '账户持有人' },
+      { top: '10%', left: '50%', width: '44%', height: '3.5%', label: '账号' },
+      { top: '20%', left: '12%', width: '30%', height: '3.5%', label: '余额' }
+    ],
+    // ▸ 获批通知
+    approval: [
+      { top: '12%', left: '12%', width: '22%', height: '3.5%', label: '姓名' },
+      { top: '12%', left: '50%', width: '44%', height: '3.5%', label: '入境许可编号' }
+    ]
+  };
+
+  // 按 docType 精确匹配
+  if (docType && bars[docType]) return bars[docType];
+  // 按 slotKey 匹配
+  if (slotKey && bars[slotKey]) return bars[slotKey];
+  // 默认: 身份证
+  return bars.id_card;
 }
