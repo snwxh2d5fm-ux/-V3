@@ -18,6 +18,19 @@ const https = require('https');
 const { URL } = require('url');
 const prompts = require('./prompts');
 
+// wx-server-sdk 初始化（优先测试mock global.cloud，生产环境使用 wx-server-sdk）
+var cloud = (typeof global !== 'undefined' && global.cloud) ? global.cloud : null;
+if (!cloud || typeof cloud.callFunction !== 'function') {
+  try {
+    const wxServerSDK = require('wx-server-sdk');
+    cloud = wxServerSDK;
+    cloud.init({ env: cloud.DYNAMIC_CURRENT_ENV });
+  } catch (e) {
+    console.warn('[ai-chat] wx-server-sdk 不可用，RAG 检索和内容审核将降级:', e.message);
+    cloud = null;
+  }
+}
+
 const DEEPSEEK_BASE_URL = 'https://api.deepseek.com/v1';
 const MAX_HISTORY_TURNS = 10; // 最多保留最近10轮对话
 const RAG_TOP_K = 5;          // RAG 检索返回条数
