@@ -85,13 +85,29 @@ Page({
     wx.cloud.callFunction({ name: 'guidebook', data: { action: 'getArticles', page: 1, pageSize: 200, sortBy: 'default' } }).then(function(res) {
       if (res.result && res.result.code === 0 && res.result.data && res.result.data.articles && res.result.data.articles.length > 0) {
         var localIds = {};
-        that.data.guideCards.forEach(function(c) { localIds[c.id] = true; });
+        var localTitles = [];
+        that.data.guideCards.forEach(function(c) {
+          localIds[c.id] = true;
+          localTitles.push((c.title || '').replace(/[【】\\s]/g, ''));
+        });
         var cloudArticles = res.result.data.articles.map(function(a) { a.helpful = ratingCache[a.id] || a.helpful || 0; return a; });
-        // 仅补充本地缺失的卡片，不替换已有数据
         var merged = that.data.guideCards.slice();
         var added = 0;
         cloudArticles.forEach(function(a) {
-          if (!localIds[a.id]) { merged.push(a); added++; }
+          if (localIds[a.id]) return;
+          // 标题去重：云端标题与本地标题相似度≥80%视为重复
+          var ct = (a.title || '').replace(/[【】\\s]/g, '');
+          var isDup = localTitles.some(function(lt) {
+            if (!ct || !lt) return false;
+            var longer = ct.length > lt.length ? ct : lt;
+            var shorter = ct.length > lt.length ? lt : ct;
+            if (shorter.length < 4) return false;
+            return longer.indexOf(shorter) >= 0 || shorter.indexOf(longer) >= 0;
+          });
+          if (isDup) return;
+          merged.push(a);
+          added++;
+          localTitles.push(ct);
         });
         that.setData({ guideCards: merged, cloudSource: added > 0 });
         that.applyFilters();
