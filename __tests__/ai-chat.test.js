@@ -245,13 +245,13 @@ describe('D. ai-chat 云函数 — 输入校验', () => {
     expect(res.code).toBe(200);
     expect(res.data).toBeDefined();
     expect(res.data.content).toBeDefined();
-  });
+  }, 15000);  // 含 DeepSeek API 调用，需较长超时
 
   test('D6 无 mode 参数默认为 general', async () => {
     const res = await aiChat.main({ message: '你好' }, {});
     expect(res.code).toBe(200);
     expect(res.data).toBeDefined();
-  });
+  }, 15000);
 });
 
 // ============================================================
