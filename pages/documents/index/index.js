@@ -315,10 +315,11 @@ Page({
   switchIdentityOwner(e) {
     const value = e.currentTarget.dataset.value;
     this.setData({ identityOwner: value });
-    // 重新计算身份分类的槽位填充状态
+    // 重新计算身份分类的槽位填充状态 + 列表视图过滤
     if (this.data.slotCategories.length > 0) {
       this.refreshIdentitySlots();
     }
+    this.applyFilter();
   },
 
   /** 切换分类折叠 */
@@ -453,8 +454,16 @@ Page({
   },
 
   applyFilter() {
-    const { activeCategory, allDocuments, searchQuery } = this.data;
+    const { activeCategory, allDocuments, searchQuery, identityOwner } = this.data;
     let docs = [...allDocuments];
+
+    // Bug #7: 按所属人过滤
+    if (identityOwner) {
+      docs = docs.filter(function(d) {
+        var docOwner = d.ownerType || 'self';
+        return docOwner === identityOwner;
+      });
+    }
 
     if (activeCategory !== 'all') {
       docs = docs.filter(d => d.category === activeCategory);
