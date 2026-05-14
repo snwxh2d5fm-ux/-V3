@@ -1,7 +1,24 @@
 /**
  * 住港伴 — 证件图片处理工具
- * 功能：脱敏遮罩 + 扫描形态增强
+ * 功能：脱敏遮罩 + 扫描增强 + 旋转 + 缩放 + 裁剪
+ * Canvas 2D API (canvas-id已废弃)
  */
+var _canvasNode = null;
+function _getCanvas() {
+  return new Promise(function(resolve) {
+    if (_canvasNode) { resolve(_canvasNode); return; }
+    var query = wx.createSelectorQuery();
+    query.select('#img-process').fields({ node: true, size: true }).exec(function(res) {
+      if (res && res[0] && res[0].node) { _canvasNode = res[0].node; resolve(_canvasNode); }
+      else { resolve(null); }
+    });
+  });
+}
+function _canvasToTemp(c) {
+  return new Promise(function(resolve, reject) {
+    wx.canvasToTempFilePath({ canvas: c, success: function(r) { resolve(r.tempFilePath); }, fail: reject });
+  });
+}
 
 /**
  * 生成脱敏遮罩预览
@@ -330,30 +347,21 @@ function rotateImage(imagePath, degrees) {
     wx.getImageInfo({
       src: imagePath,
       success: function(info) {
-        var ctx = wx.createCanvasContext('rotate-canvas');
-        var w = info.width, h = info.height;
-
-        if (rad === 90) {
-          // 右旋90: translate+rotate后重绘
-          ctx.translate(h, 0);
-          ctx.rotate(Math.PI / 2);
-          ctx.drawImage(imagePath, 0, 0, w, h);
-        } else if (rad === 180) {
-          ctx.translate(w, h);
-          ctx.rotate(Math.PI);
-          ctx.drawImage(imagePath, 0, 0, w, h);
-        } else if (rad === 270) {
-          ctx.translate(0, w);
-          ctx.rotate(-Math.PI / 2);
-          ctx.drawImage(imagePath, 0, 0, w, h);
-        }
-
-        ctx.draw(false, function() {
-          wx.canvasToTempFilePath({
-            canvasId: 'rotate-canvas',
-            success: function(res) { resolve(res.tempFilePath); },
-            fail: function() { resolve(imagePath); }
-          });
+        _getCanvas().then(function(canvas) {
+          if (!canvas) { resolve(imagePath); return; }
+          var w = info.width, h = info.height;
+          if (rad === 90 || rad === 270) { canvas.width = h; canvas.height = w; }
+          else { canvas.width = w; canvas.height = h; }
+          var ctx = canvas.getContext('2d');
+          var img = canvas.createImage();
+          img.onload = function() {
+            if (rad === 90) { ctx.translate(h, 0); ctx.rotate(Math.PI / 2); ctx.drawImage(img, 0, 0, w, h); }
+            else if (rad === 180) { ctx.translate(w, h); ctx.rotate(Math.PI); ctx.drawImage(img, 0, 0, w, h); }
+            else if (rad === 270) { ctx.translate(0, w); ctx.rotate(-Math.PI / 2); ctx.drawImage(img, 0, 0, w, h); }
+            _canvasToTemp(canvas).then(function(p) { resolve(p); }).catch(function() { resolve(imagePath); });
+          };
+          img.onerror = function() { resolve(imagePath); };
+          img.src = imagePath;
         });
       },
       fail: function() { resolve(imagePath); }
@@ -377,14 +385,14 @@ function resizeImage(imagePath, maxWidth, maxHeight) {
         var scale = Math.min((maxWidth || 2048) / w, (maxHeight || 2048) / h, 1);
         if (scale >= 1) { resolve(imagePath); return; }
 
-        var ctx = wx.createCanvasContext('resize-canvas');
-        ctx.drawImage(imagePath, 0, 0, w * scale, h * scale);
-        ctx.draw(false, function() {
-          wx.canvasToTempFilePath({
-            canvasId: 'resize-canvas',
-            success: function(res) { resolve(res.tempFilePath); },
-            fail: function() { resolve(imagePath); }
-          });
+        _getCanvas().then(function(canvas) {
+          if (!canvas) { resolve(imagePath); return; }
+          canvas.width = w * scale; canvas.height = h * scale;
+          var ctx = canvas.getContext('2d');
+          var img = canvas.createImage();
+          img.onload = function() { ctx.drawImage(img, 0, 0, w * scale, h * scale); _canvasToTemp(canvas).then(function(p) { resolve(p); }).catch(function() { resolve(imagePath); }); };
+          img.onerror = function() { resolve(imagePath); };
+          img.src = imagePath;
         });
       },
       fail: function() { resolve(imagePath); }
@@ -411,14 +419,14 @@ function cropImage(imagePath, x, y, cropWidth, cropHeight) {
         var sx = (x || 0) * w, sy = (y || 0) * h;
         var sw = cropWidth * w, sh = cropHeight * h;
 
-        var ctx = wx.createCanvasContext('crop-canvas');
-        ctx.drawImage(imagePath, sx, sy, sw, sh, 0, 0, sw, sh);
-        ctx.draw(false, function() {
-          wx.canvasToTempFilePath({
-            canvasId: 'crop-canvas',
-            success: function(res) { resolve(res.tempFilePath); },
-            fail: function() { resolve(imagePath); }
-          });
+        _getCanvas().then(function(canvas) {
+          if (!canvas) { resolve(imagePath); return; }
+          canvas.width = sw; canvas.height = sh;
+          var ctx = canvas.getContext('2d');
+          var img = canvas.createImage();
+          img.onload = function() { ctx.drawImage(img, sx, sy, sw, sh, 0, 0, sw, sh); _canvasToTemp(canvas).then(function(p) { resolve(p); }).catch(function() { resolve(imagePath); }); };
+          img.onerror = function() { resolve(imagePath); };
+          img.src = imagePath;
         });
       },
       fail: function() { resolve(imagePath); }

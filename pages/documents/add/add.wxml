@@ -407,13 +407,8 @@
 
   <view class="safe-bottom"></view>
 
-  <!-- Bug #8: 隐藏Canvas用于图片旋转/缩放/裁剪/增强/脱敏 -->
-  <canvas canvas-id="rotate-canvas" style="position:fixed;top:-9999rpx;left:-9999rpx;width:480rpx;height:480rpx"></canvas>
-  <canvas canvas-id="resize-canvas" style="position:fixed;top:-9999rpx;left:-9999rpx;width:480rpx;height:480rpx"></canvas>
-  <canvas canvas-id="crop-canvas" style="position:fixed;top:-9999rpx;left:-9999rpx;width:480rpx;height:480rpx"></canvas>
-  <canvas canvas-id="scan-canvas" style="position:fixed;top:-9999rpx;left:-9999rpx;width:480rpx;height:480rpx"></canvas>
-  <canvas canvas-id="mask-canvas" style="position:fixed;top:-9999rpx;left:-9999rpx;width:480rpx;height:480rpx"></canvas>
-  <canvas canvas-id="merge-canvas" style="position:fixed;top:-9999rpx;left:-9999rpx;width:480rpx;height:480rpx"></canvas>
+  <!-- Canvas 2D: 图片旋转/缩放/裁剪/增强 -->
+  <canvas type="2d" id="img-process" style="position:fixed;left:0;top:0;width:1rpx;height:1rpx;opacity:0"></canvas>
 
   <floating-ai visible="{{true}}" />
 </view>
