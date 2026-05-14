@@ -273,7 +273,9 @@
             <text class="tl-stage__title">{{item.label}}</text>
             <text class="tl-stage__badge tl-stage__badge--{{item.type}}">{{item.type === 'milestone' ? '里程碑' : item.type === 'renewal' ? '续签' : item.type === 'pr' ? '永居' : '材料'}}</text>
           </view>
-          <text class="tl-stage__date">📅 {{item.date}}</text>
+          <picker mode="date" value="{{item.date}}" bindchange="onTimelineDateChange" data-idx="{{index}}">
+            <view class="tl-stage__date">📅 {{item.date}}</view>
+          </picker>
           <text class="tl-stage__desc" wx:if="{{item.desc}}">{{item.desc}}</text>
         </view>
       </view>

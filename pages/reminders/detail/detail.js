@@ -165,6 +165,19 @@ Page({
     this.setData({ timelineStages: stages });
   },
 
+  /** 修改时间线节点日期 */
+  onTimelineDateChange: function(e) {
+    var idx = e.currentTarget.dataset.idx;
+    var newDate = e.detail.value;
+    var stages = this.data.timelineStages.slice();
+    if (stages[idx]) {
+      stages[idx].date = newDate;
+      stages.sort(function(a, b) { return new Date(a.date) - new Date(b.date); });
+      stages.forEach(function(s, i) { s.index = i + 1; });
+      this.setData({ timelineStages: stages });
+    }
+  },
+
   /** 一键生成提醒到提醒列表 */
   saveTimelineReminders() {
     var that = this;
