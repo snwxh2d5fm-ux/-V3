@@ -217,22 +217,48 @@ Page({
   loadFromCloud: function(id, callback) {
     if (!app.globalData.cloudReady && !wx.cloud) { callback(null); return; }
     wx.cloud.callFunction({ name: 'guidebook', data: { action: 'getArticleDetail', articleId: id } }).then(function(res) {
-      if (res.result && res.result.code === 0 && res.result.data) { callback(res.result.data); }
-      else { callback(null); }
+      if (res.result && res.result.code === 0 && res.result.data) {
+        var data = res.result.data;
+        // 云数据用 content/mergedContent，转成 renderGuide 期望的 sections 格式
+        if (!data.sections || !data.sections.length) {
+          var body = data.mergedContent || data.content || '';
+          if (body) {
+            data.sections = [{ heading: data.title || '正文', body: body }];
+            data.contentType = 'article';
+          }
+        }
+        callback(data);
+      } else { callback(null); }
     }).catch(function(e) { console.log('[攻略详情] 云端失败:', e.message); callback(null); });
   },
 
   refreshFromCloud: function(id) {
     if (!app.globalData.cloudReady && !wx.cloud) return;
+    var that = this;
     wx.cloud.callFunction({ name: 'guidebook', data: { action: 'getArticleDetail', articleId: id } }).then(function(res) {
       if (res.result && res.result.code === 0 && res.result.data) {
+        var data = res.result.data;
+        // 同样转换 content/mergedContent → sections
+        if (!data.sections || !data.sections.length) {
+          var body = data.mergedContent || data.content || '';
+          if (body) {
+            data.sections = [{ heading: data.title || '正文', body: body }];
+            data.contentType = 'article';
+          }
+        }
         if (!app.globalData.__guideDetailCache__) app.globalData.__guideDetailCache__ = {};
-        app.globalData.__guideDetailCache__[id] = res.result.data;
+        app.globalData.__guideDetailCache__[id] = data;
+        // 刷新后重新渲染
+        that.renderGuide(data);
       }
     }).catch(function() {});
   },
 
   renderGuide: function(guide) {
+    // 云攻略无 sections → 从 content/mergedContent 自动构建
+    if ((!guide.sections || !guide.sections.length) && (guide.mergedContent || guide.content)) {
+      guide.sections = [{ heading: guide.title || '', body: guide.mergedContent || guide.content || '' }];
+    }
     var ct = guide.contentType;
     if (!ct) {
       if (guide.faqAnswer && guide.faqAnswer.length > 0) ct = 'faq';
