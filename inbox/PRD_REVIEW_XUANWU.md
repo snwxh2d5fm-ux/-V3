@@ -1,11 +1,18 @@
-# PRD_REVIEW_XUANWU — R3
+# PRD_REVIEW_XUANWU — L1 E2E 需求对齐审查
 
-综合对齐度: 85→76%(↓9%) — 真机测试暴露基础功能断裂
+> Hermes → 玄武 | 日期: 2026-05-13
+> 审查范围: 三层测试清单 vs 实际覆盖
 
-## P0 (11)
+## 审查结果
 
-攻略书违规(生死线)、AI Chat直接暴露画像、质量校验不阻断不展示、提醒器路径选择后不自动生成、脱敏切换无效、详情信息不完整、所属人切换串图、卡槽无专属模板、add.wxss编译阻断、generate-pdf图片下载无隔离、getActiveStageIndex未导入
+**P0 阻断**: 无
 
-## P1 (17) / P2 (8)
+**P1 重要**:
+- spec 文件仅覆盖 49/72 L1 项，缺口 23 项（§0 DSG-1 部分、§1 启动登录部分、§9 数据持久化部分、§10/§11 部分项）
+- L1 执行稳定性不足（29/49），核心 14 项（smoke+docs+reminders）可稳定跑，其余受 automator 连接降级影响
 
-见项目outbox/PM_审查报告_PRD对齐_R3_琅琊真机后.md
+**P2 建议**:
+- L2 WeTest 已生成脚本但缺 API key，建议尽早申请
+- 建议 L1 拆分为 `test:e2e:core`（14项稳定基线）+ `test:e2e:extended`（35项需重连分批跑）
+
+**总体评价**: 三层体系框架完整，L1 覆盖率 49/72 且核心通路（smoke/TabBar/documents/reminders）100% 稳定。剩余 23 项 + automator 稳定性为已知限制。

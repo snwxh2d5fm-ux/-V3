@@ -72,8 +72,9 @@ describe('§7 AI Chat', () => {
 
         // 应触发安全规则
         const safetyBanner = await findElement(mp, '.safety-banner, .security-warning, .guard-msg');
-        // 安全横幅为可选 — 取决于具体实现，若存在则验证可发现
-        expect(safetyBanner === null || !!safetyBanner).toBe(true);
+        // 安全横幅为可选 — 取决于具体实现；验证页面未崩溃
+        const safetyPage = await mp.currentPage();
+        expect(safetyPage.path).toContain('chat');
       }
     }
   });
@@ -110,7 +111,7 @@ describe('§7 AI Chat', () => {
 
     // 验证AI回复中的格式转换 — rich-text组件需存在方可渲染粗体
     const richText = await findElement(mp, 'rich-text, .rich-text');
-    expect(richText === null || !!richText).toBe(true);
+    expect(richText).not.toBeNull();
   });
 
 });

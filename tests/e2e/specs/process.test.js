@@ -34,7 +34,7 @@ describe('§5 流程控 (process)', () => {
     const znBtn = await findElement(mp, '[data-action="guide"], [data-action="znp"]');
     const xlBtn = await findElement(mp, '[data-action="precheck"], [data-action="xlb"]');
     const hasAny = !!(znBtn || xlBtn);
-    expect(hasAny || true).toBeTruthy();
+    expect(hasAny).toBeTruthy();
   });
 
   test('5.4 流程控详情页可访问', async () => {

@@ -226,3 +226,17 @@ ledger:
       回滚方案: 合并为单一 regression.test.js, beforeAll 信任 globalSetup 连接(不做 fallback 重连),
       用 initTestState 单次 evaluate 替换 clearStorage+mockLogin 双往返。
     source: inbox/NOTIFY_regression_rollback_20260513.md
+
+  - id: P1-BUGFIX-13OF13
+    title: "真机测试13项Bug剩余6项修复"
+    phase: phase0
+    stage: done
+    status: completed
+    completed: 2026-05-13
+    priority: P0
+    notes: |
+      Phase A P0: #10 材料清单云端同步(solution-engine) / #11 证件线框动态渲染(wfFields×23) / #12 脱敏按证件类型(DOC_PRIVACY_OVERLAY+PII_FIELDS_BY_DOC_TYPE)
+      Phase B P1: #2 证件夹头部蓝色渐变 / #3 tokens.wxss灰阶权威统一 / #8 图片旋转缩放裁剪(canvas像素级)
+      变更: 7文件 (pages/documents/* × 4 + utils/* × 2 + tokens.wxss + app.wxss)
+      闸门: verify.sh 39/39 ✅ | workflow-verify 36/36 ✅ | JS语法全部通过 ✅
+      source: inbox/NOTIFY_执行13项Bug剩余6项.md

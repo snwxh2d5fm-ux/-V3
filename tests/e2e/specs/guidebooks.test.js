@@ -28,7 +28,7 @@ describe('§6 攻略书 (guidebooks)', () => {
     // 分类卡片
     const cards = await findElements(mp, '.category-card, .card, .guide-item');
     // 预期≥8个分类
-    expect(cards.length).toBeGreaterThanOrEqual(0);
+    expect(cards.length).toBeGreaterThanOrEqual(8);
   });
 
   test('6.2 点击分类 → 仅显示该分类攻略', async () => {
@@ -60,7 +60,7 @@ describe('§6 攻略书 (guidebooks)', () => {
       // 搜索结果
       const results = await findElements(mp, '.result-item, .search-result, .guide-card');
       // 热词应有结果
-      expect(results.length).toBeGreaterThanOrEqual(0);
+      expect(results.length).toBeGreaterThan(0);
     }
   });
 

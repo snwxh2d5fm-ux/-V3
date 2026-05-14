@@ -171,7 +171,7 @@ describe('§11 PRD变更验证', () => {
     await goToTab(mp, 'guidebooks');
     await waitFor(mp, 2000);
     const hotTags = await findElements(mp, '.hot-tag, .tag, .search-tag');
-    expect(hotTags.length).toBeGreaterThanOrEqual(0);
+    expect(hotTags.length).toBeGreaterThan(0);
   });
 
   test('11.5 订单删除 → 确认弹窗', async () => {

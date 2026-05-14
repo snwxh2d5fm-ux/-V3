@@ -1,0 +1,37 @@
+{
+  "docs": [
+    {
+      "id": "doc-test-self-1",
+      "docType": "id_card",
+      "docName": "本人身份证",
+      "ownerType": "self",
+      "category": "身份文件",
+      "createdAt": "2026-05-13T00:00:00.000Z"
+    },
+    {
+      "id": "doc-test-self-2",
+      "docType": "passport",
+      "docName": "本人护照",
+      "ownerType": "self",
+      "category": "身份文件",
+      "createdAt": "2026-05-13T00:00:00.000Z"
+    },
+    {
+      "id": "doc-test-spouse-1",
+      "docType": "id_card",
+      "docName": "配偶身份证",
+      "ownerType": "spouse",
+      "category": "身份文件",
+      "createdAt": "2026-05-13T00:00:00.000Z"
+    },
+    {
+      "id": "doc-test-child-1",
+      "docType": "birth_cert",
+      "docName": "子女出生证明",
+      "ownerType": "child",
+      "category": "身份文件",
+      "createdAt": "2026-05-13T00:00:00.000Z"
+    }
+  ],
+  "version": 1
+}
