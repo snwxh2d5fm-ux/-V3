@@ -88,7 +88,7 @@ Page({
         var localTitles = [];
         that.data.guideCards.forEach(function(c) {
           localIds[c.id] = true;
-          localTitles.push((c.title || '').replace(/[【】\\s]/g, ''));
+          localTitles.push((c.title || '').replace(/[【】\s]/g, ''));
         });
         var cloudArticles = res.result.data.articles.map(function(a) { a.helpful = ratingCache[a.id] || a.helpful || 0; return a; });
         var merged = that.data.guideCards.slice();
@@ -96,7 +96,7 @@ Page({
         cloudArticles.forEach(function(a) {
           if (localIds[a.id]) return;
           // 标题去重：云端标题与本地标题相似度≥80%视为重复
-          var ct = (a.title || '').replace(/[【】\\s]/g, '');
+          var ct = (a.title || '').replace(/[【】\s]/g, '');
           var isDup = localTitles.some(function(lt) {
             if (!ct || !lt) return false;
             var longer = ct.length > lt.length ? ct : lt;

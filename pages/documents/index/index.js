@@ -621,7 +621,8 @@ Page({
     var show = !this.data.showGallery;
     if (show) {
       var allDocs = this.data.allDocuments || [];
-      var docsWithImg = allDocs.filter(function(d) { return d.filePath && !d.archived; });
+      var owner = this.data.identityOwner || 'self';
+      var docsWithImg = allDocs.filter(function(d) { return d.filePath && !d.archived && (d.ownerType || 'self') === owner; });
       this.setData({ showGallery: show, filteredDocsWithImage: docsWithImg });
     } else {
       this.setData({ showGallery: false, showImageViewer: false });

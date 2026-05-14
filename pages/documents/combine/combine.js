@@ -149,7 +149,7 @@ Page({
 
   loadDocuments() {
     try {
-      var docs = getAllDocuments().filter(function(d) { return d.status !== 'archived'; });
+      var docs = getAllDocuments().filter(function(d) { return d.status !== 'archived' && (d.ownerType || 'self') === (this.data.identityOwner || 'self'); });
       this.setData({ allDocs: docs || [] });
       this.matchChecklist();
     } catch(e) {
