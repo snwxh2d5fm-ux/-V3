@@ -424,42 +424,46 @@ Page({
       'cies': 'CIES投资类身份规划', 'permanent': '永居申请'
     };
 
-    if (!path) {
-      // 无路径 → 使用通用材料准备模板
-      var prepNodes = [
-        { label: '确认申请路径与条件', offsetDays: 7, type: 'milestone', desc: '完成资格评估，选定目标路径' },
-        { label: '收集个人基础证件', offsetDays: 14, type: 'material', desc: '身份证/户口本/护照/港澳通行证' },
-        { label: '办理学历认证', offsetDays: 28, type: 'material', desc: '学信网/留服认证(15-20工作日)' },
-        { label: '准备推荐信与工作证明', offsetDays: 35, type: 'material', desc: '公司抬头纸+公章+推荐人签字' },
-        { label: '开具无犯罪记录证明', offsetDays: 42, type: 'material', desc: '户籍地派出所+翻译公证' },
-        { label: '撰写赴港计划书', offsetDays: 49, type: 'material', desc: '来港目的+职业规划+对港贡献' },
-        { label: '银行流水与资产证明', offsetDays: 56, type: 'material', desc: '近6-12个月银行流水+存款证明' },
-        { label: '复核全部材料完整性', offsetDays: 63, type: 'deadline', desc: '逐项核对材料清单，查漏补缺' },
-        { label: '预计提交申请日', offsetDays: 70, type: 'milestone', desc: '材料准备完毕，提交申请' }
+    // 根据路径匹配准备模板（基于实际项目Task Table）
+    var prepNodes;
+    if (path === 'qmas') {
+      // 优才计划 — 基于 Task Table_20260505
+      prepNodes = [
+        { label: '自我评估 (需求80分以上)', offsetDays: 1, type: 'milestone', desc: '自评工具+名校/国际经验/名企/高管加分核实' },
+        { label: '学历学位认证', offsetDays: 20, type: 'material', desc: '学信网/留服认证(15-20工作日)·海外学历需成绩单' },
+        { label: '工作经验证明', offsetDays: 25, type: 'material', desc: '每段工作需公司名+时间+职位一致·组织架构图' },
+        { label: '雇主推荐信 (每段工作一份)', offsetDays: 30, type: 'material', desc: '公司抬头纸+盖章+授权人签署·职责成就详述' },
+        { label: '赴港计划书 (500字)', offsetDays: 35, type: 'material', desc: '规划为主·成就为辅·学业/事业/计划三段式' },
+        { label: 'A-个人资料文件 (5个自然日)', offsetDays: 40, type: 'deadline', desc: '简历+通行证+ID981表+身份证+户口本+结婚证+55×45mm白底照' },
+        { label: 'B-家属资料文件', offsetDays: 42, type: 'material', desc: '配偶证件照+身份证/通行证+ID997+学历认证+结婚证+子女出生证' },
+        { label: 'C-资产证明文件 (2个自然日)', offsetDays: 44, type: 'material', desc: '个人≥20万/家庭30-60万·银行存款/房产/股票/股权均可' },
+        { label: 'D-学历及语言证明 (1个自然日)', offsetDays: 45, type: 'material', desc: '学位证+学位认证报告+语言成绩(雅思6/托福80·2年内有效)' },
+        { label: 'E-工作证明文件 (15个自然日)', offsetDays: 60, type: 'deadline', desc: '工作经历+管理经历(架构图)+雇主推荐信(每份雇主一份)' }
       ];
-      this._doGeneratePrepTimeline(prepNodes, '通用资料准备');
-      return;
+    } else if (path === 'ttps_a' || path === 'ttps_b' || path === 'ttps_c') {
+      prepNodes = [
+        { label: '确认高才通资格', offsetDays: 3, type: 'milestone', desc: 'A类:年收入≥250万HKD·B/C类:百强大学名单核查' },
+        { label: '学历认证', offsetDays: 18, type: 'material', desc: '百强大学毕业证+成绩单+认证(如需)' },
+        { label: '收入/工作证明', offsetDays: 25, type: 'material', desc: 'A类:完税证明+银行流水+雇主证明·B/C类:工作证明' },
+        { label: '个人资料文件', offsetDays: 30, type: 'deadline', desc: '通行证+身份证+户口本+证件照+申请表' }
+      ];
+    } else if (path) {
+      prepNodes = [
+        { label: '确认路径条件与资格', offsetDays: 3, type: 'milestone', desc: '核实' + (pathNames[path] || path) + '申请条件' },
+        { label: '个人基础证件收集', offsetDays: 10, type: 'material', desc: '身份证+户口本+通行证+证件照' },
+        { label: '学历与资格认证', offsetDays: 22, type: 'material', desc: '学位证+成绩单+专业资格+认证报告' },
+        { label: '工作/经历证明', offsetDays: 30, type: 'material', desc: '工作证明+推荐信+组织架构图(如需)' },
+        { label: '财务/资产证明', offsetDays: 35, type: 'material', desc: '银行流水+存款证明+税单(按路径要求)' },
+        { label: '申请文书与材料复核', offsetDays: 42, type: 'material', desc: '计划书/申请表·逐项核对' }
+      ];
     }
 
-    // 有路径 → 使用路径专属准备模板
-    var templates = require('../../../data/timeline-templates');
-    var tmpl = templates.TIMELINE_TEMPLATES[path];
-    if (!tmpl || !tmpl.nodes) {
+    if (!prepNodes) {
       wx.showToast({ title: '暂无该路径的准备模板', icon: 'none' });
       return;
     }
 
-    // 只取材料准备阶段的节点（offsetDays < 0 或 type 为 material/milestone 的早期节点）
-    var prepNodes = tmpl.nodes.filter(function(n) {
-      return n.type === 'material' || n.type === 'milestone' || n.type === 'deadline';
-    });
-
-    if (prepNodes.length === 0) {
-      wx.showToast({ title: '该路径暂无准备时间轴', icon: 'none' });
-      return;
-    }
-
-    this._doGeneratePrepTimeline(prepNodes, pathNames[path] || path);
+    this._doGeneratePrepTimeline(prepNodes, pathNames[path] || '资料准备');
   },
 
   _doGeneratePrepTimeline: function(nodes, pathName) {
