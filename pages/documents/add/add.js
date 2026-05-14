@@ -916,22 +916,23 @@ Page({
 function getSlotGuide(slotKey, docName) {
   var name = (docName || '').toLowerCase();
   var guides = {
-    // 身份证 — 双面模板：人像面+国徽面
+    // 身份证 — 双面模板：人像面+国徽面 (85.6×54mm CR80标准)
     id_card: { icon: '🪪', title: '身份证材料标准', wfTitle: '中华人民共和国居民身份证', items: [
       '正反面均需拍摄，四角完整可见',
       '平放深色桌面，正对拍摄，不倾斜',
       '确保证件号、姓名、照片清晰可读',
       '勿使用复印件或屏幕截图',
       '圆角边框不得裁切或遮挡'
-    ], piiFields: ['姓名', '身份证号', '出生日期', '地址'], specimen: '正面(人像面)+背面(国徽面)·四角完整·无反光·彩色',
+    ], piiFields: ['姓名', '身份证号', '出生日期', '地址'], specimen: '人像面+国徽面·无反光·圆角完整',
     wfFields: [
-      { label: '姓名', width: 'short', pii: true },
-      { label: '性别 / 民族', width: 'mid', pii: false },
-      { label: '出生日期', width: 'mid', pii: true },
+      { label: '姓名', width: 'long', pii: true },
+      { label: '性别', width: 'short', pii: false },
+      { label: '民族', width: 'short', pii: false },
+      { label: '出生日期', width: 'long', pii: true },
       { label: '住址', width: 'full', pii: true },
       { label: '公民身份号码', width: 'long', pii: true },
       { label: '签发机关', width: 'mid', pii: false },
-      { label: '有效期限', width: 'mid', pii: false }
+      { label: '有效期限', width: 'long', pii: false }
     ], showPhoto: true, showSeal: false },
     // 学位证
     degree: { icon: '🎓', title: '学位证/毕业证材料标准', wfTitle: '学士学位证书', items: [
@@ -949,20 +950,21 @@ function getSlotGuide(slotKey, docName) {
       { label: '学位授予单位', width: 'full', pii: false },
       { label: '授予日期', width: 'mid', pii: false }
     ], showPhoto: true, showSeal: true },
-    // 港澳通行证
-    hk_permit: { icon: '🛂', title: '港澳通行证材料标准', wfTitle: '往来港澳通行证', items: [
-      '个人信息页+签注页均需拍摄',
-      '证件号（C开头）、姓名、有效期需清晰',
-      '签注页需显示D签注类型和有效期',
-      '反光环境下从侧面打光避免正面强光'
-    ], piiFields: ['姓名', '证件号', '出生日期', '有效期'], specimen: '通行证个人信息页+签注页',
+    // 港澳通行证 — 卡式电子版 (85.6×54mm, 长城背景, 正面照片左·信息右)
+    hk_permit: { icon: '🛂', title: '港澳通行证材料标准', wfTitle: '往来港澳通行证 (卡式电子版)', items: [
+      '个人信息页+签注页(背面)均需拍摄',
+      '证件号（C开头8位数字）清晰可见',
+      '签注页显示D逗留签注类型和有效期',
+      '长城背景底纹、防伪膜反光从侧面打光'
+    ], piiFields: ['姓名', '证件号', '出生日期', '有效期'], specimen: '通行证正面个人信息页+背面签注页',
     wfFields: [
-      { label: '姓名', width: 'short', pii: true },
-      { label: '通行证号码', width: 'long', pii: true },
+      { label: '姓名 (中文)', width: 'short', pii: true },
+      { label: '姓名 (拼音)', width: 'long', pii: true },
+      { label: '通行证号码', width: 'mid', pii: true },
       { label: '出生日期', width: 'mid', pii: true },
-      { label: '签发机关', width: 'mid', pii: false },
-      { label: '签发日期 / 有效期限', width: 'full', pii: false },
-      { label: '签注类型 / 逗留条件', width: 'mid', pii: false }
+      { label: '有效期限', width: 'mid', pii: false },
+      { label: '签发机关 / 签发地', width: 'mid', pii: false },
+      { label: '签注类型 / 逗留条件 (背面)', width: 'full', pii: false }
     ], showPhoto: true, showSeal: false },
     // 护照
     passport: { icon: '🛂', title: '护照材料标准', wfTitle: '中华人民共和国护照', items: [
@@ -978,19 +980,20 @@ function getSlotGuide(slotKey, docName) {
       { label: '签发日期 / 有效期至', width: 'full', pii: false },
       { label: '签发机关', width: 'mid', pii: false }
     ], showPhoto: true, showSeal: false },
-    // 香港身份证
-    hk_id: { icon: '🆔', title: '香港身份证材料标准', wfTitle: '香港永久性居民身份证', items: [
+    // 香港身份证 — 2018版(照片左置·右侧激光影像·透明窗口)
+    hk_id: { icon: '🆔', title: '香港身份证材料标准', wfTitle: '香港永久性居民身份证 (2018版)', items: [
       '正面拍摄，四角完整',
       '证件号（字母+6位数字+括号校验码）清晰',
-      '照片、姓名、出生日期清晰可辨',
-      '芯片面朝上，无遮挡'
-    ], piiFields: ['姓名', '身份证号', '出生日期'], specimen: '香港身份证正面·彩色',
+      '照片在左侧(黑白ICAO标准)、姓名/出生日期在右侧',
+      '全息图/透明窗口可见、无遮挡'
+    ], piiFields: ['姓名', '身份证号', '出生日期'], specimen: '香港身份证正面·照片左置·彩色',
     wfFields: [
-      { label: '姓名 (中/英)', width: 'mid', pii: true },
-      { label: '身份证号码', width: 'long', pii: true },
+      { label: '姓名 (中文)', width: 'mid', pii: true },
+      { label: '姓名 (英文)', width: 'long', pii: true },
+      { label: '身份证号码 (含校验码)', width: 'long', pii: true },
       { label: '出生日期', width: 'mid', pii: true },
       { label: '签发日期', width: 'mid', pii: false },
-      { label: '符号标记', width: 'short', pii: false }
+      { label: '符号标记 (***AZ 等)', width: 'short', pii: false }
     ], showPhoto: true, showSeal: false },
     // 户口本
     household: { icon: '📖', title: '户口本材料标准', wfTitle: '居民户口簿', items: [
