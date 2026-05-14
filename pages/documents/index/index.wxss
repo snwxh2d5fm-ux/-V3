@@ -1,6 +1,6 @@
 /* ═══ 统一UI: Bug #2 蓝色渐变头对齐全局标准 + 进度卡 ═══ */
 .container { min-height: 100vh; background: var(--color-bg-page); padding-bottom: env(safe-area-inset-bottom); }
-.page-header { display: flex; align-items: center; justify-content: space-between; padding: 24rpx 28rpx 12rpx; background: linear-gradient(135deg, var(--blue-dark), var(--blue)); }
+.page-header { display: flex; align-items: center; justify-content: space-between; padding: 24rpx 28rpx 12rpx; background: linear-gradient(135deg, #1557b0, #1a73e8); }
 .header-left { flex: 1; }
 .page-header__title { font-size: 34rpx; font-weight: 800; color: #FFF; display: block; }
 .page-header__subtitle { font-size: 24rpx; color: rgba(255,255,255,0.75); display: block; margin-top: 4rpx; }

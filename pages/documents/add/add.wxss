@@ -408,7 +408,7 @@
 
 /* ═══ 证件对齐裁切 ═══ */
 .crop-container { position: relative; width: 100%; height: 600rpx; background: #000; overflow: hidden; }
-.crop-movable { position: absolute; top: 0; left: 0; right: 0; bottom: 0; width: 100%; height: 100%; }
+.crop-movable { width: 750rpx; height: 600rpx; }
 .crop-view { display: flex; align-items: center; justify-content: center; width: 200%; height: 200%; }
 .crop-img { width: 100%; opacity: 0.8; }
 /* 遮罩层 */
