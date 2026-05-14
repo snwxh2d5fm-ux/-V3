@@ -36,7 +36,9 @@ Page({
     wizardWork: '',
     wizardHasKids: false,
     wizardResults: [],
-    currentPhase: 0
+    currentPhase: 0,
+    setupStep: 0,
+    setupData: { visaType: '', familyStatus: '', arrivalScenario: '', housingIntent: '', existingAssets: [] }
   },
 
   onLoad: function() { this.init(); },
@@ -236,9 +238,7 @@ Page({
     });
   },
 
-  // ── Path setup (4-step wizard) ──
-  setupStep: 0,
-  setupData: { visaType: '', familyStatus: '', arrivalScenario: '', housingIntent: '', existingAssets: [] },
+  // ── Path setup (5-step wizard) ──
 
   onSetupNext: function(e) {
     var step = this.data.setupStep;
@@ -297,7 +297,10 @@ Page({
     if (step === 2) {
       var districtData = require('../../../data/district-data');
       var results = districtData.matchDistricts(this.data.wizardBudget, this.data.wizardWork, this.data.wizardHasKids);
-      results.forEach(function(r) { r.stars = r.familyFriendly ? new Array(r.familyFriendly+1).join('⭐') : '⭐'; });
+      results.forEach(function(r) {
+        r.stars = r.familyFriendly ? new Array(r.familyFriendly + 1).join('⭐') : '⭐';
+        r._hasSchoolNet = !!(r.schoolNet && r.schoolNet.primary > 0);
+      });
       this.setData({ wizardStep: 3, wizardResults: results });
     } else {
       this.setData({ wizardStep: step + 1 });
