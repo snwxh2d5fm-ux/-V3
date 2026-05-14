@@ -206,6 +206,8 @@ function generateFallbackResponse(message, chatMode) {
 }
 
 // ============================================================
+//  AI 调用: 优先 CloudBase AI (hunyuan 免费Token) → 降级 DeepSeek
+// ============================================================
 //  DeepSeek API 调用
 // ============================================================
 function buildDeepSeekRequest(messages, mode, v5Corrections, stream, pageCtx) {

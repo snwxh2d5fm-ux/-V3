@@ -566,7 +566,10 @@ function computeSlotStates(template, uploadedDocs, ownerType) {
         if (d.slotKey && slot.slotKey && d.slotKey === slot.slotKey) return true;
         // 2) docType 匹配 slotKey（OCR识别或分类推导的 docType）
         if (d.type && slot.slotKey && d.type === slot.slotKey) return true;
-        // 仅精确匹配：slotKey或docType。模糊规则已删除 — 防止异物混入卡槽
+        // 3) 分类+名称模糊匹配兜底（category 匹配 + name 含 docName）
+        if (d.category && d.name && slot.docName) {
+          if (d.category === cat.categoryKey && d.name.indexOf(slot.docName) !== -1) return true;
+        }
         return false;
       });
       var count = uploaded.length;

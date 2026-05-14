@@ -98,28 +98,51 @@ Page({
     });
   },
 
-  // Bug #9: 执行自动生成
+  // Bug #9: 执行自动生成 — 直接基于今日生成时间线提醒，无需跳转
   doAutoGenerate: function(path, pathName) {
     var that = this;
-    var app = getApp();
+    var TIMELINE_TEMPLATES = require('../../../data/timeline-templates').TIMELINE_TEMPLATES;
+    var template = TIMELINE_TEMPLATES[path];
 
-    wx.showModal({
-      title: '预期提交申请时间',
-      content: '请设置你计划提交申请的预期时间。时间线将从今天开始，以你的预期提交日为关键节点。\n\n可在提醒详情页手动调整。',
-      confirmText: '前往设置',
-      cancelText: '取消',
-      success: function(res) {
-        if (res.confirm) {
-          // 保存路径上下文，跳转时间线页面
-          app.globalData.selectedPath = path;
-          wx.setStorageSync('__active_process_id__', path);
-          // Bug #9: 传递 _autogen 标记让detail页自动生成时间线
-          wx.navigateTo({
-            url: '/pages/reminders/detail/detail?action=timeline&path=' + path + '&_autogen=1'
-          });
-        }
+    if (!template) {
+      wx.showToast({ title: '暂无该路径的时间线模板', icon: 'none' });
+      return;
+    }
+
+    var today = new Date();
+    today.setHours(0, 0, 0, 0);
+    var iconMap = { milestone: '✅', deadline: '📅', renewal: '🔄', pr: '🏁', material: '📋' };
+    var count = 0;
+
+    template.nodes.forEach(function(node) {
+      var date = new Date(today);
+      date.setDate(date.getDate() + (node.offsetDays || 0));
+      var y = date.getFullYear();
+      var m = date.getMonth() + 1;
+      var d = date.getDate();
+      var ds = y + '-' + (m < 10 ? '0' + m : m) + '-' + (d < 10 ? '0' + d : d);
+
+      var rangeText = '';
+      if (node.range) {
+        rangeText = ' (审批周期: ' + node.range[0] + '-' + node.range[1] + '天)';
       }
+
+      saveReminder({
+        id: 'TL_' + path + '_' + node.id + '_' + Date.now(),
+        title: node.label,
+        deadline: ds,
+        description: (pathName || '') + ' · ' + (node.type || 'milestone') + rangeText + (node.desc ? '\n' + node.desc : ''),
+        type: 'rule_engine',
+        confidence: node.range ? 'C' : 'B',
+        linkedDocIds: (node.materials || []),
+        status: 'active',
+        createdAt: new Date().toISOString()
+      });
+      count++;
     });
+
+    wx.showToast({ title: '已生成 ' + count + ' 个提醒节点', icon: 'success' });
+    this.loadReminders();
   },
 
   onPullDownRefresh() {

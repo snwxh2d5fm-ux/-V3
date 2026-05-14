@@ -20,6 +20,27 @@ function _canvasToTemp(c) {
   });
 }
 
+// Bug #8: Old Canvas API 降级辅助 — Canvas 2D 失败时使用 wx.createCanvasContext
+function _fallbackCanvasOp(imagePath, drawFn) {
+  return new Promise(function(resolve) {
+    wx.getImageInfo({
+      src: imagePath,
+      success: function(info) {
+        var ctx = wx.createCanvasContext('img-fallback');
+        drawFn(ctx, info);
+        ctx.draw(false, function() {
+          wx.canvasToTempFilePath({
+            canvasId: 'img-fallback',
+            success: function(r) { resolve(r.tempFilePath); },
+            fail: function() { resolve(imagePath); }
+          });
+        });
+      },
+      fail: function() { resolve(imagePath); }
+    });
+  });
+}
+
 /**
  * 生成脱敏遮罩预览
  * 在证件图片上绘制敏感信息遮罩矩形
@@ -348,7 +369,17 @@ function rotateImage(imagePath, degrees) {
       src: imagePath,
       success: function(info) {
         _getCanvas().then(function(canvas) {
-          if (!canvas) { resolve(imagePath); return; }
+          if (!canvas) {
+            // Bug #8: Canvas 2D 不可用 → 降级到 Old Canvas API
+            console.warn('[Bug#8] rotateImage: Canvas 2D 失败，降级到 Old API');
+            resolve(_fallbackCanvasOp(imagePath, function(ctx, inf) {
+              var w = inf.width, h = inf.height;
+              if (rad === 90) { ctx.translate(h, 0); ctx.rotate(Math.PI / 2); ctx.drawImage(imagePath, 0, 0, w, h); }
+              else if (rad === 180) { ctx.translate(w, h); ctx.rotate(Math.PI); ctx.drawImage(imagePath, 0, 0, w, h); }
+              else if (rad === 270) { ctx.translate(0, w); ctx.rotate(-Math.PI / 2); ctx.drawImage(imagePath, 0, 0, w, h); }
+            }));
+            return;
+          }
           var w = info.width, h = info.height;
           if (rad === 90 || rad === 270) { canvas.width = h; canvas.height = w; }
           else { canvas.width = w; canvas.height = h; }
@@ -386,7 +417,15 @@ function resizeImage(imagePath, maxWidth, maxHeight) {
         if (scale >= 1) { resolve(imagePath); return; }
 
         _getCanvas().then(function(canvas) {
-          if (!canvas) { resolve(imagePath); return; }
+          if (!canvas) {
+            // Bug #8: Canvas 2D 不可用 → 降级到 Old Canvas API
+            console.warn('[Bug#8] resizeImage: Canvas 2D 失败，降级到 Old API');
+            var nw = Math.round(w * scale), nh = Math.round(h * scale);
+            resolve(_fallbackCanvasOp(imagePath, function(ctx) {
+              ctx.drawImage(imagePath, 0, 0, nw, nh);
+            }));
+            return;
+          }
           canvas.width = w * scale; canvas.height = h * scale;
           var ctx = canvas.getContext('2d');
           var img = canvas.createImage();
@@ -420,7 +459,14 @@ function cropImage(imagePath, x, y, cropWidth, cropHeight) {
         var sw = cropWidth * w, sh = cropHeight * h;
 
         _getCanvas().then(function(canvas) {
-          if (!canvas) { resolve(imagePath); return; }
+          if (!canvas) {
+            // Bug #8: Canvas 2D 不可用 → 降级到 Old Canvas API
+            console.warn('[Bug#8] cropImage: Canvas 2D 失败，降级到 Old API');
+            resolve(_fallbackCanvasOp(imagePath, function(ctx) {
+              ctx.drawImage(imagePath, sx, sy, sw, sh, 0, 0, sw, sh);
+            }));
+            return;
+          }
           canvas.width = sw; canvas.height = sh;
           var ctx = canvas.getContext('2d');
           var img = canvas.createImage();

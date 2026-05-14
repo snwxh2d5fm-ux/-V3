@@ -224,8 +224,7 @@ Page({
   },
 
   /** 确认图片 → Bug #8: 应用旋转+缩放变换后再推进步骤 */
-  confirmImage() {
-    var that = this;
+  async confirmImage() {
     var qr = this.data.qualityResult;
     // Bug #6 修复: 质量检测未完成时阻断，防止跳过质检
     if (!qr) {
@@ -245,27 +244,26 @@ Page({
       return;
     }
 
-    // Bug #8: 应用旋转变换（canvas像素级）
+    // Bug #8: 应用旋转变换（canvas像素级，Canvas 2D 优先，Old API 降级）
     var imagePath = this.data.imagePath;
     var rotateDeg = this._rotateDeg || 0;
     if (rotateDeg > 0) {
       wx.showLoading({ title: '处理中...' });
-      var imgProc = require('../../../utils/image-process');
-      imgProc.rotateImage(imagePath, rotateDeg).then(function(rotatedPath) {
-        that.setData({ imagePath: rotatedPath, imageRotated: 0 });
-        that._rotateDeg = 0;
-        // 然后缩放
-        return imgProc.resizeImage(rotatedPath, 2048, 2048);
-      }).then(function(finalPath) {
+      try {
+        var imgProc = require('../../../utils/image-process');
+        var rotatedPath = await imgProc.rotateImage(imagePath, rotateDeg);
+        var finalPath = await imgProc.resizeImage(rotatedPath, 2048, 2048);
         wx.hideLoading();
-        that.setData({ imagePath: finalPath, step: 3, docType: 'unknown', docTypeLabel: '手动录入' });
-      }).catch(function() {
+        this._rotateDeg = 0;
+        this.setData({ imagePath: finalPath, imageRotated: 0, step: 4, docType: 'unknown', docTypeLabel: '手动录入' });
+      } catch (e) {
         wx.hideLoading();
-        that.setData({ step: 3, docType: 'unknown', docTypeLabel: '手动录入' });
-      });
+        wx.showToast({ title: '图片处理失败，请重试', icon: 'none' });
+        console.warn('[Bug#8] confirmImage 旋转/缩放失败:', e);
+      }
     } else {
-      // 无需旋转，直接进下一步（跳过step 2.5对齐页面）
-      this.setData({ step: 3, docType: 'unknown', docTypeLabel: '手动录入' });
+      // 无需旋转，直接进分类选择（跳过step 3确认环节）
+      this.setData({ step: 4, docType: 'unknown', docTypeLabel: '手动录入' });
     }
   },
 
@@ -283,27 +281,24 @@ Page({
     // 通过CSS transform旋转预览图
     this.setData({ _rotateStyle: 'transform: rotate(' + currentRot + 'deg);' });
   },
-  confirmCrop() {
-    var that = this;
+  async confirmCrop() {
     wx.showLoading({ title: '处理中...' });
     var imgProc = require('../../../utils/image-process');
     var imagePath = this.data.imagePath;
     // Bug #8: 先旋转，再裁剪，最后缩放
     var rotateDeg = this._rotateDeg || 0;
-    var chain = rotateDeg > 0 ? imgProc.rotateImage(imagePath, rotateDeg) : Promise.resolve(imagePath);
-    chain.then(function(p) {
-      // 应用crop参数（frame区域在80-600rpx内）
-      return imgProc.cropImage(p, 0.05, 0.08, 0.90, 0.84);
-    }).then(function(p) {
-      return imgProc.resizeImage(p, 2048, 2048);
-    }).then(function(finalPath) {
+    try {
+      var p = rotateDeg > 0 ? await imgProc.rotateImage(imagePath, rotateDeg) : imagePath;
+      p = await imgProc.cropImage(p, 0.05, 0.08, 0.90, 0.84);
+      var finalPath = await imgProc.resizeImage(p, 2048, 2048);
       wx.hideLoading();
-      that.setData({ imagePath: finalPath, imageRotated: 0, step: 3, docType: 'unknown', docTypeLabel: '手动录入' });
-      that._rotateDeg = 0;
-    }).catch(function() {
+      this._rotateDeg = 0;
+      this.setData({ imagePath: finalPath, imageRotated: 0, step: 3, docType: 'unknown', docTypeLabel: '手动录入' });
+    } catch (e) {
       wx.hideLoading();
-      that.setData({ step: 3, docType: 'unknown', docTypeLabel: '手动录入' });
-    });
+      wx.showToast({ title: '裁切处理失败，请重试', icon: 'none' });
+      console.warn('[Bug#8] confirmCrop 处理失败:', e);
+    }
   },
 
   /** Promise超时兜底 — 防止Canvas操作挂起导致转圈 */
@@ -1519,6 +1514,28 @@ function getSlotGuide(slotKey, docName) {
     ], showPhoto: false, showSeal: true }
   };
 
+  // Bug #11: slotKey → guide key 别名映射（卡槽key和指引key不一致时）
+  var keyAliases = {
+    'degree_cert': 'degree', 'emp_proof': 'work', 'recommendation': 'emp_letter',
+    'income_proof': 'income_250w', 'bank_statement': 'bank', 'income_250w': 'income_250w',
+    'tax_record': 'income_250w', 'plan_statement': 'plan_statement', 'no_crime': 'no_crime',
+    'birth_cert': 'birth_cert', 'marriage_cert': 'marriage', 'household': 'household',
+    'emp_letter': 'emp_letter', 'reference_letter': 'recommendation',
+    'student_visa': 'student_visa', 'admission_letter': 'admission_letter',
+    'language_cert': 'language_cert', 'org_chart': 'work', 'emp_3y': 'work',
+    'company_docs': 'company_docs', 'tech_achievement': 'work',
+    'salary_proof': 'income_250w', 'sponsor_id': 'id_card', 'sponsor_income': 'income_250w',
+    'sponsor_employment': 'work', 'guardian_id': 'id_card', 'guardian_consent': 'approval',
+    'guardian_income': 'income_250w', 'exchange_agreement': 'exchange_agreement',
+    'parttime_enrollment': 'parttime_enrollment', 'degree_auth': 'degree_auth',
+    'hk_permit': 'hk_permit', 'passport': 'passport', 'hk_id': 'hk_id',
+    'approval': 'approval', 'visa_label': 'approval',
+    'funding_proof': 'bank', 'investment_proof': 'income_250w', 'asset_proof': 'income_250w',
+    'retirement_fund': 'income_250w', 'pension_proof': 'income_250w', 'photo': 'id_card'
+  };
+  var resolvedKey = keyAliases[slotKey] || slotKey;
+  if (resolvedKey && guides[resolvedKey]) return guides[resolvedKey];
+
   // 模糊匹配: 根据docName关键词匹配到对应引导
   for (var key in guides) {
     if (name.indexOf(key.replace(/_/g, '')) >= 0 || name.indexOf(key) >= 0) return guides[key];
@@ -1790,7 +1807,21 @@ var DOC_PRIVACY_OVERLAY = {
     { top: '8%', left: '10%', width: '22%', height: '4%', label: '姓名' },
     { top: '20%', left: '10%', width: '45%', height: '4%', label: '证号' },
     { top: '28%', left: '10%', width: '55%', height: '5%', label: '地址' }
-  ]}
+  ]},
+  income_250w: { bars: [
+    { top: '10%', left: '15%', width: '22%', height: '4%', label: '姓名' },
+    { top: '20%', left: '15%', width: '45%', height: '4%', label: '身份证号' },
+    { top: '30%', left: '15%', width: '35%', height: '4%', label: '年收入' }
+  ]},
+  no_crime: { bars: [
+    { top: '10%', left: '15%', width: '22%', height: '4%', label: '姓名' },
+    { top: '20%', left: '15%', width: '45%', height: '4%', label: '身份证号' }
+  ]},
+  student_visa: { bars: [
+    { top: '8%', left: '20%', width: '25%', height: '4%', label: '姓名' },
+    { top: '18%', left: '20%', width: '35%', height: '4%', label: '签证编号' }
+  ]},
+  plan_statement: { bars: [] }
 };
 
 /** 卡槽key → 证件分类自动映射 (Bug #24: 补全全部映射) */
@@ -1902,6 +1933,24 @@ function getPrivacyBars(docType, slotKey) {
       { top: '12%', left: '50%', width: '44%', height: '3.5%', label: '入境许可编号' }
     ]
   };
+
+  // Bug #12: slotKey → bars key 别名映射（卡槽key与脱敏条key不一致时）
+  var barAliases = {
+    'degree_cert': 'degree', 'marriage_cert': 'marriage', 'birth_cert': 'birth_cert',
+    'household': 'household', 'bank_statement': 'bank_statement', 'income_proof': 'income_250w',
+    'income_250w': 'income_250w', 'tax_record': 'income_250w', 'emp_proof': 'work_proof',
+    'emp_letter': 'work_proof', 'emp_3y': 'work_proof', 'salary_proof': 'income_250w',
+    'sponsor_id': 'id_card', 'guardian_id': 'id_card', 'visa_label': 'approval',
+    'student_visa': 'approval', 'company_docs': 'income_250w', 'tech_achievement': 'work_proof',
+    'reference_letter': 'work_proof', 'recommendation': 'work_proof',
+    'sponsor_income': 'income_250w', 'sponsor_employment': 'work_proof',
+    'guardian_income': 'income_250w', 'guardian_consent': 'approval',
+    'investment_proof': 'income_250w', 'asset_proof': 'income_250w',
+    'retirement_fund': 'income_250w', 'pension_proof': 'income_250w',
+    'funding_proof': 'bank_statement', 'no_crime': 'work_proof'
+  };
+  var resolvedBarKey = barAliases[slotKey] || docType;
+  if (resolvedBarKey && bars[resolvedBarKey]) return bars[resolvedBarKey];
 
   // 按 docType 精确匹配
   if (docType && bars[docType]) return bars[docType];

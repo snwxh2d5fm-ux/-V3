@@ -149,7 +149,7 @@ Page({
 
   loadDocuments() {
     try {
-      var docs = getAllDocuments().filter(function(d) { return d.status !== 'archived' && (d.ownerType || 'self') === (this.data.identityOwner || 'self'); });
+      var docs = getAllDocuments().filter(function(d) { return d.status !== 'archived'; });
       this.setData({ allDocs: docs || [] });
       this.matchChecklist();
     } catch(e) {
@@ -189,6 +189,34 @@ Page({
         { id:'emp_letter', name:'3年工作证明', category:'工作经历', required:true, stage:2 },
         { id:'photo', name:'证件照', category:'其他', required:true, stage:1 }
       ],
+      'ttps_c': [
+        { id:'id_card', name:'身份证', category:'身份证明', required:true, stage:1 },
+        { id:'hk_permit', name:'港澳通行证', category:'身份证明', required:true, stage:1 },
+        { id:'degree_cert', name:'合资格大学学位证', category:'学历证明', required:true, stage:2 },
+        { id:'emp_letter', name:'5年工作经验证明', category:'工作经历', required:true, stage:2 },
+        { id:'income_250w', name:'年收入250万证明', category:'资产证明', required:true, stage:2 },
+        { id:'tax_250w', name:'完税证明', category:'资产证明', required:true, stage:2 },
+        { id:'photo', name:'证件照', category:'其他', required:true, stage:1 }
+      ],
+      'asmpt': [
+        { id:'id_card', name:'身份证', category:'身份证明', required:true, stage:1 },
+        { id:'hk_permit', name:'港澳通行证', category:'身份证明', required:true, stage:1 },
+        { id:'passport', name:'护照', category:'身份证明', required:false, stage:1 },
+        { id:'emp_letter', name:'聘用书/合同', category:'工作经历', required:true, stage:2 },
+        { id:'degree_cert', name:'学位证书', category:'学历证明', required:true, stage:2 },
+        { id:'reference_letter', name:'推荐信', category:'工作经历', required:true, stage:3 },
+        { id:'salary_proof', name:'收入证明', category:'资产证明', required:true, stage:3 },
+        { id:'photo', name:'证件照', category:'其他', required:true, stage:1 }
+      ],
+      'cies': [
+        { id:'id_card', name:'身份证', category:'身份证明', required:true, stage:1 },
+        { id:'hk_permit', name:'港澳通行证', category:'身份证明', required:true, stage:1 },
+        { id:'passport', name:'护照', category:'身份证明', required:true, stage:1 },
+        { id:'bank_statement', name:'大额资产证明(≥3000万港币)', category:'资产证明', required:true, stage:2 },
+        { id:'income_250w', name:'收入证明', category:'资产证明', required:true, stage:2 },
+        { id:'plan_statement', name:'投资计划书', category:'申请材料', required:true, stage:3 },
+        { id:'photo', name:'证件照', category:'其他', required:true, stage:1 }
+      ],
       'student_iang': [
         { id:'id_card', name:'身份证', category:'身份证明', required:true, stage:1 },
         { id:'hk_permit', name:'港澳通行证', category:'身份证明', required:true, stage:1 },
@@ -210,7 +238,7 @@ Page({
       ]
     };
     // 注入身份适配的条件材料
-    var withConditional = this.injectConditionalDocs(pathChecklists[path] || pathChecklists['qmas']);
+    var withConditional = this.injectConditionalDocs(pathChecklists[path] || []);
     this.setData({ checklist: withConditional });
   },
 

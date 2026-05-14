@@ -91,6 +91,10 @@ Page({
           localTitles.push((c.title || '').replace(/[【】\s]/g, ''));
         });
         var cloudArticles = res.result.data.articles.map(function(a) { a.helpful = ratingCache[a.id] || a.helpful || 0; return a; });
+        // Bug #5 修复: 过滤掉无内容的云文章（仅标题，内容空白）
+        cloudArticles = cloudArticles.filter(function(a) {
+          return a.mergedContent || a.content || (a.sections && a.sections.length > 0) || (a.steps && a.steps.length > 0) || a.faqAnswer;
+        });
         var merged = that.data.guideCards.slice();
         var added = 0;
         cloudArticles.forEach(function(a) {

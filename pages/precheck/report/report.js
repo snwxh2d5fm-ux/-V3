@@ -42,8 +42,11 @@ Page({
           return d && d.stats && d.stats.blocked === 0 && d.stats.warned > 0;
         });
 
-        // Bug #13: 计算材料完整度百分比
-        var totalChecks = formattedDocs.length * 6;
+        // Bug #13: 计算材料完整度百分比（使用实际检查项数而非硬编码）
+        var totalChecks = formattedDocs.reduce(function(sum, d) {
+          var s = d.stats || {};
+          return sum + (s.total || 6);
+        }, 0);
         var passedChecks = formattedDocs.reduce(function(sum, d) {
           var s = d.stats || {};
           return sum + (s.passed || 0);

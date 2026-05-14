@@ -577,7 +577,8 @@ Page({
       });
       return;
     }
-    wx.navigateTo({ url: '/pages/documents/add/add' });
+    var ownerParam = this.data.identityOwner && this.data.identityOwner !== 'self' ? '&ownerType=' + this.data.identityOwner : '';
+    wx.navigateTo({ url: '/pages/documents/add/add?ownerPass=' + (this.data.identityOwner || 'self') + ownerParam });
   },
 
   navigateToDetail(e) {

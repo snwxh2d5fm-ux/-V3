@@ -407,8 +407,10 @@
 
   <view class="safe-bottom"></view>
 
-  <!-- Canvas 2D: 图片旋转/缩放/裁剪/增强 -->
-  <canvas type="2d" id="img-process" style="position:fixed;left:0;top:0;width:1rpx;height:1rpx;opacity:0"></canvas>
+  <!-- Canvas 2D: 图片旋转/缩放/裁剪/增强 (Bug #8: 合理默认尺寸确保selector可发现) -->
+  <canvas type="2d" id="img-process" style="position:fixed;left:-9999px;top:0;width:300px;height:300px"></canvas>
+  <!-- Old Canvas API 降级用 (Bug #8: wx.createCanvasContext 备用画布) -->
+  <canvas canvas-id="img-fallback" style="position:fixed;left:-9999px;top:310px;width:300px;height:300px"></canvas>
 
   <floating-ai visible="{{true}}" />
 </view>

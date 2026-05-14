@@ -54,7 +54,7 @@
 
   <!-- 操作按钮 -->
   <view class="action-bar">
-    <button class="btn--primary btn-flex" bindtap="navigateToAdd">+ 添加证件</button>
+    <button class="btn--primary btn-flex" bindtap="navigateToAdd">+</button>
     <button class="btn--outline btn-flex" bindtap="toggleGallery">🖼 画廊</button>
     <button class="btn--outline btn-flex" bindtap="onSmartCombine">📦 组合</button>
   </view>
@@ -77,8 +77,8 @@
         <text class="cat-head__arrow {{collapsedCategories[cat.categoryKey] ? '' : 'open'}}">›</text>
       </view>
 
-      <!-- 所属人切换 (身份类) -->
-      <view class="owner-tabs" wx:if="{{cat.categoryKey === 'identities' || cat.categoryKey === 'identity' || cat.categoryKey === 'education'}}">
+      <!-- 所属人切换 (所有分类) -->
+      <view class="owner-tabs">
         <block wx:for="{{ownerOptions}}" wx:key="value">
           <view class="owner-tab {{identityOwner === item.value ? 'active' : ''}}"
                 wx:if="{{cat.categoryKey !== 'education' || item.value !== 'child'}}"
