@@ -18,7 +18,9 @@
 
       <view class="detail-row">
         <text class="detail-label">截止日期</text>
-        <text class="detail-value {{reminder.priority === 'urgent' ? 'urgent' : ''}}">{{reminder.deadline}}</text>
+        <picker mode="date" value="{{reminder.deadline}}" bindchange="onChangeDeadline">
+          <text class="detail-value detail-value--editable {{reminder.priority === 'urgent' ? 'urgent' : ''}}">{{reminder.deadline}}</text>
+        </picker>
       </view>
       <view class="detail-row" wx:if="{{reminder.description}}">
         <text class="detail-label">描述</text>
@@ -53,7 +55,6 @@
     <!-- 操作按钮 -->
     <view class="action-row" wx:if="{{reminder.status === 'active'}}">
       <button class="btn btn-success flex-1" bindtap="markComplete">✓ 完成</button>
-      <button class="btn btn-outline flex-1" bindtap="openDeferModal">⏰ 延期</button>
       <button class="btn btn-ghost flex-1" bindtap="ignoreReminder">忽略</button>
     </view>
     <view class="action-row" wx:if="{{reminder.status === 'completed'}}">
@@ -309,22 +310,6 @@
     </view>
   </block>
 
-  <!-- ==================== 延期弹窗 ==================== -->
-  <view class="modal-overlay" wx:if="{{showDeferModal}}" bindtap="cancelDefer">
-    <view class="modal-sheet" catchtap="">
-      <view class="modal-handle"></view>
-      <text class="modal-title">延期提醒</text>
-      <view class="defer-control">
-        <text class="defer-label">延期天数</text>
-        <input class="form-input" type="number" value="{{deferDays}}" bindinput="onDeferDaysChange" />
-      </view>
-      <text class="defer-preview">新截止日期：{{deferDate}}</text>
-      <view class="modal-actions">
-        <button class="btn btn-ghost flex-1" bindtap="cancelDefer">取消</button>
-        <button class="btn btn-primary flex-1" bindtap="confirmDefer">确认延期</button>
-      </view>
-    </view>
-  </view>
 
   <!-- ==================== 编辑模式 ==================== -->
   <block wx:if="{{reminder && isEdit}}">

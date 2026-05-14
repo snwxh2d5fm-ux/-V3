@@ -305,6 +305,15 @@ Page({
   },
 
   // ========== 操作: 完成 ==========
+  onChangeDeadline: function(e) {
+    var newDate = e.detail.value;
+    updateReminder(this.data.reminderId, { deadline: newDate, updatedAt: new Date().toISOString() });
+    var r = this.data.reminder;
+    r.deadline = newDate;
+    this.setData({ reminder: r });
+    wx.showToast({ title: '已更新截止日期', icon: 'success' });
+  },
+
   async markComplete() {
     wx.showLoading({ title: '更新中...' });
     try {
