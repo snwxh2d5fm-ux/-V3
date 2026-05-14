@@ -64,8 +64,8 @@ page {
   padding-bottom: 40rpx;
 }
 
-/* ===== 页面顶部栏 ===== */
-.page-header {
+/* ===== 页面顶部栏 — 全局统一蓝底白字 ===== */
+.page-header, .page-header__wrap {
   padding: 28rpx 32rpx 24rpx;
   background: linear-gradient(135deg, var(--blue-dark), var(--blue));
   color: var(--white);
@@ -73,14 +73,16 @@ page {
   align-items: center;
   justify-content: space-between;
 }
-.page-header-title {
+.page-header-title, .page-header__title {
   font-size: var(--font-xl);
   font-weight: 700;
+  color: #FFF;
 }
-.page-header-sub {
+.page-header-sub, .page-header__subtitle {
   font-size: var(--font-xs);
   opacity: 0.85;
   margin-top: 4rpx;
+  color: rgba(255,255,255,0.85);
 }
 
 /* ===== 隐私指示条 ===== */
