@@ -297,6 +297,7 @@ Page({
     if (step === 2) {
       var districtData = require('../../../data/district-data');
       var results = districtData.matchDistricts(this.data.wizardBudget, this.data.wizardWork, this.data.wizardHasKids);
+      results.forEach(function(r) { r.stars = r.familyFriendly ? new Array(r.familyFriendly+1).join('⭐') : '⭐'; });
       this.setData({ wizardStep: 3, wizardResults: results });
     } else {
       this.setData({ wizardStep: step + 1 });

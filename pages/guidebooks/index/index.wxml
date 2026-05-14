@@ -254,7 +254,7 @@
             <text class="result-name">{{item.district}}</text>
             <text class="result-stat">呎租: HK${{item.avgRentPsf}}/ft² · {{item.vibe}}</text>
             <text class="result-stat">通勤: 中环{{item.commute.central}}min</text>
-            <text wx:if="{{item.schoolNet.primary>0}}" class="result-stat">校网: {{item.schoolNet.primary}} · 家庭友好: {{'⭐'.repeat(item.familyFriendly)}}</text>
+            <text wx:if="{{item.schoolNet.primary>0}}" class="result-stat">校网: {{item.schoolNet.primary}} · 家庭友好: {{item.stars}}</text>
           </view>
         </scroll-view>
         <view class="wizard-done" bindtap="onWizardDone">完成向导 ✓</view>
