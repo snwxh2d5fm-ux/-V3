@@ -258,7 +258,12 @@ Page({
   catchStop() {},
   closeDisclaimer() { this.setData({ showDisclaimer: false }); },
   showSelfAssessDisclaimer() {
-    this.setData({ showDisclaimer: true });
+    this.setData({
+      showDisclaimerPopup: true,
+      disclaimerType: 'self_assessed',
+      disclaimerTitle: '自评数据说明',
+      disclaimerBody: '此数据由用户自行评估填写，并非香港入境事务处官方认可。\n\n请在提交申请前自行核准所有标准与信息。\n\n官方申请标准请以入境处官网 immd.gov.hk 最新公布为准。'
+    });
   },
 
   // ===== 指标说明弹窗 =====
@@ -282,23 +287,8 @@ Page({
     this.setData({ showHelpPopup: false });
   },
 
-  // 仅保留自评数据说明弹窗，其余弹窗全部移除
-  checkDisclaimerNeeded() {
-    var activeProcess = this.data.activeProcess;
-    var progress = this.data.progress || 0;
-    var materialTotalCount = this.data.materialTotalCount || 0;
-    if (this.data.disclaimerConfirmed) return;
-
-    // 用户自评数据说明
-    if (materialTotalCount > 6 && progress === 0) {
-      this.setData({
-        showDisclaimerPopup: true,
-        disclaimerType: 'self_assessed',
-        disclaimerTitle: '数据来源说明',
-        disclaimerBody: '此数据由用户自行评估填写，并非香港入境事务处官方认可。\n\n请在提交前核准所有标准与信息。\n\n所有官方申请标准请以入境处官网（immd.gov.hk）最新公布为准。'
-      });
-    }
-  },
+  // 不在页面加载时弹窗打扰用户
+  checkDisclaimerNeeded() {},
   confirmDisclaimer() {
     this.setData({ showDisclaimerPopup: false, disclaimerConfirmed: true });
   },

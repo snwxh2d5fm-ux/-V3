@@ -44,20 +44,6 @@
         <text class="process-hero__cycle" bindtap="showCycleHelp">⏱ {{activeProcess.totalCycle || '—'}}</text>
         <text class="process-hero__risk" bindtap="showRiskHelp">{{activeProcess.riskLevel === 'low' ? '🟢低风险' : activeProcess.riskLevel === 'medium' ? '🟡中风险' : '🔴高风险'}}</text>
       </view>
-      <!-- P0#13: 免责声明弹窗 -->
-      <view class="disclaimer-overlay" wx:if="{{showDisclaimer}}" catchtap="closeDisclaimer">
-        <view class="disclaimer-card" catchtap="catchStop">
-          <text class="disclaimer-icon">⚠️</text>
-          <text class="disclaimer-title">重要提示</text>
-          <view class="disclaimer-body">
-            <text class="disclaimer-item" wx:if="{{progress === 0}}">📋 材料完整度为 0%——尚未开始准备申请材料。请先完成资格评估和路径选择。</text>
-            <text class="disclaimer-item" wx:if="{{activeProcess.totalCycle}}">⏱ 此路径周期较长（{{activeProcess.totalCycle}}），需长期维持在港居住，续签存在不确定性。</text>
-            <text class="disclaimer-item">⚠️ 材料清单为用户自评数据，并非香港入境事务处官方认可。请在提交前核准所有标准和信息。</text>
-            <text class="disclaimer-item">✅ 建议在递交前咨询持牌身份规划顾问或律师，确认材料完整性和合规性。</text>
-          </view>
-          <button class="disclaimer-btn" bindtap="closeDisclaimer">我已了解</button>
-        </view>
-      </view>
 
       <!-- 材料完成度 — 环形进度+快捷入口 -->
       <view class="material-completion">
