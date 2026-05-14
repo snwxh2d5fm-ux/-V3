@@ -267,7 +267,7 @@ Page({
     }
     var confidence = guide.confidence || 'B';
     var confidenceInfo = constants.CONFIDENCE_LEVELS[confidence] || constants.CONFIDENCE_LEVELS.B;
-    var parsedSections = ct === 'faq' ? (function(text) { if (!text) return []; return text.split(/\n+/).filter(function(b){ return b.trim(); }).map(function(b){ b = b.trim(); var c = b.indexOf('：'); if (c < 0) c = b.indexOf(':'); if (c > 0 && c < 40) return { type: 'heading', content: b.substring(0, c+1) }; if (/^\d+[.]/.test(b)) return { type: 'numbered', content: b }; if (/^[-]/.test(b)) return { type: 'bullet', content: b.replace(/^[-]\s*/, '') }; return { type: 'body', content: b }; }); })(guide.faqAnswer) : parseSections(guide.sections);
+    var parsedSections = ct === 'faq' ? (function(text) { if (!text) return []; var result = []; var paragraphs = text.split(/\n+/); for (var i = 0; i < paragraphs.length; i++) { var b = paragraphs[i].trim(); if (!b) continue; var c = b.indexOf('：'); if (c < 0) c = b.indexOf(':'); if (c > 0 && c < 40) { result.push({ type: 'heading', content: b.substring(0, c+1) }); if (b.length > c + 1) result.push({ type: 'body', content: b.substring(c+1).trim() }); } else if (/^\d+[.]/.test(b)) { result.push({ type: 'numbered', content: b }); } else if (/^[-]/.test(b)) { result.push({ type: 'bullet', content: b.replace(/^[-]\s*/, '') }); } else { result.push({ type: 'body', content: b }); } } return result; })(guide.faqAnswer) : parseSections(guide.sections);
 
     this.setData({
       guide: {
