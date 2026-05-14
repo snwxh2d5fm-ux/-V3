@@ -147,18 +147,7 @@ Page({
       if (!app.globalData.__guideDetailCache__) app.globalData.__guideDetailCache__ = {};
       app.globalData.__guideDetailCache__[id] = data;
     } else {
-      // 云端卡片：用列表数据构造最小缓存，detail页后台补全
-      var card = (this.data.guideCards || []).find(function(c) { return c.id === id; });
-      if (card) {
-        if (!app.globalData.__guideDetailCache__) app.globalData.__guideDetailCache__ = {};
-        app.globalData.__guideDetailCache__[id] = {
-          id: card.id, title: card.title, icon: card.icon, desc: card.desc || '',
-          contentType: card.contentType || 'article', sections: [],
-          category: card.category, tags: card.tags, confidence: card.confidence || 'B',
-          source: card.source || '攻略书', updated: card.updated || '',
-          rating: card.rating || '4.0', helpful: card.helpful || 0
-        };
-      }
+      // 云端卡片：不建毒缓存，detail页直接从云端获取完整内容
     }
     wx.navigateTo({ url: '/pages/guidebooks/detail/detail?id=' + id });
   },

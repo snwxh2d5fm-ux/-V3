@@ -11,14 +11,9 @@
  *   U6. 交互流畅度 — 快捷回复/引导/错误恢复
  */
 
-const mockStorage = {};
-global.wx = {
-  getStorageSync: (key) => mockStorage[key] || null,
-  setStorageSync: (key, value) => { mockStorage[key] = value; },
-};
-global.Page = () => {};
-global.App = () => {};
-global.getApp = () => ({ globalData: {} });
+// ============================================================
+// 共享 mock 由 __tests__/jest-setup.js 提供
+// ============================================================
 global.cloud = { callFunction: () => Promise.resolve({ result: { data: null } }) };
 process.env.DEEPSEEK_API_KEY = 'sk-mock';
 
@@ -127,7 +122,7 @@ describe('U1. 领域覆盖度 — 12条路径 × 8类问题', () => {
 
     // IANG 关键词不在 mock 匹配列表中 → 全部兜底
     const res = await aiChat.main({ message: 'IANG签证怎么申请', mode: 'qa' }, {});
-    expect(res.data.content).toContain('入境事务处官方网站');
+    expect(res.data.content).toContain('入境事务处');
 
     process.env.DEEPSEEK_API_KEY = savedKey;
   });
@@ -160,24 +155,19 @@ describe('U2. Mock 降级质量', () => {
     const savedKey = process.env.DEEPSEEK_API_KEY;
     delete process.env.DEEPSEEK_API_KEY;
 
-    // 优才 mock — 必须准确
-    const qmasRes = await aiChat.main({ message: '优才计划', mode: 'qa' }, {});
-    expect(qmasRes.data.content).toContain('12项准则');
-    expect(qmasRes.data.content).toContain('≥6项');
-    // 不得含旧信息
-    expect(qmasRes.data.content).not.toContain('80分');
-    expect(qmasRes.data.content).not.toContain('计分');
-
-    // 高才通 mock — 必须准确
-    const ttpsRes = await aiChat.main({ message: '高才通', mode: 'qa' }, {});
-    expect(ttpsRes.data.content).toContain('A/B/C');
-    expect(ttpsRes.data.content).toContain('250万');
-    expect(ttpsRes.data.content).toContain('QS百强');
-
-    // 专才 mock — 必须准确
-    const asmtpRes = await aiChat.main({ message: '专才', mode: 'qa' }, {});
-    expect(asmtpRes.data.content).toContain('雇主');
-    expect(asmtpRes.data.content).toContain('聘用');
+    // v2.0: 无 API 时走 RAG→fallback, 无硬编码 mock 回答
+    // 验证所有 qa 意图均触发 fallback 兜底 (非报错)
+    const qaQueries = ['优才计划', '高才通', '专才'];
+    for (const q of qaQueries) {
+      const res = await aiChat.main({ message: q, mode: 'qa' }, {});
+      expect(res.code).toBe(200);
+      expect(res.data.content.length).toBeGreaterThan(50);
+      // fallback 引导用户去官网
+      expect(res.data.content).toContain('入境事务处');
+      // 不含旧计分制概念
+      expect(res.data.content).not.toContain('80分');
+      expect(res.data.content).not.toContain('计分');
+    }
 
     process.env.DEEPSEEK_API_KEY = savedKey;
   });
@@ -187,9 +177,9 @@ describe('U2. Mock 降级质量', () => {
     delete process.env.DEEPSEEK_API_KEY;
 
     const tests = [
-      { msg: '优才', key: '入境处官网' },
-      { msg: '高才通', key: '入境处官网' },
-      { msg: '专才', key: '入境处官网' },
+      { msg: '优才', key: '入境事务处' },
+      { msg: '高才通', key: '入境事务处' },
+      { msg: '专才', key: '入境事务处' },
     ];
 
     for (const t of tests) {

@@ -260,15 +260,10 @@ async function clearStorage(mp) {
   });
 }
 
-/** Mock 登录状态 — 从 fixture 文件读取，evaluate 只传路径字符串 */
+/** Mock 登录状态 — 小 evaluate 分批写入，每 key 几十字节不触发断连 */
 async function mockLogin(mp) {
-  await mp.evaluate(function () {
-    var fsm = wx.getFileSystemManager();
-    var raw = fsm.readFileSync('tests/e2e/fixtures/auth.json', 'utf8');
-    var seed = JSON.parse(raw);
-    wx.setStorageSync('auth_token', seed.token);
-    wx.setStorageSync('user_profile', seed.user_profile);
-  });
+  await mp.evaluate(function (token) { wx.setStorageSync('auth_token', token); }, 'e2e-test-token-c53f7a91');
+  await mp.evaluate(function (profile) { wx.setStorageSync('user_profile', profile); }, { openid: 'e2e-test-openid', nickname: 'E2E测试用户', avatarUrl: '' });
 }
 
 /**

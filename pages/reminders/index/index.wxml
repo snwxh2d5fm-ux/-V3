@@ -37,6 +37,18 @@
     </view>
   </view>
 
+  <!-- ===== 逆向时间轴入口 — 未申请/材料准备状态 ===== -->
+  <view class="rev-timeline-card" wx:if="{{!hasPath || stats.total === 0}}">
+    <view class="rev-timeline-card__head">
+      <text class="rev-timeline-card__icon">📋</text>
+      <text class="rev-timeline-card__title">资料准备时间轴</text>
+    </view>
+    <text class="rev-timeline-card__desc">基于项目管理逻辑，从今天开始向前推算每个准备步骤的预估完成日期</text>
+    <button class="btn btn--primary btn--block" bindtap="generatePrepTimeline" loading="{{generatingPrep}}">
+      ⚡ 一键生成预估时间轴
+    </button>
+  </view>
+
   <!-- ===== 视图切换 Tab ===== -->
   <view class="mode-tabs">
     <view class="mode-tab {{viewMode === 'timeline' ? 'active' : ''}}" bindtap="switchView" data-mode="timeline">

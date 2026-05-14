@@ -1,15 +1,13 @@
 /**
- * E2E 全局 Setup — 连接 DevTools + 文件种子注入
+ * E2E 全局 Setup — 连接 DevTools + 小 evaluate 分批种子注入
  *
- * mp.evaluate(大JSON) 无论放 setup 还是 beforeAll 都会断开 WebSocket。
- * 解决方案: 种子数据写为 tests/e2e/fixtures/*.json，小程序通过
- * wx.getFileSystemManager().readFileSync() 自己读，evaluate 只传路径字符串。
- * 详见: inbox/NOTIFY_file_seed_approach_20260513.md
+ * readFileSync 在小程序运行时无文件系统权限，已废弃。
+ * 改用多次极小 evaluate，每次只写一个 storage key，载荷几十字节不会断连。
+ * 详见: inbox/NOTIFY_small_evaluate_20260514.md
  */
 
 const automator = require('miniprogram-automator');
 const path = require('path');
-const fs = require('fs');
 
 const PROJECT_PATH = path.resolve(__dirname, '../..');
 
@@ -35,41 +33,30 @@ module.exports = async function globalSetup() {
 
     console.log(`✅ 小程序已连接 (${Date.now() - startTime}ms)`);
 
-    // 文件种子注入 — evaluate 只传路径字符串，大 JSON 由小程序自己读
-    await mp.evaluate(function () {
-      var fsm = wx.getFileSystemManager();
+    // 小 evaluate 分批写入 — 每个只传几十字节，不会触发 WebSocket 断连
+    const seeds = [
+      // auth
+      { key: 'auth_token',              label: 'auth_token',            val: 'e2e-test-token-c53f7a91' },
+      { key: 'user_profile',            label: 'user_profile',          val: { openid: 'e2e-test-openid', nickname: 'E2E测试用户', avatarUrl: '' } },
+      // processes
+      { key: '__processes__',           label: 'processes',             val: { lines: [{ id: 'e2e-test-process', name: '学生→IANG', templateId: 'student_iang', pathType: 'student_iang', riskLevel: 'low', totalCycle: '7年', status: 'active', source: 'manual', stages: [{ id: 's1', name: '资格评估', phaseId: 'phase1', order: 0, status: 'completed', unlocked: true, steps: [{ name: '学校录取' }, { name: '签证获批' }], completedSteps: [0, 1] }, { id: 's2', name: '获批激活', phaseId: 'phase2', order: 1, status: 'current', unlocked: true, steps: [{ name: '入境激活' }, { name: '办理身份证' }, { name: '银行开户' }], completedSteps: [0] }, { id: 's3', name: '中期维持', phaseId: 'phase3', order: 2, status: 'pending', unlocked: false, steps: [{ name: '全日制学习' }, { name: 'IANG申请' }], completedSteps: [] }], currentStage: '获批激活' }], version: 1 } },
+      // reminders
+      { key: '__reminders__',           label: 'reminders',             val: { items: [{ id: 'e2e-test', title: 'E2E测试提醒', label: 'E2E测试提醒', deadline: '2026-12-31', description: 'E2E测试用提醒', type: 'manual', confidence: 'B', status: 'active', priority: 'normal', linkedDocIds: [], dependsOn: null, alerts: [], source: { type: 'manual' }, createdAt: '2026-05-13T00:00:00.000Z', updatedAt: '2026-05-13T00:00:00.000Z' }], version: 1 } },
+    ];
 
-      // 读取 auth 种子并写入 storage
+    for (var i = 0; i < seeds.length; i++) {
+      var s = seeds[i];
       try {
-        var authRaw = fsm.readFileSync('tests/e2e/fixtures/auth.json', 'utf8');
-        var auth = JSON.parse(authRaw);
-        wx.setStorageSync('auth_token', auth.token);
-        wx.setStorageSync('user_profile', auth.user_profile);
-        console.log('[E2E setup] auth seeded from fixture');
+        await mp.evaluate(function (key, val) {
+          wx.setStorageSync(key, val);
+        }, s.key, s.val);
+        console.log('  ✅ seed: ' + s.label);
       } catch (e) {
-        console.error('[E2E setup] auth fixture read failed:', e.message);
+        console.error('  ❌ seed failed: ' + s.label + ' — ' + (e.message || e));
       }
+    }
 
-      // 读取 processes 种子
-      try {
-        var procRaw = fsm.readFileSync('tests/e2e/fixtures/processes.json', 'utf8');
-        wx.setStorageSync('__processes__', JSON.parse(procRaw));
-        console.log('[E2E setup] processes seeded from fixture');
-      } catch (e) {
-        console.error('[E2E setup] processes fixture read failed:', e.message);
-      }
-
-      // 读取 reminders 种子
-      try {
-        var remRaw = fsm.readFileSync('tests/e2e/fixtures/reminders.json', 'utf8');
-        wx.setStorageSync('__reminders__', JSON.parse(remRaw));
-        console.log('[E2E setup] reminders seeded from fixture');
-      } catch (e) {
-        console.error('[E2E setup] reminders fixture read failed:', e.message);
-      }
-    });
-
-    console.log(`✅ 种子数据注入完成 (${Date.now() - startTime}ms)`);
+    console.log('✅ 种子数据注入完成 (' + (Date.now() - startTime) + 'ms)');
 
     global.__miniProgram__ = mp;
     global.__automator__ = automator;

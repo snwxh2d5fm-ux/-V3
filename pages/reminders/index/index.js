@@ -43,7 +43,8 @@ Page({
     freeLimitReached: false,
 
     loading: true,
-    showAddMenu: false        // 底部添加菜单
+    showAddMenu: false,       // 底部添加菜单
+    generatingPrep: false     // 逆向时间轴生成中
   },
 
   onLoad() {
@@ -410,6 +411,91 @@ Page({
   },
 
   // ========== 详情页入口（原list页已合并至detail） ==========
+  // 逆向时间轴：基于今天+资料准备模板，一键生成预估日期
+  generatePrepTimeline() {
+    var that = this;
+    var app = getApp();
+    var session = wx.getStorageSync('__session__') || {};
+    var path = (app && app.globalData && app.globalData.selectedPath) || session.selectedPath || '';
+
+    var pathNames = {
+      'qmas': '优才计划', 'ttps_a': '高才通A类', 'ttps_b': '高才通B类', 'ttps_c': '高才通C类',
+      'asmpt': '专才计划', 'student_iang': '学生→IANG', 'dependent': '受养人',
+      'cies': 'CIES投资类身份规划', 'permanent': '永居申请'
+    };
+
+    if (!path) {
+      // 无路径 → 使用通用材料准备模板
+      var prepNodes = [
+        { label: '确认申请路径与条件', offsetDays: 7, type: 'milestone', desc: '完成资格评估，选定目标路径' },
+        { label: '收集个人基础证件', offsetDays: 14, type: 'material', desc: '身份证/户口本/护照/港澳通行证' },
+        { label: '办理学历认证', offsetDays: 28, type: 'material', desc: '学信网/留服认证(15-20工作日)' },
+        { label: '准备推荐信与工作证明', offsetDays: 35, type: 'material', desc: '公司抬头纸+公章+推荐人签字' },
+        { label: '开具无犯罪记录证明', offsetDays: 42, type: 'material', desc: '户籍地派出所+翻译公证' },
+        { label: '撰写赴港计划书', offsetDays: 49, type: 'material', desc: '来港目的+职业规划+对港贡献' },
+        { label: '银行流水与资产证明', offsetDays: 56, type: 'material', desc: '近6-12个月银行流水+存款证明' },
+        { label: '复核全部材料完整性', offsetDays: 63, type: 'deadline', desc: '逐项核对材料清单，查漏补缺' },
+        { label: '预计提交申请日', offsetDays: 70, type: 'milestone', desc: '材料准备完毕，提交申请' }
+      ];
+      this._doGeneratePrepTimeline(prepNodes, '通用资料准备');
+      return;
+    }
+
+    // 有路径 → 使用路径专属准备模板
+    var templates = require('../../../data/timeline-templates');
+    var tmpl = templates.TIMELINE_TEMPLATES[path];
+    if (!tmpl || !tmpl.nodes) {
+      wx.showToast({ title: '暂无该路径的准备模板', icon: 'none' });
+      return;
+    }
+
+    // 只取材料准备阶段的节点（offsetDays < 0 或 type 为 material/milestone 的早期节点）
+    var prepNodes = tmpl.nodes.filter(function(n) {
+      return n.type === 'material' || n.type === 'milestone' || n.type === 'deadline';
+    });
+
+    if (prepNodes.length === 0) {
+      wx.showToast({ title: '该路径暂无准备时间轴', icon: 'none' });
+      return;
+    }
+
+    this._doGeneratePrepTimeline(prepNodes, pathNames[path] || path);
+  },
+
+  _doGeneratePrepTimeline: function(nodes, pathName) {
+    var that = this;
+    this.setData({ generatingPrep: true });
+
+    var today = new Date();
+    today.setHours(0, 0, 0, 0);
+
+    var count = 0;
+    nodes.forEach(function(node) {
+      var date = new Date(today);
+      date.setDate(date.getDate() + Math.abs(node.offsetDays || 7));
+      var ds = date.getFullYear() + '-' +
+        String(date.getMonth() + 1).padStart(2, '0') + '-' +
+        String(date.getDate()).padStart(2, '0');
+
+      var iconMap = { milestone: '✅', deadline: '📅', renewal: '🔄', pr: '🏁', material: '📋' };
+      saveReminder({
+        id: 'PREP_' + Date.now() + '_' + (count++),
+        title: node.label,
+        deadline: ds,
+        description: (pathName || '资料准备') + ' · ' + (node.type || 'milestone'),
+        type: 'rule_engine',
+        confidence: 'B',
+        linkedDocIds: [],
+        status: 'active',
+        createdAt: new Date().toISOString()
+      });
+    });
+
+    this.setData({ generatingPrep: false });
+    wx.showToast({ title: '已生成 ' + nodes.length + ' 个节点', icon: 'success' });
+    this.loadReminders();
+  },
+
   // 手动触发生成路径时间线提醒
   manualGenerateTimeline() {
     var app = getApp();
