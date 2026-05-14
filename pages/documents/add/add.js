@@ -934,21 +934,22 @@ function getSlotGuide(slotKey, docName) {
       { label: '签发机关', width: 'mid', pii: false },
       { label: '有效期限', width: 'long', pii: false }
     ], showPhoto: true, showSeal: false },
-    // 学位证
-    degree: { icon: '🎓', title: '学位证/毕业证材料标准', wfTitle: '学士学位证书', items: [
-      '证书原件彩色拍摄，不可拍摄复印件',
-      '确保证书编号、姓名、学位、日期清晰',
-      '如有英文版本一并拍摄',
-      '海外学历需同时拍摄认证文件',
-      '证书四角完整，印章清晰可辨'
-    ], piiFields: ['姓名', '证书编号', '毕业日期'], specimen: '学位证正面+背面',
+    // 学位证 — A4(210×297mm)防伪水印纸, 16位编号, 2寸彩照+钢印
+    degree: { icon: '🎓', title: '学位证/毕业证材料标准', wfTitle: '学士学位证书 (A4防伪纸)', items: [
+      '证书原件彩色拍摄(A4幅面)，不可拍摄复印件',
+      '16位证书编号(前5位学校代码+4位年份+7位序号)',
+      '2寸彩色照片+学校钢印骑缝章清晰',
+      '专业全称、学科门类(如工学学士)',
+      '海外学历需同时拍摄留服认证'
+    ], piiFields: ['姓名', '证书编号', '出生日期'], specimen: '学位证正面·钢印+校长签名',
     wfFields: [
-      { label: '学位证书编号', width: 'long', pii: true },
-      { label: '姓名', width: 'short', pii: true },
-      { label: '性别 / 出生日期', width: 'mid', pii: false },
-      { label: '所学专业', width: 'mid', pii: false },
-      { label: '学位授予单位', width: 'full', pii: false },
-      { label: '授予日期', width: 'mid', pii: false }
+      { label: '学位证书编号 (16位)', width: 'long', pii: true },
+      { label: '姓名 (与身份证一致)', width: 'short', pii: true },
+      { label: '性别 / 出生日期', width: 'mid', pii: true },
+      { label: '专业名称 / 学科门类', width: 'full', pii: false },
+      { label: '学位授予单位 (全称)', width: 'full', pii: false },
+      { label: '校长签名 / 授予日期', width: 'mid', pii: false },
+      { label: '2寸彩照 / 钢印骑缝', width: 'short', pii: false }
     ], showPhoto: true, showSeal: true },
     // 港澳通行证 — 卡式电子版 (85.6×54mm, 长城背景, 正面照片左·信息右)
     hk_permit: { icon: '🛂', title: '港澳通行证材料标准', wfTitle: '往来港澳通行证 (卡式电子版)', items: [
@@ -966,19 +967,22 @@ function getSlotGuide(slotKey, docName) {
       { label: '签发机关 / 签发地', width: 'mid', pii: false },
       { label: '签注类型 / 逗留条件 (背面)', width: 'full', pii: false }
     ], showPhoto: true, showSeal: false },
-    // 护照
-    passport: { icon: '🛂', title: '护照材料标准', wfTitle: '中华人民共和国护照', items: [
-      '个人信息页完整拍摄（含照片、护照号、签名）',
-      '确保护照号（E/G开头）和有效期清晰',
-      '如有签证页一并拍摄'
-    ], piiFields: ['姓名', '护照号', '出生日期', '国籍'], specimen: '护照个人信息页',
+    // 护照 — 电子护照 (125×88mm, 第2页资料页, 照片左·牡丹花激光防伪·MRZ底)
+    passport: { icon: '🛂', title: '护照材料标准', wfTitle: '中华人民共和国护照 (资料页第2页)', items: [
+      '资料页(第2页)完整拍摄，含照片、护照号',
+      '护照号为E开头+字母+7位数字',
+      '防伪膜含天安门+五星图案，从侧面打光',
+      'MRZ机读码两行在底部，不可裁切'
+    ], piiFields: ['姓名', '护照号', '出生日期', '出生地点'], specimen: '护照第2页资料页·牡丹花防伪',
     wfFields: [
-      { label: '姓名 (中/英)', width: 'mid', pii: true },
-      { label: '护照号码', width: 'mid', pii: true },
-      { label: '国籍 / 性别', width: 'short', pii: false },
-      { label: '出生日期 / 地点', width: 'full', pii: true },
+      { label: '类型P / 国家码CHN', width: 'short', pii: false },
+      { label: '护照号 (E+8位)', width: 'mid', pii: true },
+      { label: '姓名 (中文/拼音)', width: 'full', pii: true },
+      { label: '性别 / 国籍', width: 'short', pii: false },
+      { label: '出生日期 / 出生地点', width: 'full', pii: true },
       { label: '签发日期 / 有效期至', width: 'full', pii: false },
-      { label: '签发机关', width: 'mid', pii: false }
+      { label: '签发机关', width: 'mid', pii: false },
+      { label: 'MRZ机读码 (底部)', width: 'full', pii: false }
     ], showPhoto: true, showSeal: false },
     // 香港身份证 — 2018版(照片左置·右侧激光影像·透明窗口)
     hk_id: { icon: '🆔', title: '香港身份证材料标准', wfTitle: '香港永久性居民身份证 (2018版)', items: [
@@ -995,44 +999,47 @@ function getSlotGuide(slotKey, docName) {
       { label: '签发日期', width: 'mid', pii: false },
       { label: '符号标记 (***AZ 等)', width: 'short', pii: false }
     ], showPhoto: true, showSeal: false },
-    // 户口本
-    household: { icon: '📖', title: '户口本材料标准', wfTitle: '居民户口簿', items: [
-      '户主页+本人页均需拍摄',
-      '四角完整，印章清晰',
-      '姓名、身份证号、与户主关系清晰',
-      '户口登记机关印章可见'
-    ], piiFields: ['姓名', '身份证号', '住址'], specimen: '户主页+本人页·四角完整',
+    // 户口本 — 首页+户主页+本人页 (28个登记项目)
+    household: { icon: '📖', title: '户口本材料标准', wfTitle: '居民户口簿 (首页+户主页+本人页)', items: [
+      '首页(扉页)+户主页(常住人口登记卡)+本人页均需拍摄',
+      '首页: 户别/户号/户主姓名/住址/两个公章',
+      '本人页: 姓名/与户主关系/身份证号/籍贯/出生地等28项',
+      '户口登记机关(派出所)印章清晰可见'
+    ], piiFields: ['姓名', '身份证号', '住址', '籍贯'], specimen: '首页+户主页+本人页·印章清晰',
     wfFields: [
-      { label: '户主姓名', width: 'short', pii: true },
-      { label: '户号', width: 'mid', pii: false },
-      { label: '住址', width: 'full', pii: true },
-      { label: '本人姓名', width: 'short', pii: true },
+      { label: '户别 (首页)', width: 'short', pii: false },
+      { label: '户号 (首页)', width: 'mid', pii: false },
+      { label: '户主姓名 (首页)', width: 'short', pii: true },
+      { label: '住址 (首页)', width: 'full', pii: true },
+      { label: '本人姓名 (本人页)', width: 'short', pii: true },
+      { label: '与户主关系 (本人页)', width: 'short', pii: false },
       { label: '公民身份号码', width: 'long', pii: true },
-      { label: '与户主关系', width: 'short', pii: false },
-      { label: '登记机关 (印章)', width: 'mid', pii: false }
+      { label: '登记机关 / 签发日期', width: 'mid', pii: false }
     ], showPhoto: false, showSeal: true },
-    // 结婚证
-    marriage: { icon: '💍', title: '结婚证材料标准', wfTitle: '中华人民共和国结婚证', items: [
-      '双页展开或正反页拍摄',
-      '结婚证字号、双方姓名清晰',
-      '登记机关印章完整',
-      '照片清晰可见'
-    ], piiFields: ['双方姓名', '证件号', '登记日期'], specimen: '结婚证双页展开·印章清晰',
+    // 结婚证 — 188×128mm封皮, 证芯195×135mm, 双页展开, 持证人每本不同
+    marriage: { icon: '💍', title: '结婚证材料标准', wfTitle: '中华人民共和国结婚证 (双页展开)', items: [
+      '双页全展开拍摄，四角完整不留白',
+      '结婚证字号(J开头)清晰，含行政区划代码',
+      '双方姓名、出生日期、身份证号清晰',
+      '合影照片+钢印骑缝章可见',
+      '登记机关红色印章+婚姻登记员亲笔签名'
+    ], piiFields: ['双方姓名', '证件号', '登记日期', '出生日期'], specimen: '双页展开·钢印骑缝·红印清晰',
     wfFields: [
-      { label: '持证人姓名', width: 'short', pii: true },
+      { label: '持证人 (男/女)', width: 'short', pii: true },
       { label: '登记日期', width: 'mid', pii: false },
       { label: '结婚证字号', width: 'long', pii: true },
-      { label: '双方姓名', width: 'full', pii: true },
-      { label: '双方证件号码', width: 'full', pii: true },
-      { label: '登记机关 (印章)', width: 'mid', pii: false }
+      { label: '双方姓名 / 出生日期', width: 'full', pii: true },
+      { label: '双方身份证号码', width: 'full', pii: true },
+      { label: '登记机关 (红印)', width: 'mid', pii: false },
+      { label: '婚姻登记员签名', width: 'short', pii: false }
     ], showPhoto: true, showSeal: true },
-    // 出生证
-    birth_cert: { icon: '👶', title: '出生证材料标准', wfTitle: '出生医学证明', items: [
-      '正面完整拍摄，四角可见',
-      '婴儿姓名、出生日期、父母信息清晰',
-      '医院印章和编号清晰',
-      '无折叠、无反光'
-    ], piiFields: ['婴儿姓名', '父母姓名', '出生日期'], specimen: '出生证正面·四角完整',
+    // 出生证 — 第七版(2023.4.1启用)正页+副页, 字母+9位条形码编号
+    birth_cert: { icon: '👶', title: '出生证材料标准', wfTitle: '出生医学证明 (第七版·正页+副页)', items: [
+      '正页+副页完整拍摄(不可撕切,副页由派出所裁切)',
+      '婴儿姓名(规范汉字)、性别、出生时间(精确到分)',
+      '出生医学证明编号(字母+9位条形码,黄色底)',
+      '父母姓名+身份证号、签发机构+专用章(红色)'
+    ], piiFields: ['婴儿姓名', '父母姓名', '身份证号', '出生日期'], specimen: '正页+副页·红色印章·条形码清晰',
     wfFields: [
       { label: '婴儿姓名', width: 'short', pii: true },
       { label: '出生医学证明编号', width: 'long', pii: false },
