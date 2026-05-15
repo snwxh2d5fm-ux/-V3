@@ -14,14 +14,18 @@ Page({
   },
 
   loadGuide(id) {
+    var that = this;
     // 从缓存获取攻略数据
     var cache = wx.getStorageSync('__guides_cache__') || [];
     var guide = cache.find(function(g) { return g.id === id; });
 
     if (guide) {
-      this.setData({ guide: guide });
-      this.loadRelated(guide);
-      this.checkCollection(id);
+      // 延迟渲染避免框架首次渲染时序问题
+      setTimeout(function() {
+        that.setData({ guide: guide });
+        that.loadRelated(guide);
+        that.checkCollection(id);
+      }, 50);
     } else {
       wx.showToast({ title: '攻略未找到', icon: 'none' });
     }
