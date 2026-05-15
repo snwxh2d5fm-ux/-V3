@@ -1,1 +1,2 @@
 {"ts":"2026-05-15T03:25:43Z","from":"hermes","action":"gate_inbox_done","detail":"复闸9/9通过(3P0验证PASS)，新发P1-A(listArticles→getArticles)已写inbox+NOTIFY，3份报告已回写","state":"done"}
+{"ts":"2026-05-15T11:35:00+08:00","from":"hermes","action":"gate_precheck_a723a42","detail":"verify.sh 38/39(A8假阳性), workflow-verify 36/36, Jest smoke 35/39(4todo). DevTools FAIL: 6114ca8 WXSS行号污染(6文件). ACL通知Claude已发. 等修复后重跑G3.","state":"blocked_p0"}
