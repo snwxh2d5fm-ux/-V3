@@ -11,12 +11,18 @@
 ## 执行模型
 
 ```
-WXSS/样式修复  → 麒麟玄武直接改（token替换、行号清理、CSS语法）
+WXSS/样式修复  → 天元统一commit（麒麟玄武报告→天元执行→push）
 JS/WXML/云函数 → Claude MCP直连（Claude写 → 调Hermes verify/deploy）
-闸门验证      → 麒麟玄武真机跑（verify.sh + Jest + DevTools编译）
+闸门验证      → 麒麟玄武只读（verify.sh + Jest + DevTools编译）
 进度跟踪      → PROGRESS.md + BI/DASHBOARD.md
-天元          → 巡检 + 协调 + 对接琅琊
+天元          → 巡检 + 协调 + 对接琅琊 + 唯一commit点
 ```
+
+## 基线铁律
+
+**代码修改只有一个入口：天元的 repo，通过天元 push。**
+麒麟玄武执行闸门前必须先 `git pull && git reset --hard origin/main` 对齐基线。
+麒麟玄武不得有本地修改，stash 或丢弃。
 
 ## 角色与权限
 
