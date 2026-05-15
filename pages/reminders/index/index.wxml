@@ -74,7 +74,7 @@
 
   <!-- ===== 时间线视图 ===== -->
   <view wx:if="{{viewMode === 'timeline'}}" class="timeline-view">
-    <block wx:for="{{filterStatus==='all'?allChainGroups:chainGroups}}" wx:key="chainId" wx:for-item="group">
+    <block wx:for="{{displayChainGroups}}" wx:key="chainId" wx:for-item="group">
 
       <!-- 链标题 -->
       <view class="chain-header" bindtap="viewChain" data-chain-id="{{group.chainId}}" wx:if="{{group.chainId}}">

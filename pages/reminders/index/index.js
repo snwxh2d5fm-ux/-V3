@@ -24,6 +24,8 @@ Page({
     activeReminders: [],     // 活跃提醒(未完成)
     completedReminders: [],  // 已完成
     chainGroups: [],         // 规则链分组(时间线用)
+    allChainGroups: [],      // 含已完成项
+    displayChainGroups: [],  // 当前显示用(受筛选影响)
 
     // 筛选
     filterStatus: 'all',     // 'all' | 'active' | 'completed'
@@ -273,6 +275,7 @@ Page({
       completedReminders,
       chainGroups,
       allChainGroups,
+      displayChainGroups: this.data.filterStatus === 'all' ? allChainGroups : chainGroups,
       stats,
       freeLimitReached,
       loading: false
@@ -395,7 +398,10 @@ Page({
   // ========== 筛选 ==========
   onFilterStatus(e) {
     const status = e.currentTarget.dataset.status;
-    this.setData({ filterStatus: status });
+    this.setData({
+      filterStatus: status,
+      displayChainGroups: status === 'all' ? this.data.allChainGroups : this.data.chainGroups
+    });
   },
 
   onFilterType(e) {
