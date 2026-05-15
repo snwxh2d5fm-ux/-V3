@@ -111,12 +111,25 @@ Page({
 
     var today = new Date();
     today.setHours(0, 0, 0, 0);
+
+    // 未申请用户：以今天为起点，负偏移节点(准备材料等)从现在开始而非过去
+    var app = getApp();
+    var session = wx.getStorageSync('__session__') || {};
+    var userStatus = (app && app.globalData && app.globalData.userStatus) || session.userStatus || '';
+    var minOffset = 0;
+    if (userStatus === 'unapplied' || !userStatus) {
+      template.nodes.forEach(function(n) {
+        if (n.offsetDays < minOffset) minOffset = n.offsetDays;
+      });
+    }
+    var shiftDays = minOffset < 0 ? Math.abs(minOffset) : 0;
+
     var iconMap = { milestone: '✅', deadline: '📅', renewal: '🔄', pr: '🏁', material: '📋' };
     var count = 0;
 
     template.nodes.forEach(function(node) {
       var date = new Date(today);
-      date.setDate(date.getDate() + (node.offsetDays || 0));
+      date.setDate(date.getDate() + (node.offsetDays || 0) + shiftDays);
       var y = date.getFullYear();
       var m = date.getMonth() + 1;
       var d = date.getDate();
