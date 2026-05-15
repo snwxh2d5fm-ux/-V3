@@ -34,3 +34,11 @@
 
 ## 分配
 Claude — 全部 JS/WXML/WXSS 修改
+
+## P0 (追加)
+### 7. 优才路径时间线回归旧版本
+- 文件: data/timeline-templates.js
+- 问题: 准备材料 offsetDays=-90，以当天为锚点应显示为正向阶段
+- 根因: v3.2版本的时间线切割引擎更新后模板退回到旧版本
+- 修复: 优才路径节点以当天为起点重新计算偏移，准备材料→递交→获批→激活等按实际阶段排列
+- 参考: reminder-engine 云函数的 advanedStage/verifyMilestone 逻辑
