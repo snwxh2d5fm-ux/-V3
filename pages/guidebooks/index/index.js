@@ -202,15 +202,34 @@ Page({
   loadArticles: function() {
     var self = this;
     self.setData({ articleLoading: true });
-    // 优先用本地48篇攻略填充，映射字段供旧详情页读取
+    // 优先用本地48篇攻略填充，映射完整字段供旧详情页(layers)读取
     var localGuides = require('../../../data/guidebook-data');
     var rawCards = localGuides.getAllCards ? localGuides.getAllCards() : [];
     if (rawCards.length > 0) {
-      var mapped = rawCards.map(function(c) { return {
-        id: c.id, title: c.title, knowledge_domain: c.category, topics: c.tags || [],
-        summary: c.desc || '', usefulCount: c.helpful || 0, imageUrl: '',
-        publishDate: c.updated || '', source: c.source || ''
-      }; });
+      var mapped = rawCards.map(function(c) {
+        var full = localGuides.getById ? localGuides.getById(c.id) : null;
+        // 构建layers结构
+        var layers = [];
+        if (c.desc) layers.push({ id: 'overview', title: '概览', content: c.desc, open: true });
+        if (full && full.sections) {
+          full.sections.forEach(function(s, i) {
+            layers.push({ id: 's' + i, title: s.heading || '', content: s.body || '', open: false });
+          });
+        }
+        if (full && full.pitfalls && full.pitfalls.length) {
+          layers.push({ id: 'pitfalls', title: '⚠️ 避坑指南', content: full.pitfalls.map(function(p, i) { return (i+1) + '. ' + p; }).join('\n'), open: false });
+        }
+        if (full && full.materials && full.materials.length) {
+          layers.push({ id: 'materials', title: '📎 所需材料', content: full.materials.join('\n'), open: false });
+        }
+        if (c.source) layers.push({ id: 'source', title: '📜 信息来源', content: c.source + (c.updated ? '\n更新: ' + c.updated : ''), open: false });
+        return {
+          id: c.id, title: c.title, knowledge_domain: c.category, topics: c.tags || [],
+          summary: c.desc || '', usefulCount: c.helpful || 0, imageUrl: '',
+          publishDate: c.updated || '', source: c.source || '',
+          layers: layers, lastUpdated: c.updated || ''
+        };
+      });
       wx.setStorageSync('__guides_cache__', mapped);
       self.setData({ articles: mapped, articleLoading: false });
       return;
