@@ -109,37 +109,7 @@
         </view>
         <!-- 展开详情 -->
         <view wx:if="{{expandedBrowseTaskId===item._id}}" class="browse-expand">
-          <text class="browse-desc">{{item.desc || item.description || item.content || item.subtitle || ''}}</text>
-          <!-- 步骤（数组对象） -->
-          <view wx:if="{{item.steps && item.steps.length}}" class="browse-steps">
-            <text class="browse-steps-title">步骤指引：</text>
-            <text wx:for="{{item.steps}}" wx:key="seq" wx:for-item="s" class="browse-step">• {{s.title || s.content || s}}</text>
-          </view>
-          <!-- 所需材料（字符串数组） -->
-          <view wx:if="{{item.requiredItems && item.requiredItems.length}}" class="browse-steps">
-            <text class="browse-steps-title">所需材料：</text>
-            <text wx:for="{{item.requiredItems}}" wx:key="*this" wx:for-item="ri" class="browse-step">📎 {{ri}}</text>
-          </view>
-          <!-- 贴士（字符串数组） -->
-          <view wx:if="{{item.tips && item.tips.length}}" class="browse-steps">
-            <text class="browse-steps-title">小贴士：</text>
-            <text wx:for="{{item.tips}}" wx:key="*this" wx:for-item="t" class="browse-step">💡 {{t}}</text>
-          </view>
-          <!-- 坑点（字符串数组） -->
-          <view wx:if="{{item.pitfalls && item.pitfalls.length}}" class="browse-steps">
-            <text class="browse-steps-title">常见坑点：</text>
-            <text wx:for="{{item.pitfalls}}" wx:key="*this" wx:for-item="p" class="browse-step">⚠️ {{p}}</text>
-          </view>
-          <!-- 链接（对象数组） -->
-          <view wx:if="{{item.official_links && item.official_links.length}}" class="browse-links">
-            <text class="browse-links-title">参考链接：</text>
-            <text wx:for="{{item.official_links}}" wx:key="label" wx:for-item="l" class="browse-link">🔗 {{l.label || l.url}}</text>
-          </view>
-          <!-- 纯文本字段兜底：material_list/pitfall_list 等 -->
-          <view wx:if="{{item.material_list && item.material_list.length}}" class="browse-steps">
-            <text class="browse-steps-title">所需材料：</text>
-            <text wx:for="{{item.material_list}}" wx:key="*this" wx:for-item="m" class="browse-step">📎 {{m}}</text>
-          </view>
+          <text class="browse-desc" style="white-space:pre-line">{{expandedBrowseContent}}</text>
         </view>
       </view>
       <view wx:if="{{browseTasks.length===0 && !loading}}" class="empty-hint">

@@ -45,6 +45,7 @@ Page({
     selectedAssets: {},
     expandedBrowseTask: null,
     expandedBrowseTaskId: '',
+    expandedBrowseContent: '',
     assetOptions: [
       { v: 'hkid', l: '香港身份证' },
       { v: 'bank-account', l: '银行户口' },
@@ -234,15 +235,69 @@ Page({
   onBrowseTaskTap: function(e) {
     var id = e.currentTarget.dataset.id;
     if (!id) return;
-    // 场景速查任务非攻略文章，内联展开详情而非跳转独立页
     var tasks = this.data.browseTasks;
     var task = null;
     for (var i = 0; i < tasks.length; i++) {
       if (tasks[i]._id === id) { task = tasks[i]; break; }
     }
-    if (task) {
-      this.setData({ expandedBrowseTask: task._id === this.data.expandedBrowseTaskId ? null : task, expandedBrowseTaskId: task._id === this.data.expandedBrowseTaskId ? '' : task._id });
+    if (!task) return;
+    // 已展开则收起
+    if (task._id === this.data.expandedBrowseTaskId) {
+      this.setData({ expandedBrowseTask: null, expandedBrowseTaskId: '' });
+      return;
     }
+    // 从task对象聚合所有可用字段生成详情HTML
+    var lines = [];
+    var desc = task.desc || task.description || task.content || task.summary || '';
+    if (desc) lines.push(desc);
+    // 步骤
+    if (task.steps && task.steps.length) {
+      lines.push('');
+      lines.push('【步骤指引】');
+      task.steps.forEach(function(s) { lines.push('• ' + (typeof s === 'string' ? s : (s.title || s.content || JSON.stringify(s)))); });
+    }
+    // 材料
+    var mats = task.requiredItems || task.required_items || task.material_list || task.materials || [];
+    if (mats.length) {
+      lines.push('');
+      lines.push('【所需材料】');
+      mats.forEach(function(m) { lines.push('📎 ' + (typeof m === 'string' ? m : (m.name || m.label || JSON.stringify(m)))); });
+    }
+    // 贴士
+    var tips = task.tips || task.hints || [];
+    if (tips.length) {
+      lines.push('');
+      lines.push('【小贴士】');
+      tips.forEach(function(t) { lines.push('💡 ' + (typeof t === 'string' ? t : (t.text || t.content || JSON.stringify(t)))); });
+    }
+    // 坑点
+    var pits = task.pitfalls || task.warnings || task.pitfall_list || [];
+    if (pits.length) {
+      lines.push('');
+      lines.push('【常见坑点】');
+      pits.forEach(function(p) { lines.push('⚠️ ' + (typeof p === 'string' ? p : (p.text || p.content || JSON.stringify(p)))); });
+    }
+    // 链接
+    var links = task.official_links || task.officialLinks || task.links || [];
+    if (links.length) {
+      lines.push('');
+      lines.push('【参考链接】');
+      links.forEach(function(l) { lines.push('🔗 ' + (typeof l === 'string' ? l : (l.label || l.url || JSON.stringify(l)))); });
+    }
+    // 如果没有任何详情字段，显示原始数据的JSON摘要
+    if (lines.length <= 1) {
+      var keys = Object.keys(task).filter(function(k) { return k[0] !== '_' && task[k] !== null && task[k] !== undefined && typeof task[k] !== 'object'; });
+      if (keys.length > 0) {
+        lines.push('');
+        lines.push('【其他信息】');
+        keys.forEach(function(k) { lines.push(k + ': ' + task[k]); });
+      }
+    }
+    this.setData({
+      expandedBrowseTask: task,
+      expandedBrowseTaskId: task._id,
+      expandedBrowseContent: lines.join('\n')
+    });
   },
 
   // ── Tab 2: Export ──
