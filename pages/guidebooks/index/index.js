@@ -121,6 +121,15 @@ Page({
     var phaseNames = { 0:'抵港前准备',1:'落地生存',2:'行政开户',3:'安居乐业',4:'出行融入',5:'子女教育',6:'财务税务',7:'续签准备' };
     var phaseMap = {};
 
+    // 去重: 按_id去重，防止云端数据重复导致的翻倍
+    var seen = {};
+    tasks = tasks.filter(function(t) {
+      if (!t._id) return true;
+      if (seen[t._id]) return false;
+      seen[t._id] = true;
+      return true;
+    });
+
     tasks.forEach(function(t) {
       var pt = progressTasks[t._id];
       t._completed = pt ? (pt.status === 'completed' || pt.status === 'skipped') : false;
