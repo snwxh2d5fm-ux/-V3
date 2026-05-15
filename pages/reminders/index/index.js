@@ -104,10 +104,21 @@ Page({
   // Bug #9: 执行自动生成 — 直接基于今日生成时间线提醒，无需跳转
   doAutoGenerate: function(path, pathName) {
     var that = this;
+    // 防重入：同一路径不重复生成
+    if (this._generating) return;
+    var existing = getAllReminders();
+    var hasTimeline = existing.some(function(r) { return r.pathway === path; });
+    if (hasTimeline) {
+      wx.showToast({ title: '该路径提醒已存在', icon: 'none' });
+      return;
+    }
+    this._generating = true;
+
     var TIMELINE_TEMPLATES = require('../../../data/timeline-templates').TIMELINE_TEMPLATES;
     var template = TIMELINE_TEMPLATES[path];
 
     if (!template) {
+      this._generating = false;
       wx.showToast({ title: '暂无该路径的时间线模板', icon: 'none' });
       return;
     }
@@ -163,6 +174,7 @@ Page({
       count++;
     });
 
+    this._generating = false;
     wx.showToast({ title: '已生成 ' + count + ' 个提醒节点', icon: 'success' });
     this.loadReminders();
   },
@@ -184,6 +196,17 @@ Page({
 
     var session = wx.getStorageSync('__session__') || {};
     let reminders = getAllReminders();
+    // 去重：按pathway+title去重(修复双击生成导致重复)
+    var deduped = [];
+    var seenRem = {};
+    reminders.forEach(function(r) {
+      var key = (r.pathway || '') + '||' + (r.title || '');
+      if (!seenRem[key]) { seenRem[key] = true; deduped.push(r); }
+    });
+    if (deduped.length < reminders.length) {
+      reminders = deduped;
+      saveReminders(reminders);
+    }
 
     // 云端同步
     if (app.globalData.cloudReady && app.globalData.isLoggedIn) {
