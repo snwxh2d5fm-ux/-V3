@@ -224,9 +224,9 @@
       <view wx:if="{{setupStep===4}}" class="setup-step">
         <text class="setup-q">Q5: 你已经有？(可多选，没有就跳过)</text>
         <view wx:for="{{assetOptions}}" wx:key="v"
-              class="setup-option setup-check {{setupData.existingAssets.indexOf(item.v)>=0?'selected':''}}"
+              class="setup-option setup-check {{selectedAssets[item.v]?'selected':''}}"
               data-value="{{item.v}}" bindtap="onSetupAssetToggle">
-          <text>{{setupData.existingAssets.indexOf(item.v)>=0?'☑':'☐'}} {{item.l}}</text>
+          <text>{{selectedAssets[item.v]?'☑':'☐'}} {{item.l}}</text>
         </view>
         <view class="setup-back" bindtap="onSetupBack"><text>← 返回上一步</text></view>
         <view class="btn-primary setup-confirm" bindtap="onSetupConfirm">

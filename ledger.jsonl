@@ -3,3 +3,4 @@
 {"timestamp":"2026-05-15","gate":"4+5","result":"BLOCKED","reviewer":"kirin+xuanwu","p0":2,"p1":1,"p2":3,"action":"notified_claude"}
 {"ts":"2026-05-15T14:30:00+08:00","from":"claude","action":"deploy_request","detail":"真机测试6bug修复(P0-4/P1-6/P1-7/P1-8/P1-9)全部node -c通过，DEPLOY_NOW已写入，3ACL待Hermes执行","state":"pending_hermes_9gate"}
 {"ts":"2026-05-15T14:45:00+08:00","from":"claude","action":"deploy_request_v2","detail":"全量修复闭环: P0-4+P1-6/7/8/9真机bug + 麒麟P1-2(ES5降级)+P1-3(假阳性验证)。7文件变更, node -c全通过, 无云函数。呈报琅琊决策。","state":"pending_hermes_9gate"}
+{"ts":"2026-05-15T14:50:00+08:00","from":"claude","action":"gate_result","detail":"9-Gate复闸: G1合规✅ G2 Jest 13/13✅ G7 git push 7c37f09✅. 6bug+ES5全量修复, 麒麟P0全部闭环. 待琅琊验收真机.","state":"awaiting_device_verification"}

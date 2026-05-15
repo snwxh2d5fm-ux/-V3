@@ -157,10 +157,85 @@ function formatForDisplay(audit) {
   };
 }
 
+/**
+ * OCR预处理：逐个文档上传→识别→删除临时文件
+ * @param {Array} docs - 文档数组 [{ filePath, cloudFileID, ocrData, type, docId, id }]
+ * @param {Function} onProgress - 进度回调 ({ current, total, percent, status })
+ * @returns {Array} docs — 附带 ocrData 字段的文档数组
+ */
+async function ocrDocuments(docs, onProgress) {
+  onProgress = onProgress || function(){};
+  var total = docs.length;
+  var results = [];
+
+  for (var i = 0; i < docs.length; i++) {
+    var d = docs[i];
+
+    // 已有OCR数据 → 跳过
+    if (d.ocrData) {
+      results.push(d);
+      onProgress({
+        current: i + 1, total: total,
+        percent: Math.round(((i + 1) / total) * 60),
+        status: 'skipped'
+      });
+      continue;
+    }
+
+    try {
+      // 1. 获取或上传fileID
+      var fileID = d.cloudFileID;
+      if (!fileID && d.filePath) {
+        var uploadRes = await wx.cloud.uploadFile({
+          cloudPath: '_ocr_temp/precheck_' + Date.now() + '_' + i + '.jpg',
+          filePath: d.filePath
+        });
+        fileID = uploadRes.fileID;
+      }
+
+      if (!fileID) {
+        results.push(d);
+        onProgress({
+          current: i + 1, total: total,
+          percent: Math.round(((i + 1) / total) * 60),
+          status: 'no_file'
+        });
+        continue;
+      }
+
+      // 2. 调ocr-service（传fileID，不传imagePath）
+      var ocrRes = await wx.cloud.callFunction({
+        name: 'ocr-service',
+        data: { action: 'ocr', fileID: fileID }
+      });
+
+      if (ocrRes.result && ocrRes.result.code === 0 && ocrRes.result.data) {
+        d.ocrData = ocrRes.result.data.fields || ocrRes.result.data;
+      }
+
+      // 3. 删除临时文件（零留存）
+      wx.cloud.deleteFile({ fileList: [fileID] }).catch(function(){});
+
+    } catch(e) {
+      console.error('[preaudit] OCR失败:', e);
+    }
+
+    results.push(d);
+    onProgress({
+      current: i + 1, total: total,
+      percent: Math.round(((i + 1) / total) * 60),
+      status: 'done'
+    });
+  }
+
+  return results;
+}
+
 module.exports = {
   check: check,
   getChecklist: getChecklist,
   batchCheck: batchCheck,
   getStageStatus: getStageStatus,
-  formatForDisplay: formatForDisplay
+  formatForDisplay: formatForDisplay,
+  ocrDocuments: ocrDocuments
 };

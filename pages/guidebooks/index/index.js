@@ -42,6 +42,7 @@ Page({
     currentPhase: 0,
     setupStep: 0,
     setupData: { visaType: '', familyStatus: '', arrivalScenario: '', housingIntent: '', existingAssets: [] },
+    selectedAssets: {},
     assetOptions: [
       { v: 'hkid', l: '香港身份证' },
       { v: 'bank-account', l: '银行户口' },
@@ -290,27 +291,40 @@ Page({
       // Asset toggles
       var asset = value;
       var assets = data.existingAssets.slice();
+      var selectedAssets = JSON.parse(JSON.stringify(this.data.selectedAssets));
       var idx = assets.indexOf(asset);
-      if (idx >= 0) assets.splice(idx, 1);
-      else assets.push(asset);
+      if (idx >= 0) { assets.splice(idx, 1); selectedAssets[asset] = false; }
+      else { assets.push(asset); selectedAssets[asset] = true; }
       data.existingAssets = assets;
-      this.setData({ setupData: data });
+      this.setData({ setupData: data, selectedAssets: selectedAssets });
       return;
     }
 
     this.setData({ setupStep: step + 1, setupData: data });
+    // 进入步骤4时同步 selectedAssets
+    if (step + 1 === 4) {
+      var synced = {};
+      (data.existingAssets || []).forEach(function(a) { synced[a] = true; });
+      this.setData({ selectedAssets: synced });
+    }
   },
 
   onSetupAssetToggle: function(e) {
     var asset = e.currentTarget.dataset.value;
     if (!asset) return;
     var setupData = JSON.parse(JSON.stringify(this.data.setupData));
+    var selectedAssets = JSON.parse(JSON.stringify(this.data.selectedAssets));
     var assets = setupData.existingAssets || [];
     var idx = assets.indexOf(asset);
-    if (idx >= 0) assets.splice(idx, 1);
-    else assets.push(asset);
+    if (idx >= 0) {
+      assets.splice(idx, 1);
+      selectedAssets[asset] = false;
+    } else {
+      assets.push(asset);
+      selectedAssets[asset] = true;
+    }
     setupData.existingAssets = assets;
-    this.setData({ setupData: setupData });
+    this.setData({ setupData: setupData, selectedAssets: selectedAssets });
   },
 
   onSetupBack: function() {
@@ -321,14 +335,14 @@ Page({
   onSetupConfirm: function() {
     var params = this.data.setupData;
     storage.initOnboarding(params);
-    this.setData({ showPathSetup: false, setupStep: 0 });
+    this.setData({ showPathSetup: false, setupStep: 0, selectedAssets: {} });
     this.init();
   },
 
   onSetupQuick: function() {
     var params = { visaType: 'ttps-bc', familyStatus: 'single', arrivalScenario: 'fresh', housingIntent: 'undecided', existingAssets: [] };
     storage.initOnboarding(params);
-    this.setData({ showPathSetup: false, setupStep: 0 });
+    this.setData({ showPathSetup: false, setupStep: 0, selectedAssets: {} });
     this.init();
   },
 
