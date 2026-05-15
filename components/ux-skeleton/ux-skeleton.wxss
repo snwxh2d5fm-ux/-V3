@@ -1,89 +1,88 @@
-     1|/* ux-skeleton 骨架屏样式 */
-     2|.skeleton-container {
-     3|  padding: 0 24rpx;
-     4|}
-     5|
-     6|/* shimmer 底色 */
-     7|.sk-shimmer {
-     8|  background: linear-gradient(90deg, #E8EBF0 25%, #F0F2F5 50%, #E8EBF0 75%);
-     9|  background-size: 200% 100%;
-    10|  border-radius: 6rpx;
-    11|}
-    12|.sk-animated .sk-shimmer {
-    13|  animation: skShimmer 1.5s infinite;
-    14|}
-    15|@keyframes skShimmer {
-    16|  0%   { background-position: 200% 0; }
-    17|  100% { background-position: -200% 0; }
-    18|}
-    19|
-    20|/* ── card ── */
-    21|.sk-card {
-    22|  background: var(--color-bg-card);
-    23|  border-radius: var(--radius);
-    24|  margin: 12rpx 0;
-    25|  padding: 28rpx;
-    26|  box-shadow: var(--shadow-sm);
-    27|  display: flex;
-    28|  gap: 20rpx;
-    29|}
-    30|.sk-card__img {
-    31|  width: 100rpx;
-    32|  height: 100rpx;
-    33|  border-radius: var(--radius-sm);
-    34|  flex-shrink: 0;
-    35|}
-    36|.*** { flex: 1; display: flex; flex-direction: column; gap: 12rpx; }
-    37|.*** { height: 32rpx; width: 70%; }
-    38|.*** { height: 22rpx; width: 100%; }
-    39|.sk-car...hort { width: 55%; }
-    40|
-    41|/* ── list ── */
-    42|.sk-list {
-    43|  background: var(--color-bg-card);
-    44|  padding: 22rpx 28rpx;
-    45|  display: flex;
-    46|  align-items: center;
-    47|  gap: 20rpx;
-    48|  border-bottom: 1rpx solid var(--gray-100);
-    49|}
-    50|.*** {
-    51|  width: 64rpx;
-    52|  height: 64rpx;
-    53|  border-radius: 50%;
-    54|  flex-shrink: 0;
-    55|}
-    56|.*** { flex: 1; display: flex; flex-direction: column; gap: 10rpx; }
-    57|.*** { height: 28rpx; width: 60%; }
-    58|.sk-list__sub { height: 22rpx; width: 40%; }
-    59|
-    60|/* ── grid ── */
-    61|.sk-grid {
-    62|  display: grid;
-    63|  grid-template-columns: 1fr 1fr;
-    64|  gap: 16rpx;
-    65|  margin: 12rpx 0;
-    66|}
-    67|.*** {
-    68|  background: var(--color-bg-card);
-    69|  border-radius: var(--radius);
-    70|  padding: 28rpx;
-    71|  display: flex;
-    72|  flex-direction: column;
-    73|  align-items: center;
-    74|  gap: 14rpx;
-    75|  box-shadow: var(--shadow-sm);
-    76|}
-    77|.*** { width: 68rpx; height: 68rpx; border-radius: 16rpx; }
-    78|.*** { width: 70%; height: 24rpx; }
-    79|
-    80|/* ── text ── */
-    81|.sk-text {
-    82|  display: flex;
-    83|  flex-direction: column;
-    84|  gap: 14rpx;
-    85|  padding: 24rpx 0;
-    86|}
-    87|.*** { height: 22rpx; width: 100%; }
-    88|.sk-tex...-w80 { width: 80%; }
-    89|
+/* ux-skeleton 骨架屏样式 */
+.skeleton-container {
+  padding: 0 24rpx;
+}
+
+/* shimmer 底色 */
+.sk-shimmer {
+  background: linear-gradient(90deg, #E8EBF0 25%, #F0F2F5 50%, #E8EBF0 75%);
+  background-size: 200% 100%;
+  border-radius: 6rpx;
+}
+.sk-animated .sk-shimmer {
+  animation: skShimmer 1.5s infinite;
+}
+@keyframes skShimmer {
+  0%   { background-position: 200% 0; }
+  100% { background-position: -200% 0; }
+}
+
+/* ── card ── */
+.sk-card {
+  background: var(--color-bg-card);
+  border-radius: var(--radius);
+  margin: 12rpx 0;
+  padding: 28rpx;
+  box-shadow: var(--shadow-sm);
+  display: flex;
+  gap: 20rpx;
+}
+.sk-card__img {
+  width: 100rpx;
+  height: 100rpx;
+  border-radius: var(--radius-sm);
+  flex-shrink: 0;
+}
+.*** { flex: 1; display: flex; flex-direction: column; gap: 12rpx; }
+.*** { height: 32rpx; width: 70%; }
+.*** { height: 22rpx; width: 100%; }
+.sk-car...hort { width: 55%; }
+
+/* ── list ── */
+.sk-list {
+  background: var(--color-bg-card);
+  padding: 22rpx 28rpx;
+  display: flex;
+  align-items: center;
+  gap: 20rpx;
+  border-bottom: 1rpx solid var(--gray-100);
+}
+.*** {
+  width: 64rpx;
+  height: 64rpx;
+  border-radius: 50%;
+  flex-shrink: 0;
+}
+.*** { flex: 1; display: flex; flex-direction: column; gap: 10rpx; }
+.*** { height: 28rpx; width: 60%; }
+.sk-list__sub { height: 22rpx; width: 40%; }
+
+/* ── grid ── */
+.sk-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 16rpx;
+  margin: 12rpx 0;
+}
+.*** {
+  background: var(--color-bg-card);
+  border-radius: var(--radius);
+  padding: 28rpx;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 14rpx;
+  box-shadow: var(--shadow-sm);
+}
+.*** { width: 68rpx; height: 68rpx; border-radius: 16rpx; }
+.*** { width: 70%; height: 24rpx; }
+
+/* ── text ── */
+.sk-text {
+  display: flex;
+  flex-direction: column;
+  gap: 14rpx;
+  padding: 24rpx 0;
+}
+.*** { height: 22rpx; width: 100%; }
+.sk-tex...-w80 { width: 80%; }
