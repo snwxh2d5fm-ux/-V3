@@ -156,13 +156,42 @@
     </view>
   </view>
 
-  <!-- 空状态 -->
+  <!-- 空状态：未申请 -->
   <view class="card get-started-card" wx:if="{{!activeProcess && isUnapplied}}">
     <text class="get-started-icon">🎯</text>
-    <text class="get-started-title">开始资格评估</text>
-    <text class="get-started-desc">回答15个问题，AI将根据12条路径匹配最佳方案</text>
-    <button class="btn btn--primary btn--block" bindtap="startAssessment">进入资格评估</button>
-    <text class="get-started-skip" bindtap="onSkipToPath">无需评估，直接选择路径 →</text>
+    <text class="get-started-title">开始你的身份规划</text>
+    <text class="get-started-desc">AI智能评估匹配最佳路径，或直接选择你已确定的身份规划路径</text>
+
+    <view class="get-started-btns">
+      <button class="btn btn--primary btn--block" bindtap="startAssessment">
+        🤖 AI智能评估
+      </button>
+      <view class="get-started-divider"><text>或</text></view>
+      <button class="btn btn--outline btn--block" bindtap="toggleDirectPathPicker">
+        📋 直接选择路径
+      </button>
+    </view>
+
+    <!-- 直接选择路径面板 -->
+    <view class="direct-path-picker" wx:if="{{showDirectPathPicker}}">
+      <text class="picker-title">选择你的身份规划路径</text>
+      <view class="picker-list">
+        <view wx:for="{{directPathOptions}}" wx:key="id"
+              class="picker-item {{directSelectedPath===item.id?'picker-item--active':''}}"
+              bindtap="onSelectDirectPath" data-id="{{item.id}}">
+          <text class="picker-item-icon">{{item.icon}}</text>
+          <view class="picker-item-info">
+            <text class="picker-item-name">{{item.name}}</text>
+            <text class="picker-item-desc">{{item.desc}}</text>
+          </view>
+          <text wx:if="{{directSelectedPath===item.id}}" class="picker-check">✓</text>
+        </view>
+      </view>
+      <button class="btn btn--primary btn--block" bindtap="onConfirmDirectPath"
+              disabled="{{!directSelectedPath}}" wx:if="{{directSelectedPath}}">
+        确认选择：{{directSelectedPathLabel}}
+      </button>
+    </view>
   </view>
 
   <view class="card get-started-card" wx:elif="{{!activeProcess && !isUnapplied}}">

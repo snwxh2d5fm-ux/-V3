@@ -67,15 +67,18 @@ Page({
 
     var progress = storage.getProgress();
     if (!progress) {
-      // 读取评估预填数据
+      // 读取直接选路径或评估预填数据
       var prefill = null;
+      var directPath = null;
       try { prefill = wx.getStorageSync('__assess_prefill__'); } catch(e) {}
-      if (prefill && prefill.recommendedPath) {
-        var pathMap = { 'qmas':'qmas', 'ttps':'ttps-bc', 'asmpt':'asmpt', 'iang':'iang', 'ttps-a':'ttps-a', 'ttps-bc':'ttps-bc' };
+      try { directPath = wx.getStorageSync('__direct_path__'); } catch(e) {}
+      if (directPath || (prefill && prefill.recommendedPath)) {
+        var pathMap = { 'qmas':'qmas', 'ttps':'ttps-bc', 'ttps_a':'ttps-a', 'ttps_b':'ttps-b', 'ttps_c':'ttps-c', 'asmpt':'asmpt', 'iang':'iang', 'student_iang':'iang', 'dependent':'dependent', 'cies':'dependent', 'ttps-a':'ttps-a', 'ttps-bc':'ttps-bc' };
         var familyMap = { '单身':'single', '已婚无子女':'couple', '已婚有子女（1个）':'preschool', '已婚有子女（2个+）':'preschool' };
-        var presetVisa = pathMap[prefill.recommendedPath] || '';
-        var presetFamily = familyMap[prefill.familyStatus] || '';
+        var presetVisa = directPath ? (pathMap[directPath] || directPath) : (pathMap[prefill.recommendedPath] || '');
+        var presetFamily = prefill ? (familyMap[prefill.familyStatus] || '') : '';
         var sd = { visaType: presetVisa, familyStatus: presetFamily, arrivalScenario: '', housingIntent: '', existingAssets: [] };
+        wx.removeStorageSync('__direct_path__');
         self.setData({
           loading: false, showPathSetup: true,
           setupStep: presetVisa ? 1 : 0,

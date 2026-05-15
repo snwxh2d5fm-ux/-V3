@@ -186,3 +186,17 @@
   display: flex; gap: 16rpx; width: 100%;
 }
 .disclaimer-actions .btn-flex { flex: 1; }
+
+/* 直接选择路径 */
+.get-started-btns { margin-top: 32rpx; }
+.get-started-divider { text-align: center; padding: 12rpx 0; font-size: 24rpx; color: var(--gray-400); }
+.direct-path-picker { margin-top: 24rpx; padding-top: 24rpx; border-top: 2rpx solid var(--gray-100); }
+.picker-title { font-size: 28rpx; font-weight: 600; color: var(--color-text-primary); display: block; margin-bottom: 16rpx; }
+.picker-list { display: flex; flex-direction: column; gap: 8rpx; }
+.picker-item { display: flex; align-items: center; padding: 20rpx 16rpx; background: var(--gray-50); border-radius: 12rpx; border: 2rpx solid transparent; }
+.picker-item--active { background: var(--color-primary-light); border-color: var(--color-primary); }
+.picker-item-icon { font-size: 36rpx; margin-right: 16rpx; }
+.picker-item-info { flex: 1; }
+.picker-item-name { font-size: 28rpx; font-weight: 500; color: var(--color-text-primary); display: block; }
+.picker-item-desc { font-size: 22rpx; color: var(--gray-500); display: block; margin-top: 4rpx; }
+.picker-check { font-size: 32rpx; color: var(--color-primary); font-weight: 700; }

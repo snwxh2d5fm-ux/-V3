@@ -41,6 +41,21 @@ Page({
     showTemplateSelect: false,
     templates: templates.processTemplates,
 
+    // 直接选择路径
+    showDirectPathPicker: false,
+    directSelectedPath: '',
+    directSelectedPathLabel: '',
+    directPathOptions: [
+      { id: 'qmas', name: '优才计划', icon: '🎯', desc: '综合计分制 · 12项准则≥6项' },
+      { id: 'ttps_a', name: '高才通A类', icon: '💰', desc: '年收入≥250万港币' },
+      { id: 'ttps_b', name: '高才通B类', icon: '🎓', desc: '百强本科+3年工作经验' },
+      { id: 'ttps_c', name: '高才通C类', icon: '🏃', desc: '百强本科(<3年经验)·限额' },
+      { id: 'asmpt', name: '专才计划', icon: '💼', desc: '已获香港雇主聘用' },
+      { id: 'student_iang', name: '学生→IANG', icon: '📚', desc: '香港高校毕业后留港' },
+      { id: 'dependent', name: '受养人签证', icon: '👨‍👩‍👧', desc: '配偶/子女随行来港' },
+      { id: 'cies', name: 'CIES投资类身份规划', icon: '🏦', desc: '投资≥3000万港币' }
+    ],
+
     // Bug #13: 风险提醒弹窗
     showDisclaimerPopup: false,
     disclaimerType: '',
@@ -73,7 +88,28 @@ Page({
   },
 
   goSelectIdentity() { wx.navigateTo({ url: '/pages/status-select/status-select' }); },
-  onSkipToPath() { wx.switchTab({ url: '/pages/guidebooks/index/index' }); },
+
+  toggleDirectPathPicker() {
+    this.setData({ showDirectPathPicker: !this.data.showDirectPathPicker });
+  },
+
+  onSelectDirectPath(e) {
+    var id = e.currentTarget.dataset.id;
+    var opts = this.data.directPathOptions;
+    var label = '';
+    for (var i = 0; i < opts.length; i++) {
+      if (opts[i].id === id) { label = opts[i].name; break; }
+    }
+    this.setData({ directSelectedPath: id, directSelectedPathLabel: label });
+  },
+
+  onConfirmDirectPath() {
+    var path = this.data.directSelectedPath;
+    if (!path) return;
+    wx.setStorageSync('__direct_path__', path);
+    app.globalData.selectedPath = path;
+    wx.switchTab({ url: '/pages/guidebooks/index/index' });
+  },
 
   startAssessment() {
     const persona = wx.getStorageSync('__assessment_persona__') || app.globalData._persona || 0;
