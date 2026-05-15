@@ -160,6 +160,11 @@
 
   <!-- Tab 3: 攻略精选 -->
   <view wx:elif="{{activeTab===3}}" class="tab-content">
+    <scroll-view scroll-x class="category-scroll">
+      <view wx:for="{{['全部','优才','高才通','IANG','专才','生活','税务','教育']}}"
+            wx:key="*this" class="category-tag {{articleCategory===item?'active':''}}"
+            data-category="{{item}}" bindtap="onArticleCategory"><text>{{item}}</text></view>
+    </scroll-view>
     <view wx:if="{{articleLoading}}" class="loading-wrap">
       <view class="skeleton-line" wx:for="{{[1,2,3,4,5]}}" wx:key="*this"></view>
     </view>

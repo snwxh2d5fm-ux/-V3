@@ -43,6 +43,7 @@ Page({
     setupStep: 0,
     setupData: { visaType: '', familyStatus: '', arrivalScenario: '', housingIntent: '', existingAssets: [] },
     selectedAssets: {},
+    articleCategory: '全部',
     expandedBrowseTask: null,
     expandedBrowseTaskId: '',
     expandedBrowseContent: '',
@@ -247,6 +248,19 @@ Page({
         self.setData({ articleLoading: false });
       }
     });
+  },
+
+  onArticleCategory: function(e) {
+    var cat = e.currentTarget.dataset.category;
+    this.setData({ articleCategory: cat });
+    var categoryMap = { '优才':'qmas', '高才通':'ttps', 'IANG':'iang', '专才':'asmpt', '生活':'life', '税务':'tax', '教育':'education' };
+    var key = categoryMap[cat] || '';
+    if (key) {
+      var all = wx.getStorageSync('__guides_cache__') || [];
+      this.setData({ articles: all.filter(function(a) { return a.knowledge_domain === key; }) });
+    } else {
+      this.setData({ articles: wx.getStorageSync('__guides_cache__') || [] });
+    }
   },
 
   onArticleTap: function(e) {
