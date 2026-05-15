@@ -165,7 +165,7 @@
     </view>
     <view wx:else>
       <scroll-view scroll-y class="article-list">
-        <view wx:for="{{articles}}" wx:key="_id" class="article-card" bindtap="onArticleTap" data-id="{{item._id}}">
+        <view wx:for="{{articles}}" wx:key="id" class="article-card" bindtap="onArticleTap" data-id="{{item.id}}">
           <image wx:if="{{item.cover}}" src="{{item.cover}}" class="article-cover" mode="aspectFill"/>
           <view class="article-info">
             <text class="article-title">{{item.title}}</text>
