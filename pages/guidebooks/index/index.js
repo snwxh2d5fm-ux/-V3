@@ -80,7 +80,7 @@ Page({
       var directPath = null;
       try { prefill = wx.getStorageSync('__assess_prefill__'); } catch(e) {}
       try { directPath = wx.getStorageSync('__direct_path__'); } catch(e) {}
-      if (!directPath) { directPath = app.globalData.selectedPath || ''; }
+      if (!directPath) { directPath = (getApp().globalData && getApp().globalData.selectedPath) || ''; }
       if (directPath || (prefill && prefill.recommendedPath)) {
         var pathMap = { 'qmas':'qmas', 'ttps':'ttps-bc', 'ttps_a':'ttps-a', 'ttps_b':'ttps-b', 'ttps_c':'ttps-c', 'asmpt':'asmpt', 'iang':'iang', 'student_iang':'iang', 'dependent':'dependent', 'cies':'dependent', 'ttps-a':'ttps-a', 'ttps-bc':'ttps-bc' };
         var familyMap = { '单身':'single', '已婚无子女':'couple', '已婚有子女（1个）':'preschool', '已婚有子女（2个+）':'preschool' };
