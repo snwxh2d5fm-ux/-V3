@@ -26,6 +26,7 @@ Page({
     chainGroups: [],         // 规则链分组(时间线用)
     allChainGroups: [],      // 含已完成项
     displayChainGroups: [],  // 当前显示用(受筛选影响)
+    collapsedChains: {},     // 折叠的规则链id
 
     // 筛选
     filterStatus: 'all',     // 'all' | 'active' | 'completed'
@@ -435,6 +436,14 @@ Page({
   viewChain(e) {
     const chainId = e.currentTarget.dataset.chainId;
     wx.navigateTo({ url: `/pages/reminders/detail/detail?chainId=${chainId}` });
+  },
+
+  toggleChain(e) {
+    var chainId = e.currentTarget.dataset.chainId;
+    var collapsed = JSON.parse(JSON.stringify(this.data.collapsedChains));
+    if (collapsed[chainId]) delete collapsed[chainId];
+    else collapsed[chainId] = true;
+    this.setData({ collapsedChains: collapsed });
   },
 
   // ========== 快捷操作 ==========

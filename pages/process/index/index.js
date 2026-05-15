@@ -107,9 +107,8 @@ Page({
     var path = this.data.directSelectedPath;
     if (!path) return;
     app.globalData.selectedPath = path;
-    wx.setStorageSync('__direct_path__', path);
-    // 刷新当前流程控页面
-    this.setData({ showDirectPathPicker: false });
+    // 刷新当前流程控页面并关闭面板
+    this.setData({ showDirectPathPicker: false, directSelectedPath: '', directSelectedPathLabel: '' });
     this.loadActiveProcess();
   },
 

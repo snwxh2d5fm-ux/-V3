@@ -19,19 +19,19 @@
 
   <!-- ===== 统计条 ===== -->
   <view class="stats-bar">
-    <view class="stat-item">
+    <view class="stat-item" bindtap="onFilterStatus" data-status="all">
       <text class="stat-num">{{stats.total}}</text>
       <text class="stat-label">全部</text>
     </view>
-    <view class="stat-item">
+    <view class="stat-item" bindtap="onFilterStatus" data-status="active">
       <text class="stat-num" style="color:var(--blue)">{{stats.active}}</text>
       <text class="stat-label">进行中</text>
     </view>
-    <view class="stat-item">
+    <view class="stat-item" bindtap="onFilterStatus" data-status="active">
       <text class="stat-num" style="color:var(--red)">{{stats.urgent}}</text>
       <text class="stat-label">紧急</text>
     </view>
-    <view class="stat-item">
+    <view class="stat-item" bindtap="onFilterStatus" data-status="completed">
       <text class="stat-num" style="color:var(--green)">{{stats.completed}}</text>
       <text class="stat-label">已完成</text>
     </view>
@@ -77,15 +77,15 @@
     <block wx:for="{{displayChainGroups}}" wx:key="chainId" wx:for-item="group">
 
       <!-- 链标题 -->
-      <view class="chain-header" bindtap="viewChain" data-chain-id="{{group.chainId}}" wx:if="{{group.chainId}}">
-        <view class="chain-header-left">
-          <text class="chain-icon">🔗</text>
+      <view class="chain-header" wx:if="{{group.chainId}}">
+        <view class="chain-header-left" bindtap="toggleChain" data-chain-id="{{group.chainId}}">
+          <text class="chain-icon">{{collapsedChains[group.chainId]?'▶️':'🔽'}}</text>
           <view>
             <text class="chain-title">{{group.chainLabel}}</text>
             <text class="chain-count">{{group.items.length}} 个节点</text>
           </view>
         </view>
-        <view class="chain-header-right">
+        <view class="chain-header-right" bindtap="viewChain" data-chain-id="{{group.chainId}}">
           <view class="progress" style="width:120rpx">
             <view class="progress-fill green" style="width:{{group.progress}}%"></view>
           </view>
@@ -94,7 +94,7 @@
       </view>
 
       <!-- 提醒卡片 -->
-      <block wx:for="{{group.items}}" wx:key="id" wx:for-item="reminder">
+      <block wx:if="{{!collapsedChains[group.chainId] || !group.chainId}}" wx:for="{{group.items}}" wx:key="id" wx:for-item="reminder">
         <view class="card {{reminder.statusCls}} fade-in" bindtap="viewReminder" data-id="{{reminder.id}}">
           <!-- 卡片顶部行 -->
           <view class="card-row">
