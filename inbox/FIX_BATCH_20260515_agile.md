@@ -53,3 +53,8 @@ Claude — 全部 JS/WXML/WXSS 修改
 - 文件: data/onboarding-tasks.js / cloudfunctions/queryLifeGuideTasks
 - 问题: 工作经历、资产证明、申请材料阶段不应依赖配偶子女条件
 - 修复: applicable_to 过滤条件调整，单人也应可见这些阶段
+
+### 10. 卡槽进入添加证件不应再选分类
+- 文件: pages/documents/add/add.js
+- 问题: 从证件夹卡槽点进去，仍弹出分类选择
+- 修复: 卡槽携带 docType 参数进入时，跳过分类选择步骤
