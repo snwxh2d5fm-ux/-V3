@@ -457,10 +457,13 @@ Page({
     const { activeCategory, allDocuments, searchQuery, identityOwner } = this.data;
     let docs = [...allDocuments];
 
-    // Bug #7: 按所属人过滤
+    // Bug #7: 按所属人过滤 + 工作经历/资产/申请材料仅本人
+    var SELF_ONLY = ['employment', 'financial', 'application'];
     if (identityOwner) {
       docs = docs.filter(function(d) {
         var docOwner = d.ownerType || 'self';
+        // 仅本人分类：始终只显示本人的材料
+        if (SELF_ONLY.indexOf(d.category) !== -1) return docOwner === 'self';
         return docOwner === identityOwner;
       });
     }

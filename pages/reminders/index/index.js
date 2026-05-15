@@ -124,10 +124,14 @@ Page({
     }
     var shiftDays = minOffset < 0 ? Math.abs(minOffset) : 0;
 
+    // 未申请用户：只显示资料准备→递交激活阶段，排除续签/永居节点
+    var EXCLUDE_TYPES = shiftDays > 0 ? ['renewal', 'pr'] : [];
+
     var iconMap = { milestone: '✅', deadline: '📅', renewal: '🔄', pr: '🏁', material: '📋' };
     var count = 0;
 
     template.nodes.forEach(function(node) {
+      if (EXCLUDE_TYPES.indexOf(node.type) !== -1) return;
       var date = new Date(today);
       date.setDate(date.getDate() + (node.offsetDays || 0) + shiftDays);
       var y = date.getFullYear();
