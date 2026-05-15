@@ -186,13 +186,13 @@ Page({
     var that = this;
     that.setData({ loading: true, loadError: false });
     var cached = app.globalData.__guideDetailCache__ && app.globalData.__guideDetailCache__[id];
-    // Bug #5 修复: 缓存为空壳(sections:[])时不渲染，走云端补全
-    if (cached && cached.sections && cached.sections.length > 0) {
+    // 缓存有效时渲染，但本地数据优先（缓存的云端数据可能不完整）
+    if (cached && cached.sections && cached.sections.length > 0 && !guideData.getById(id)) {
       that.renderGuide(cached);
       that.loadRelated(cached);
       return;
     }
-    if (cached && (cached.faqAnswer || (cached.steps && cached.steps.length > 0))) {
+    if (cached && (cached.faqAnswer || (cached.steps && cached.steps.length > 0)) && !guideData.getById(id)) {
       that.renderGuide(cached);
       that.loadRelated(cached);
       return;
@@ -235,6 +235,9 @@ Page({
 
   refreshFromCloud: function(id) {
     if (!app.globalData.cloudReady && !wx.cloud) return;
+    // 本地已有完整sections→不覆盖
+    var guide = this.data.guide;
+    if (guide && guide.sections && guide.sections.length >= 2) return;
     var that = this;
     wx.cloud.callFunction({ name: 'guidebook', data: { action: 'getArticleDetail', articleId: id } }).then(function(res) {
       if (res.result && res.result.code === 0 && res.result.data) {
