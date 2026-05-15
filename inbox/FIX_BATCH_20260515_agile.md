@@ -42,3 +42,14 @@ Claude — 全部 JS/WXML/WXSS 修改
 - 根因: v3.2版本的时间线切割引擎更新后模板退回到旧版本
 - 修复: 优才路径节点以当天为起点重新计算偏移，准备材料→递交→获批→激活等按实际阶段排列
 - 参考: reminder-engine 云函数的 advanedStage/verifyMilestone 逻辑
+
+### 8. 提醒器完成无打勾
+- 文件: pages/reminders/detail/detail.js
+- 问题: markComplete() 调 loadReminderDetail 但 UI 不更新打勾
+- 根因: updateReminder 未 await，loadReminderDetail 读回旧状态
+- 修复: 确保本地写入完成后再刷新 UI
+
+### 9. 优才路径—工作经历/资产/申请材料不应过滤配偶子女
+- 文件: data/onboarding-tasks.js / cloudfunctions/queryLifeGuideTasks
+- 问题: 工作经历、资产证明、申请材料阶段不应依赖配偶子女条件
+- 修复: applicable_to 过滤条件调整，单人也应可见这些阶段
