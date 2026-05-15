@@ -458,7 +458,7 @@ Page({
     let docs = [...allDocuments];
 
     // Bug #7: 按所属人过滤 + 工作经历/资产/申请材料仅本人
-    var SELF_ONLY = ['employment', 'financial', 'application'];
+    var SELF_ONLY = ['work', 'assets', 'approved'];
     if (identityOwner) {
       docs = docs.filter(function(d) {
         var docOwner = d.ownerType || 'self';

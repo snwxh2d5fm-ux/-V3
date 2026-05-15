@@ -215,8 +215,9 @@ Page({
       .filter(r => r.status === 'completed')
       .sort((a, b) => new Date(b.completedAt || 0) - new Date(a.completedAt || 0));
 
-    // 时间线: 按规则链分组
+    // 时间线: 按规则链分组（含已完成项，用于"全部"视图）
     const chainGroups = this.buildChainGroups(activeReminders);
+    const allChainGroups = this.buildChainGroups(activeReminders.concat(completedReminders));
 
     // 统计
     const stats = {
@@ -366,12 +367,17 @@ Page({
 
   // ========== 获取筛选后的提醒 ==========
   getFilteredReminders() {
-    let list = this.data.activeReminders;
+    var ft = this.data.filterType;
+    var list;
     if (this.data.filterStatus === 'completed') {
       list = this.data.completedReminders;
+    } else if (this.data.filterStatus === 'all') {
+      list = this.data.activeReminders.concat(this.data.completedReminders);
+    } else {
+      list = this.data.activeReminders;
     }
-    if (this.data.filterType !== 'all') {
-      list = list.filter(r => r.type === this.data.filterType);
+    if (ft !== 'all') {
+      list = list.filter(function(r) { return r.type === ft; });
     }
     return list;
   },
