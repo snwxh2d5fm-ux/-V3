@@ -317,7 +317,7 @@ Page({
   async markComplete() {
     wx.showLoading({ title: '更新中...' });
     try {
-      await updateReminder(this.data.reminderId, {
+      updateReminder(this.data.reminderId, {
         status: 'completed',
         completedAt: new Date().toISOString(),
         updatedAt: new Date().toISOString()

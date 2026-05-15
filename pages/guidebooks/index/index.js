@@ -209,10 +209,6 @@ Page({
     });
   },
   onCategoryTap: function(e) { this.loadBrowse(e.currentTarget.dataset.category); },
-  onBrowseTaskTap: function(e) {
-    var id = e.currentTarget.dataset.id;
-    if (id) wx.navigateTo({ url: '/pages/guidebooks/detail/detail?id=' + id });
-  },
 
   // ── Tab 2: Export ──
   onExportDossier: function() {
