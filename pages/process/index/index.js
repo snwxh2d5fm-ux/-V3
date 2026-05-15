@@ -107,10 +107,7 @@ Page({
     var path = this.data.directSelectedPath;
     if (!path) return;
     app.globalData.selectedPath = path;
-    // 保存到session供loadActiveProcess读取
-    var session = wx.getStorageSync('__session__') || {};
-    session.selectedPath = path;
-    wx.setStorageSync('__session__', session);
+    wx.setStorageSync('__direct_path__', path);
     // 刷新当前流程控页面
     this.setData({ showDirectPathPicker: false });
     this.loadActiveProcess();
