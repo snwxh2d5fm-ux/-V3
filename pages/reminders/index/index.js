@@ -153,6 +153,8 @@ Page({
         confidence: node.range ? 'C' : 'B',
         linkedDocIds: (node.materials || []),
         status: 'active',
+        offsetDays: (node.offsetDays || 0) + shiftDays,
+        pathway: path,
         createdAt: new Date().toISOString()
       });
       count++;
@@ -177,6 +179,7 @@ Page({
   async loadReminders() {
     this.setData({ loading: true });
 
+    var session = wx.getStorageSync('__session__') || {};
     let reminders = getAllReminders();
 
     // 云端同步
@@ -202,9 +205,43 @@ Page({
       }
     }
 
+    // 动态时间线：未完成节点的日期随今天漂移，直到前一个节点完成为止
+    var todayDate = new Date();
+    todayDate.setHours(0, 0, 0, 0);
+    var tlReminders = reminders.filter(function(r) { return r.offsetDays !== undefined; });
+    if (tlReminders.length > 0) {
+      // 找到第一个已完成的节点（最低offsetDays中status为completed的）
+      var firstDoneOffset = Infinity;
+      tlReminders.forEach(function(r) {
+        if (r.status === 'completed' && r.offsetDays < firstDoneOffset) {
+          firstDoneOffset = r.offsetDays;
+        }
+      });
+      // 未完成的节点：如果其offsetDays < firstDoneOffset，重新计算deadline
+      tlReminders.forEach(function(r) {
+        if (r.status !== 'completed' && r.offsetDays < firstDoneOffset) {
+          var newDate = new Date(todayDate);
+          newDate.setDate(newDate.getDate() + r.offsetDays);
+          var y = newDate.getFullYear();
+          var m = newDate.getMonth() + 1;
+          var d = newDate.getDate();
+          r.deadline = y + '-' + (m < 10 ? '0' + m : m) + '-' + (d < 10 ? '0' + d : d);
+          r.updatedAt = new Date().toISOString();
+        }
+      });
+    }
+
     // 格式化
     const now = Date.now();
-    const formatted = reminders.map(r => this.formatReminder(r));
+    var formatted = reminders.map(r => this.formatReminder(r));
+
+    // 按当前路径过滤: 有pathway的提醒只显示当前路径的
+    var currentPath = app.globalData.selectedPath || session.selectedPath || '';
+    if (currentPath) {
+      formatted = formatted.filter(function(r) {
+        return !r.pathway || r.pathway === currentPath;
+      });
+    }
 
     // 分类
     const activeReminders = formatted
