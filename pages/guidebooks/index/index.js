@@ -201,11 +201,26 @@ Page({
   loadArticles: function() {
     var self = this;
     self.setData({ articleLoading: true });
+    // 优先用本地48篇攻略填充，映射字段供旧详情页读取
+    var localGuides = require('../../../data/guidebook-data');
+    var rawCards = localGuides.getAllCards ? localGuides.getAllCards() : [];
+    if (rawCards.length > 0) {
+      var mapped = rawCards.map(function(c) { return {
+        id: c.id, title: c.title, knowledge_domain: c.category, topics: c.tags || [],
+        summary: c.desc || '', usefulCount: c.helpful || 0, imageUrl: '',
+        publishDate: c.updated || '', source: c.source || ''
+      }; });
+      wx.setStorageSync('__guides_cache__', mapped);
+      self.setData({ articles: mapped, articleLoading: false });
+      return;
+    }
+    // 兜底: 云端加载
     wx.cloud.callFunction({
       name: 'guidebook',
       data: { action: 'getArticles', limit: 50 },
       success: function(res) {
         var articles = (res.result && res.result.data && res.result.data.articles) || [];
+        if (articles.length > 0) wx.setStorageSync('__guides_cache__', articles);
         self.setData({ articles: articles, articleLoading: false });
       },
       fail: function() {
@@ -217,7 +232,7 @@ Page({
   onArticleTap: function(e) {
     var id = e.currentTarget.dataset.id;
     if (id) {
-      wx.navigateTo({ url: '/pages/guidebooks/detail/detail?id=' + id });
+      wx.navigateTo({ url: '/pages/guide/detail/detail?id=' + id });
     }
   },
   onTaskToggle: function(e) {
