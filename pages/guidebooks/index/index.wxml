@@ -189,8 +189,8 @@
       <view wx:if="{{setupStep===0}}" class="setup-step">
         <text class="setup-q">Q1: 你的签证类型？</text>
         <view wx:for="{{[{v:'qmas',l:'优才'},{v:'ttps-a',l:'高才通A类'},{v:'ttps-bc',l:'高才通BC类'},{v:'asmpt',l:'专才'},{v:'iang',l:'IANG/学生'},{v:'dependent',l:'受养人'}]}}" wx:key="v"
-              class="setup-option" data-value="{{item.v}}" bindtap="onSetupNext">
-          <text>{{item.l}}</text>
+              class="setup-option {{setupData.visaType===item.v?'selected':''}}" data-value="{{item.v}}" bindtap="onSetupNext">
+          <text>{{setupData.visaType===item.v?'☑️ ':''}}{{item.l}}</text>
         </view>
       </view>
 
@@ -198,8 +198,8 @@
       <view wx:if="{{setupStep===1}}" class="setup-step">
         <text class="setup-q">Q2: 你的家庭状态？</text>
         <view wx:for="{{[{v:'single',l:'单身'},{v:'couple',l:'情侣'},{v:'preschool',l:'带娃(学龄前)'},{v:'school-age',l:'带娃(中小学)'},{v:'teen',l:'带娃(中学以上)'}]}}" wx:key="v"
-              class="setup-option" data-value="{{item.v}}" bindtap="onSetupNext">
-          <text>{{item.l}}</text>
+              class="setup-option {{setupData.familyStatus===item.v?'selected':''}}" data-value="{{item.v}}" bindtap="onSetupNext">
+          <text>{{setupData.familyStatus===item.v?'☑️ ':''}}{{item.l}}</text>
         </view>
         <view class="setup-back" bindtap="onSetupBack"><text>← 返回上一步</text></view>
       </view>
@@ -208,8 +208,8 @@
       <view wx:if="{{setupStep===2}}" class="setup-step">
         <text class="setup-q">Q3: 你目前的状态？</text>
         <view wx:for="{{[{v:'pre-arrival',l:'还未抵港'},{v:'fresh',l:'刚抵港(1周内)'},{v:'delayed',l:'已抵港一段时间'}]}}" wx:key="v"
-              class="setup-option" data-value="{{item.v}}" bindtap="onSetupNext">
-          <text>{{item.l}}</text>
+              class="setup-option {{setupData.arrivalScenario===item.v?'selected':''}}" data-value="{{item.v}}" bindtap="onSetupNext">
+          <text>{{setupData.arrivalScenario===item.v?'☑️ ':''}}{{item.l}}</text>
         </view>
         <view class="setup-back" bindtap="onSetupBack"><text>← 返回上一步</text></view>
       </view>
@@ -218,8 +218,8 @@
       <view wx:if="{{setupStep===3}}" class="setup-step">
         <text class="setup-q">Q4: 你打算租房还是买房？</text>
         <view wx:for="{{[{v:'rent',l:'租房'},{v:'buy',l:'买房'},{v:'undecided',l:'还没想好'}]}}" wx:key="v"
-              class="setup-option" data-value="{{item.v}}" bindtap="onSetupNext">
-          <text>{{item.l}}</text>
+              class="setup-option {{setupData.housingIntent===item.v?'selected':''}}" data-value="{{item.v}}" bindtap="onSetupNext">
+          <text>{{setupData.housingIntent===item.v?'☑️ ':''}}{{item.l}}</text>
         </view>
         <view class="setup-back" bindtap="onSetupBack"><text>← 返回上一步</text></view>
       </view>
