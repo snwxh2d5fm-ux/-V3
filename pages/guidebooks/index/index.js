@@ -248,50 +248,62 @@ Page({
     }
     // 从task对象聚合所有可用字段生成详情HTML
     var lines = [];
-    var desc = task.desc || task.description || task.content || task.summary || '';
+    var desc = task.desc || task.description || task.content || task.summary || task.subtitle || '';
     if (desc) lines.push(desc);
-    // 步骤
-    if (task.steps && task.steps.length) {
+    // 步骤 — 兼容多种字段名
+    var steps = task.steps || task.step_list || [];
+    if (steps.length) {
       lines.push('');
       lines.push('【步骤指引】');
-      task.steps.forEach(function(s) { lines.push('• ' + (typeof s === 'string' ? s : (s.title || s.content || JSON.stringify(s)))); });
+      steps.forEach(function(s) { lines.push('• ' + (typeof s === 'string' ? s : (s.title || s.content || s.name || ''))); });
     }
     // 材料
     var mats = task.requiredItems || task.required_items || task.material_list || task.materials || [];
     if (mats.length) {
       lines.push('');
       lines.push('【所需材料】');
-      mats.forEach(function(m) { lines.push('📎 ' + (typeof m === 'string' ? m : (m.name || m.label || JSON.stringify(m)))); });
+      mats.forEach(function(m) { lines.push('📎 ' + (typeof m === 'string' ? m : (m.name || m.label || ''))); });
     }
     // 贴士
-    var tips = task.tips || task.hints || [];
+    var tips = task.tips || task.hints || task.tip_list || [];
     if (tips.length) {
       lines.push('');
       lines.push('【小贴士】');
-      tips.forEach(function(t) { lines.push('💡 ' + (typeof t === 'string' ? t : (t.text || t.content || JSON.stringify(t)))); });
+      tips.forEach(function(t) { lines.push('💡 ' + (typeof t === 'string' ? t : (t.text || t.content || ''))); });
     }
     // 坑点
     var pits = task.pitfalls || task.warnings || task.pitfall_list || [];
     if (pits.length) {
       lines.push('');
       lines.push('【常见坑点】');
-      pits.forEach(function(p) { lines.push('⚠️ ' + (typeof p === 'string' ? p : (p.text || p.content || JSON.stringify(p)))); });
+      pits.forEach(function(p) { lines.push('⚠️ ' + (typeof p === 'string' ? p : (p.text || p.content || ''))); });
     }
     // 链接
-    var links = task.official_links || task.officialLinks || task.links || [];
+    var links = task.official_links || task.officialLinks || task.links || task.officialLinks || [];
     if (links.length) {
       lines.push('');
       lines.push('【参考链接】');
-      links.forEach(function(l) { lines.push('🔗 ' + (typeof l === 'string' ? l : (l.label || l.url || JSON.stringify(l)))); });
+      links.forEach(function(l) { lines.push('🔗 ' + (typeof l === 'string' ? l : (l.label || l.url || ''))); });
     }
-    // 如果没有任何详情字段，显示原始数据的JSON摘要
-    if (lines.length <= 1) {
-      var keys = Object.keys(task).filter(function(k) { return k[0] !== '_' && task[k] !== null && task[k] !== undefined && typeof task[k] !== 'object'; });
-      if (keys.length > 0) {
-        lines.push('');
-        lines.push('【其他信息】');
-        keys.forEach(function(k) { lines.push(k + ': ' + task[k]); });
-      }
+    // 通过 applicable_to 显示适用范围
+    if (task.applicable_to) {
+      var at = task.applicable_to;
+      var tags = [];
+      if (at.visa_types && at.visa_types !== 'all') tags.push('适用路径: ' + (Array.isArray(at.visa_types) ? at.visa_types.join('/') : at.visa_types));
+      if (at.family_status && at.family_status !== 'all') tags.push('家庭: ' + (Array.isArray(at.family_status) ? at.family_status.join('/') : at.family_status));
+      if (at.skip_if_existing && at.skip_if_existing.length) tags.push('已有资产可跳过');
+      if (tags.length) { lines.push(''); lines.push('【适用范围】'); tags.forEach(function(t) { lines.push(t); }); }
+    }
+    // 兜底：显示所有简单字段
+    var stringKeys = Object.keys(task).filter(function(k) {
+      return k[0] !== '_' && task[k] !== null && task[k] !== undefined &&
+        typeof task[k] !== 'object' &&
+        ['title','subtitle','urgency','time_estimate','scene_tags','phase','sequence','status','desc','description','content','steps','tips','pitfalls','links'].indexOf(k) === -1;
+    });
+    if (stringKeys.length) {
+      lines.push('');
+      lines.push('【其他信息】');
+      stringKeys.forEach(function(k) { lines.push(k + ': ' + task[k]); });
     }
     this.setData({
       expandedBrowseTask: task,
