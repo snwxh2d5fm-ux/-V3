@@ -106,9 +106,14 @@ Page({
   onConfirmDirectPath() {
     var path = this.data.directSelectedPath;
     if (!path) return;
-    wx.setStorageSync('__direct_path__', path);
     app.globalData.selectedPath = path;
-    wx.switchTab({ url: '/pages/guidebooks/index/index' });
+    // 保存到session供loadActiveProcess读取
+    var session = wx.getStorageSync('__session__') || {};
+    session.selectedPath = path;
+    wx.setStorageSync('__session__', session);
+    // 刷新当前流程控页面
+    this.setData({ showDirectPathPicker: false });
+    this.loadActiveProcess();
   },
 
   startAssessment() {
@@ -160,7 +165,7 @@ Page({
       var session = wx.getStorageSync('__session__') || {};
       var userStatus = app.globalData.userStatus || session.userStatus || 'unapplied';
       var selectedPath = app.globalData.selectedPath || session.selectedPath || '';
-      if (selectedPath && userStatus !== 'unapplied') {
+      if (selectedPath) {
         var stageMap = { submitted: 3, approved: 4, permanent: 6 };
         var startStep = stageMap[userStatus] || 0;
         var pathNames = { qmas:'优才计划', ttps_a:'高才通A类', ttps_b:'高才通B类', ttps_c:'高才通C类', asmpt:'专才计划', student_iang:'学生→IANG', dependent:'受养人', cies:'CIES投资类身份规划' };

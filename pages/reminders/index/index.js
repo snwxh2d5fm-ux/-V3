@@ -272,6 +272,7 @@ Page({
       activeReminders,
       completedReminders,
       chainGroups,
+      allChainGroups,
       stats,
       freeLimitReached,
       loading: false
