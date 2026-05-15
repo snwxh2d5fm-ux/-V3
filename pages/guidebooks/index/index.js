@@ -165,7 +165,12 @@ Page({
     });
   },
 
-  // ── Tab 0: Task toggle ──
+  onArticleTap: function(e) {
+    var id = e.currentTarget.dataset.id;
+    if (id) {
+      wx.navigateTo({ url: '/pages/documents/detail/detail?id=' + id });
+    }
+  },
   onTaskToggle: function(e) {
     var taskId = e.currentTarget.dataset.id;
     var task = this.data.tasks.find(function(t) { return t._id === taskId; });
@@ -334,7 +339,13 @@ Page({
 
     if (step === 2) {
       var districtData = require('../../../data/district-data');
-      var results = districtData.matchDistricts(this.data.wizardBudget, this.data.wizardWork, this.data.wizardHasKids);
+      var budgetBrackets = districtData.BUDGET_BRACKETS;
+      var budgetId = this.data.wizardBudget;
+      var budgetValue = 10000;
+      for (var bi = 0; bi < budgetBrackets.length; bi++) {
+        if (budgetBrackets[bi].id === budgetId) { budgetValue = budgetBrackets[bi].min; break; }
+      }
+      var results = districtData.matchDistricts(budgetValue, this.data.wizardWork, this.data.wizardHasKids);
       results.forEach(function(r) {
         r.stars = r.familyFriendly ? new Array(r.familyFriendly + 1).join('⭐') : '⭐';
         r._hasSchoolNet = !!(r.schoolNet && r.schoolNet.primary > 0);
