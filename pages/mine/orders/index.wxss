@@ -1,7 +1,7 @@
 /* 我的订单列表样式 */
 
 page {
-  background: #f5f7fa;
+background: var(--gray-100);
 }
 
 .page {
@@ -16,7 +16,7 @@ page {
 }
 .loading-text {
   font-size: 28rpx;
-  color: #999;
+  color: var(--gray-400);
 }
 
 /* 空态 */
@@ -38,7 +38,7 @@ page {
 }
 .empty-desc {
   font-size: 26rpx;
-  color: #999;
+  color: var(--gray-400);
   margin-bottom: 40rpx;
 }
 .btn-primary {
@@ -58,7 +58,7 @@ page {
 }
 
 .order-card {
-  background: #fff;
+  background: var(--white);
   border-radius: 16rpx;
   padding: 28rpx;
   margin-bottom: 20rpx;
@@ -105,7 +105,7 @@ page {
 
 .order-label {
   font-size: 26rpx;
-  color: #999;
+  color: var(--gray-400);
 }
 
 .order-value {

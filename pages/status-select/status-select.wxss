@@ -1,7 +1,7 @@
 /* 住港伴 v4.2 — 身份状态选择页 */
 .container {
   min-height: 100vh;
-  background: #f5f5f5;
+  background: var(--gray-100);
   padding-bottom: 140rpx;
 }
 
@@ -22,7 +22,7 @@
 .hero__title {
   font-size: 40rpx;
   font-weight: 800;
-  color: #202124;
+color: var(--color-text);
   display: block;
   margin-bottom: 8rpx;
   letter-spacing: 1rpx;
@@ -43,7 +43,7 @@
 /* ===== 单张状态卡片 ===== */
 .status-card {
   margin-bottom: 16rpx;
-  background: #fff;
+  background: var(--white);
   border-radius: 20rpx;
   overflow: hidden;
   box-shadow: 0 2rpx 16rpx rgba(0,0,0,0.04);
@@ -83,7 +83,7 @@
 .status-card__title {
   font-size: 30rpx;
   font-weight: 700;
-  color: #202124;
+color: var(--color-text);
   display: block;
 }
 .status-card__desc {
@@ -148,7 +148,7 @@
   gap: 4rpx;
   padding: 12rpx 22rpx;
   border-radius: 24rpx;
-  background: #f5f5f5;
+  background: var(--gray-100);
   font-size: 26rpx;
   color: #555;
   transition: all 0.2s;
@@ -166,7 +166,7 @@
 .upload-box {
   margin-top: 20rpx;
   padding: 16rpx;
-  background: #fafafa;
+background: var(--blue-light);
   border-radius: 14rpx;
   border: 1rpx dashed #ddd;
 }
@@ -174,19 +174,19 @@
 .upload-box__label {
   font-size: 26rpx;
   font-weight: 600;
-  color: #202124;
+color: var(--color-text);
   display: block;
 }
 .upload-box__hint {
   font-size: 22rpx;
-  color: #999;
+  color: var(--gray-400);
   margin-top: 4rpx;
   display: block;
 }
 
 .upload-area {
   padding: 36rpx 24rpx;
-  background: #fff;
+  background: var(--white);
   border-radius: 12rpx;
   text-align: center;
   border: 2rpx dashed #e0e0e0;
@@ -214,7 +214,7 @@
   height: 96rpx;
   border-radius: 48rpx;
   background: linear-gradient(135deg, var(--color-primary), #4a9af5);
-  color: #fff;
+  color: var(--white);
   font-size: 32rpx;
   font-weight: 700;
   border: none;
@@ -227,7 +227,7 @@
 .confirm-btn:active { transform: scale(0.97); opacity: 0.9; }
 
 .confirm-btn--disabled {
-  background: #e0e0e0;
+background: var(--blue);
   color: #aaa;
   box-shadow: none;
 }
@@ -247,7 +247,7 @@
 .local-hint__icon { font-size: 28rpx; }
 .local-hint__text {
   font-size: 24rpx;
-  color: #0369A1;
+color: var(--blue);
   line-height: 1.5;
   flex: 1;
 }
@@ -289,7 +289,7 @@
 }
 .ocr-box__hint {
   font-size: 22rpx;
-  color: #999;
+  color: var(--gray-400);
 }
 /* ========== 本地拍照留存 ========== */
 .local-capture {
@@ -324,7 +324,7 @@
 /* 拍照区域 */
 .local-capture__area {
   display: flex; flex-direction: column; align-items: center; justify-content: center;
-  padding: 40rpx 20rpx; background: #fff; border: 2rpx dashed var(--gray-300);
+  padding: 40rpx 20rpx; background: var(--white); border: 2rpx dashed var(--gray-300);
   border-radius: 12rpx; transition: all 0.2s;
 }
 .local-capture__area:active { border-color: var(--color-primary); background: #FAFBFF; }

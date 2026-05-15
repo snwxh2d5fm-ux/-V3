@@ -1,4 +1,4 @@
-/* pages/home/home.wxss — v5令牌重构 (DSG-1 P0-03) */
+/* pages/home/home.wxss — v6 品牌欢迎体验 (DSG-3) */
 .page {
   min-height: 100vh;
   display: flex;
@@ -6,23 +6,31 @@
   align-items: center;
   justify-content: center;
 }
+
+/* ═══ 加载屏 ═══ */
 .loading-screen {
   display: flex;
   flex-direction: column;
   align-items: center;
   gap: 24rpx;
+  background: var(--white);
+  padding: 80rpx;
+  border-radius: var(--radius-lg);
+  box-shadow: var(--shadow-md);
+  animation: fadeIn var(--duration-slow) var(--easing);
 }
 .logo-text {
-  font-size: 48rpx;
+  font-size: 52rpx;
   font-weight: 800;
   color: var(--blue);
+  letter-spacing: 2rpx;
 }
 .loading-dot {
   font-size: var(--font-md);
   color: var(--gray-400);
 }
 
-/* 欢迎页 */
+/* ═══ 欢迎页 ═══ */
 .welcome {
   display: flex;
   flex-direction: column;
@@ -35,14 +43,18 @@
   display: flex;
   flex-direction: column;
   align-items: center;
-  margin-bottom: 60rpx;
+  margin-bottom: 48rpx;
 }
-.app-icon { font-size: 100rpx; }
+.app-icon {
+  font-size: 100rpx;
+  filter: drop-shadow(0 4rpx 16rpx rgba(26,115,232,0.15));
+}
 .app-name {
-  font-size: 48rpx;
+  font-size: 52rpx;
   font-weight: 800;
   color: var(--color-text);
   margin-top: 16rpx;
+  letter-spacing: 2rpx;
 }
 .tagline {
   font-size: var(--font-md);
@@ -50,10 +62,11 @@
   margin-top: 8rpx;
 }
 
+/* ═══ 特性卡片 ═══ */
 .features {
   display: flex;
-  gap: 24rpx;
-  margin-bottom: 60rpx;
+  gap: 16rpx;
+  margin-bottom: 48rpx;
   width: 100%;
 }
 .feature {
@@ -63,10 +76,14 @@
   align-items: center;
   gap: 8rpx;
   padding: 24rpx 12rpx;
-  background: var(--gray-50);
-  border-radius: var(--radius-pill, 20rpx);
+  background: var(--white);
+  border-radius: var(--radius);
+  box-shadow: var(--shadow-sm);
+  border: 1rpx solid var(--gray-100);
+  transition: transform var(--duration-fast);
 }
-.feat-icon { font-size: 40rpx; }
+.feature:active { transform: scale(0.97); }
+.feat-icon { font-size: 36rpx; }
 .feat-title {
   font-size: var(--font-sm);
   font-weight: 600;
@@ -76,26 +93,35 @@
   font-size: var(--font-xs);
   color: var(--gray-400);
   text-align: center;
+  line-height: 1.4;
 }
 
+/* ═══ 登录区 ═══ */
 .login-area {
   width: 100%;
   display: flex;
   flex-direction: column;
   align-items: center;
-  gap: 16rpx;
+  gap: 12rpx;
 }
 .login-btn {
   width: 100%;
-  background: var(--blue);
+  background: var(--gradient-hero);
   color: var(--white);
   border-radius: var(--radius);
   font-size: var(--font-lg);
   font-weight: 600;
   padding: 28rpx;
   text-align: center;
+  box-shadow: 0 4rpx 20rpx rgba(26,115,232,0.25);
+  transition: all var(--duration-fast);
+}
+.login-btn:active {
+  opacity: 0.9;
+  transform: scale(0.98);
 }
 .login-btn::after { border: none; }
+
 .privacy-check {
   font-size: var(--font-xs);
   color: var(--gray-400);
@@ -103,20 +129,24 @@
   line-height: 1.4;
 }
 .footer-links {
-  margin-top: 40rpx;
+  margin-top: 32rpx;
   font-size: var(--font-sm);
   color: var(--blue);
 }
 
-/* 锁定页 */
+/* ═══ 锁定页 ═══ */
 .locked-screen {
   display: flex;
   flex-direction: column;
   align-items: center;
-  padding: 120rpx 48rpx;
+  padding: 80rpx 48rpx;
   text-align: center;
 }
-.lock-icon { font-size: 100rpx; margin-bottom: 24rpx; }
+.lock-icon {
+  font-size: 96rpx;
+  margin-bottom: 24rpx;
+  filter: grayscale(0.3);
+}
 .lock-title {
   font-size: var(--font-xl);
   font-weight: 700;
@@ -128,13 +158,17 @@
   color: var(--gray-500);
   margin-bottom: 40rpx;
   line-height: 1.6;
+  max-width: 500rpx;
 }
 .upgrade-btn {
   width: 80%;
-  background: var(--blue);
+  background: var(--gradient-membership);
   color: var(--white);
   border-radius: var(--radius);
   font-size: var(--font-lg);
+  font-weight: 600;
   padding: 24rpx;
+  box-shadow: 0 4rpx 20rpx rgba(26,115,232,0.3);
 }
 .upgrade-btn::after { border: none; }
+.upgrade-btn:active { opacity: 0.9; transform: scale(0.98); }

@@ -13,7 +13,7 @@ page {
   justify-content: center;
   padding: 200rpx 0;
 }
-.loading-text { font-size: 28rpx; color: #999; }
+.loading-text { font-size: 28rpx; color: var(--gray-400); }
 
 /* 成功页 */
 .success-card {
@@ -32,12 +32,12 @@ page {
 .order-summary {
   margin: 24rpx 32rpx;
   padding: 28rpx 32rpx;
-  background: #fff;
+  background: var(--white);
   border-radius: 16rpx;
   box-shadow: 0 2rpx 12rpx rgba(0,0,0,0.04);
 }
 
-.summary-label { font-size: 24rpx; color: #999; display: block; margin-bottom: 8rpx; }
+.summary-label { font-size: 24rpx; color: var(--gray-400); display: block; margin-bottom: 8rpx; }
 .summary-name { font-size: 30rpx; font-weight: 600; color: #333; display: block; }
 .summary-amount { font-size: 40rpx; font-weight: 800; color: var(--color-error); display: block; margin-top: 8rpx; }
 
@@ -60,7 +60,7 @@ page {
 }
 
 .type-option.active {
-  background: #fff;
+  background: var(--white);
   color: var(--color-primary);
   font-weight: 600;
   box-shadow: 0 2rpx 8rpx rgba(0,0,0,0.08);
@@ -72,7 +72,7 @@ page {
 }
 
 .field-group {
-  background: #fff;
+  background: var(--white);
   border-radius: 14rpx;
   padding: 28rpx 32rpx;
   margin-bottom: 16rpx;
@@ -105,7 +105,7 @@ page {
 
 .field-hint {
   font-size: 22rpx;
-  color: #999;
+  color: var(--gray-400);
   display: block;
   margin-top: 8rpx;
 }
@@ -160,7 +160,7 @@ page {
   margin: 16rpx 32rpx;
   height: 80rpx;
   line-height: 80rpx;
-  background: #fff;
+  background: var(--white);
   color: var(--color-primary);
   border: 2rpx solid var(--color-primary);
   border-radius: 14rpx;

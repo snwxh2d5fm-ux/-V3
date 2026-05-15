@@ -155,7 +155,7 @@ Page({
     self.setData({ articleLoading: true });
     wx.cloud.callFunction({
       name: 'guidebook',
-      data: { action: 'listArticles', limit: 50 },
+      data: { action: 'getArticles', limit: 50 },
       success: function(res) {
         var articles = (res.result && res.result.articles) || [];
         self.setData({ articles: articles, articleLoading: false });

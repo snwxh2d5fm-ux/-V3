@@ -1,7 +1,7 @@
 /* 订单详情样式 */
 
 page {
-  background: #f5f7fa;
+background: var(--gray-100);
 }
 
 .page {
@@ -13,7 +13,7 @@ page {
   justify-content: center;
   padding: 200rpx 0;
 }
-.loading-text { font-size: 28rpx; color: #999; }
+.loading-text { font-size: 28rpx; color: var(--gray-400); }
 
 .empty-wrap {
   display: flex;
@@ -22,11 +22,11 @@ page {
   padding: 160rpx 40rpx;
 }
 .empty-icon { font-size: 80rpx; margin-bottom: 24rpx; }
-.empty-text { font-size: 32rpx; color: #333; font-weight: 600; margin-bottom: 40rpx; }
+.empty-text { font-size: 32rpx; color: var(--gray-700); font-weight: 600; margin-bottom: 40rpx; }
 
 .detail-card {
   margin: 24rpx 32rpx;
-  background: #fff;
+  background: var(--white);
   border-radius: 20rpx;
   overflow: hidden;
 }
@@ -80,7 +80,7 @@ page {
 
 .amount-label {
   font-size: 24rpx;
-  color: #999;
+  color: var(--gray-400);
   display: block;
   margin-top: 4rpx;
 }
@@ -93,7 +93,7 @@ page {
 .info-title {
   font-size: 28rpx;
   font-weight: 600;
-  color: #333;
+  color: var(--gray-700);
   margin-bottom: 16rpx;
 }
 
@@ -106,18 +106,18 @@ page {
 
 .info-label {
   font-size: 26rpx;
-  color: #999;
+  color: var(--gray-400);
 }
 
 .info-value {
   font-size: 26rpx;
-  color: #333;
+  color: var(--gray-700);
 }
 
 .info-value.mono {
   font-family: 'Courier New', monospace;
   font-size: 22rpx;
-  color: #666;
+  color: var(--gray-500);
   max-width: 360rpx;
   word-break: break-all;
   text-align: right;
@@ -155,7 +155,7 @@ page {
   width: 100%;
   height: 80rpx;
   line-height: 80rpx;
-  background: #fff;
+  background: var(--white);
   color: var(--color-primary);
   border: 2rpx solid var(--color-primary);
   border-radius: 14rpx;

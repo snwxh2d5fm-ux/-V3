@@ -1,92 +1,93 @@
-/* 住港伴 v4 — 我的页面样式 */
-
-.user-section{display:flex;align-items:center;gap:16rpx}
-.user-name{font-size:var(--font-lg);font-weight:600;color:var(--color-bg-card);display:block}
-.user-status{font-size:var(--font-xs);color:rgba(255,255,255,.7);display:block}
-.membership-card{background:linear-gradient(135deg,var(--color-primary-dark),var(--color-info));color:var(--color-bg-card);text-align:left;padding:28rpx}
-
-/* ===== 商务后台卡片 ===== */
-.biz-backend-card {
-  border: 2rpx dashed var(--blue);
-  background: linear-gradient(180deg, var(--blue-light), var(--white));
-  margin-top: 24rpx;
-}
-.biz-header {
-  display: flex;
-  align-items: center;
-  gap: 12rpx;
-  margin-bottom: 16rpx;
-}
-.biz-icon { font-size: 36rpx; }
-.biz-title { font-size: var(--font-md); font-weight: 700; color: var(--blue); }
-.biz-desc {
-  font-size: var(--font-xs);
-  color: var(--gray-500);
-  line-height: 2;
-  display: block;
-  margin-bottom: 16rpx;
-  white-space: pre-line;
-}
-.biz-url {
-  background: var(--gray-100);
-  border-radius: var(--radius-sm);
-  padding: 14rpx 20rpx;
-}
-.biz-url-text {
-  font-size: var(--font-xs);
-  color: var(--gray-600);
-  font-weight: 500;
-}
-
-/* ===== 个人数据保险箱 ===== */
-.data-vault-card {
-  background: linear-gradient(135deg, #7C3AED, #A855F7);
-  padding: 0;
-  margin-top: 24rpx;
-  border-radius: var(--radius);
-  overflow: hidden;
-}
-.vault-content {
-  display: flex;
-  align-items: center;
-  padding: 28rpx;
-  gap: 20rpx;
-}
-.vault-icon-large {
-  font-size: 56rpx;
-  flex-shrink: 0;
-}
-.vault-info {
-  flex: 1;
-  display: flex;
-  flex-direction: column;
-  gap: 6rpx;
-}
-.vault-title {
-  font-size: var(--font-md);
-  font-weight: 700;
-  color: var(--color-bg-card);
-}
-.vault-desc {
-  font-size: var(--font-xs);
-  color: rgba(255,255,255,0.8);
-  line-height: 1.5;
-}
-.vault-arrow {
-  font-size: 36rpx;
-  color: rgba(255,255,255,0.6);
-  flex-shrink: 0;
-}
-
-/* ===== 设置分组间距 ===== */
-.settings-group {
-  margin-top: 16rpx;
-}
-
-/* ===== 页脚 ===== */
-.version-footer {
-  text-align: center;
-  padding: 20rpx;
-  font-size: var(--font-xs);
-  color: var(--gray-400);
-}
+     1|/* 住港伴 v4 — 我的页面样式 */
+     2|
+     3|.user-section{display:flex;align-items:center;gap:16rpx}
+     4|.user-name{font-size:var(--font-lg);font-weight:600;color:var(--color-bg-card);display:block}
+     5|.user-status{font-size:var(--font-xs);color:rgba(255,255,255,.7);display:block}
+     6|.membership-card{background:linear-gradient(135deg,var(--color-primary-dark),var(--color-info));color:var(--color-bg-card);text-align:left;padding:28rpx}
+     7|
+     8|/* ===== 商务后台卡片 ===== */
+     9|.biz-backend-card {
+    10|  border: 2rpx dashed var(--color-primary);
+    11|  background: linear-gradient(180deg, var(--color-primary-light), var(--color-bg-card));
+    12|  margin-top: 24rpx;
+    13|}
+    14|.biz-header {
+    15|  display: flex;
+    16|  align-items: center;
+    17|  gap: 12rpx;
+    18|  margin-bottom: 16rpx;
+    19|}
+    20|.biz-icon { font-size: 36rpx; }
+    21|.biz-title { font-size: var(--font-md); font-weight: 700; color: var(--color-primary); }
+    22|.biz-desc {
+    23|  font-size: var(--font-xs);
+    24|  color: var(--gray-500);
+    25|  line-height: 2;
+    26|  display: block;
+    27|  margin-bottom: 16rpx;
+    28|  white-space: pre-line;
+    29|}
+    30|.biz-url {
+    31|  background: var(--gray-100);
+    32|  border-radius: var(--radius-sm);
+    33|  padding: 14rpx 20rpx;
+    34|}
+    35|.biz-url-text {
+    36|  font-size: var(--font-xs);
+    37|  color: var(--gray-600);
+    38|  font-weight: 500;
+    39|}
+    40|
+    41|/* ===== 个人数据保险箱 ===== */
+    42|.data-vault-card {
+    43|  background: linear-gradient(135deg, #7C3AED, #A855F7);
+    44|  padding: 0;
+    45|  margin-top: 24rpx;
+    46|  border-radius: var(--radius);
+    47|  overflow: hidden;
+    48|}
+    49|.vault-content {
+    50|  display: flex;
+    51|  align-items: center;
+    52|  padding: 28rpx;
+    53|  gap: 20rpx;
+    54|}
+    55|.vault-icon-large {
+    56|  font-size: 56rpx;
+    57|  flex-shrink: 0;
+    58|}
+    59|.vault-info {
+    60|  flex: 1;
+    61|  display: flex;
+    62|  flex-direction: column;
+    63|  gap: 6rpx;
+    64|}
+    65|.vault-title {
+    66|  font-size: var(--font-md);
+    67|  font-weight: 700;
+    68|  color: var(--color-bg-card);
+    69|}
+    70|.vault-desc {
+    71|  font-size: var(--font-xs);
+    72|  color: rgba(255,255,255,0.8);
+    73|  line-height: 1.5;
+    74|}
+    75|.vault-arrow {
+    76|  font-size: 36rpx;
+    77|  color: rgba(255,255,255,0.6);
+    78|  flex-shrink: 0;
+    79|}
+    80|
+    81|/* ===== 设置分组间距 ===== */
+    82|.settings-group {
+    83|  margin-top: 16rpx;
+    84|}
+    85|
+    86|/* ===== 页脚 ===== */
+    87|.version-footer {
+    88|  text-align: center;
+    89|  padding: 20rpx;
+    90|  font-size: var(--font-xs);
+    91|  color: var(--gray-400);
+    92|}
+    93|

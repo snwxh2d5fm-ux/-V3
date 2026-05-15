@@ -1,312 +1,313 @@
-/**
- * 住港伴 v4.1 — 提醒器主页样式
- * 时间线视图 + 列表视图切换
- */
-
-/* ===== 顶部Header扩展 ===== */
-.header-left { flex: 1; }
-.header-right { display: flex; gap: 12rpx; align-items: center; }
-.header-icon-btn {
-  font-size: 40rpx;
-  padding: 8rpx 12rpx;
-  border-radius: var(--radius-sm);
-  background: rgba(255,255,255,0.2);
-}
-
-/* ===== 统计条 ===== */
-.stats-bar {
-  display: flex;
-  justify-content: space-around;
-  padding: 20rpx 24rpx;
-  background: var(--white);
-  margin: 16rpx 24rpx 0;
-  border-radius: var(--radius);
-  box-shadow: var(--shadow-sm);
-}
-.stat-item {
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  gap: 4rpx;
-}
-.stat-num {
-  font-size: var(--font-xl);
-  font-weight: 800;
-  color: var(--color-text);
-}
-.stat-label {
-  font-size: var(--font-xs);
-  color: var(--color-text-secondary);
-}
-
-/* ===== 筛选栏 ===== */
-.filter-row {
-  padding: 12rpx 0;
-}
-.filter-scroll {
-  white-space: nowrap;
-  padding: 0 24rpx;
-}
-.filter-chip {
-  display: inline-block;
-  padding: 8rpx 20rpx;
-  margin-right: 10rpx;
-  border-radius: 24rpx;
-  font-size: var(--font-xs);
-  font-weight: 500;
-  color: var(--gray-500);
-  background: var(--gray-100);
-  transition: all 0.2s;
-}
-.filter-chip.active {
-  color: var(--white);
-  background: var(--blue);
-}
-
-/* ===== 时间线视图 ===== */
-.timeline-view {
-  padding: 0 24rpx;
-}
-
-/* 链标题 */
-.chain-header {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  padding: 20rpx 8rpx 10rpx;
-  margin-top: 12rpx;
-}
-.chain-header-left {
-  display: flex;
-  align-items: center;
-  gap: 10rpx;
-}
-.chain-icon {
-  font-size: 28rpx;
-}
-.chain-title {
-  font-size: var(--font-sm);
-  font-weight: 700;
-  color: var(--color-text);
-  display: block;
-}
-.chain-count {
-  font-size: var(--font-xs);
-  color: var(--color-text-secondary);
-}
-.chain-header-right {
-  display: flex;
-  align-items: center;
-  gap: 10rpx;
-}
-.chain-progress-text {
-  font-size: var(--font-xs);
-  color: var(--green);
-  font-weight: 700;
-  min-width: 48rpx;
-  text-align: right;
-}
-
-/* 提醒卡片 */
-.reminder-title {
-  font-size: var(--font-lg);
-  font-weight: 700;
-  color: var(--color-text);
-  display: block;
-  margin: 10rpx 0 6rpx;
-}
-.reminder-desc {
-  font-size: var(--font-sm);
-  color: var(--color-text-secondary);
-  display: block;
-  line-height: 1.5;
-  overflow: hidden;
-  text-overflow: ellipsis;
-  white-space: nowrap;
-}
-
-/* 卡片标签行 */
-.card-tags {
-  display: flex;
-  gap: 8rpx;
-  flex-wrap: wrap;
-}
-.card-date {
-  font-size: var(--font-xs);
-  color: var(--gray-500);
-  flex-shrink: 0;
-}
-
-/* 倒计时行 */
-.countdown-row {
-  display: flex;
-  align-items: center;
-  gap: 12rpx;
-  margin-top: 12rpx;
-}
-.countdown-badge {
-  display: inline-flex;
-  align-items: center;
-  padding: 6rpx 16rpx;
-  border-radius: 20rpx;
-  font-size: var(--font-xs);
-  font-weight: 700;
-  color: var(--gray-600);
-  background: var(--gray-100);
-}
-.countdown-badge.urgent {
-  color: var(--red);
-  background: var(--red-light);
-}
-.countdown-badge.warning {
-  color: var(--orange);
-  background: var(--orange-light);
-}
-
-.linked-doc-badge {
-  font-size: var(--font-xs);
-  color: var(--blue);
-}
-
-/* 卡片操作 */
-.card-actions {
-  display: flex;
-  gap: 12rpx;
-  margin-top: 16rpx;
-  padding-top: 14rpx;
-  border-top: 1rpx solid var(--gray-100);
-}
-
-/* 已完成标记 */
-.completed-mark {
-  margin-top: 12rpx;
-  padding-top: 10rpx;
-  border-top: 1rpx solid var(--gray-100);
-}
-
-/* ===== 列表视图 ===== */
-.list-view {
-  padding: 0 24rpx;
-}
-
-.list-item-left {
-  flex-shrink: 0;
-  width: 48rpx;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-}
-.list-status-icon {
-  font-size: 28rpx;
-  color: var(--gray-400);
-  font-weight: 700;
-}
-.list-status-icon.done {
-  color: var(--green);
-}
-.list-status-icon.urgent {
-  color: var(--red);
-}
-
-.list-item-meta {
-  display: flex;
-  align-items: center;
-  gap: 10rpx;
-  margin-top: 4rpx;
-}
-.list-item-date {
-  font-size: var(--font-xs);
-  color: var(--color-text-secondary);
-}
-
-.list-item-right {
-  display: flex;
-  align-items: center;
-  gap: 8rpx;
-  flex-shrink: 0;
-}
-
-.countdown-mini {
-  font-size: var(--font-xs);
-  font-weight: 600;
-  color: var(--gray-500);
-}
-.countdown-mini.urgent {
-  color: var(--red);
-}
-.countdown-mini.warning {
-  color: var(--orange);
-}
-
-/* ===== 添加菜单弹层 ===== */
-.modal-title {
-  font-size: var(--font-lg);
-  font-weight: 700;
-  text-align: center;
-  padding: 8rpx 0 20rpx;
-  color: var(--color-text);
-}
-
-.add-option {
-  display: flex;
-  align-items: center;
-  gap: 16rpx;
-  padding: 22rpx 32rpx;
-  border-bottom: 1rpx solid var(--gray-100);
-  position: relative;
-}
-.add-option:active { background: var(--gray-50); }
-.add-option-icon {
-  font-size: 40rpx;
-  flex-shrink: 0;
-  width: 56rpx;
-  text-align: center;
-}
-.add-option-info {
-  flex: 1;
-  min-width: 0;
-}
-.add-option-title {
-  font-size: var(--font-md);
-  font-weight: 600;
-  display: block;
-}
-.add-option-desc {
-  font-size: var(--font-xs);
-  color: var(--color-text-secondary);
-  display: block;
-  margin-top: 4rpx;
-}
-
-.pro-badge {
-  position: absolute;
-  right: 48rpx;
-  top: 50%;
-  transform: translateY(-50%);
-  padding: 2rpx 10rpx;
-  border-radius: 6rpx;
-  font-size: 18rpx;
-  font-weight: 700;
-  color: var(--white);
-  background: linear-gradient(135deg, #F59E0B, var(--color-warning));
-}
-
-/* ===== 其他 ===== */
-.tag-xs {
-  padding: 2rpx 10rpx !important;
-  font-size: 20rpx !important;
-}
-.empty-sub {
-  font-size: var(--font-xs);
-  color: var(--color-text-muted);
-  margin-top: 8rpx;
-}
-
-/* ===== 动画 ===== */
-@keyframes fadeIn {
-  from { opacity: 0; transform: translateY(10rpx); }
-  to { opacity: 1; transform: translateY(0); }
-}
-.fade-in {
-  animation: fadeIn 0.3s ease;
-}
+     1|     1|/**
+     2|     2| * 住港伴 v4.1 — 提醒器主页样式
+     3|     3| * 时间线视图 + 列表视图切换
+     4|     4| */
+     5|     5|
+     6|     6|/* ===== 顶部Header扩展 ===== */
+     7|     7|.header-left { flex: 1; }
+     8|     8|.header-right { display: flex; gap: 12rpx; align-items: center; }
+     9|     9|.header-icon-btn {
+    10|    10|  font-size: 40rpx;
+    11|    11|  padding: 8rpx 12rpx;
+    12|    12|  border-radius: var(--radius-sm);
+    13|    13|  background: rgba(255,255,255,0.2);
+    14|    14|}
+    15|    15|
+    16|    16|/* ===== 统计条 ===== */
+    17|    17|.stats-bar {
+    18|    18|  display: flex;
+    19|    19|  justify-content: space-around;
+    20|    20|  padding: 20rpx 24rpx;
+    21|    21|  background: var(--color-bg-card);
+    22|    22|  margin: 16rpx 24rpx 0;
+    23|    23|  border-radius: var(--radius);
+    24|    24|  box-shadow: var(--shadow-sm);
+    25|    25|}
+    26|    26|.stat-item {
+    27|    27|  display: flex;
+    28|    28|  flex-direction: column;
+    29|    29|  align-items: center;
+    30|    30|  gap: 4rpx;
+    31|    31|}
+    32|    32|.stat-num {
+    33|    33|  font-size: var(--font-xl);
+    34|    34|  font-weight: 800;
+    35|    35|  color: var(--color-text-primary);
+    36|    36|}
+    37|    37|.stat-label {
+    38|    38|  font-size: var(--font-xs);
+    39|    39|  color: var(--color-text-secondary);
+    40|    40|}
+    41|    41|
+    42|    42|/* ===== 筛选栏 ===== */
+    43|    43|.filter-row {
+    44|    44|  padding: 12rpx 0;
+    45|    45|}
+    46|    46|.filter-scroll {
+    47|    47|  white-space: nowrap;
+    48|    48|  padding: 0 24rpx;
+    49|    49|}
+    50|    50|.filter-chip {
+    51|    51|  display: inline-block;
+    52|    52|  padding: 8rpx 20rpx;
+    53|    53|  margin-right: 10rpx;
+    54|    54|  border-radius: 24rpx;
+    55|    55|  font-size: var(--font-xs);
+    56|    56|  font-weight: 500;
+    57|    57|  color: var(--gray-500);
+    58|    58|  background: var(--gray-100);
+    59|    59|  transition: all 0.2s;
+    60|    60|}
+    61|    61|.filter-chip.active {
+    62|    62|  color: var(--color-bg-card);
+    63|    63|  background: var(--color-primary);
+    64|    64|}
+    65|    65|
+    66|    66|/* ===== 时间线视图 ===== */
+    67|    67|.timeline-view {
+    68|    68|  padding: 0 24rpx;
+    69|    69|}
+    70|    70|
+    71|    71|/* 链标题 */
+    72|    72|.chain-header {
+    73|    73|  display: flex;
+    74|    74|  align-items: center;
+    75|    75|  justify-content: space-between;
+    76|    76|  padding: 20rpx 8rpx 10rpx;
+    77|    77|  margin-top: 12rpx;
+    78|    78|}
+    79|    79|.chain-header-left {
+    80|    80|  display: flex;
+    81|    81|  align-items: center;
+    82|    82|  gap: 10rpx;
+    83|    83|}
+    84|    84|.chain-icon {
+    85|    85|  font-size: 28rpx;
+    86|    86|}
+    87|    87|.chain-title {
+    88|    88|  font-size: var(--font-sm);
+    89|    89|  font-weight: 700;
+    90|    90|  color: var(--color-text-primary);
+    91|    91|  display: block;
+    92|    92|}
+    93|    93|.chain-count {
+    94|    94|  font-size: var(--font-xs);
+    95|    95|  color: var(--color-text-secondary);
+    96|    96|}
+    97|    97|.chain-header-right {
+    98|    98|  display: flex;
+    99|    99|  align-items: center;
+   100|   100|  gap: 10rpx;
+   101|   101|}
+   102|   102|.chain-progress-text {
+   103|   103|  font-size: var(--font-xs);
+   104|   104|  color: var(--color-success);
+   105|   105|  font-weight: 700;
+   106|   106|  min-width: 48rpx;
+   107|   107|  text-align: right;
+   108|   108|}
+   109|   109|
+   110|   110|/* 提醒卡片 */
+   111|   111|.reminder-title {
+   112|   112|  font-size: var(--font-lg);
+   113|   113|  font-weight: 700;
+   114|   114|  color: var(--color-text-primary);
+   115|   115|  display: block;
+   116|   116|  margin: 10rpx 0 6rpx;
+   117|   117|}
+   118|   118|.reminder-desc {
+   119|   119|  font-size: var(--font-sm);
+   120|   120|  color: var(--color-text-secondary);
+   121|   121|  display: block;
+   122|   122|  line-height: 1.5;
+   123|   123|  overflow: hidden;
+   124|   124|  text-overflow: ellipsis;
+   125|   125|  white-space: nowrap;
+   126|   126|}
+   127|   127|
+   128|   128|/* 卡片标签行 */
+   129|   129|.card-tags {
+   130|   130|  display: flex;
+   131|   131|  gap: 8rpx;
+   132|   132|  flex-wrap: wrap;
+   133|   133|}
+   134|   134|.card-date {
+   135|   135|  font-size: var(--font-xs);
+   136|   136|  color: var(--gray-500);
+   137|   137|  flex-shrink: 0;
+   138|   138|}
+   139|   139|
+   140|   140|/* 倒计时行 */
+   141|   141|.countdown-row {
+   142|   142|  display: flex;
+   143|   143|  align-items: center;
+   144|   144|  gap: 12rpx;
+   145|   145|  margin-top: 12rpx;
+   146|   146|}
+   147|   147|.countdown-badge {
+   148|   148|  display: inline-flex;
+   149|   149|  align-items: center;
+   150|   150|  padding: 6rpx 16rpx;
+   151|   151|  border-radius: 20rpx;
+   152|   152|  font-size: var(--font-xs);
+   153|   153|  font-weight: 700;
+   154|   154|  color: var(--gray-600);
+   155|   155|  background: var(--gray-100);
+   156|   156|}
+   157|   157|.countdown-badge.urgent {
+   158|   158|  color: var(--red);
+   159|   159|  background: var(--red-light);
+   160|   160|}
+   161|   161|.countdown-badge.warning {
+   162|   162|  color: var(--orange);
+   163|   163|  background: var(--orange-light);
+   164|   164|}
+   165|   165|
+   166|   166|.linked-doc-badge {
+   167|   167|  font-size: var(--font-xs);
+   168|   168|  color: var(--color-primary);
+   169|   169|}
+   170|   170|
+   171|   171|/* 卡片操作 */
+   172|   172|.card-actions {
+   173|   173|  display: flex;
+   174|   174|  gap: 12rpx;
+   175|   175|  margin-top: 16rpx;
+   176|   176|  padding-top: 14rpx;
+   177|   177|  border-top: 1rpx solid var(--gray-100);
+   178|   178|}
+   179|   179|
+   180|   180|/* 已完成标记 */
+   181|   181|.completed-mark {
+   182|   182|  margin-top: 12rpx;
+   183|   183|  padding-top: 10rpx;
+   184|   184|  border-top: 1rpx solid var(--gray-100);
+   185|   185|}
+   186|   186|
+   187|   187|/* ===== 列表视图 ===== */
+   188|   188|.list-view {
+   189|   189|  padding: 0 24rpx;
+   190|   190|}
+   191|   191|
+   192|   192|.list-item-left {
+   193|   193|  flex-shrink: 0;
+   194|   194|  width: 48rpx;
+   195|   195|  display: flex;
+   196|   196|  align-items: center;
+   197|   197|  justify-content: center;
+   198|   198|}
+   199|   199|.list-status-icon {
+   200|   200|  font-size: 28rpx;
+   201|   201|  color: var(--gray-400);
+   202|   202|  font-weight: 700;
+   203|   203|}
+   204|   204|.list-status-icon.done {
+   205|   205|  color: var(--color-success);
+   206|   206|}
+   207|   207|.list-status-icon.urgent {
+   208|   208|  color: var(--red);
+   209|   209|}
+   210|   210|
+   211|   211|.list-item-meta {
+   212|   212|  display: flex;
+   213|   213|  align-items: center;
+   214|   214|  gap: 10rpx;
+   215|   215|  margin-top: 4rpx;
+   216|   216|}
+   217|   217|.list-item-date {
+   218|   218|  font-size: var(--font-xs);
+   219|   219|  color: var(--color-text-secondary);
+   220|   220|}
+   221|   221|
+   222|   222|.list-item-right {
+   223|   223|  display: flex;
+   224|   224|  align-items: center;
+   225|   225|  gap: 8rpx;
+   226|   226|  flex-shrink: 0;
+   227|   227|}
+   228|   228|
+   229|   229|.countdown-mini {
+   230|   230|  font-size: var(--font-xs);
+   231|   231|  font-weight: 600;
+   232|   232|  color: var(--gray-500);
+   233|   233|}
+   234|   234|.countdown-mini.urgent {
+   235|   235|  color: var(--red);
+   236|   236|}
+   237|   237|.countdown-mini.warning {
+   238|   238|  color: var(--orange);
+   239|   239|}
+   240|   240|
+   241|   241|/* ===== 添加菜单弹层 ===== */
+   242|   242|.modal-title {
+   243|   243|  font-size: var(--font-lg);
+   244|   244|  font-weight: 700;
+   245|   245|  text-align: center;
+   246|   246|  padding: 8rpx 0 20rpx;
+   247|   247|  color: var(--color-text-primary);
+   248|   248|}
+   249|   249|
+   250|   250|.add-option {
+   251|   251|  display: flex;
+   252|   252|  align-items: center;
+   253|   253|  gap: 16rpx;
+   254|   254|  padding: 22rpx 32rpx;
+   255|   255|  border-bottom: 1rpx solid var(--gray-100);
+   256|   256|  position: relative;
+   257|   257|}
+   258|   258|.add-option:active { background: var(--gray-50); }
+   259|   259|.add-option-icon {
+   260|   260|  font-size: 40rpx;
+   261|   261|  flex-shrink: 0;
+   262|   262|  width: 56rpx;
+   263|   263|  text-align: center;
+   264|   264|}
+   265|   265|.add-option-info {
+   266|   266|  flex: 1;
+   267|   267|  min-width: 0;
+   268|   268|}
+   269|   269|.add-option-title {
+   270|   270|  font-size: var(--font-md);
+   271|   271|  font-weight: 600;
+   272|   272|  display: block;
+   273|   273|}
+   274|   274|.add-option-desc {
+   275|   275|  font-size: var(--font-xs);
+   276|   276|  color: var(--color-text-secondary);
+   277|   277|  display: block;
+   278|   278|  margin-top: 4rpx;
+   279|   279|}
+   280|   280|
+   281|   281|.pro-badge {
+   282|   282|  position: absolute;
+   283|   283|  right: 48rpx;
+   284|   284|  top: 50%;
+   285|   285|  transform: translateY(-50%);
+   286|   286|  padding: 2rpx 10rpx;
+   287|   287|  border-radius: 6rpx;
+   288|   288|  font-size: 22rpx;  /* a11y: was 18rpx */
+   289|   289|  font-weight: 700;
+   290|   290|  color: var(--color-bg-card);
+   291|   291|  background: linear-gradient(135deg, #F59E0B, var(--color-warning));
+   292|   292|}
+   293|   293|
+   294|   294|/* ===== 其他 ===== */
+   295|   295|.tag-xs {
+   296|   296|  padding: 2rpx 10rpx !important;
+   297|   297|  font-size: 20rpx !important;
+   298|   298|}
+   299|   299|.empty-sub {
+   300|   300|  font-size: var(--font-xs);
+   301|   301|  color: var(--color-text-muted);
+   302|   302|  margin-top: 8rpx;
+   303|   303|}
+   304|   304|
+   305|   305|/* ===== 动画 ===== */
+   306|   306|@keyframes fadeIn {
+   307|   307|  from { opacity: 0; transform: translateY(10rpx); }
+   308|   308|  to { opacity: 1; transform: translateY(0); }
+   309|   309|}
+   310|   310|.fade-in {
+   311|   311|  animation: fadeIn 0.3s ease;
+   312|   312|}
+   313|   313|

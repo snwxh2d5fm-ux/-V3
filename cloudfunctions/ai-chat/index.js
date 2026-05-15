@@ -1,21 +1,24 @@
 /**
- * 住港伴 — AI 对话云函数 v2.1 (ai-chat)
+ * 住港伴 — AI 对话云函数 v3.0 (ai-chat)
  *
- * v2.1 改进 (2026-05-12):
- *   [P0] RAG集成: API不可用时查询 knowledge_chunks (8,779文档) 替代硬编码Mock
- *   [P0] 多轮对话: 支持 history[] 数组，完整会话上下文传递给DeepSeek
+ * v3.0 改进 (2026-05-15):
+ *   [P0] 升级为 CloudBase 内置模型: 使用 @cloudbase/node-sdk AI (hunyuan-v3/hy3-preview)
+ *        移除外部 DeepSeek API 依赖，无需自备 API Key
+ *   [P0] hunyuan-exp → hunyuan-v3: 响应官方升级要求（2026-05-30 下线前）
+ *
+ * v2.1 保留:
+ *   [P0] RAG集成: API不可用时查询 knowledge_chunks 替代硬编码Mock
+ *   [P0] 多轮对话: 支持 history[] 数组，完整会话上下文传递
  *   [P0] 意图自动识别: autoDetectMode() 免手动传 mode
- *   [P0] 流式输出: 支持 stream:true + SSE 解析 (微信小程序兼容)
  *
- * 输入: { sessionId, message, mode?, history?, context?, stream? }
+ * 输入: { sessionId, message, mode?, history?, context? }
  * 输出: { code, message, data: { messageId, content, quickReplies, assessmentResult, mode, source } }
  *
- * 环境变量:
- *   DEEPSEEK_API_KEY - DeepSeek API 密钥
- *   DEEPSEEK_MODEL   - 模型名称（默认 deepseek-chat）
+ * 环境变量 (不再需要 DEEPSEEK_API_KEY):
+ *   AI_PROVIDER  - 模型提供商: "hunyuan-v3" (默认)
+ *   AI_MODEL     - 模型名称: "hy3-preview" (默认)
  */
-const https = require('https');
-const { URL } = require('url');
+const tcb = require('@cloudbase/node-sdk');
 const prompts = require('./prompts');
 
 // wx-server-sdk 初始化（优先测试mock global.cloud，生产环境使用 wx-server-sdk）
@@ -31,47 +34,61 @@ if (!cloud || typeof cloud.callFunction !== 'function') {
   }
 }
 
-const DEEPSEEK_BASE_URL = 'https://api.deepseek.com/v1';
-const MAX_HISTORY_TURNS = 10; // 最多保留最近10轮对话
-const RAG_TOP_K = 5;          // RAG 检索返回条数
+// @cloudbase/node-sdk 初始化 (用于 CloudBase 内置 AI 模型)
+var tcbApp = null;
+try {
+  tcbApp = tcb.init({ env: process.env.ENV_ID || (cloud && cloud.DYNAMIC_CURRENT_ENV) });
+  console.log('[ai-chat v3] CloudBase AI 初始化成功, provider:', process.env.AI_PROVIDER || 'hunyuan-v3');
+} catch (e) {
+  console.warn('[ai-chat v3] CloudBase AI 初始化失败, 将降级到 RAG:', e.message);
+}
+
+const AI_PROVIDER = process.env.AI_PROVIDER || 'hunyuan-v3';
+const AI_MODEL = process.env.AI_MODEL || 'hy3-preview';
+const MAX_HISTORY_TURNS = 10;
+const RAG_TOP_K = 5;
 
 // ============================================================
-//  HTTP 工具
+//  CloudBase AI 调用 (hunyuan-v3 / hy3-preview)
 // ============================================================
-function httpPostJson(url, body, headers, timeoutMs) {
-  return new Promise((resolve, reject) => {
-    const parsedUrl = new URL(url);
-    const options = {
-      method: 'POST',
-      hostname: parsedUrl.hostname,
-      path: parsedUrl.pathname + parsedUrl.search,
-      headers: Object.assign({
-        'Content-Type': 'application/json',
-        'Content-Length': Buffer.byteLength(body, 'utf8')
-      }, headers || {}),
-      timeout: timeoutMs || 25000
-    };
+async function callCloudBaseAI(messages) {
+  if (!tcbApp) {
+    console.warn('[ai-chat v3] tcbApp 未初始化，无法调用 CloudBase AI');
+    return null;
+  }
 
-    const req = https.request(options, (res) => {
-      let data = '';
-      res.on('data', (chunk) => { data += chunk; });
-      res.on('end', () => {
-        resolve({
-          ok: res.statusCode >= 200 && res.statusCode < 300,
-          status: res.statusCode,
-          text: async () => data,
-          json: async () => JSON.parse(data)
+  try {
+    console.log('[ai-chat v3] Calling CloudBase AI, model:', AI_MODEL, 'provider:', AI_PROVIDER);
+
+    var model = tcbApp.ai().createModel(AI_PROVIDER);
+    var result = await model.generateText({
+      model: AI_MODEL,
+      messages: messages
+    });
+
+    console.log('[ai-chat v3] CloudBase AI success, usage:', JSON.stringify(result.usage));
+    return { result: result, source: 'cloudbase-ai' };
+  } catch (error) {
+    console.error('[ai-chat v3] CloudBase AI failed:', error.message || error);
+
+    // 降级到 hunyuan-v3 的其他模型
+    if (AI_PROVIDER !== 'hunyuan-v3') {
+      try {
+        console.log('[ai-chat v3] 降级到 hunyuan-v3 provider');
+        var fallbackModel = tcbApp.ai().createModel('hunyuan-v3');
+        var fallbackResult = await fallbackModel.generateText({
+          model: 'hy3-preview',
+          messages: messages
         });
-      });
-    });
+        console.log('[ai-chat v3] hunyuan-v3 降级成功');
+        return { result: fallbackResult, source: 'cloudbase-ai-fallback' };
+      } catch (fallbackErr) {
+        console.error('[ai-chat v3] hunyuan-v3 降级也失败:', fallbackErr.message || fallbackErr);
+      }
+    }
 
-    req.on('timeout', () => {
-      req.destroy(new Error('Request timeout after ' + (timeoutMs || 25000) + 'ms'));
-    });
-    req.on('error', reject);
-    req.write(body);
-    req.end();
-  });
+    return null;
+  }
 }
 
 // ============================================================
@@ -79,23 +96,16 @@ function httpPostJson(url, body, headers, timeoutMs) {
 // ============================================================
 function autoDetectMode(message) {
   if (!message || typeof message !== 'string') return 'general';
-  var msg = message.toLowerCase();
 
-  // assessment 意图: 评估/自评/测评/测试/能不能/可以吗/适合
   if (/评估|测评|自评|测一下|我能不能|我能不|我适合|我可以|我行吗/.test(message)) {
     return 'assessment';
   }
-
-  // solution_recommend 意图: 推荐/方案/选择/哪个好/对比/路径
   if (/推荐|方案|选择|哪个好|对比|路径|更适合|怎么选/.test(message)) {
     return 'solution_recommend';
   }
-
-  // qa 意图: 计划/条件/申请/签证/续签/永居/材料/政策
   if (/优才|高才|专才|IANG|iang|QMAS|qmas|TTPS|ttps|ASMTP|asmpt|续签|永居|条件|政策|材料|费用|收入|学历|工作经验/.test(message)) {
     return 'qa';
   }
-
   return 'general';
 }
 
@@ -104,37 +114,32 @@ function autoDetectMode(message) {
 // ============================================================
 async function queryKnowledgeBase(message, chatMode) {
   try {
-    // 调用 rag-search 云函数做关键词检索
     var ragResult = await cloud.callFunction({
       name: 'rag-search',
       data: {
         action: 'keyword',
         query: message,
         topK: RAG_TOP_K,
-        filters: {
-          content_grade: ['green', 'yellow'],  // 仅返回优质内容
-        }
+        filters: { content_grade: ['green', 'yellow'] }
       }
     });
 
     if (!ragResult.result || !ragResult.result.ok || !ragResult.result.data) {
-      console.warn('[ai-chat v2] rag-search 返回异常，使用兜底');
+      console.warn('[ai-chat v3] rag-search 返回异常，使用兜底');
       return null;
     }
 
     var data = ragResult.result.data;
     var results = data.results || [];
-
     if (results.length === 0) {
-      console.log('[ai-chat v2] RAG 无匹配结果');
+      console.log('[ai-chat v3] RAG 无匹配结果');
       return null;
     }
 
-    // 构建基于知识库的回答
     var chunks = results.map(function(r, i) {
       var title = r.source_title ? '【' + r.source_title + '】' : '';
       var confidence = r.confidence ? ' [置信度:' + (r.confidence * 100).toFixed(0) + '%]' : '';
-      var content = (r.content || '').substring(0, 300); // 每条截取300字
+      var content = (r.content || '').substring(0, 300);
       return (i + 1) + '. ' + title + '\n' + content + confidence;
     });
 
@@ -160,57 +165,49 @@ async function queryKnowledgeBase(message, chatMode) {
         { id: 'start_assess', text: '开始免费评估' }
       ],
       source: 'knowledge_chunks',
-      matchCount: results.length,
-      filteredByK2: data.filtered_by_k2 || 0
+      matchCount: results.length
     };
   } catch (e) {
-    console.error('[ai-chat v2] RAG 查询失败:', e.message);
+    console.error('[ai-chat v3] RAG 查询失败:', e.message);
     return null;
   }
 }
 
 // ============================================================
-//  Mock 兜底响应 (RAG 也失败时的最后防线)
+//  Mock 兜底响应
 // ============================================================
 function generateFallbackResponse(message, chatMode) {
-  var msgLower = (message || '').toLowerCase();
-
   if (chatMode === 'qa') {
-    // V2.0: 兜底时引导用户而非假装知道答案
     return {
       content: '很抱歉，我暂时无法获取相关信息。\n\n建议：\n• 查阅香港入境事务处官网 www.immd.gov.hk\n• 使用"攻略书"模块浏览已整理的官方政策\n• 尝试重新提问，或换个方式描述您的问题\n\n如需个案建议，请咨询香港持牌律师。',
       quickReplies: [
         { id: 'start_assess', text: '进行资格评估' },
-        { id: 'qr_guidebook', text: '查看攻略书' },
+        { id: 'qr_guidebook', text: '查看攻略书' }
       ],
       source: 'fallback'
     };
   }
-
   if (chatMode === 'general') {
     return {
-      content: '您好！我是住港伴AI助手 v2.1。\n\n我可以帮助您：\n• 🎯 评估香港身份路径（12条路径全覆盖）\n• 📋 检索入境政策信息（联网+知识库双引擎）\n• 📖 推荐流程攻略\n• 📄 整理材料清单和提醒\n\n请随时告诉我您的需求！',
+      content: '您好！我是住港伴AI助手 v3.0。\n\n我可以帮助您：\n• 🎯 评估香港身份路径（12条路径全覆盖）\n• 📋 检索入境政策信息（知识库+AI双引擎）\n• 📖 推荐流程攻略\n• 📄 整理材料清单和提醒\n\n请随时告诉我您的需求！',
       quickReplies: [
         { id: 'start_assess', text: '开始免费评估' },
-        { id: 'ask_policy', text: '咨询政策问题' },
+        { id: 'ask_policy', text: '咨询政策问题' }
       ],
       source: 'fallback'
     };
   }
-
   if (chatMode === 'solution_recommend') {
     return {
-      content: '🏷️ 方案推荐引擎 v2.0\n\n为了给您最精准的路径推荐，请先完成资格评估，系统将基于您的画像自动匹配最优方案。\n\n或直接告诉我您的背景（年龄/学历/收入/行业），我可以快速推荐适合的路径。',
+      content: '🏷️ 方案推荐引擎 v3.0\n\n为了给您最精准的路径推荐，请先完成资格评估，系统将基于您的画像自动匹配最优方案。\n\n或直接告诉我您的背景（年龄/学历/收入/行业），我可以快速推荐适合的路径。',
       quickReplies: [
         { id: 'start_assess', text: '开始精准评估' },
         { id: 'qr_qmas', text: '了解优才计划' },
-        { id: 'qr_ttps', text: '了解高才通' },
+        { id: 'qr_ttps', text: '了解高才通' }
       ],
       source: 'fallback'
     };
   }
-
-  // assessment 模式
   return {
     content: '感谢您的回答！让我们继续评估流程。',
     quickReplies: undefined,
@@ -219,11 +216,9 @@ function generateFallbackResponse(message, chatMode) {
 }
 
 // ============================================================
-//  AI 调用: 优先 CloudBase AI (hunyuan 免费Token) → 降级 DeepSeek
+//  AI 请求构建
 // ============================================================
-//  DeepSeek API 调用
-// ============================================================
-function buildDeepSeekRequest(messages, mode, v5Corrections, stream, pageCtx) {
+function buildAIRequest(messages, mode, v5Corrections, pageCtx) {
   var systemPrompt = prompts.getSystemPrompt(mode, pageCtx || {});
 
   if (v5Corrections) {
@@ -236,82 +231,9 @@ function buildDeepSeekRequest(messages, mode, v5Corrections, stream, pageCtx) {
       '6. 【V6反旧计分】优才2024.11改革: 旧综合计分制(80-120分)已废除, 现为12项是/否准则(≥6即可)。严禁提及"分数""打分""计分""80分/100分/120分"等旧概念！';
   }
 
-  return {
-    model: process.env.DEEPSEEK_MODEL || 'deepseek-chat',
-    messages: [
-      { role: 'system', content: systemPrompt }
-    ].concat(messages),
-    temperature: 0.7,
-    max_tokens: 2048,
-    stream: stream || false,
-  };
-}
-
-function withTimeout(promise, ms) {
-  return Promise.race([
-    promise,
-    new Promise((_, reject) =>
-      setTimeout(() => reject(new Error('API call timeout after ' + ms + 'ms')), ms)
-    )
-  ]);
-}
-
-async function callDeepSeek(requestBody) {
-  var apiKey = process.env.DEEPSEEK_API_KEY;
-
-  if (!apiKey) {
-    console.warn('DEEPSEEK_API_KEY 未设置，使用知识库检索');
-    return null;
-  }
-
-  var apiTimeout = requestBody.stream ? 45000 : 25000;
-
-  try {
-    var body = JSON.stringify(requestBody);
-    console.log('[ai-chat v2] Calling DeepSeek, model:', requestBody.model, 'stream:', requestBody.stream);
-
-    var response;
-    if (typeof fetch === 'function') {
-      var fetchPromise = fetch(DEEPSEEK_BASE_URL + '/chat/completions', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-          'Authorization': 'Bearer ' + apiKey,
-        },
-        body: body,
-      });
-      response = await withTimeout(fetchPromise, apiTimeout);
-    } else {
-      response = await httpPostJson(DEEPSEEK_BASE_URL + '/chat/completions', body, {
-        'Authorization': 'Bearer ' + apiKey
-      }, apiTimeout);
-    }
-
-    if (!response.ok) {
-      var errorText = await response.text();
-      throw new Error('DeepSeek API error: ' + response.status + ' ' + errorText);
-    }
-
-    var result = await response.json();
-    console.log('[ai-chat v2] DeepSeek success, usage:', JSON.stringify(result.usage));
-    return { result: result, source: 'deepseek' };
-  } catch (error) {
-    console.error('[ai-chat v2] DeepSeek API failed:', error.message || error);
-    return null;
-  }
-}
-
-// ============================================================
-//  V2.0: 流式 SSE 解析
-// ============================================================
-async function callDeepSeekStream(requestBody) {
-  var apiKey = process.env.DEEPSEEK_API_KEY;
-  if (!apiKey) return null;
-
-  // 对微信小程序云函数，流式输出需要特殊处理
-  // 当前返回完整内容 + stream_fragment 标记
-  // 完整 SSE 实现需小程序的 wx.request 支持 enableChunked
-  return null; // 暂返回 null 走降级; 微信小程序云函数不完全支持 SSE
+  return [
+    { role: 'system', content: systemPrompt }
+  ].concat(messages);
 }
 
 // ============================================================
@@ -321,7 +243,6 @@ function parseAssessmentResult(content) {
   var marker = 'ASSESS_RESULT:';
   var idx = content.indexOf(marker);
   if (idx === -1) return undefined;
-
   try {
     var jsonStr = content.substring(idx + marker.length).trim();
     var start = jsonStr.indexOf('{');
@@ -346,9 +267,8 @@ function generateAssessmentQuickReplies(step) {
     { id: 'income', options: ['250万港币+', '100-250万', '50-100万', '30-50万', '低于30万'] },
     { id: 'company', options: ['世界500强/上市公司', '知名企业', '中小企业', '创业/自雇', '自由职业'] },
     { id: 'language', options: ['中文（母语）', '英语（流利）', '英语（一般）', '粤语', '其他外语'] },
-    { id: 'family', options: ['单身', '已婚无子女', '已婚有子女（1个）', '已婚有子女（2个+）'] },
+    { id: 'family', options: ['单身', '已婚无子女', '已婚有子女（1个）', '已婚有子女（2个+）'] }
   ];
-
   if (step >= 0 && step < questions.length) {
     return questions[step].options.map(function (text, i) {
       return { id: questions[step].id + '_' + i, text: text };
@@ -368,11 +288,9 @@ function parseQuickReplies(content) {
   var marker = '```quick_replies';
   var idx = content.indexOf(marker);
   if (idx === -1) return null;
-
   var afterMarker = content.substring(idx + marker.length);
   var endIdx = afterMarker.indexOf('```');
   if (endIdx === -1) return null;
-
   var jsonStr = afterMarker.substring(0, endIdx).trim();
   try {
     var replies = JSON.parse(jsonStr);
@@ -386,7 +304,7 @@ function parseQuickReplies(content) {
 }
 
 // ============================================================
-//  云函数入口 v2.1
+//  云函数入口 v3.0
 // ============================================================
 exports.main = async function (event, context) {
   var sessionId = event.sessionId;
@@ -394,33 +312,24 @@ exports.main = async function (event, context) {
   var mode = event.mode;
   var history = event.history || [];
   var sessionContext = event.context;
-  var requestStream = event.stream === true;
 
-  // 参数校验
   if (!message || typeof message !== 'string' || message.trim().length === 0) {
-    return {
-      code: 400,
-      message: '消息内容不能为空',
-      data: null,
-    };
+    return { code: 400, message: '消息内容不能为空', data: null };
   }
 
-  // V2.0: 自动意图识别
   var validModes = ['assessment', 'qa', 'general', 'solution_recommend'];
   var chatMode = validModes.indexOf(mode) > -1 ? mode : autoDetectMode(message);
   if (mode && validModes.indexOf(mode) === -1) {
-    console.log('[ai-chat v2] mode "' + mode + '" 无效，自动识别为: ' + chatMode);
+    console.log('[ai-chat v3] mode "' + mode + '" 无效，自动识别为: ' + chatMode);
   }
 
   var v5Corrections = sessionContext && sessionContext.v5Corrections === true;
 
   try {
-    // --- V2.0: 构建多轮对话消息 ---
+    // --- 构建多轮对话消息 ---
     var messages = [];
-
-    // 裁剪 history 到最近 MAX_HISTORY_TURNS 轮
     if (Array.isArray(history) && history.length > 0) {
-      var trimmedHistory = history.slice(-MAX_HISTORY_TURNS * 2); // 每轮 user+assistant
+      var trimmedHistory = history.slice(-MAX_HISTORY_TURNS * 2);
       for (var h = 0; h < trimmedHistory.length; h++) {
         var entry = trimmedHistory[h];
         if (entry.role === 'user' || entry.role === 'assistant') {
@@ -428,29 +337,24 @@ exports.main = async function (event, context) {
         }
       }
     }
-
-    // 追加当前消息
     messages.push({ role: 'user', content: message });
 
-    // Bug #17 修复: 不再注入原始sessionContext JSON（绕过隐私规则，画像已在system prompt中）
-    // 仅注入非画像的会话上下文（page行为信息），帮助模型理解当前浏览场景
     if (sessionContext && (sessionContext.page || sessionContext.chatTopics)) {
       var ctxHint = {};
       if (sessionContext.page) ctxHint.page = sessionContext.page;
       if (sessionContext.chatTopics) ctxHint.topic = sessionContext.chatTopics;
       messages.unshift({
         role: 'user',
-        content: '[系统] 当前浏览场景：' + JSON.stringify(ctxHint),
+        content: '[系统] 当前浏览场景：' + JSON.stringify(ctxHint)
       });
     }
 
-    // --- 调用 DeepSeek API ---
+    // --- 调用 AI ---
     var content;
     var quickReplies;
     var assessmentResult;
     var responseSource = 'unknown';
 
-    // 构建用户画像上下文（四层权重）
     var userProfile = {};
     if (sessionContext && sessionContext.userStatus) userProfile.userStatus = sessionContext.userStatus;
     if (sessionContext && sessionContext.selectedPath) userProfile.selectedPath = sessionContext.selectedPath;
@@ -459,15 +363,14 @@ exports.main = async function (event, context) {
     if (sessionContext && sessionContext.chatTopics) userProfile.chatTopics = sessionContext.chatTopics;
     if (sessionContext && sessionContext.page) userProfile.page = sessionContext.page;
 
-    var requestBody = buildDeepSeekRequest(messages, chatMode, v5Corrections, requestStream, userProfile);
-    var apiResponse = await callDeepSeek(requestBody);
+    var aiMessages = buildAIRequest(messages, chatMode, v5Corrections, userProfile);
+    var aiResponse = await callCloudBaseAI(aiMessages);
 
-    if (apiResponse) {
-      // DeepSeek 成功
-      var apiResult = apiResponse.result;
-      responseSource = apiResponse.source;
+    if (aiResponse) {
+      var aiResult = aiResponse.result;
+      responseSource = aiResponse.source;
 
-      content = apiResult.choices[0].message.content;
+      content = aiResult.text || (aiResult.choices && aiResult.choices[0] && aiResult.choices[0].message && aiResult.choices[0].message.content) || '';
       content = cleanHtmlTags(content);
 
       assessmentResult = parseAssessmentResult(content);
@@ -483,21 +386,20 @@ exports.main = async function (event, context) {
         content = parsedQR.cleanContent;
       }
     } else {
-      // --- V2.0: API 不可用 → 先用 RAG，失败再用 fallback ---
-      console.log('[ai-chat v2] DeepSeek 不可用，尝试 RAG 检索');
+      // CloudBase AI 不可用 → 先用 RAG，失败再用 fallback
+      console.log('[ai-chat v3] CloudBase AI 不可用，尝试 RAG 检索');
 
       var ragResponse = await queryKnowledgeBase(message, chatMode);
       if (ragResponse) {
         content = ragResponse.content;
         quickReplies = ragResponse.quickReplies;
         responseSource = 'knowledge_chunks';
-        console.log('[ai-chat v2] RAG 命中 ' + (ragResponse.matchCount || 0) + ' 条');
       } else {
         var fallback = generateFallbackResponse(message, chatMode);
         content = fallback.content;
         quickReplies = fallback.quickReplies;
         responseSource = 'fallback';
-        console.log('[ai-chat v2] RAG 无结果，使用兜底');
+        console.log('[ai-chat v3] RAG 无结果，使用兜底');
       }
     }
 
@@ -530,7 +432,7 @@ exports.main = async function (event, context) {
         }
       }
     } catch (modErr) {
-      console.log('[ai-chat v2] 内容审核失败，默认放行:', modErr.message);
+      console.log('[ai-chat v3] 内容审核失败，默认放行:', modErr.message);
     }
 
     return {
@@ -541,18 +443,16 @@ exports.main = async function (event, context) {
         content: safeContent,
         quickReplies: quickReplies || undefined,
         assessmentResult: assessmentResult || undefined,
-        // V2.0 新增字段
         mode: chatMode,
-        source: responseSource,
-      },
+        source: responseSource
+      }
     };
   } catch (error) {
-    console.error('[ai-chat v2] error:', error);
-
+    console.error('[ai-chat v3] error:', error);
     return {
       code: 500,
       message: 'AI对话服务异常：' + (error.message || '未知错误'),
-      data: null,
+      data: null
     };
   }
 };

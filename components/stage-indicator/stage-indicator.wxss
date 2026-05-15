@@ -1,98 +1,99 @@
-.stage-indicator {
-  background: #fff;
-  padding: 12rpx 16rpx 8rpx;
-  border-bottom: 1rpx solid var(--gray-200);
-}
-
-.stage-track {
-  width: 100%;
-}
-
-.stage-nodes {
-  display: flex;
-  align-items: flex-start;
-  padding: 4rpx 8rpx;
-}
-
-.stage-node {
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  flex-shrink: 0;
-  width: 88rpx;
-}
-
-.stage-dot {
-  width: 40rpx;
-  height: 40rpx;
-  border-radius: 50%;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  font-size: 20rpx;
-  font-weight: 700;
-  flex-shrink: 0;
-}
-
-.stage-dot.done {
-  background: var(--green);
-  color: #fff;
-}
-
-.stage-dot.active {
-  background: var(--blue);
-  color: #fff;
-  box-shadow: 0 0 0 6rpx rgba(26,115,232,0.15);
-}
-
-.stage-dot.pending {
-  background: var(--gray-200);
-  color: var(--gray-500);
-}
-
-.stage-dot.locked {
-  background: var(--gray-100);
-  color: var(--gray-400);
-}
-
-.stage-label {
-  font-size: 18rpx;
-  margin-top: 4rpx;
-  text-align: center;
-  max-width: 88rpx;
-  overflow: hidden;
-  text-overflow: ellipsis;
-  white-space: nowrap;
-}
-
-.stage-label.done { color: var(--green); }
-.stage-label.active { color: var(--blue); font-weight: 600; }
-.stage-label.pending { color: var(--gray-500); }
-.stage-label.locked { color: var(--gray-400); }
-
-.stage-connector {
-  width: 20rpx;
-  height: 2rpx;
-  margin-top: 20rpx;
-  flex-shrink: 0;
-}
-
-.stage-connector.done { background: var(--green); }
-.stage-connector.active { background: linear-gradient(90deg, var(--blue), var(--gray-200)); }
-.stage-connector.pending { background: var(--gray-200); }
-.stage-connector.locked { background: var(--gray-100); }
-
-.stage-progress-bar {
-  height: 4rpx;
-  background: var(--gray-200);
-  border-radius: 2rpx;
-  margin: 8rpx 8rpx 0;
-  overflow: hidden;
-}
-
-.stage-progress-fill {
-  height: 100%;
-  background: linear-gradient(90deg, var(--blue), #4a9af5);
-  border-radius: 2rpx;
-  transition: width 0.4s ease;
-}
+     1|.stage-indicator {
+     2|  background: var(--white);
+     3|  padding: 12rpx 16rpx 8rpx;
+     4|  border-bottom: 1rpx solid var(--gray-200);
+     5|}
+     6|
+     7|.stage-track {
+     8|  width: 100%;
+     9|}
+    10|
+    11|.stage-nodes {
+    12|  display: flex;
+    13|  align-items: flex-start;
+    14|  padding: 4rpx 8rpx;
+    15|}
+    16|
+    17|.stage-node {
+    18|  display: flex;
+    19|  flex-direction: column;
+    20|  align-items: center;
+    21|  flex-shrink: 0;
+    22|  width: 88rpx;
+    23|}
+    24|
+    25|.stage-dot {
+    26|  width: 40rpx;
+    27|  height: 40rpx;
+    28|  border-radius: 50%;
+    29|  display: flex;
+    30|  align-items: center;
+    31|  justify-content: center;
+    32|  font-size: 20rpx;
+    33|  font-weight: 700;
+    34|  flex-shrink: 0;
+    35|}
+    36|
+    37|.stage-dot.done {
+    38|  background: var(--color-success);
+    39|  color: var(--white);
+    40|}
+    41|
+    42|.stage-dot.active {
+    43|  background: var(--color-primary);
+    44|  color: var(--white);
+    45|  box-shadow: 0 0 0 6rpx rgba(26,115,232,0.15);
+    46|}
+    47|
+    48|.stage-dot.pending {
+    49|  background: var(--gray-200);
+    50|  color: var(--gray-500);
+    51|}
+    52|
+    53|.stage-dot.locked {
+    54|  background: var(--gray-100);
+    55|  color: var(--gray-400);
+    56|}
+    57|
+    58|.stage-label {
+    59|  font-size: 18rpx;
+    60|  margin-top: 4rpx;
+    61|  text-align: center;
+    62|  max-width: 88rpx;
+    63|  overflow: hidden;
+    64|  text-overflow: ellipsis;
+    65|  white-space: nowrap;
+    66|}
+    67|
+    68|.stage-label.done { color: var(--color-success); }
+    69|.stage-label.active { color: var(--color-primary); font-weight: 600; }
+    70|.stage-label.pending { color: var(--gray-500); }
+    71|.stage-label.locked { color: var(--gray-400); }
+    72|
+    73|.stage-connector {
+    74|  width: 20rpx;
+    75|  height: 2rpx;
+    76|  margin-top: 20rpx;
+    77|  flex-shrink: 0;
+    78|}
+    79|
+    80|.stage-connector.done { background: var(--color-success); }
+    81|.stage-connector.active { background: linear-gradient(90deg, var(--color-primary), var(--gray-200)); }
+    82|.stage-connector.pending { background: var(--gray-200); }
+    83|.stage-connector.locked { background: var(--gray-100); }
+    84|
+    85|.stage-progress-bar {
+    86|  height: 4rpx;
+    87|  background: var(--gray-200);
+    88|  border-radius: 2rpx;
+    89|  margin: 8rpx 8rpx 0;
+    90|  overflow: hidden;
+    91|}
+    92|
+    93|.stage-progress-fill {
+    94|  height: 100%;
+    95|  background: linear-gradient(90deg, var(--color-primary), #4a9af5);
+    96|  border-radius: 2rpx;
+    97|  transition: width 0.4s ease;
+    98|}
+    99|

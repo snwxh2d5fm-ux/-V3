@@ -1,6 +1,7 @@
 /**
- * 住港伴 — DSG-3 语义色令牌体系
+ * 住港伴 — DSG-3 语义色令牌体系 v2.0
  * 禁止直接使用 hex 值，全部通过 var() 引用本文件变量
+ * 单源真相 — 所有颜色/间距/字号/阴影在此定义
  */
 
 page {
@@ -9,7 +10,7 @@ page {
   --color-primary-dark: #1557b0;
   --color-primary-light: #e8f0fe;
 
-  /* ═══ 中性色 (Bug #3: 统一权威源，采用 v5 对比度增强值) ═══ */
+  /* ═══ 中性色 (对比度增强: gray-400/500 在白色背景 ≥4.5:1) ═══ */
   --color-text-primary: #111827;
   --color-text-secondary: #5f6368;
   --color-text-muted: #757F8C;
@@ -27,7 +28,15 @@ page {
   --color-info: #2563eb;
   --color-info-bg: #eff6ff;
 
-  /* ═══ 灰阶 (v5 对比度增强: gray-400/500 白色背景 ≥4.5:1) ═══ */
+  /* ═══ 品牌渐变色 ═══ */
+  --gradient-header: linear-gradient(135deg, #1557b0, #1a73e8);
+  --gradient-hero: linear-gradient(135deg, #2563eb, #1a73e8);
+  --gradient-success: linear-gradient(135deg, #059669, #047857);
+  --gradient-membership: linear-gradient(135deg, #1557b0, #2563eb);
+  --gradient-vault: linear-gradient(135deg, #7C3AED, #A855F7);
+  --gradient-warm: linear-gradient(135deg, #fff8e1, #fff3cd);
+
+  /* ═══ 灰阶 ═══ */
   --gray-50: #F9FAFB;
   --gray-100: #F3F4F6;
   --gray-200: #E5E7EB;
@@ -39,30 +48,47 @@ page {
   --gray-800: #1F2937;
   --gray-900: #111827;
 
-  /* ═══ 间距 ═══ */
+  /* ═══ 间距 (4rpx 栅格) ═══ */
   --space-xs: 8rpx;
   --space-sm: 12rpx;
   --space-md: 16rpx;
   --space-lg: 24rpx;
   --space-xl: 32rpx;
+  --space-2xl: 48rpx;
 
   /* ═══ 圆角 ═══ */
   --radius-xs: 6rpx;
   --radius-sm: 8rpx;
   --radius: 16rpx;
+  --radius-md: 16rpx;
   --radius-lg: 24rpx;
   --radius-pill: 20rpx;
 
   /* ═══ 字号 ═══ */
   --font-xs: 22rpx;
   --font-sm: 26rpx;
-  --font-md: 30rpx;
-  --font-lg: 34rpx;
-  --font-xl: 40rpx;
-  --font-xxl: 48rpx;
+  --font-md: 28rpx;
+  --font-lg: 32rpx;
+  --font-xl: 36rpx;
+  --font-xxl: 44rpx;
 
   /* ═══ 阴影 ═══ */
   --shadow-sm: 0 2rpx 8rpx rgba(0,0,0,0.04);
-  --shadow: 0 4rpx 16rpx rgba(0,0,0,0.08);
+  --shadow: 0 4rpx 16rpx rgba(0,0,0,0.06);
+  --shadow-md: 0 4rpx 20rpx rgba(0,0,0,0.08);
   --shadow-lg: 0 8rpx 32rpx rgba(0,0,0,0.12);
+
+  /* ═══ 动效时长 ═══ */
+  --duration-fast: 0.15s;
+  --duration: 0.25s;
+  --duration-slow: 0.4s;
+  --easing: cubic-bezier(0.4, 0, 0.2, 1);
+
+  /* ═══ Z-Index ═══ */
+  --z-base: 1;
+  --z-dropdown: 100;
+  --z-sticky: 200;
+  --z-overlay: 500;
+  --z-modal: 800;
+  --z-toast: 1000;
 }

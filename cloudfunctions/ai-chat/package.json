@@ -1,7 +1,9 @@
 {
   "name": "ai-chat",
   "version": "3.0.0",
-  "description": "住港伴 AI 对话云函数 — DeepSeek API 集成",
+  "description": "住港伴 AI 对话云函数 — CloudBase 内置模型 (hunyuan-v3/hy3-preview)",
   "main": "index.js",
-  "dependencies": {}
+  "dependencies": {
+    "@cloudbase/node-sdk": "^3.16.0"
+  }
 }

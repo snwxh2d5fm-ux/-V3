@@ -277,7 +277,7 @@
 
 .feedback-btn {
   font-size: 22rpx;
-  color: #999;
+  color: var(--gray-400);
 }
 
 .feedback-btn:active {

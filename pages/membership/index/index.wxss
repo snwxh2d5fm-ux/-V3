@@ -1,7 +1,7 @@
 /* pages/membership/index — 会员方案页样式 */
 
 page {
-  background: #f5f7fa;
+background: var(--gray-100);
   font-family: -apple-system, BlinkMacSystemFont, 'PingFang SC', sans-serif;
 }
 
@@ -20,7 +20,7 @@ page {
 .loading-text {
   margin-top: 24rpx;
   font-size: 28rpx;
-  color: #999;
+  color: var(--gray-400);
 }
 
 /* ========== 状态栏 ========== */
@@ -30,22 +30,22 @@ page {
   justify-content: space-between;
   margin: 24rpx 32rpx;
   padding: 28rpx 32rpx;
-  background: #fff;
+  background: var(--white);
   border-radius: 16rpx;
   box-shadow: 0 2rpx 12rpx rgba(0,0,0,0.04);
 }
 .status-label {
   font-size: 24rpx;
-  color: #999;
+  color: var(--gray-400);
   display: block;
   margin-bottom: 4rpx;
 }
 .status-level {
   font-size: 36rpx;
   font-weight: 700;
-  color: #333;
+  color: var(--gray-700);
 }
-.status-level.free { color: #999; }
+.status-level.free { color: var(--gray-400); }
 .status-level.basic { color: var(--color-success); }
 .status-level.pro { color: var(--color-info); }
 .status-level.premium { color: #7C3AED; }
@@ -70,14 +70,14 @@ page {
   align-items: center;
   justify-content: center;
   gap: 10rpx;
-  background: #fff;
+  background: var(--white);
   border-radius: 14rpx;
   padding: 24rpx 0;
   box-shadow: 0 2rpx 12rpx rgba(0,0,0,0.04);
 }
 
 .entry-icon { font-size: 36rpx; }
-.entry-text { font-size: 28rpx; color: #333; font-weight: 500; }
+.entry-text { font-size: 28rpx; color: var(--gray-700); font-weight: 500; }
 
 /* ========== 周期切换 ========== */
 .period-switch {
@@ -92,7 +92,7 @@ page {
   text-align: center;
   padding: 16rpx 0;
   font-size: 28rpx;
-  color: #666;
+  color: var(--gray-500);
   border-radius: 10rpx;
   display: flex;
   align-items: center;
@@ -100,14 +100,14 @@ page {
   gap: 8rpx;
 }
 .period-option.active {
-  background: #fff;
+  background: var(--white);
   color: var(--color-primary);
   font-weight: 600;
   box-shadow: 0 2rpx 8rpx rgba(0,0,0,0.08);
 }
 .save-tag {
   font-size: 20rpx;
-  color: #fff;
+  color: var(--white);
   background: var(--color-error);
   padding: 2rpx 10rpx;
   border-radius: 6rpx;
@@ -123,7 +123,7 @@ page {
 
 .plan-card {
   position: relative;
-  background: #fff;
+  background: var(--white);
   border-radius: 20rpx;
   padding: 36rpx 32rpx;
   border: 2rpx solid var(--gray-200);
@@ -144,7 +144,7 @@ page {
   top: 0;
   right: 32rpx;
   background: linear-gradient(135deg, var(--color-primary), var(--color-info));
-  color: #fff;
+  color: var(--white);
   font-size: 22rpx;
   padding: 6rpx 20rpx;
   border-radius: 0 0 12rpx 12rpx;
@@ -192,12 +192,12 @@ page {
 }
 .price-unit {
   font-size: 26rpx;
-  color: #999;
+  color: var(--gray-400);
   margin-left: 6rpx;
 }
 .plan-price-compare {
   font-size: 24rpx;
-  color: #999;
+  color: var(--gray-400);
   margin-bottom: 20rpx;
 }
 
@@ -247,10 +247,10 @@ page {
 }
 .subscribe-btn.primary {
   background: linear-gradient(135deg, var(--color-primary), var(--color-info));
-  color: #fff;
+  color: var(--white);
 }
 .subscribe-btn.outline {
-  background: #fff;
+  background: var(--white);
   color: var(--color-primary);
   border: 2rpx solid var(--color-primary);
 }
@@ -262,8 +262,8 @@ page {
   font-weight: 600;
   border-radius: 12rpx;
   text-align: center;
-  background: #f0f0f0;
-  color: #999;
+background: var(--gray-100);
+  color: var(--gray-400);
 }
 
 /* ========== 支付结果弹窗 ========== */
@@ -277,7 +277,7 @@ page {
   z-index: 1000;
 }
 .result-modal {
-  background: #fff;
+  background: var(--white);
   border-radius: 24rpx;
   padding: 60rpx 48rpx;
   width: 560rpx;
@@ -297,7 +297,7 @@ page {
 }
 .result-msg {
   font-size: 28rpx;
-  color: #666;
+  color: var(--gray-500);
   margin-bottom: 16rpx;
 }
 .result-btn {
@@ -308,7 +308,7 @@ page {
   font-weight: 600;
   border-radius: 12rpx;
   background: linear-gradient(135deg, var(--color-primary), var(--color-info));
-  color: #fff;
+  color: var(--white);
   border: none;
   text-align: center;
 }
