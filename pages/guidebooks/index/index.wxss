@@ -139,3 +139,4 @@
 .result-stat { font-size: 22rpx; color: #666; display: block; margin-top: 4rpx; }
 .wizard-done { margin-top: 20rpx; padding: 20rpx; background: #3e6ae1; color: #fff; text-align: center; border-radius: 12rpx; font-size: 30rpx; font-weight: 600; }
 .wizard-close { padding: 20rpx 0 0; text-align: center; font-size: 26rpx; color: #999; }
+.wizard-empty { padding: 32rpx; text-align: center; font-size: 26rpx; color: #999; }

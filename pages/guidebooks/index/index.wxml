@@ -201,9 +201,9 @@
       <!-- Step 4: Existing assets + Confirm -->
       <view wx:if="{{setupStep===4}}" class="setup-step">
         <text class="setup-q">Q5: 你已经有？(可多选，没有就跳过)</text>
-        <view wx:for="{{[{v:'hkid',l:'香港身份证'},{v:'bank-account',l:'银行户口'},{v:'rental',l:'已签租约'},{v:'driving-license',l:'香港驾照'}]}}" wx:key="v"
+        <view wx:for="{{assetOptions}}" wx:key="v"
               class="setup-option setup-check {{setupData.existingAssets.indexOf(item.v)>=0?'selected':''}}"
-              data-value="{{item.v}}" bindtap="onSetupNext">
+              data-value="{{item.v}}" bindtap="onSetupAssetToggle">
           <text>{{setupData.existingAssets.indexOf(item.v)>=0?'☑':'☐'}} {{item.l}}</text>
         </view>
         <view class="setup-back" bindtap="onSetupBack"><text>← 返回上一步</text></view>
@@ -257,6 +257,9 @@
             <text wx:if="{{item._hasSchoolNet}}" class="result-stat">校网: {{item.schoolNet.primary}} · 家庭友好: {{item.stars}}</text>
           </view>
         </scroll-view>
+        <view wx:if="{{wizardResults.length===0}}" class="wizard-empty">
+          <text>没有匹配的区域，请调整筛选条件</text>
+        </view>
         <view class="wizard-done" bindtap="onWizardDone">完成向导 ✓</view>
       </view>
       <view wx:if="{{wizardStep<3}}" class="wizard-close" bindtap="onWizardClose">跳过</view>

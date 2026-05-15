@@ -13,7 +13,8 @@ Page({
     tabs: [
       { id: 0, label: '生活指南' },
       { id: 1, label: '场景速查' },
-      { id: 2, label: '我的进度' }
+      { id: 2, label: '我的进度' },
+      { id: 3, label: '攻略精选' }
     ],
     phases: [],
     tasks: [],
@@ -23,6 +24,8 @@ Page({
     readiness: null,
     activeCategory: '全部',
     browseTasks: [],
+    articles: [],
+    articleLoading: false,
     loading: true,
     loadError: false,
     showPathSetup: false,
@@ -38,7 +41,13 @@ Page({
     wizardResults: [],
     currentPhase: 0,
     setupStep: 0,
-    setupData: { visaType: '', familyStatus: '', arrivalScenario: '', housingIntent: '', existingAssets: [] }
+    setupData: { visaType: '', familyStatus: '', arrivalScenario: '', housingIntent: '', existingAssets: [] },
+    assetOptions: [
+      { v: 'hkid', l: '香港身份证' },
+      { v: 'bank-account', l: '银行户口' },
+      { v: 'rental', l: '已签租约' },
+      { v: 'driving-license', l: '香港驾照' }
+    ]
   },
 
   onLoad: function() { this.init(); },
@@ -137,6 +146,23 @@ Page({
     var tabId = parseInt(e.currentTarget.dataset.tab);
     this.setData({ activeTab: tabId });
     if (tabId === 1 && this.data.browseTasks.length === 0) this.loadBrowse('全部');
+    if (tabId === 3 && this.data.articles.length === 0) this.loadArticles();
+  },
+
+  loadArticles: function() {
+    var self = this;
+    self.setData({ articleLoading: true });
+    wx.cloud.callFunction({
+      name: 'guidebook',
+      data: { action: 'listArticles', limit: 50 },
+      success: function(res) {
+        var articles = (res.result && res.result.articles) || [];
+        self.setData({ articles: articles, articleLoading: false });
+      },
+      fail: function() {
+        self.setData({ articleLoading: false });
+      }
+    });
   },
 
   // ── Tab 0: Task toggle ──
@@ -242,7 +268,7 @@ Page({
 
   onSetupNext: function(e) {
     var step = this.data.setupStep;
-    var data = this.data.setupData;
+    var data = JSON.parse(JSON.stringify(this.data.setupData));
     var value = e.currentTarget.dataset.value;
 
     if (step === 0) data.visaType = value;
@@ -262,6 +288,18 @@ Page({
     }
 
     this.setData({ setupStep: step + 1, setupData: data });
+  },
+
+  onSetupAssetToggle: function(e) {
+    var asset = e.currentTarget.dataset.value;
+    if (!asset) return;
+    var setupData = JSON.parse(JSON.stringify(this.data.setupData));
+    var assets = setupData.existingAssets || [];
+    var idx = assets.indexOf(asset);
+    if (idx >= 0) assets.splice(idx, 1);
+    else assets.push(asset);
+    setupData.existingAssets = assets;
+    this.setData({ setupData: setupData });
   },
 
   onSetupBack: function() {
@@ -310,6 +348,12 @@ Page({
     storage.completeTask('onboard-300');
     this.setData({ showHousingWizard: false, housingWizardDone: true });
     this.refreshProgress();
+    var phases = this.data.phases;
+    phases = phases.map(function(p) {
+      if (p.phase === 3) p.expanded = true;
+      return p;
+    });
+    this.setData({ phases: phases });
     wx.showToast({ title: '找房向导完成 ✓', icon: 'success' });
   },
   onWizardClose: function() { this.setData({ showHousingWizard: false }); }
