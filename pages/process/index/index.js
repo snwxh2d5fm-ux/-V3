@@ -73,6 +73,7 @@ Page({
   },
 
   goSelectIdentity() { wx.navigateTo({ url: '/pages/status-select/status-select' }); },
+  onSkipToPath() { wx.switchTab({ url: '/pages/guidebooks/index/index' }); },
 
   startAssessment() {
     const persona = wx.getStorageSync('__assessment_persona__') || app.globalData._persona || 0;

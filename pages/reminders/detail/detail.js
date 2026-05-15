@@ -654,7 +654,7 @@ Page({
         'R_DEPENDENT_VISA': '受养人签证到期提醒', 'R_RENEWAL_WINDOW': '续签窗口提醒'
       };
       var rulesWithNames = reminderRules.map(function(r) {
-        r.name = ruleNames[r.rule_id] || r.rule_id;
+        r.name = ruleNames[r.rule_id] || '';
         r.icon = r.icon || '📋';
         return r;
       });

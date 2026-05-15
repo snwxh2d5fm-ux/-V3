@@ -162,6 +162,7 @@
     <text class="get-started-title">开始资格评估</text>
     <text class="get-started-desc">回答15个问题，AI将根据12条路径匹配最佳方案</text>
     <button class="btn btn--primary btn--block" bindtap="startAssessment">进入资格评估</button>
+    <text class="get-started-skip" bindtap="onSkipToPath">无需评估，直接选择路径 →</text>
   </view>
 
   <view class="card get-started-card" wx:elif="{{!activeProcess && !isUnapplied}}">
