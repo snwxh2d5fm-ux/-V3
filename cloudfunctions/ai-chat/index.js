@@ -36,14 +36,15 @@ if (!cloud || typeof cloud.callFunction !== 'function') {
 
 // @cloudbase/node-sdk 初始化 (用于 CloudBase 内置 AI 模型)
 var tcbApp = null;
+var CLOUD_ENV = process.env.ENV_ID || 'cloudbase-d1g17tgt7cc199a60';
 try {
-  tcbApp = tcb.init({ env: process.env.ENV_ID || (cloud && cloud.DYNAMIC_CURRENT_ENV) });
-  console.log('[ai-chat v3] CloudBase AI 初始化成功, provider:', process.env.AI_PROVIDER || 'hunyuan-v3');
+  tcbApp = tcb.init({ env: CLOUD_ENV });
+  console.log('[ai-chat v3] CloudBase AI 初始化成功, env:', CLOUD_ENV);
 } catch (e) {
   console.warn('[ai-chat v3] CloudBase AI 初始化失败, 将降级到 RAG:', e.message);
 }
 
-const AI_PROVIDER = process.env.AI_PROVIDER || 'hunyuan-v3';
+const AI_PROVIDER = process.env.AI_PROVIDER || 'cloudbase';
 const AI_MODEL = process.env.AI_MODEL || 'hy3-preview';
 const MAX_HISTORY_TURNS = 10;
 const RAG_TOP_K = 5;
@@ -71,11 +72,11 @@ async function callCloudBaseAI(messages) {
   } catch (error) {
     console.error('[ai-chat v3] CloudBase AI failed:', error.message || error);
 
-    // 降级到 hunyuan-v3 的其他模型
-    if (AI_PROVIDER !== 'hunyuan-v3') {
+    // 降级到 cloudbase 的其他模型
+    if (AI_PROVIDER !== 'cloudbase') {
       try {
-        console.log('[ai-chat v3] 降级到 hunyuan-v3 provider');
-        var fallbackModel = tcbApp.ai().createModel('hunyuan-v3');
+        console.log('[ai-chat v3] 降级到 cloudbase provider');
+        var fallbackModel = tcbApp.ai().createModel('cloudbase');
         var fallbackResult = await fallbackModel.generateText({
           model: 'hy3-preview',
           messages: messages
