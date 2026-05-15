@@ -3,6 +3,18 @@ cloud.init({ env: cloud.DYNAMIC_CURRENT_ENV });
 const db = cloud.database();
 const _ = db.command;
 
+function dedupTasks(tasks) {
+  const seen = {};
+  const result = [];
+  for (const t of tasks) {
+    const key = t._id || (t.title + '_' + t.phase + '_' + t.sequence);
+    if (seen[key]) continue;
+    seen[key] = true;
+    result.push(t);
+  }
+  return result;
+}
+
 function assemblePathOnServer(allTasks, params) {
   const { visaType, familyStatus, arrivalScenario, existingAssets = [] } = params;
 
@@ -107,15 +119,13 @@ exports.main = async (event, context) => {
 
       case 'byPath':
         // params: { visaType, familyStatus, arrivalScenario, existingAssets }
-        // Server-side path assembly. Fetch ALL active tasks, then filter+sort in memory.
-        // This moves the path assembly engine from client to server.
         const allResult = await collection
           .where({ status: 'active' })
           .orderBy('phase', 'asc')
           .orderBy('sequence', 'asc')
           .get();
 
-        const filtered = assemblePathOnServer(allResult.data, params);
+        const filtered = assemblePathOnServer(dedupTasks(allResult.data), params);
         return { code: 0, data: filtered.tasks, phases: filtered.phases, summary: filtered.summary };
 
       case 'bySceneTags':
@@ -125,7 +135,8 @@ exports.main = async (event, context) => {
           .orderBy('phase', 'asc')
           .orderBy('sequence', 'asc')
           .get();
-        return { code: 0, data: tagResult.data, total: tagResult.data.length };
+        const tagData = dedupTasks(tagResult.data);
+        return { code: 0, data: tagData, total: tagData.length };
 
       case 'search':
         // params: { keyword: "银行" }
@@ -157,7 +168,8 @@ exports.main = async (event, context) => {
           .orderBy('phase', 'asc')
           .orderBy('sequence', 'asc')
           .get();
-        return { code: 0, data: all.data, total: all.data.length };
+        const allData = dedupTasks(all.data);
+        return { code: 0, data: allData, total: allData.length };
 
       default:
         return { code: 400, error: `Unknown mode: ${mode}` };
