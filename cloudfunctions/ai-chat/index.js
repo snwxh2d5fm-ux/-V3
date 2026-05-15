@@ -44,7 +44,7 @@ try {
   console.warn('[ai-chat v3] CloudBase AI 初始化失败, 将降级到 RAG:', e.message);
 }
 
-const AI_PROVIDER = process.env.AI_PROVIDER || 'cloudbase';
+const AI_PROVIDER = process.env.AI_PROVIDER || 'hunyuan-v3';
 const AI_MODEL = process.env.AI_MODEL || 'hy3-preview';
 const MAX_HISTORY_TURNS = 10;
 const RAG_TOP_K = 5;
