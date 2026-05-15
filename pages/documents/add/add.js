@@ -255,14 +255,18 @@ Page({
         var finalPath = await imgProc.resizeImage(rotatedPath, 2048, 2048);
         wx.hideLoading();
         this._rotateDeg = 0;
-        this.setData({ imagePath: finalPath, imageRotated: 0, step: 4, docType: 'unknown', docTypeLabel: '手动录入' });
+        this.setData({ imagePath: finalPath, imageRotated: 0 });
       } catch (e) {
         wx.hideLoading();
         wx.showToast({ title: '图片处理失败，请重试', icon: 'none' });
         console.warn('[Bug#8] confirmImage 旋转/缩放失败:', e);
+        return;
       }
+    }
+    // 卡槽入口已确定分类→直接保存；否则进分类选择
+    if (this.data.skipCategory && this.data.docCategory) {
+      this.confirmSave();
     } else {
-      // 无需旋转，直接进分类选择（跳过step 3确认环节）
       this.setData({ step: 4, docType: 'unknown', docTypeLabel: '手动录入' });
     }
   },

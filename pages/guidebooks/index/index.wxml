@@ -109,14 +109,26 @@
         </view>
         <!-- 展开详情 -->
         <view wx:if="{{expandedBrowseTaskId===item._id}}" class="browse-expand">
-          <text class="browse-desc">{{item.desc || item.description || ''}}</text>
+          <text class="browse-desc">{{item.desc || item.description || item.content || ''}}</text>
+          <view wx:if="{{item.requiredItems && item.requiredItems.length}}" class="browse-required">
+            <text class="browse-steps-title">所需材料：</text>
+            <text wx:for="{{item.requiredItems}}" wx:key="*this" wx:for-item="ri" class="browse-step">📎 {{ri}}</text>
+          </view>
           <view wx:if="{{item.steps}}" class="browse-steps">
             <text class="browse-steps-title">步骤指引：</text>
             <text wx:for="{{item.steps}}" wx:key="seq" wx:for-item="s" class="browse-step">• {{s.title || s.content}}</text>
           </view>
+          <view wx:if="{{item.tips}}" class="browse-steps">
+            <text class="browse-steps-title">小贴士：</text>
+            <text wx:for="{{item.tips}}" wx:key="*this" wx:for-item="t" class="browse-step">💡 {{t}}</text>
+          </view>
           <view wx:if="{{item.official_links}}" class="browse-links">
             <text class="browse-links-title">官方链接：</text>
             <text wx:for="{{item.official_links}}" wx:key="label" wx:for-item="l" class="browse-link">🔗 {{l.label}}: {{l.url}}</text>
+          </view>
+          <view wx:if="{{item.pitfalls}}" class="browse-steps">
+            <text class="browse-steps-title">常见坑点：</text>
+            <text wx:for="{{item.pitfalls}}" wx:key="*this" wx:for-item="p" class="browse-step">⚠️ {{p}}</text>
           </view>
         </view>
       </view>
