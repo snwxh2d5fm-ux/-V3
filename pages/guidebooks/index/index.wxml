@@ -107,6 +107,18 @@
           <text class="tag-sm">{{item.time_estimate}}</text>
           <text wx:for="{{item.scene_tags||item.sceneTags}}" wx:key="*this" wx:for-item="tag" class="tag-sm scene">#{{tag}}</text>
         </view>
+        <!-- 展开详情 -->
+        <view wx:if="{{expandedBrowseTaskId===item._id}}" class="browse-expand">
+          <text class="browse-desc">{{item.desc || item.description || ''}}</text>
+          <view wx:if="{{item.steps}}" class="browse-steps">
+            <text class="browse-steps-title">步骤指引：</text>
+            <text wx:for="{{item.steps}}" wx:key="seq" wx:for-item="s" class="browse-step">• {{s.title || s.content}}</text>
+          </view>
+          <view wx:if="{{item.official_links}}" class="browse-links">
+            <text class="browse-links-title">官方链接：</text>
+            <text wx:for="{{item.official_links}}" wx:key="label" wx:for-item="l" class="browse-link">🔗 {{l.label}}: {{l.url}}</text>
+          </view>
+        </view>
       </view>
       <view wx:if="{{browseTasks.length===0 && !loading}}" class="empty-hint">
         <text>选择分类标签开始浏览</text>

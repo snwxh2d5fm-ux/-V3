@@ -128,6 +128,14 @@ Page({
         // 处理方案推荐结果
         if (res.data.assessmentResult) {
           replyContent += '\n\n' + this.formatAssessmentResult(res.data.assessmentResult);
+          // 保存评估结果用于通关路线预填
+          try {
+            wx.setStorageSync('__assess_prefill__', {
+              recommendedPath: res.data.assessmentResult.recommendedPath || '',
+              familyStatus: res.data.assessmentResult.familyStatus || '',
+              updatedAt: Date.now()
+            });
+          } catch(e) {}
         }
         // V7: 处理安全元数据
         if (res.data.safety) {

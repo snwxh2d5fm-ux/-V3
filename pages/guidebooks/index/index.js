@@ -43,6 +43,8 @@ Page({
     setupStep: 0,
     setupData: { visaType: '', familyStatus: '', arrivalScenario: '', housingIntent: '', existingAssets: [] },
     selectedAssets: {},
+    expandedBrowseTask: null,
+    expandedBrowseTaskId: '',
     assetOptions: [
       { v: 'hkid', l: '香港身份证' },
       { v: 'bank-account', l: '银行户口' },
@@ -65,6 +67,23 @@ Page({
 
     var progress = storage.getProgress();
     if (!progress) {
+      // 读取评估预填数据
+      var prefill = null;
+      try { prefill = wx.getStorageSync('__assess_prefill__'); } catch(e) {}
+      if (prefill && prefill.recommendedPath) {
+        var pathMap = { 'qmas':'qmas', 'ttps':'ttps-bc', 'asmpt':'asmpt', 'iang':'iang', 'ttps-a':'ttps-a', 'ttps-bc':'ttps-bc' };
+        var familyMap = { '单身':'single', '已婚无子女':'couple', '已婚有子女（1个）':'preschool', '已婚有子女（2个+）':'preschool' };
+        var presetVisa = pathMap[prefill.recommendedPath] || '';
+        var presetFamily = familyMap[prefill.familyStatus] || '';
+        var sd = { visaType: presetVisa, familyStatus: presetFamily, arrivalScenario: '', housingIntent: '', existingAssets: [] };
+        self.setData({
+          loading: false, showPathSetup: true,
+          setupStep: presetVisa ? 1 : 0,
+          setupData: sd,
+          selectedAssets: {}
+        });
+        return;
+      }
       self.setData({ loading: false, showPathSetup: true });
       return;
     }
@@ -211,7 +230,16 @@ Page({
   onCategoryTap: function(e) { this.loadBrowse(e.currentTarget.dataset.category); },
   onBrowseTaskTap: function(e) {
     var id = e.currentTarget.dataset.id;
-    if (id) wx.navigateTo({ url: '/pages/guidebooks/detail/detail?id=' + id });
+    if (!id) return;
+    // 场景速查任务非攻略文章，内联展开详情而非跳转独立页
+    var tasks = this.data.browseTasks;
+    var task = null;
+    for (var i = 0; i < tasks.length; i++) {
+      if (tasks[i]._id === id) { task = tasks[i]; break; }
+    }
+    if (task) {
+      this.setData({ expandedBrowseTask: task._id === this.data.expandedBrowseTaskId ? null : task, expandedBrowseTaskId: task._id === this.data.expandedBrowseTaskId ? '' : task._id });
+    }
   },
 
   // ── Tab 2: Export ──
