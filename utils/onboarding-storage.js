@@ -53,6 +53,7 @@ function initOnboarding(params) {
     currentPhase: 1,
     tasks: {},
     phases: {
+      '0': { unlocked: true, completed: false },
       '1': { unlocked: true, completed: false }
     },
     renewalDossier: {

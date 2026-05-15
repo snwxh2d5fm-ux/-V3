@@ -1,47 +1,64 @@
-# 麒麟代码审查报告 — cc4a0d3 + 29e82cb
-时间: 2026-05-15
-审查人: 麒麟 (Code Review subagent)
+# 麒麟代码审查报告 — 住港伴V3 HEAD~2..HEAD
+审查时间: 2026-05-15
+审查范围: 6114ca8 (P1-A Tab4修复+DSG-3令牌迁移) + b68ebc4 (Hermes闸门报告)
 
-## P0 修复验证
+---
 
-### P0-1: fetchByPath 参数 5→4 — PASS
-- pages/guidebooks/index/index.js:72 调用4参，与 utils/lifeGuideCache.js:194 定义完全一致
-- housingIntent不传云函数合理（云函数从未消费该字段）
+## P0 阻断
 
-### P0-2: matchDistricts 预算类型修复 — PASS
-- string budgetId → BUDGET_BRACKETS.min 数值，类型链完整
-- 5档预算(b1~b5)全部覆盖，string===string比较正确
+### P0-1 行号污染已入 git 历史
+6114ca8 将 read_file 工具行号前缀 `     N|     N|` 写入6个WXSS文件的已提交版本。
+工作区18个未提交修复已清除行号，但 git 历史损坏——任何 clone/checkout 得到污染文件，DevTools编译失败。
+**修复**: 将工作区18个干净WXSS文件 commit（建议 amend 6114ca8 或新增修复commit）。
 
-### P0-3: Tab4 WXML渲染块 — PASS
-- 骨架屏/列表/空态/导航四要素齐备
-- onArticleTap → navigateTo detail 路径存在
+### P0-2 CSS语法错误: var(--white)3e0 — 6处
+机械替换将 `#fff3e0` 拆成 `var(--white)` + `3e0`，产生无效CSS值，背景色丢失。
+已独立验证确认:
+- pages/playbook/index/index.wxss:19,24
+- pages/privacy/index/index.wxss:6,29
+- pages/status-select/status-select.wxss:77,109
+**修复**: 替换为 `var(--color-warning-bg)` 或 `#fff3e0`（tokens.wxss已有 --color-warning-bg: #fff7ed）。
 
-## P1 问题
+---
 
-### P1-1: housingIntent 数据孤岛
-- 文件: pages/guidebooks/index/index.js:283, utils/onboarding-storage.js:42-51
-- 现状: step===3收集housingIntent写入setupData，但initOnboarding的pathParams不含此字段，静默丢弃
-- 建议: 明确保留或删除该字段的收集逻辑
+## P1 重要
 
-### P1-2: loadArticles 无错误状态反馈
-- 文件: pages/guidebooks/index/index.js:163-165
-- 现状: fail回调只清loading，不设错误标志，空态无法区分"无内容"和"加载失败"
-- 建议: 增加 articleLoadError 状态
+### P1-1 Tab4数据链路断裂 — res.result.articles 路径错误
+pages/guidebooks/index/index.js:160 取 `res.result.articles`，
+但云函数 getArticles 返回 `{ code:0, data:{ articles, total, ... } }`，
+正确路径应为 `res.result.data.articles`。
+Tab4 action名已修复但数据仍取不到，页面仍显示"暂无攻略文章"。
+**修复**: 第160行改为 `(res.result && res.result.data && res.result.data.articles) || []`
 
-## P2 问题
+### P1-2 pages/playbook/index/index.js 使用 ES6 语法
+async/await、箭头函数、展开运算符，与项目ES5规范不符，低版本基础库设备可能崩溃。
 
-### P2-1: onArticleTap URL未encodeURIComponent
-- 文件: pages/guidebooks/index/index.js:172
-- 建议: encodeURIComponent(id)
+### P1-3 导航路径 /pages/guide/detail/detail 需确认注册
+pages/playbook/index/index.js:124 导航目标与 /pages/guidebooks/detail/detail 不一致，
+可能导致白屏。
 
-### P2-2: wizardResults stars边界
-- 文件: pages/guidebooks/index/index.js:351
-- familyFriendly=0时显示1颗星，语义不准确
+---
 
-### P2-3: Promise.finally兼容性
-- 文件: pages/guidebooks/index/index.js:58
-- iOS 9/Android 4.x旧版WebView不支持，建议改为.then().catch()
+## P2 建议
 
-### P2-4: article-list scroll-view高度
-- 文件: pages/guidebooks/index/index.wxss:145
-- calc()在部分低版本基础库可能不生效，建议增加min-height兜底
+### P2-1 var(--blue-light) 是兼容别名，非DSG-3规范令牌
+应直接使用 var(--color-primary-light)。
+
+### P2-2 b68ebc4 commit message 与实际变更不符
+commit message "P2/P0修复闭环" 但闸门报告记录 DevTools ❌ FAIL，误导后续审查。
+
+### P2-3 guidebooks/index/index.wxss:191 残留硬编码 #fff3cd
+已提交代码中唯一残留裸hex，应提取为令牌。
+
+---
+
+## 结论
+
+| 级别 | 数量 |
+|------|:----:|
+| P0 阻断 | 2 |
+| P1 重要 | 3 |
+| P2 建议 | 3 |
+
+**Gate 3 (DevTools编译) 不通过。Gate 4 代码审查: 不放行。**
+需Claude修复P0-1(commit WXSS修复) + P0-2(CSS语法错误) + P1-1(数据路径)后复闸。

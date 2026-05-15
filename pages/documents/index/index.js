@@ -419,7 +419,7 @@ Page({
     var identityOwner = this.data.identityOwner;
     if (!template || !allDocuments) return;
 
-    var computeSlotStates = require('../../data/document-index-templates').computeSlotStates;
+    var computeSlotStates = require('../../../data/document-index-templates').computeSlotStates;
     var updated = computeSlotStates(template, allDocuments, identityOwner);
 
     // Bug #7修复: 溢出区也按ownerType过滤

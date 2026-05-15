@@ -1,8 +1,8 @@
 # 住港伴 V3 — 项目进度单源真相
 
-**最后更新**: 2026-05-15 11:40
+**最后更新**: 2026-05-15 13:30
 **负责人**: Hermes (PMO)
-**状态**: 🟢 P1复闸完成 — 7/9 Gate通过 (ledger+ACL待补) | CloudBase部署建议中
+**状态**: 🔴 复闸阻断 — Gate 3/4/5 不通过 | 等待Claude修复P0-1+P0-2+P1-1
 
 ---
 
@@ -42,12 +42,13 @@ ac328d7 docs: CLAUDE.md增强 — 启动必读PROGRESS.md/编码规范/已知陷
 | 1 | verify.sh | ✅ 38/39 (A8 PII预存) |
 | 1b | workflow-verify.sh | ✅ 36/36 |
 | 2 | Jest | ✅ 421/425 |
-| 3 | DevTools编译 | ✅ build通过 (preview粘滞已知) |
-| 4 | 麒麟CodeReview | ✅ 通过 |
-| 5 | 玄武PMReview | ✅ 通过 |
-| 7 | git push | ✅ a723a42 |
-| 8 | ledger | ⏳ |
-| 9 | ACL通知 | ⏳ |
+| 3 | DevTools编译 | ❌ FAIL — 6个WXSS行号污染未commit |
+| 4 | 麒麟CodeReview | ❌ 不放行 — P0-2 CSS语法错误+P1-1数据路径 |
+| 5 | 玄武PMReview | ❌ 不放行 — Tab4功能断裂+编译失败 |
+| 6 | CloudBase部署 | ⏳ 等Gate 3通过 |
+| 7 | git push | ⏳ 等Gate 3通过 |
+| 8 | ledger | ✅ Gate4+5结论已追加 |
+| 9 | ACL通知 | ✅ claude-cowork已发送 |
 
 ## 五、P0修复（全部闭环）
 

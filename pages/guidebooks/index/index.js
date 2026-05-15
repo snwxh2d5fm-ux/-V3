@@ -169,7 +169,7 @@ Page({
   onArticleTap: function(e) {
     var id = e.currentTarget.dataset.id;
     if (id) {
-      wx.navigateTo({ url: '/pages/documents/detail/detail?id=' + id });
+      wx.navigateTo({ url: '/pages/guidebooks/detail/detail?id=' + id });
     }
   },
   onTaskToggle: function(e) {
@@ -200,7 +200,12 @@ Page({
     var self = this;
     self.setData({ activeCategory: category });
     var promise = category === '全部' ? cache.fetchAllTasks() : cache.fetchTasks('bySceneTags', { tags: [category] });
-    promise.then(function(r) { if (r) self.setData({ browseTasks: r.data || (r.data ? r.data.data : []) }); });
+    promise.then(function(r) { 
+      if (r && r.data) {
+        var tasks = r.data.tasks || r.data.data || (Array.isArray(r.data) ? r.data : []);
+        self.setData({ browseTasks: tasks }); 
+      }
+    });
   },
   onCategoryTap: function(e) { this.loadBrowse(e.currentTarget.dataset.category); },
 

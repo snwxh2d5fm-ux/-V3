@@ -33,10 +33,10 @@
   border-radius: var(--radius-sm);
   flex-shrink: 0;
 }
-.*** { flex: 1; display: flex; flex-direction: column; gap: 12rpx; }
-.*** { height: 32rpx; width: 70%; }
-.*** { height: 22rpx; width: 100%; }
-.sk-car...hort { width: 55%; }
+.sk-card__body { flex: 1; display: flex; flex-direction: column; gap: 12rpx; }
+.sk-card__title { height: 32rpx; width: 70%; }
+.sk-card__line { height: 22rpx; width: 100%; }
+.sk-card__line--short { width: 55%; }
 
 /* ── list ── */
 .sk-list {
@@ -47,14 +47,14 @@
   gap: 20rpx;
   border-bottom: 1rpx solid var(--gray-100);
 }
-.*** {
+.sk-list__avatar {
   width: 64rpx;
   height: 64rpx;
   border-radius: 50%;
   flex-shrink: 0;
 }
-.*** { flex: 1; display: flex; flex-direction: column; gap: 10rpx; }
-.*** { height: 28rpx; width: 60%; }
+.sk-list__body { flex: 1; display: flex; flex-direction: column; gap: 10rpx; }
+.sk-list__title { height: 28rpx; width: 60%; }
 .sk-list__sub { height: 22rpx; width: 40%; }
 
 /* ── grid ── */
@@ -64,7 +64,7 @@
   gap: 16rpx;
   margin: 12rpx 0;
 }
-.*** {
+.sk-grid__item {
   background: var(--color-bg-card);
   border-radius: var(--radius);
   padding: 28rpx;
@@ -74,8 +74,8 @@
   gap: 14rpx;
   box-shadow: var(--shadow-sm);
 }
-.*** { width: 68rpx; height: 68rpx; border-radius: 16rpx; }
-.*** { width: 70%; height: 24rpx; }
+.sk-grid__icon { width: 68rpx; height: 68rpx; border-radius: 16rpx; }
+.sk-grid__title { width: 70%; height: 24rpx; }
 
 /* ── text ── */
 .sk-text {
@@ -84,5 +84,5 @@
   gap: 14rpx;
   padding: 24rpx 0;
 }
-.*** { height: 22rpx; width: 100%; }
-.sk-tex...-w80 { width: 80%; }
+.sk-text__line { height: 22rpx; width: 100%; }
+.sk-text__line--w80 { width: 80%; }

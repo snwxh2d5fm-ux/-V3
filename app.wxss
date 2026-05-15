@@ -186,6 +186,7 @@ page {
 .btn-lg { padding: 22rpx 44rpx; font-size: var(--font-lg); width: 100%; }
 .btn-block { display: flex; width: 100%; }
 .btn-disabled { opacity: 0.5; pointer-events: none; }
+.btn-muted { background: #9CA3AF; color: #fff; }
 
 /* ===== 标签系统 ===== */
 .tag {
