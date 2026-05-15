@@ -320,7 +320,7 @@ module.exports = [
     steps: [
       { seq: 1, title: "下载HA Go App并注册", content: "App Store/Google Play搜索“HA Go”，用香港手机号注册", type: "action" },
       { seq: 2, title: "亲临诊所完成首次线下登记", content: "携HK身份证+地址证明前往任一公立诊所/医院，成人自助，小童家长代携港澳通行证+有效签证，⚠️建议健康时尽早登记", type: "action" },
-      { seq: 3, title: "学习预约门诊", content: "HA Go→"预约家庭医学诊所"→选择诊所→接纳预约时间，🔑抢号秘诀：每小时的29分和59分刷新App", type: "action" }
+      { seq: 3, title: "学习预约门诊", content: "HA Go→预约家庭医学诊所→选择诊所→接纳预约时间，🔑抢号秘诀：每小时的29分和59分刷新App", type: "action" }
     ],
     requiredItems: ["HK身份证", "地址证明", "香港手机号"],
     officialLinks: [{ label: "HA Go", url: "https://www.ha.org.hk/hago" }],
@@ -655,7 +655,7 @@ module.exports = [
       arrivalScenario: ["fresh", "delayed"], skipIfExisting: []
     },
     steps: [
-      { seq: 1, title: "预约普通科门诊", content: "HA Go→"预约家庭医学诊所"→选择就近诊所→接纳可用时段（可预约未来24小时）", type: "action" },
+      { seq: 1, title: "预约普通科门诊", content: "HA Go→预约家庭医学诊所→选择就近诊所→接纳可用时段（可预约未来24小时）", type: "action" },
       { seq: 2, title: "完成一次就诊", content: "提前15-30min到→用八达通/现金/HA Go缴费→等候叫号→诊症→取药，费用约$150（药每款$5）", type: "action" }
     ],
     requiredItems: ["HA Go已登记", "八达通/现金", "HK身份证"],
@@ -697,7 +697,7 @@ module.exports = [
       arrivalScenario: ["fresh", "delayed"], skipIfExisting: []
     },
     steps: [
-      { seq: 1, title: "寻找群组", content: "Facebook搜索"[区名]跑团"/"[区名]行山群"，Meetup.com搜索“Hong Kong hiking/board games/language exchange”，教会/佛堂/清真寺", type: "info" },
+      { seq: 1, title: "寻找群组", content: "Facebook搜索[区名]跑团/[区名]行山群，Meetup.com搜索“Hong Kong hiking/board games/language exchange”，教会/佛堂/清真寺", type: "info" },
       { seq: 2, title: "参加首次活动", content: "选择1-2个群组参加首次活动，建议从运动类开始（低社交压力）", type: "action" }
     ],
     requiredItems: [],
