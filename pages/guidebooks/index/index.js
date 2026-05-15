@@ -64,6 +64,8 @@ Page({
 
   init: function() {
     var self = this;
+    if (self._loading) return;
+    self._loading = true;
     self.setData({ loading: true, loadError: false });
 
     var progress = storage.getProgress();
@@ -80,6 +82,7 @@ Page({
         var presetFamily = prefill ? (familyMap[prefill.familyStatus] || '') : '';
         var sd = { visaType: presetVisa, familyStatus: presetFamily, arrivalScenario: '', housingIntent: '', existingAssets: [] };
         wx.removeStorageSync('__direct_path__');
+        self._loading = false;
         self.setData({
           loading: false, showPathSetup: true,
           setupStep: presetVisa ? 1 : 0,
@@ -88,6 +91,7 @@ Page({
         });
         return;
       }
+      self._loading = false;
       self.setData({ loading: false, showPathSetup: true });
       return;
     }
@@ -95,6 +99,7 @@ Page({
     var params = progress.pathParams;
     cache.fetchByPath(params.visaType, params.familyStatus, params.arrivalScenario, params.existingAssets)
       .then(function(result) {
+        self._loading = false;
         if (!result || !result.data) {
           self.setData({ loading: false, loadError: true });
           return;
@@ -112,6 +117,7 @@ Page({
       })
       .catch(function(e) {
         console.error('[Guidebooks]', e);
+        self._loading = false;
         self.setData({ loading: false, loadError: true });
       });
   },
@@ -121,12 +127,16 @@ Page({
     var phaseNames = { 0:'抵港前准备',1:'落地生存',2:'行政开户',3:'安居乐业',4:'出行融入',5:'子女教育',6:'财务税务',7:'续签准备' };
     var phaseMap = {};
 
-    // 去重: 按_id去重，防止云端数据重复导致的翻倍
-    var seen = {};
+    // 去重: 按_id和title双重去重，防止云端数据重复
+    var seenId = {};
+    var seenTitle = {};
     tasks = tasks.filter(function(t) {
-      if (!t._id) return true;
-      if (seen[t._id]) return false;
-      seen[t._id] = true;
+      var id = t._id || '';
+      var title = t.title || '';
+      if (id && seenId[id]) return false;
+      if (title && seenTitle[title]) return false;
+      if (id) seenId[id] = true;
+      if (title) seenTitle[title] = true;
       return true;
     });
 

@@ -399,9 +399,17 @@ Page({
   // ========== 筛选 ==========
   onFilterStatus(e) {
     const status = e.currentTarget.dataset.status;
+    var displayGroups;
+    if (status === 'all') {
+      displayGroups = this.data.allChainGroups;
+    } else if (status === 'completed') {
+      displayGroups = this.buildChainGroups(this.data.completedReminders);
+    } else {
+      displayGroups = this.data.chainGroups;
+    }
     this.setData({
       filterStatus: status,
-      displayChainGroups: status === 'all' ? this.data.allChainGroups : this.data.chainGroups
+      displayChainGroups: displayGroups
     });
   },
 
