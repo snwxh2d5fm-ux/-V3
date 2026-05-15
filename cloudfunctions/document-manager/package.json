@@ -1,1 +1,1 @@
-{"name":"document-manager","version":"1.0.0","main":"index.js","dependencies":{"wx-server-sdk":"latest"}}
+{"name":"document-manager","version":"1.0.0","main":"index.js","dependencies":{"wx-server-sdk":"~2.6.0"}}

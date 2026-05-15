@@ -4,6 +4,6 @@
   "description": "效率宝预审引擎 — 文档材料自动合规校验",
   "main": "index.js",
   "dependencies": {
-    "wx-server-sdk": "latest"
+    "wx-server-sdk": "~2.6.0"
   }
 }

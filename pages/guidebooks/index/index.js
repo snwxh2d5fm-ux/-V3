@@ -103,6 +103,7 @@ Page({
       t._materialCollected = pt ? !!pt.materialCollected : false;
       t._skipped = pt ? pt.status === 'skipped' : (t.autoSkipped || false);
       t._skipReason = pt ? (pt.skipReason || '') : (t.skipReason || '');
+      t._urgencyClass = t.urgency === '必修' ? 'required' : (t.urgency === '建议' ? 'suggest' : 'optional');
 
       var p = t.phase;
       if (!phaseMap[p]) {
@@ -119,7 +120,7 @@ Page({
       phases.forEach(function(ph) { if (!(progress.phases && progress.phases[ph.phase] && progress.phases[ph.phase].unlocked)) ph.unlocked = false; });
     }
 
-    return { tasks: tasks, phases: phases, summary: { totalRequired: Object.values(phaseMap).reduce(function(s,p){return s+p.totalRequired;},0), totalTasks: tasks.length } };
+    return { tasks: tasks, phases: phases, summary: { totalRequired: Object.keys(phaseMap).map(function(k){return phaseMap[k]}).reduce(function(s,p){return s+p.totalRequired;},0), totalTasks: tasks.length } };
   },
 
   refreshProgress: function() {
@@ -240,7 +241,7 @@ Page({
     var task = tasks.find(function(t) { return t._id === taskId; });
     if (!task) return;
     task['_step' + stepSeq] = !task['_step' + stepSeq];
-    // Check if all steps done
+    if (!task.steps || !task.steps.length) return;
     var allDone = task.steps.every(function(s) { return task['_step' + s.seq]; });
     task._allStepsDone = allDone;
     this.setData({ tasks: tasks });
@@ -333,9 +334,9 @@ Page({
   onWizardNext: function(e) {
     var step = this.data.wizardStep;
     var value = e.currentTarget.dataset.value;
-    if (step === 0) this.data.wizardBudget = value;
-    else if (step === 1) this.data.wizardWork = value;
-    else if (step === 2) this.data.wizardHasKids = value === 'yes';
+    if (step === 0) this.setData({ wizardBudget: value });
+    else if (step === 1) this.setData({ wizardWork: value });
+    else if (step === 2) this.setData({ wizardHasKids: value === 'yes' });
 
     if (step === 2) {
       var districtData = require('../../../data/district-data');

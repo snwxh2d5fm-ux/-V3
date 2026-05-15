@@ -4,6 +4,6 @@
   "description": "住港伴 — 内容合规清洗",
   "main": "index.js",
   "dependencies": {
-    "wx-server-sdk": "latest"
+    "wx-server-sdk": "~2.6.0"
   }
 }

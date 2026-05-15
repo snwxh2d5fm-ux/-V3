@@ -3,5 +3,5 @@
   "version": "1.0.0",
   "description": "住港伴 — 流程控管理：流程模板、里程碑验证、进度跟踪",
   "main": "index.js",
-  "dependencies": { "wx-server-sdk": "latest" }
+  "dependencies": { "wx-server-sdk": "~2.6.0" }
 }

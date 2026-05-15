@@ -4,6 +4,6 @@
   "description": "用户行为追踪 + 路径偏好校验",
   "main": "index.js",
   "dependencies": {
-    "wx-server-sdk": "latest"
+    "wx-server-sdk": "~2.6.0"
   }
 }

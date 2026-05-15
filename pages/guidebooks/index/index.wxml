@@ -57,7 +57,7 @@
                   <text class="task-subtitle">{{task.subtitle}}</text>
                 </view>
                 <view class="task-meta">
-                  <text class="task-urgency urgency-{{task.urgency==='必修'?'required':(task.urgency==='建议'?'suggest':'optional')}}">{{task.urgency}}</text>
+                  <text class="task-urgency urgency-{{task._urgencyClass}}">{{task.urgency}}</text>
                   <text class="task-time">{{task.time_estimate}}</text>
                 </view>
               </view>

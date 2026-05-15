@@ -4,6 +4,6 @@
   "description": "K2泄露扫描器 — 每日扫描AI对话历史检测K2泄露",
   "main": "index.js",
   "dependencies": {
-    "wx-server-sdk": "latest"
+    "wx-server-sdk": "~2.6.0"
   }
 }

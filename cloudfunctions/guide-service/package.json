@@ -3,5 +3,5 @@
   "version": "1.0.0",
   "description": "住港伴 — 指引牌服务：指引内容、材料标准、政策关联",
   "main": "index.js",
-  "dependencies": { "wx-server-sdk": "latest" }
+  "dependencies": { "wx-server-sdk": "~2.6.0" }
 }

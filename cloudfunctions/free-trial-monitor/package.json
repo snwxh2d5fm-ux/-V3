@@ -3,5 +3,5 @@
   "version": "1.0.0",
   "description": "住港伴 — 免费试用监控：到期锁定、到期前提醒推送",
   "main": "index.js",
-  "dependencies": { "wx-server-sdk": "latest" }
+  "dependencies": { "wx-server-sdk": "~2.6.0" }
 }

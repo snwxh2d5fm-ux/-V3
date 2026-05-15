@@ -4,6 +4,6 @@
   "description": "住港伴v4.1 方案库智能推荐引擎 (PRD v3.1)",
   "main": "index.js",
   "dependencies": {
-    "wx-server-sdk": "latest"
+    "wx-server-sdk": "~2.6.0"
   }
 }

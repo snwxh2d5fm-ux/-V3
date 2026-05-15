@@ -3,5 +3,5 @@
   "version": "1.0.0",
   "description": "住港伴 — 攻略书服务：文章获取、搜索、评分、推荐",
   "main": "index.js",
-  "dependencies": { "wx-server-sdk": "latest" }
+  "dependencies": { "wx-server-sdk": "~2.6.0" }
 }
