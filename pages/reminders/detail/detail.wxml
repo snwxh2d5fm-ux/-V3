@@ -296,8 +296,8 @@
               bindtap="selectRule" data-rule-id="{{item.rule_id}}">
           <text class="rule-item-icon">{{item.icon || '📋'}}</text>
           <view class="rule-item-info">
-            <text class="rule-item-title">{{item.name || '规则模板'}}</text>
-            <text class="rule-item-desc">{{item.description || ''}}</text>
+            <text class="rule-item-title">{{item.name || item.rule_id}}</text>
+            <text class="rule-item-desc">{{item.reminders ? item.reminders.length : 0}} 个节点</text>
           </view>
           <text class="rule-item-check">{{selectedRuleId === item.rule_id ? '✓' : ''}}</text>
         </view>
