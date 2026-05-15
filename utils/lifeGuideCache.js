@@ -143,8 +143,20 @@ function fetchTasks(mode, params) {
       },
       success: function (res) {
         var result = res.result || {};
-        // Write to cache regardless of cloud function code;
-        // even an empty result may be worth caching.
+        // 去重：云函数可能返回重复数据
+        if (result.data && Array.isArray(result.data)) {
+          var deduped = [];
+          var seenId = {};
+          var seenTitle = {};
+          result.data.forEach(function(t) {
+            if (t._id && seenId[t._id]) return;
+            if (t.title && seenTitle[t.title]) return;
+            if (t._id) seenId[t._id] = true;
+            if (t.title) seenTitle[t.title] = true;
+            deduped.push(t);
+          });
+          result.data = deduped;
+        }
         writeCache(key, result);
         resolve({
           data: result,

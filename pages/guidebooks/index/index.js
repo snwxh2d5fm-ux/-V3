@@ -66,6 +66,11 @@ Page({
     var self = this;
     if (self._loading) return;
     self._loading = true;
+    // 清除旧缓存以修复云端数据重复问题(一次性)
+    if (!wx.getStorageSync('__cache_cleared_v2__')) {
+      cache.invalidateCache();
+      wx.setStorageSync('__cache_cleared_v2__', true);
+    }
     self.setData({ loading: true, loadError: false });
 
     var progress = storage.getProgress();
