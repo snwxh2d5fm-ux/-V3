@@ -71,6 +71,16 @@ Page({
 
     const bestMatch = enriched[0] || null;
 
+    // 保存评估结果用于通关路线预填
+    if (bestMatch) {
+      try {
+        wx.setStorageSync('__assess_prefill__', {
+          recommendedPath: bestMatch.path || '',
+          updatedAt: Date.now()
+        });
+      } catch(e) {}
+    }
+
     // 校验最佳匹配 vs 当前画像
     let compatWarning = null;
     let compatWarningOk = true;
