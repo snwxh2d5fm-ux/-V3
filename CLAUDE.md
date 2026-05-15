@@ -25,6 +25,18 @@
 - `inbox/` — 任务接收（Hermes写入，Claude读取）
 - `outbox/` — 交付确认（Claude写入，Hermes读取）
 
+## 🔴 修复铁律 — 手术刀原则
+
+**只修有问题的行，不动其他任何代码。**
+- 禁止重写整个函数/文件
+- 禁止"顺带优化"无关代码
+- 禁止混入你理解的新需求
+- 修改前后用 diff 自检：改动行数应 ≤ 问题相关的 3 倍以内
+- 每次修复只改一个文件一个点，commit message 精确到行号
+- 绝不改动 data/templates data/constants 除非任务明确要求
+
+违反此铁律 → 回滚重做。
+
 ## 编码规范
 
 - **ES5强制**：Page()内只用 var + function(){}，禁 const/let/=>/spread
