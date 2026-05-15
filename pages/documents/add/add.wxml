@@ -206,8 +206,8 @@
     <!-- 图片预览 + 脱敏遮罩 + 旋转样式 -->
     <view class="image-preview" wx:if="{{imagePath}}">
       <image src="{{imagePath}}" mode="aspectFit" class="preview-img" style="transform: rotate({{imageRotated}}deg)" aria-label="证件图片预览" />
-      <!-- Bug #12修复: 隐私遮罩始终显示，隐私模式控制透明度而非显隐 -->
-      <view class="privacy-overlay" style="opacity:{{privacyMode === 'local' ? 1 : (privacyMode === 'feature' ? 0.6 : 0.3)}}">
+      <!-- 遮挡仅在脱敏模式下显示，预览时不遮挡 -->
+      <view class="privacy-overlay" wx:if="{{privacyMode !== 'off' && privacyMode !== 'none'}}" style="opacity:{{privacyMode === 'local' ? 1 : 0.6}}">
         <view class="privacy-bar" wx:for="{{privacyBars}}" wx:key="label" style="top:{{item.top}};left:{{item.left}};width:{{item.width}};height:{{item.height}}"></view>
         <text class="privacy-label" wx:for="{{privacyBars}}" wx:key="label" style="top:{{item.top}};left:{{item.left}};width:{{item.width}}">{{item.label}}</text>
       </view>
