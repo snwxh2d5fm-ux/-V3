@@ -14,7 +14,7 @@
   align-items: center;
   justify-content: space-between;
   padding: 16rpx 24rpx;
-  background: var(--color-bg-card)FFF;
+  background: var(--color-bg-card);
   border-bottom: 1rpx solid var(--gray-200);
 }
 
@@ -107,7 +107,7 @@
 }
 
 .bubble.assistant {
-  background: var(--color-bg-card)FFF;
+  background: var(--color-bg-card);
   color: var(--gray-800);
   border-top-left-radius: 4rpx;
   box-shadow: 0 1rpx 4rpx rgba(0,0,0,0.05);
@@ -115,7 +115,7 @@
 
 .bubble.user {
   background: var(--color-info);
-  color: var(--color-bg-card)FFF;
+  color: var(--color-bg-card);
   border-top-right-radius: 4rpx;
 }
 
@@ -177,7 +177,7 @@
   display: flex;
   padding: 12rpx 16rpx;
   gap: 12rpx;
-  background: var(--color-bg-card)FFF;
+  background: var(--color-bg-card);
   border-top: 1rpx solid var(--gray-200);
   overflow-x: auto;
 }
@@ -209,7 +209,7 @@
   align-items: center;
   padding: 12rpx 16rpx;
   padding-bottom: calc(12rpx + env(safe-area-inset-bottom));
-  background: var(--color-bg-card)FFF;
+  background: var(--color-bg-card);
   border-top: 1rpx solid var(--gray-200);
   gap: 12rpx;
 }
@@ -229,7 +229,7 @@
   background: var(--gray-300);
   border-radius: 36rpx;
   font-size: 28rpx;
-  color: var(--color-bg-card)FFF;
+  color: var(--color-bg-card);
   flex-shrink: 0;
 }
 
@@ -257,7 +257,7 @@
 }
 
 .safety-banner {
-  background: var(--color-bg-card)3CD;
+  background: var(--color-bg-card);
   border-left: 6rpx solid #FFC107;
   padding: 12rpx 16rpx;
   margin-bottom: 8rpx;

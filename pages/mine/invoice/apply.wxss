@@ -116,7 +116,7 @@ page {
   padding: 28rpx;
   background: linear-gradient(135deg, var(--color-success), #10B981);
   border-radius: 16rpx;
-  color: #fff;
+  color: var(--white);
 }
 
 .privacy-icon { font-size: 36rpx; display: block; margin-bottom: 8rpx; }
@@ -130,7 +130,7 @@ page {
   height: 88rpx;
   line-height: 88rpx;
   background: linear-gradient(135deg, var(--color-primary), var(--color-info));
-  color: #fff;
+  color: var(--white);
   border: none;
   border-radius: 14rpx;
   font-size: 32rpx;
@@ -146,7 +146,7 @@ page {
   height: 88rpx;
   line-height: 88rpx;
   background: linear-gradient(135deg, var(--color-primary), var(--color-info));
-  color: #fff;
+  color: var(--white);
   border: none;
   border-radius: 14rpx;
   font-size: 30rpx;

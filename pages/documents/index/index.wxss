@@ -67,7 +67,7 @@
 .slot__tag--optional { background: var(--gray-100); color: var(--gray-500); }
 .slot__count { font-size: 22rpx; color: var(--color-success); }
 .slot__btn { width: 56rpx; height: 56rpx; border-radius: 14rpx; display: flex; align-items: center; justify-content: center; font-size: 28rpx; font-weight: 700; flex-shrink: 0; }
-.slot__btn--add { background: var(--color-info-bg); color: var(--color-info); border: 2rpx dashed #BFDBFE; }
+.slot__btn--add { background: var(--color-info-bg); color: var(--color-info); border: 2rpx dashed var(--blue-light); }
 .slot__btn--done { background: var(--color-success-bg); color: var(--color-success); }
 
 /* ═══ 画廊 ═══ */

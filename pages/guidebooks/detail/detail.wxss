@@ -46,7 +46,7 @@
 /* ===== FAQ 卡片 ===== */
 .card { background: var(--white); margin: 12rpx 24rpx; border-radius: 20rpx; overflow: hidden; box-shadow: 0 2rpx 12rpx rgba(0,0,0,0.03); }
 .faq-q { display: flex; gap: 14rpx; padding: 24rpx 24rpx 14rpx; border-bottom: 1rpx solid var(--gray-100); }
-.faq-badge { width: 40rpx; height: 40rpx; line-height: 40rpx; text-align: center; border-radius: 12rpx; font-size: 26rpx; font-weight: 800; color: #fff; flex-shrink: 0; }
+.faq-badge { width: 40rpx; height: 40rpx; line-height: 40rpx; text-align: center; border-radius: 12rpx; font-size: 26rpx; font-weight: 800; color: var(--white); flex-shrink: 0; }
 .faq-badge.q { background: var(--color-info); }
 .faq-badge.a { background: var(--color-success); }
 .faq-q-text { font-size: 30rpx; font-weight: 700; color: var(--gray-800); line-height: 1.5; }
@@ -56,7 +56,7 @@
 /* ===== 步骤卡片 ===== */
 .steps-wrap { padding: 0 24rpx; }
 .step-card { display: flex; gap: 16rpx; background: var(--white); border-radius: 16rpx; padding: 22rpx 24rpx; margin-bottom: 12rpx; box-shadow: 0 2rpx 12rpx rgba(0,0,0,0.03); position: relative; }
-.step-num { width: 44rpx; height: 44rpx; line-height: 44rpx; text-align: center; background: linear-gradient(135deg, var(--color-info), #1D4ED8); color: #fff; border-radius: 50%; font-size: 24rpx; font-weight: 800; flex-shrink: 0; }
+.step-num { width: 44rpx; height: 44rpx; line-height: 44rpx; text-align: center; background: linear-gradient(135deg, var(--color-info), #1D4ED8); color: var(--white); border-radius: 50%; font-size: 24rpx; font-weight: 800; flex-shrink: 0; }
 .step-body { flex: 1; min-width: 0; }
 .step-title { font-size: 28rpx; font-weight: 700; color: var(--gray-800); display: block; margin-bottom: 6rpx; }
 .step-desc { font-size: 26rpx; color: var(--gray-600); line-height: 1.7; display: block; margin-bottom: 8rpx; }
@@ -78,7 +78,7 @@
 .bul-mark { font-size: 28rpx; color: var(--color-info); font-weight: 700; flex-shrink: 0; line-height: 1.7; }
 .bul-text { font-size: 26rpx; color: var(--gray-600); line-height: 1.7; flex: 1; }
 /* 关键信息卡 */
-.seg-keypoint { display: flex; gap: 10rpx; background: var(--color-bg-card)BEB; border-radius: 12rpx; padding: 12rpx 16rpx; margin: 8rpx 0; border-left: 4rpx solid #F59E0B; }
+.seg-keypoint { display: flex; gap: 10rpx; background: var(--color-bg-card); border-radius: 12rpx; padding: 12rpx 16rpx; margin: 8rpx 0; border-left: 4rpx solid #F59E0B; }
 .kp-icon { font-size: 24rpx; flex-shrink: 0; margin-top: 2rpx; }
 .kp-text { font-size: 26rpx; color: #92400E; line-height: 1.7; flex: 1; }
 /* 普通段落 */
@@ -92,7 +92,7 @@
 
 /* ===== 避坑指南 ===== */
 .pit-list { padding: 0 24rpx; }
-.pit-item { display: flex; gap: 14rpx; padding: 14rpx 20rpx; background: var(--color-bg-card)BEB; border-radius: 14rpx; margin-bottom: 10rpx; border-left: 4rpx solid #F59E0B; align-items: flex-start; }
+.pit-item { display: flex; gap: 14rpx; padding: 14rpx 20rpx; background: var(--color-bg-card); border-radius: 14rpx; margin-bottom: 10rpx; border-left: 4rpx solid #F59E0B; align-items: flex-start; }
 .pit-num { width: 32rpx; height: 32rpx; line-height: 32rpx; text-align: center; background: var(--color-warning-bg); color: #D97706; border-radius: 50%; font-size: 20rpx; font-weight: 800; flex-shrink: 0; }
 .pit-text { font-size: 26rpx; color: #92400E; line-height: 1.65; flex: 1; }
 
@@ -108,7 +108,7 @@
 /* ===== 操作行 ===== */
 .action-row { display: flex; gap: 16rpx; padding: 12rpx 24rpx 20rpx; }
 .act-btn { flex: 1; text-align: center; padding: 14rpx 0; font-size: 26rpx; color: var(--color-info); background: var(--color-info-bg); border-radius: 14rpx; font-weight: 600; }
-.act-share { flex: 1; text-align: center; padding: 14rpx 0; font-size: 26rpx; color: #fff; background: linear-gradient(135deg, var(--color-info), #1D4ED8); border-radius: 14rpx; font-weight: 600; margin: 0; line-height: 1.5; border: none; }
+.act-share { flex: 1; text-align: center; padding: 14rpx 0; font-size: 26rpx; color: var(--white); background: linear-gradient(135deg, var(--color-info), #1D4ED8); border-radius: 14rpx; font-weight: 600; margin: 0; line-height: 1.5; border: none; }
 
 /* ===== 相关攻略 ===== */
 .related-card { display: flex; align-items: center; gap: 14rpx; background: var(--white); margin: 8rpx 24rpx; border-radius: 16rpx; padding: 18rpx 22rpx; box-shadow: 0 2rpx 12rpx rgba(0,0,0,0.03); }

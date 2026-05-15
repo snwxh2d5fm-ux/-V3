@@ -13,7 +13,7 @@ page { background: #f5f7fa; }
 
 .btn-primary {
   background: linear-gradient(135deg, var(--color-primary), var(--color-info));
-  color: #fff;
+  color: var(--white);
   border: none;
   border-radius: 12rpx;
   padding: 20rpx 48rpx;

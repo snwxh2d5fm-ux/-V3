@@ -16,7 +16,7 @@
 .hero {
   padding: 40rpx 40rpx 24rpx;
   text-align: center;
-  background: linear-gradient(180deg, #fff 0%, #f5f5f5 100%);
+  background: linear-gradient(180deg, var(--white) 0%, var(--gray-100) 100%);
 }
 .hero__logo { font-size: 56rpx; display: block; margin-bottom: 12rpx; }
 .hero__title {
@@ -61,7 +61,7 @@ color: var(--color-text);
   gap: 14rpx;
   min-height: 96rpx;
 }
-.status-card__main:active { background: #fafafa; }
+.status-card__main:active { background: var(--gray-50); }
 
 .status-card__icon {
   width: 64rpx;
@@ -189,7 +189,7 @@ color: var(--color-text);
   background: var(--white);
   border-radius: 12rpx;
   text-align: center;
-  border: 2rpx dashed #e0e0e0;
+  border: 2rpx dashed var(--gray-200);
   transition: border-color 0.2s;
 }
 .upload-area:active { border-color: var(--color-primary); background: #fafbff; }
@@ -205,7 +205,7 @@ color: var(--color-text);
   left: 0;
   right: 0;
   padding: 16rpx 28rpx 32rpx;
-  background: linear-gradient(0deg, #fff 85%, rgba(255,255,255,0));
+  background: linear-gradient(0deg, var(--white) 85%, rgba(255,255,255,0));
   padding-bottom: calc(32rpx + env(safe-area-inset-bottom));
 }
 
@@ -310,7 +310,7 @@ color: var(--blue);
 /* 扫描动画 */
 .local-capture__scan {
   display: flex; flex-direction: column; align-items: center; justify-content: center;
-  padding: 48rpx 20rpx; background: var(--color-bg-card)BEB; border: 2rpx solid #F59E0B;
+  padding: 48rpx 20rpx; background: var(--color-bg-card); border: 2rpx solid #F59E0B;
   border-radius: 12rpx; position: relative; overflow: hidden;
 }
 .local-capture__scan-text { font-size: 28rpx; color: #B45309; margin-top: 12rpx; }

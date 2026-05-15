@@ -47,7 +47,7 @@
   border-radius: 20rpx;
   font-size: 26rpx;
   color: var(--text-secondary, #5f6368);
-  border: 1rpx solid var(--border, #e0e0e0);
+  border: 1rpx solid var(--border, var(--gray-200));
 }
 
 /* 证件信息卡片 */
@@ -85,7 +85,7 @@
   display: flex;
   align-items: center;
   padding: 16rpx 0;
-  border-bottom: 1rpx solid var(--border, #e0e0e0);
+  border-bottom: 1rpx solid var(--border, var(--gray-200));
 }
 .field-row:last-child { border-bottom: none; }
 .field-label {
@@ -131,7 +131,7 @@
   background: var(--card-bg, #fff);
   border-radius: 16rpx;
   font-size: 30rpx;
-  border: 1rpx solid var(--border, #e0e0e0);
+  border: 1rpx solid var(--border, var(--gray-200));
 }
 .action-item.danger {
   color: var(--color-error);

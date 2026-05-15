@@ -14,7 +14,7 @@
   border-radius: 14rpx; border-left: 6rpx solid;
 }
 .compat-banner--warn {
-  background: var(--color-bg-card)BEB; border-color: #F59E0B;
+  background: var(--color-bg-card); border-color: #F59E0B;
 }
 .compat-banner--reject {
   background: var(--color-error-bg); border-color: var(--color-error);

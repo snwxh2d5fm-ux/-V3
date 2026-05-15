@@ -157,7 +157,7 @@ Page({
       name: 'guidebook',
       data: { action: 'getArticles', limit: 50 },
       success: function(res) {
-        var articles = (res.result && res.result.articles) || [];
+        var articles = (res.result && res.result.data && res.result.data.articles) || [];
         self.setData({ articles: articles, articleLoading: false });
       },
       fail: function() {
