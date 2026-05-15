@@ -29,7 +29,8 @@ Page({
 
   onPullDownRefresh() {
     this.setData({ page: 1, guides: [], hasMore: true });
-    this.loadGuides().then(() => wx.stopPullDownRefresh());
+    var self = this;
+    this.loadGuides().then(function() { wx.stopPullDownRefresh(); });
   },
 
   onReachBottom() {
@@ -39,14 +40,14 @@ Page({
     }
   },
 
-  async loadGuides() {
+  loadGuides: function() {
     if (this.data.loading) return;
     this.setData({ loading: true });
 
     try {
       // 从本地缓存或云数据库加载攻略
-      const cacheKey = constants.STORAGE_KEYS.GUIDES_CACHE || '__guides_cache__';
-      let allGuides = wx.getStorageSync(cacheKey) || [];
+      var cacheKey = constants.STORAGE_KEYS.GUIDES_CACHE || '__guides_cache__';
+      var allGuides = wx.getStorageSync(cacheKey) || [];
 
       // 如果缓存为空，加载内置示例数据
       if (!allGuides.length) {
@@ -54,30 +55,31 @@ Page({
         wx.setStorageSync(cacheKey, allGuides);
       }
 
-      let filtered = allGuides;
-      const { activeCategory, searchKeyword } = this.data;
+      var filtered = allGuides;
+      var activeCategory = this.data.activeCategory;
+      var searchKeyword = this.data.searchKeyword;
 
       if (activeCategory !== 'all') {
-        filtered = filtered.filter(g => g.knowledge_domain === activeCategory);
+        filtered = filtered.filter(function(g) { return g.knowledge_domain === activeCategory; });
       }
       if (searchKeyword) {
-        const kw = searchKeyword.toLowerCase();
-        filtered = filtered.filter(g => 
-          (g.title && g.title.includes(kw)) || 
-          (g.topics && g.topics.some(t => t.includes(kw)))
-        );
+        var kw = searchKeyword.toLowerCase();
+        filtered = filtered.filter(function(g) {
+          return (g.title && g.title.indexOf(kw) >= 0) ||
+            (g.topics && g.topics.some(function(t) { return t.indexOf(kw) >= 0; }));
+        });
       }
 
       // 分页
-      const pageSize = 10;
-      const start = (this.data.page - 1) * pageSize;
-      const pageData = filtered.slice(start, start + pageSize);
-      
-      const guides = this.data.page === 1 ? pageData : [...this.data.guides, ...pageData];
-      this.setData({ 
-        guides, 
+      var pageSize = 10;
+      var start = (this.data.page - 1) * pageSize;
+      var pageData = filtered.slice(start, start + pageSize);
+
+      var guides = this.data.page === 1 ? pageData : this.data.guides.concat(pageData);
+      this.setData({
+        guides: guides,
         hasMore: start + pageSize < filtered.length,
-        loading: false 
+        loading: false
       });
     } catch (e) {
       this.setData({ loading: false });
@@ -126,14 +128,14 @@ Page({
 
   onUsefulTap(e) {
     const { id } = e.currentTarget.dataset;
-    const guides = this.data.guides.map(g => {
+    const guides = this.data.guides.map(function(g) {
       if (g.id === id) {
         g.usefulCount = (g.usefulCount || 0) + 1;
         g.userVoted = true;
       }
       return g;
     });
-    this.setData({ guides });
+    this.setData({ guides: guides });
     wx.showToast({ title: '感谢反馈 👍', icon: 'none' });
   }
 });

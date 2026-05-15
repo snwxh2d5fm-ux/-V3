@@ -15,11 +15,11 @@ Page({
 
   loadGuide(id) {
     // 从缓存获取攻略数据
-    const cache = wx.getStorageSync('__guides_cache__') || [];
-    const guide = cache.find(g => g.id === id);
-    
+    var cache = wx.getStorageSync('__guides_cache__') || [];
+    var guide = cache.find(function(g) { return g.id === id; });
+
     if (guide) {
-      this.setData({ guide });
+      this.setData({ guide: guide });
       this.loadRelated(guide);
       this.checkCollection(id);
     } else {
@@ -28,23 +28,24 @@ Page({
   },
 
   loadRelated(guide) {
-    const cache = wx.getStorageSync('__guides_cache__') || [];
-    const related = cache
-      .filter(g => g.id !== guide.id && g.knowledge_domain === guide.knowledge_domain)
+    var cache = wx.getStorageSync('__guides_cache__') || [];
+    var related = cache
+      .filter(function(g) { return g.id !== guide.id && g.knowledge_domain === guide.knowledge_domain; })
       .slice(0, 3);
     this.setData({ relatedGuides: related });
   },
 
   checkCollection(id) {
-    const collected = wx.getStorageSync('__guide_collections__') || [];
-    this.setData({ isCollected: collected.includes(id) });
+    var collected = wx.getStorageSync('__guide_collections__') || [];
+    this.setData({ isCollected: collected.indexOf(id) >= 0 });
   },
 
   toggleCollect() {
-    const { guide, isCollected } = this.data;
-    let collected = wx.getStorageSync('__guide_collections__') || [];
+    var guide = this.data.guide;
+    var isCollected = this.data.isCollected;
+    var collected = wx.getStorageSync('__guide_collections__') || [];
     if (isCollected) {
-      collected = collected.filter(id => id !== guide.id);
+      collected = collected.filter(function(id) { return id !== guide.id; });
     } else {
       collected.push(guide.id);
     }
@@ -54,14 +55,14 @@ Page({
   },
 
   onUsefulTap() {
-    const guide = this.data.guide;
+    var guide = this.data.guide;
     guide.usefulCount = (guide.usefulCount || 0) + 1;
     // 回写缓存
-    const cache = wx.getStorageSync('__guides_cache__') || [];
-    const idx = cache.findIndex(g => g.id === guide.id);
+    var cache = wx.getStorageSync('__guides_cache__') || [];
+    var idx = cache.findIndex(function(g) { return g.id === guide.id; });
     if (idx > -1) cache[idx].usefulCount = guide.usefulCount;
     wx.setStorageSync('__guides_cache__', cache);
-    this.setData({ guide });
+    this.setData({ guide: guide });
     wx.showToast({ title: '感谢反馈 👍', icon: 'none' });
   },
 
