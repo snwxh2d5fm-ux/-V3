@@ -383,10 +383,14 @@ Page({
       }
     });
 
-    // 计算每组进度
-    chainMap.forEach(group => {
-      group.items.sort((a, b) => (a.chainOrder || 0) - (b.chainOrder || 0));
-      const completed = group.items.filter(i => i.status === 'completed').length;
+    // 计算每组进度——已完成项置顶
+    chainMap.forEach(function(group) {
+      group.items.sort(function(a, b) {
+        if (a.status === 'completed' && b.status !== 'completed') return -1;
+        if (b.status === 'completed' && a.status !== 'completed') return 1;
+        return (a.chainOrder || 0) - (b.chainOrder || 0);
+      });
+      const completed = group.items.filter(function(i) { return i.status === 'completed'; }).length;
       group.progress = Math.round((completed / group.items.length) * 100);
     });
 
