@@ -225,15 +225,10 @@
       <text class="{{backPhotoPath?'done':''}}">{{backPhotoPath ? '✅ ' + backSideLabel + '已拍' : '☐ ' + backSideLabel}}</text>
     </view>
 
-    <!-- Bug #5: 旋转+扫描件工具栏 -->
     <view class="img-toolbar">
       <view class="img-tool" bindtap="onRotateImage">
         <text class="img-tool__icon">🔄</text>
         <text class="img-tool__label">旋转</text>
-      </view>
-      <view class="img-tool {{scanProcessing ? 'disabled' : ''}}" bindtap="onToggleScanMode">
-        <text class="img-tool__icon">{{scanMode ? '📄' : '📋'}}</text>
-        <text class="img-tool__label">{{scanMode ? '已增强' : '扫描件'}}</text>
       </view>
     </view>
 
@@ -423,8 +418,6 @@
   <canvas type="2d" id="img-process" style="position:fixed;left:-9999px;top:0;width:300px;height:300px"></canvas>
   <!-- Old Canvas API 降级用 (Bug #8: wx.createCanvasContext 备用画布) -->
   <canvas canvas-id="img-fallback" style="position:fixed;left:-9999px;top:310px;width:300px;height:300px"></canvas>
-  <!-- Bug #2修复: 扫描增强所需 Old API 画布 -->
-  <canvas canvas-id="scan-canvas" style="position:fixed;left:-9999px;top:620px;width:300px;height:300px"></canvas>
   <canvas canvas-id="crop-canvas" style="position:fixed;left:-9999px;top:930px;width:300px;height:300px"></canvas>
 
   <floating-ai visible="{{true}}" />
