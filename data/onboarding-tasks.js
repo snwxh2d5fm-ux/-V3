@@ -578,7 +578,7 @@ module.exports = [
   },
 
   // ═══════════════════════════════════════════════════════════════
-  // 关卡4: 出行融入 (8项)
+  // 关卡4: 出行融入 (7项)
   // ═══════════════════════════════════════════════════════════════
   {
     id: "onboard-401", phase: 4, sequence: 1, category: "出行融入",
@@ -710,29 +710,7 @@ module.exports = [
   },
 
   {
-    id: "onboard-407", phase: 4, sequence: 7, category: "出行融入",
-    title: "准备首次报税（如已入职）",
-    subtitle: "收到绿色信封BIR60别慌——首次报税其实很简单",
-    timeEstimate: "30分钟", urgency: "必修", icon: "tax",
-    applicableTo: {
-      visaTypes: "all", familyStatus: "all",
-      arrivalScenario: ["fresh", "delayed"], skipIfExisting: []
-    },
-    steps: [
-      { seq: 1, title: "了解报税时间", content: "5月第一工作日税务局发BIR60（绿色信封）→6-7月提交→10-11月收评税通知→翌年1月缴第一期（75%）→4月缴第二期（25%）", type: "info" },
-      { seq: 2, title: "首次报税", content: "雇主入职3月内向税务局提交IR56E→税务局5月内寄首次报税表→如应课税但没收到报税表须7月31日前书面通知", type: "info" },
-      { seq: 3, title: "了解免税额和扣税", content: "基本免税额$132,000/已婚$264,000/子女每名$130,000/供养父母$50,000/住宅租金扣除$100,000/MPF$18,000", type: "info" }
-    ],
-    requiredItems: ["已入职雇主证明", "税单/BIR60表格"],
-    officialLinks: [{ label: "税务局", url: "https://www.ird.gov.hk" }],
-    tips: ["网上电子报税（eTax）可延长提交期至2个月", "以月入$40,000为例：单身税款约$18,100（扣除基本+租金+MPF后）", "带2名子女基本可达至免税"],
-    pitfalls: ["逾期提交可被罚款最高$10,000", "如须课税但没收到报税表须主动通知税务局"],
-    renewalEvidence: { produces: false, docType: null, docCategory: null, collectMethod: null, isRequiredForRenewal: false, expiryCheck: null, renewalTip: null },
-    reminderTrigger: null, documentLink: null, aiChatContext: null
-  },
-
-  {
-    id: "onboard-408", phase: 4, sequence: 8, category: "出行融入",
+    id: "onboard-408", phase: 4, sequence: 7, category: "出行融入",
     title: "了解紧急求助渠道",
     subtitle: "999/1823/消防/救护——紧急时不慌",
     timeEstimate: "10分钟", urgency: "必修", icon: "alert",
