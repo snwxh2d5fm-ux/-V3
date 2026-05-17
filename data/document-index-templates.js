@@ -350,10 +350,11 @@ const INDEX_TEMPLATES = {
       {
         categoryKey: 'identity', categoryName: '身份证明', categoryIcon: '🪪',
         slots: [
-          { slotKey: 'id_card',    docName: '内地身份证', docIcon: '🆔', requirement: 'required', maxCount: 2 },
-          { slotKey: 'hk_permit',  docName: '港澳通行证', docIcon: '🛂', requirement: 'required', maxCount: 2 },
-          { slotKey: 'passport',   docName: '护照',         docIcon: '📘', requirement: 'recommended', maxCount: 8 },
-          { slotKey: 'photo',      docName: '证件照',       docIcon: '📷', requirement: 'required', maxCount: 1 }
+          { slotKey: 'id_card',       docName: '内地身份证',   docIcon: '🆔', requirement: 'required', maxCount: 2 },
+          { slotKey: 'hk_permit',     docName: '港澳通行证',   docIcon: '🛂', requirement: 'required', maxCount: 2 },
+          { slotKey: 'passport',      docName: '护照',         docIcon: '📘', requirement: 'recommended', maxCount: 8 },
+          { slotKey: 'photo',         docName: '证件照',       docIcon: '📷', requirement: 'required', maxCount: 1 },
+          { slotKey: 'marriage_cert', docName: '结婚证(配偶)', docIcon: '💍', requirement: 'required', description: '如配偶随行', maxCount: 8 }
         ]
       },
       {
