@@ -304,9 +304,11 @@ Page({
 
     var matched = checklist.map(function(item) {
       var found = allDocs.find(function(d) {
-        return (d.docType && d.docType.indexOf(item.id) !== -1) ||
-               (d.docSubType && d.docSubType.indexOf(item.id) !== -1) ||
-               (d.category === item.category && d.name && d.name.indexOf(item.name.slice(0,2)) !== -1);
+        // 精确匹配: type/slotKey/category
+        if (d.type && d.type === item.id) return true;
+        if (d.slotKey && d.slotKey === item.id) return true;
+        if (d.category === item.category && d.name && d.name.indexOf(item.name.slice(0,2)) !== -1) return true;
+        return false;
       });
 
       var status;
