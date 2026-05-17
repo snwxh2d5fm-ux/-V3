@@ -207,23 +207,13 @@ Page({
     }, 800);
   },
 
-  // ========== Token生成 (P0修复: 真随机替代全零) ==========
+  // ========== Token生成 (P0修复: 真随机替代全零+Date.now) ==========
   generateRandomToken: function() {
-    try {
-      var arr = new Uint8Array(16);
-      wx.getRandomValues({ length: 16, success: function(res) {
-        if (res.randomValues) {
-          for (var i = 0; i < 16; i++) arr[i] = res.randomValues[i];
-        }
-      }, fail: function() {
-        for (var i = 0; i < 16; i++) arr[i] = Math.floor(Math.random() * 256);
-      }});
-      return Array.from(arr).map(function(b) {
-        return ('0' + b.toString(16)).slice(-2);
-      }).join('');
-    } catch(e) {
-      return Date.now().toString(36) + Math.random().toString(36).slice(2);
+    var hex = '';
+    for (var i = 0; i < 32; i++) {
+      hex += ('0' + Math.floor(Math.random() * 16).toString(16)).slice(-1);
     }
+    return Date.now().toString(36) + '_' + hex;
   },
 
   // ========== 协议 ==========
