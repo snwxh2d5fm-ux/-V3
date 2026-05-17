@@ -22,6 +22,31 @@ global.Page = () => {};
 global.App = () => {};
 global.getApp = () => ({ globalData: {} });
 
+// Mock @cloudbase/node-sdk — CI 环境无腾讯云凭证，且包未安装
+jest.mock('@cloudbase/node-sdk', () => {
+  const mockDb = () => ({
+    collection: () => ({
+      where: () => ({ get: () => Promise.resolve({ data: [] }) }),
+      orderBy: () => ({ get: () => Promise.resolve({ data: [] }) }),
+      get: () => Promise.resolve({ data: [] }),
+      add: () => Promise.resolve({ _id: 'mock-id' }),
+    }),
+    command: { in: () => ({}), and: () => ({}), or: () => ({}) },
+    RegExp: () => ({}),
+  });
+  return {
+    init: () => ({
+      ai: {
+        generateText: () => Promise.resolve({ text: '[mock] AI 响应' }),
+        streamText: () => Promise.resolve({ text: '[mock] AI 流式响应' }),
+      },
+      database: mockDb,
+    }),
+    database: mockDb,
+    callFunction: () => Promise.resolve({ result: {} }),
+  };
+}, { virtual: true });
+
 // 云函数需要 mock cloud 对象用于 content-moderation 调用
 global.cloud = {
   callFunction: () => Promise.resolve({ result: { data: null } }),

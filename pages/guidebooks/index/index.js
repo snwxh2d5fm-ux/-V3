@@ -472,39 +472,76 @@ Page({
   // ── Tab 1: Scene browse — PRD v6.2 §4.3: 结构化卡片 + 搜索 + 加入指南 ──
 
   /**
-   * Load browse tasks by category. Marks completion status against user progress.
+   * Load browse tasks by category — local-first, CloudBase supplement.
+   * Mirrors Tab 0 architecture: local data renders immediately, CloudBase merges later.
    */
   loadBrowse: function(category) {
     var self = this;
     self.setData({ activeCategory: category, browseKeyword: '' });
 
+    // Step 1: Load all local tasks immediately (always works, content complete)
+    var localAll = self._loadAllLocalTasks();
+    var localFiltered = category === '全部'
+      ? localAll
+      : localAll.filter(function(t) {
+          var tags = t.scene_tags || [];
+          return tags.indexOf(category) >= 0;
+        });
+    localFiltered = self._markBrowseCompletion(localFiltered);
+    self.setData({ browseTasks: localFiltered, browseTasksAll: localFiltered });
+
+    // Step 2: Try CloudBase as supplement (async, merges into existing data)
     var promise = category === '全部'
       ? cache.fetchAllTasks()
       : cache.fetchTasks('bySceneTags', { tags: [category] });
 
     promise.then(function(r) {
-      var tasks = [];
+      var cloudTasks = [];
       if (r && r.data) {
-        tasks = r.data.tasks || r.data.data || (Array.isArray(r.data) ? r.data : []);
-        tasks = (Array.isArray(tasks) ? tasks : []).filter(function(t) {
+        cloudTasks = r.data.tasks || r.data.data || (Array.isArray(r.data) ? r.data : []);
+        cloudTasks = (Array.isArray(cloudTasks) ? cloudTasks : []).filter(function(t) {
           return t && typeof t.title === 'string' && t.title.length > 0;
         });
       }
-      // Fall back to local if CloudBase returned empty
-      if (tasks.length === 0) {
-        tasks = self._loadBrowseLocal(category);
-      }
-      tasks = self._markBrowseCompletion(tasks);
-      self.setData({ browseTasks: tasks, browseTasksAll: tasks });
+      if (cloudTasks.length === 0) return; // Nothing to merge
+
+      // Merge CloudBase tasks into local: title match → local content wins
+      var localTitleMap = {};
+      localAll.forEach(function(t) { if (t.title) localTitleMap[t.title] = t; });
+
+      var merged = localAll.slice();
+      cloudTasks.forEach(function(ct) {
+        var lm = ct.title ? localTitleMap[ct.title] : null;
+        if (lm) {
+          if (ct._id) lm._id = ct._id; // Keep CloudBase _id for progress
+        } else {
+          // CloudBase-only task — normalize and add
+          merged.push(norm(ct));
+        }
+      });
+
+      // Re-filter and render
+      var filtered = category === '全部'
+        ? merged
+        : merged.filter(function(t) {
+            var tags = t.scene_tags || [];
+            return tags.indexOf(category) >= 0;
+          });
+      filtered = self._markBrowseCompletion(filtered);
+      self.setData({ browseTasks: filtered, browseTasksAll: filtered });
     }).catch(function(e) {
-      console.error('[Browse] failed:', e);
-      var tasks = self._loadBrowseLocal(category);
-      tasks = self._markBrowseCompletion(tasks);
-      self.setData({ browseTasks: tasks, browseTasksAll: tasks });
+      console.error('[Browse] CloudBase supplement failed:', e);
+      // Local data already rendered, nothing to do
     });
   },
 
-  /** Load browse tasks from local assemblePath */
+  /** Load ALL local tasks (unfiltered by path) for full browse coverage */
+  _loadAllLocalTasks: function() {
+    var allTasks = require('../../../data/onboarding-tasks');
+    return (Array.isArray(allTasks) ? allTasks : []).map(norm);
+  },
+
+  /** Deprecated: kept for reference, no longer primary path */
   _loadBrowseLocal: function(category) {
     var progress = storage.getProgress();
     if (!progress) return [];

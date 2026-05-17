@@ -974,7 +974,7 @@ module.exports = [
     applicableTo: { visaTypes: "all", familyStatus: ["school-age","teen"], arrivalScenario: ["fresh","delayed"], skipIfExisting: [] },
     steps: [
       { seq: 1, title: "8项材料清单", content: "出生证明+近2-3年成绩表+证书/奖状(不超10页)+父母身份证副本+住址证明+回邮信封+申请费$50-200+学生近照2-4张", type: "info" },
-      { seq: 2, title: "年级匹配速查", content: "2019年→P1, 2018→P2, 2014→S1, 2012→S3。适龄入学为主，降1-2级常见(英文+繁体字适应)", type: "info" },
+      { seq: 2, title: "年级匹配速查", content: "2020年出生→P1, 2019→P2, 2014→S1, 2012→S3。适龄入学为主，降1-2级常见(英文+繁体字适应)", type: "info" },
       { seq: 3, title: "居留权要求", content: "须持香港居留权或有效居留证明(受养人签证)。访客签注儿童不得入读。学生签证只能读非公营", type: "info" }
     ],
     tips: ["教育局学位支援组2892 6191→三个工作天内获安排学位","入境管制站可索取申请表","春季插班(1-2月入学)比秋季更易获录取"],
