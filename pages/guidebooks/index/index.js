@@ -403,7 +403,7 @@ Page({
   },
 
   onTaskToggle: function(e) {
-    var taskId = e.currentTarget.dataset.id;
+    var taskId = e.currentTarget.dataset.id || e.currentTarget.dataset.taskId;
     var task = this.data.tasks.find(function(t) { return t._id === taskId; });
     if (!task || task._completed) return;
     storage.completeTask(taskId);
