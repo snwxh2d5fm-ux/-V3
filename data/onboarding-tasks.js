@@ -69,7 +69,7 @@ module.exports = [
   {
     id: "onboard-003", phase: 0, sequence: 3, category: "抵港前准备",
     title: "预约办理香港身份证",
-    subtitle: "不预约可能要等几周——提前锁定时间",
+    subtitle: "先约身份证，再定过关日——同一天办完少跑一趟",
     timeEstimate: "10分钟", urgency: "必修", icon: "idcard",
     applicableTo: {
       visaTypes: "all", familyStatus: "all",
@@ -77,13 +77,14 @@ module.exports = [
     },
     steps: [
       { seq: 1, title: "网上预约", content: "登入入境处网上预约系统（gov.hk/icbooking），选择「申领香港智能身份证」。填写姓名、证件号码、出生日期。", type: "action" },
-      { seq: 2, title: "选择办理日期和地点", content: "建议选择抵港后3-5个工作日的日期。办理地点可选港岛（湾仔）、九龙（长沙湾/观塘）、新界（火炭/元朗/屯门）。湾仔总部的预约最满，建议选九龙或新界。", type: "action" },
-      { seq: 3, title: "保存预约确认", content: "截图保存预约确认页面（含预约编号、日期、时间、地点）。抵港后按预约时间前往。", type: "action" }
+      { seq: 2, title: "选择办理日期——这是关键一步", content: "先定身份证预约日期，再据此安排过关日。最佳策略：预约在过关当天或次日，激活签证+办身份证一趟搞定。湾仔总部最满，九龙（长沙湾/观塘）或新界（火炭/元朗/屯门）更容易约到。每天上午9点释放新名额。", type: "action" },
+      { seq: 3, title: "根据预约日期反推过关日", content: "确认预约日期后，再安排过关激活签证的日期（建议提前1天或当天）。过关日确定后，依次预订交通、住宿、准备过关文件包。", type: "action" },
+      { seq: 4, title: "保存预约确认", content: "截图保存预约确认页面（含预约编号、日期、时间、地点）。过关激活签证后按预约时间前往办理。", type: "action" }
     ],
     requiredItems: ["护照/港澳通行证号码"],
     officialLinks: [{ label: "入境处网上预约", url: "https://www.gov.hk/icbooking" }],
-    tips: ["每天上午9点释放新的预约名额，热门时段竞争激烈", "火炭办事处通常比湾仔容易约到", "预约可更改两次，如需改期尽早操作"],
-    pitfalls: ["入境后30天内必须申领身份证，逾期可能被检控", "网上预约需输入在港联系电话，可先填酒店/朋友电话"],
+    tips: ["核心策略：先约身份证→再定过关日→最后订交通住宿。一趟搞定激活+办证", "每天上午9点释放新的预约名额，热门时段竞争激烈", "火炭办事处通常比湾仔容易约到", "预约可更改两次，如需改期尽早操作"],
+    pitfalls: ["不要先订机票酒店再约身份证——预约日期可能不理想，到时候改机票成本高", "入境后30天内必须申领身份证，逾期可能被检控", "网上预约需输入在港联系电话，可先填酒店/朋友电话"],
     renewalEvidence: { produces: true, docType: "预约确认截图", docCategory: "visa", collectMethod: "photo", isRequiredForRenewal: false, expiryCheck: null, renewalTip: "预约确认不是必须的续签材料，但保留可作为你抵港后及时办理行政手续的时间证据。" },
     reminderTrigger: null, documentLink: null, aiChatContext: null
   },

@@ -41,26 +41,39 @@ function saveProgress(progress) {
  */
 function initOnboarding(params) {
   var now = new Date().toISOString();
+  // Determine initial unlocked phases based on arrivalScenario
+  var arrivalScenario = params.arrivalScenario || 'fresh';
+  var unlockedPhases = { '0': { unlocked: true, completed: false }, '1': { unlocked: true, completed: false } };
+  if (arrivalScenario === 'fresh') {
+    // Fresh arrivals get phases 0-7 unlocked upfront (关卡0-1 already set above)
+    for (var p = 2; p <= 7; p++) { unlockedPhases[String(p)] = { unlocked: true, completed: false }; }
+  } else if (arrivalScenario === 'delayed') {
+    unlockedPhases = {};
+    for (var p2 = 2; p2 <= 7; p2++) { unlockedPhases[String(p2)] = { unlocked: true, completed: false }; }
+  } else if (arrivalScenario === 'pre-arrival') {
+    unlockedPhases = { '0': { unlocked: true, completed: false } };
+  }
   var progress = {
     userId: '',
     pathParams: {
       visaType: params.visaType || '',
       familyStatus: params.familyStatus || 'single',
-      arrivalScenario: params.arrivalScenario || 'fresh',
-      existingAssets: Array.isArray(params.existingAssets) ? params.existingAssets : []
+      arrivalScenario: arrivalScenario,
+      existingAssets: Array.isArray(params.existingAssets) ? params.existingAssets : [],
+      housingIntent: params.housingIntent || 'undecided'
     },
     startedAt: now,
-    currentPhase: 1,
+    currentPhase: arrivalScenario === 'pre-arrival' ? 0 : (arrivalScenario === 'delayed' ? 2 : 1),
     tasks: {},
-    phases: {
-      '0': { unlocked: true, completed: false },
-      '1': { unlocked: true, completed: false }
-    },
+    phases: unlockedPhases,
     renewalDossier: {
       address: { items: [], completeness: 0 },
       employment: { items: [], completeness: 0 },
-      family: { items: [], completeness: 0 },
+      family: { items: [], completeness: 0, applicable: params.familyStatus !== 'single' },
       visa: { items: [], completeness: 0 }
+    },
+    flags: {
+      housingWizardDone: false
     },
     updatedAt: now
   };
@@ -346,6 +359,28 @@ function clamp01(val) {
   return val;
 }
 
+/**
+ * 标记找房向导已完成
+ */
+function markHousingWizardDone() {
+  var progress = getProgress();
+  if (!progress) return false;
+  if (!progress.flags) progress.flags = {};
+  progress.flags.housingWizardDone = true;
+  saveProgress(progress);
+  return true;
+}
+
+/**
+ * 检查找房向导是否已完成
+ * @returns {boolean}
+ */
+function isHousingWizardDone() {
+  var progress = getProgress();
+  if (!progress) return false;
+  return !!(progress.flags && progress.flags.housingWizardDone);
+}
+
 module.exports = {
   initOnboarding: initOnboarding,
   getProgress: getProgress,
@@ -360,5 +395,7 @@ module.exports = {
   resetAll: resetAll,
   getRenewalDossier: getRenewalDossier,
   getRenewalReadiness: getRenewalReadiness,
-  exportChecklist: exportChecklist
+  exportChecklist: exportChecklist,
+  markHousingWizardDone: markHousingWizardDone,
+  isHousingWizardDone: isHousingWizardDone
 };

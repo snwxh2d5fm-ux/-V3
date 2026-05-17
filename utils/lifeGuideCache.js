@@ -281,10 +281,36 @@ function invalidateCache() {
   }
 }
 
+/**
+ * Local data source: client-side assemblePath engine.
+ * Synchronous — assemblePath runs instantly on local onboarding-tasks.js.
+ * Used as the primary data source (方案C) for immediate offline-first render.
+ *
+ * @param {string} visaType
+ * @param {string} familyStatus
+ * @param {string} arrivalScenario
+ * @param {string[]} [existingAssets]
+ * @returns {{data: {tasks: Array, phases: Array, summary: Object}, source: string}}
+ */
+function fetchByPathLocal(visaType, familyStatus, arrivalScenario, existingAssets) {
+  var assemblePath = require('../data/onboarding-paths').assemblePath;
+  var result = assemblePath({
+    visaType: visaType,
+    familyStatus: familyStatus,
+    arrivalScenario: arrivalScenario,
+    existingAssets: existingAssets || []
+  });
+  return {
+    data: { tasks: result.tasks, phases: result.phases, summary: result.summary },
+    source: 'local'
+  };
+}
+
 module.exports = {
   fetchTasks: fetchTasks,
   fetchAllTasks: fetchAllTasks,
   fetchByPath: fetchByPath,
+  fetchByPathLocal: fetchByPathLocal,
   invalidateCache: invalidateCache,
   isCacheValid: isCacheValid,
   getCacheAge: getCacheAge

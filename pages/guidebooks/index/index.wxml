@@ -20,6 +20,17 @@
 
   <!-- Tab 0: 生活指南 -->
   <view wx:elif="{{activeTab===0}}" class="tab-content">
+    <!-- 当前进度指示 -->
+    <view class="current-phase-bar" wx:if="{{phases.length}}">
+      <text class="cp-label">📍 当前: 关卡{{currentPhase}}</text>
+      <view class="cp-progress">
+        <view class="cp-dots">
+          <block wx:for="{{phases}}" wx:key="phase">
+            <view class="cp-dot {{item.phase < currentPhase ? 'done' : (item.phase === currentPhase ? 'active' : '')}}"></view>
+          </block>
+        </view>
+      </view>
+    </view>
     <view class="dossier-bar" wx:if="{{renewalDossier}}" bindtap="switchTab" data-tab="2">
       <text class="dossier-label">📋 续签档案</text>
       <text class="dossier-stat"><text>🏠{{renewalDossier.address.completeness||0}}</text>/4</text>
@@ -75,7 +86,7 @@
                     </view>
                     <view class="step-info">
                       <text class="step-title">{{step.title}}</text>
-                      <text class="step-content">{{step.content}}</text>
+                      <view class="step-content">{{step.content}}</view>
                     </view>
                   </view>
                 </view>
@@ -91,29 +102,85 @@
     </scroll-view>
   </view>
 
-  <!-- Tab 1: 场景速查 -->
+  <!-- Tab 1: 场景速查 — PRD v6.2 §4.3: 结构化卡片+搜索+加入指南 -->
   <view wx:elif="{{activeTab===1}}" class="tab-content">
+    <view class="browse-search-bar">
+      <input class="browse-search-input" placeholder="🔍 搜索攻略..." value="{{browseKeyword}}" bindinput="onBrowseSearch" confirm-type="search"/>
+    </view>
     <scroll-view scroll-x class="category-scroll">
       <view wx:for="{{['全部','银行','通讯','交通','住房','医疗','教育','税务','证件','运动','搬家','保险','社区']}}"
             wx:key="*this" class="category-tag {{activeCategory===item?'active':''}}"
             data-category="{{item}}" bindtap="onCategoryTap"><text>{{item}}</text></view>
     </scroll-view>
     <scroll-view scroll-y class="browse-list">
-      <view wx:for="{{browseTasks}}" wx:key="_id" class="browse-card" bindtap="onBrowseTaskTap" data-id="{{item._id}}">
-        <text class="browse-title">{{item.title}}</text>
-        <text class="browse-sub">{{item.subtitle}}</text>
-        <view class="browse-meta">
-          <text class="tag-sm">{{item.urgency}}</text>
-          <text class="tag-sm">{{item.time_estimate}}</text>
-          <text wx:for="{{item.scene_tags||item.sceneTags}}" wx:key="*this" wx:for-item="tag" class="tag-sm scene">#{{tag}}</text>
+      <view wx:for="{{browseTasks}}" wx:key="_id" class="browse-card">
+        <view class="browse-card-main" bindtap="onBrowseTaskTap" data-id="{{item._id}}">
+          <view class="browse-card-left">
+            <text class="browse-title">{{item.title}}</text>
+            <text class="browse-sub">{{item.subtitle}}</text>
+          </view>
+          <view class="browse-card-right">
+            <text class="tag-sm urgency-{{item._urgencyClass}}">{{item.urgency}}</text>
+            <text class="tag-sm">{{item.time_estimate}}</text>
+            <text wx:if="{{item._completed && item._materialCollected}}" class="browse-done-icon">✓✓</text>
+            <text wx:elif="{{item._completed}}" class="browse-warn-icon">⚠️</text>
+            <text wx:else class="browse-expand-icon">{{expandedBrowseTaskId===item._id?'▲':'▼'}}</text>
+          </view>
         </view>
-        <!-- 展开详情 -->
-        <view wx:if="{{expandedBrowseTaskId===item._id}}" class="browse-expand">
-          <text class="browse-desc" style="white-space:pre-line">{{expandedBrowseContent}}</text>
+        <!-- 结构化详情面板 -->
+        <view wx:if="{{expandedBrowseTaskId===item._id}}" class="browse-detail">
+          <!-- 步骤 -->
+          <view wx:if="{{item.steps && item.steps.length}}" class="browse-section">
+            <text class="browse-section-title">📋 步骤指引</text>
+            <view wx:for="{{item.steps}}" wx:key="seq" wx:for-item="step" class="browse-step">
+              <text class="browse-step-num">{{step.seq}}.</text>
+              <view class="browse-step-body">
+                <text class="browse-step-title">{{step.title}}</text>
+                <view class="browse-step-content">{{step.content}}</view>
+              </view>
+            </view>
+          </view>
+          <!-- 材料 -->
+          <view wx:if="{{item.required_items && item.required_items.length}}" class="browse-section">
+            <text class="browse-section-title">📎 所需材料</text>
+            <view wx:for="{{item.required_items}}" wx:key="*this" wx:for-item="mat" class="browse-item-row">
+              <view>• {{mat}}</view>
+            </view>
+          </view>
+          <!-- 贴士 -->
+          <view wx:if="{{item.tips && item.tips.length}}" class="browse-section">
+            <text class="browse-section-title">💡 小贴士</text>
+            <view wx:for="{{item.tips}}" wx:key="*this" wx:for-item="tip" class="browse-item-row">
+              <view>💡 {{tip}}</view>
+            </view>
+          </view>
+          <!-- 坑点 -->
+          <view wx:if="{{item.pitfalls && item.pitfalls.length}}" class="browse-section">
+            <text class="browse-section-title">⚠️ 常见坑点</text>
+            <view wx:for="{{item.pitfalls}}" wx:key="*this" wx:for-item="pit" class="browse-item-row">
+              <view>⚠️ {{pit}}</view>
+            </view>
+          </view>
+          <!-- 链接 -->
+          <view wx:if="{{item.official_links && item.official_links.length}}" class="browse-section">
+            <text class="browse-section-title">🔗 参考链接</text>
+            <view wx:for="{{item.official_links}}" wx:key="label" wx:for-item="link" class="browse-item-row">
+              <view>• {{link.label}}</view>
+            </view>
+          </view>
+          <!-- 操作按钮 -->
+          <view class="browse-actions">
+            <view wx:if="{{item._completed}}" class="browse-done-tag">
+              <text>{{item._materialCollected?'✓✓ 已完成(含材料)':'✓ 步骤已完成'}}</text>
+            </view>
+            <view wx:else class="browse-detail-btn" bindtap="onBrowseViewDetail" data-id="{{item._id}}">
+              <text>了解详情 →</text>
+            </view>
+          </view>
         </view>
       </view>
       <view wx:if="{{browseTasks.length===0 && !loading}}" class="empty-hint">
-        <text>选择分类标签开始浏览</text>
+        <text>{{browseKeyword?'未找到匹配的攻略':'选择分类标签开始浏览'}}</text>
       </view>
     </scroll-view>
   </view>
@@ -297,8 +364,80 @@
     </view>
   </view>
 
-  <!-- 找房向导入口横幅 -->
-  <view wx:if="{{activeTab===0 && currentPhase===3 && !housingWizardDone}}" class="housing-banner" bindtap="onHousingBannerTap">
+  <!-- 找房向导入口横幅 — 关卡3解锁即可见，不再依赖 currentPhase -->
+  <view wx:if="{{activeTab===0 && phase3Unlocked && !housingWizardDone}}" class="housing-banner" bindtap="onHousingBannerTap">
     <text>🏠 不确定住哪个区？先做找房向导（30秒）</text>
+  </view>
+
+  <!-- 任务详情全屏弹窗 (Tab 1 "了解详情") -->
+  <view wx:if="{{showTaskDetail}}" class="overlay task-detail-overlay">
+    <view class="task-detail-sheet">
+      <view class="task-detail-header">
+        <text class="task-detail-title">{{taskDetail.title}}</text>
+        <view class="task-detail-meta">
+          <text class="tag-sm urgency-{{taskDetail._urgencyClass}}">{{taskDetail.urgency}}</text>
+          <text class="tag-sm">{{taskDetail.time_estimate}}</text>
+        </view>
+        <view class="task-detail-close" bindtap="onTaskDetailClose"><text>✕</text></view>
+      </view>
+      <scroll-view scroll-y class="task-detail-body">
+        <!-- 概览 -->
+        <view wx:if="{{taskDetail.subtitle}}" class="td-section">
+          <view class="td-text">{{taskDetail.subtitle}}</view>
+        </view>
+        <!-- 步骤 -->
+        <view wx:if="{{taskDetail.steps && taskDetail.steps.length}}" class="td-section">
+          <text class="td-section-title">📋 步骤指引</text>
+          <view wx:for="{{taskDetail.steps}}" wx:key="seq" wx:for-item="step" class="td-step">
+            <text class="td-step-num">{{step.seq}}</text>
+            <view class="td-step-body">
+              <text class="td-step-title">{{step.title}}</text>
+              <view class="td-step-content">{{step.content}}</view>
+            </view>
+          </view>
+        </view>
+        <!-- 材料 -->
+        <view wx:if="{{taskDetail.required_items && taskDetail.required_items.length}}" class="td-section">
+          <text class="td-section-title">📎 所需材料</text>
+          <view wx:for="{{taskDetail.required_items}}" wx:key="*this" wx:for-item="mat" class="td-item">
+            <view>• {{mat}}</view>
+          </view>
+        </view>
+        <!-- 贴士 -->
+        <view wx:if="{{taskDetail.tips && taskDetail.tips.length}}" class="td-section">
+          <text class="td-section-title">💡 小贴士</text>
+          <view wx:for="{{taskDetail.tips}}" wx:key="*this" wx:for-item="tip" class="td-item">
+            <view>💡 {{tip}}</view>
+          </view>
+        </view>
+        <!-- 坑点 -->
+        <view wx:if="{{taskDetail.pitfalls && taskDetail.pitfalls.length}}" class="td-section">
+          <text class="td-section-title">⚠️ 常见坑点</text>
+          <view wx:for="{{taskDetail.pitfalls}}" wx:key="*this" wx:for-item="pit" class="td-item">
+            <view>⚠️ {{pit}}</view>
+          </view>
+        </view>
+        <!-- 链接 -->
+        <view wx:if="{{taskDetail.official_links && taskDetail.official_links.length}}" class="td-section">
+          <text class="td-section-title">🔗 参考链接</text>
+          <view wx:for="{{taskDetail.official_links}}" wx:key="label" wx:for-item="link" class="td-item">
+            <view>• {{link.label}}: {{link.url}}</view>
+          </view>
+        </view>
+        <!-- 续签提示 -->
+        <view wx:if="{{taskDetail.renewal_evidence && taskDetail.renewal_evidence.produces}}" class="td-section td-renewal-hint">
+          <text class="td-section-title">📋 续签材料</text>
+          <view class="td-text">完成此任务后记得收集: {{taskDetail.renewal_evidence.doc_type}}</view>
+        </view>
+      </scroll-view>
+      <view class="task-detail-footer">
+        <view wx:if="{{taskDetail._completed}}" class="browse-done-tag">
+          <text>{{taskDetail._materialCollected?'✓✓ 已完成(含材料)':'✓ 步骤已完成'}}</text>
+        </view>
+        <view wx:else class="browse-add-btn" bindtap="onBrowseAddToGuide" data-id="{{taskDetail._id}}">
+          <text>+ 加入我的生活指南</text>
+        </view>
+      </view>
+    </view>
   </view>
 </view>
