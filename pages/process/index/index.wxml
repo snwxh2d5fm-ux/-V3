@@ -187,10 +187,6 @@
           <text wx:if="{{directSelectedPath===item.id}}" class="picker-check">✓</text>
         </view>
       </view>
-      <button class="btn btn--primary btn--block" bindtap="onConfirmDirectPath"
-              disabled="{{!directSelectedPath}}" wx:if="{{directSelectedPath}}">
-        确认选择：{{directSelectedPathLabel}}
-      </button>
     </view>
   </view>
 

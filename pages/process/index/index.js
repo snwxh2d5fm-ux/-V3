@@ -100,15 +100,10 @@ Page({
     for (var i = 0; i < opts.length; i++) {
       if (opts[i].id === id) { label = opts[i].name; break; }
     }
-    this.setData({ directSelectedPath: id, directSelectedPathLabel: label });
-  },
-
-  onConfirmDirectPath() {
-    var path = this.data.directSelectedPath;
-    if (!path) return;
-    app.globalData.selectedPath = path;
-    // 刷新当前流程控页面并关闭面板
+    // 一触即选：点击即确认，无需二次按钮
+    app.globalData.selectedPath = id;
     this.setData({ showDirectPathPicker: false, directSelectedPath: '', directSelectedPathLabel: '' });
+    wx.showToast({ title: '已选择：' + label, icon: 'success', duration: 1500 });
     this.loadActiveProcess();
   },
 

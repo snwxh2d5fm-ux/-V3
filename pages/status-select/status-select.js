@@ -66,7 +66,7 @@ Page({
     }
   },
 
-  // ========== 拍照 + OCR 验证 ==========
+  // ========== 拍照留存（纯本地，不做上传校验） ==========
   captureDoc: function(e) {
     var that = this;
     var docType = e.currentTarget.dataset.type;
@@ -76,116 +76,30 @@ Page({
       sizeType: ['compressed'],
       sourceType: ['camera'],
       success: function(res) {
-        that.setData({ capturing: true, capturedImage: '' });
         var filePath = res.tempFilePaths[0];
 
-        // 压缩 → 临时上传 → OCR → 校验 → 删除
-        wx.compressImage({
-          src: filePath, quality: 40,
-          success: function(compressRes) {
-            var cloudPath = '_ocr_temp/' + Date.now() + '_' + Math.random().toString(36).slice(2, 8) + '.jpg';
-            wx.cloud.uploadFile({
-              cloudPath: cloudPath, filePath: compressRes.tempFilePath,
-              success: function(uploadRes) {
-                wx.cloud.callFunction({
-                  name: 'ocr-service',
-                  data: {
-                    action: 'verify',
-                    docType: docType,
-                    fileID: uploadRes.fileID,
-                    selectedPath: that.data.selectedSubStatus
-                  }
-                }).then(function(cloudRes) {
-                  that.setData({ capturing: false });
-                  var result = cloudRes.result || {};
-                  var savedPath = that.saveToLocal(docType, filePath);
+        // 保存到系统相册
+        wx.saveImageToPhotosAlbum({
+          filePath: filePath,
+          success: function() {
+            wx.showToast({ title: '已保存到相册', icon: 'success' });
+          },
+          fail: function() {
+            // 授权被拒不影响流程
+          }
+        });
 
-                  if (result.code === 0 && result.data) {
-                    var data = result.data;
-
-                    // OCR 不可用 → 人工确认
-                    if (data.ocrAvailable === false || data.matched === null) {
-                      that.setData({
-                        capturedImage: savedPath || filePath,
-                        capturedSummary: data.summary || '已留存',
-                        capturedType: docType,
-                        ocrFields: data.fields || [],
-                        ocrMatched: null,
-                        ocrWarning: '',
-                        manualPrompt: data.manualVerifyPrompt || '请人工确认照片与所选路径一致'
-                      });
-                      wx.showModal({
-                        title: '🔍 人工校验',
-                        content: data.manualVerifyPrompt ||
-                          'OCR 服务暂不可用，请查看照片确认与所选路径一致',
-                        confirmText: '确认一致',
-                        cancelText: '重新拍照',
-                        success: function(modalRes) {
-                          if (modalRes.confirm) {
-                            that.setData({ ocrMatched: true, canConfirm: true });
-                          }
-                        }
-                      });
-                      return;
-                    }
-
-                    // OCR 可用 → 自动比对
-                    var matched = data.matched !== false;
-                    that.setData({
-                      capturedImage: savedPath || filePath,
-                      capturedSummary: data.summary || '已留存',
-                      capturedType: docType,
-                      ocrFields: data.fields || [],
-                      ocrMatched: matched,
-                      ocrWarning: data.warning || '',
-                      canConfirm: matched
-                    });
-
-                    if (!matched) {
-                      // 不匹配 → 提供智能修正
-                      var correctedValue = that.matchToSubStatus(data.extractedType, that.data.selectedStatus);
-                      var content = (data.warning || '识别结果与所选路径不一致') +
-                        (correctedValue ? '\n\n是否按识别结果「' + data.extractedType + '」确认？' : '');
-
-                      wx.showModal({
-                        title: '⚠️ 资料不匹配',
-                        content: content,
-                        confirmText: correctedValue ? '按识别结果确认' : '知道了',
-                        cancelText: correctedValue ? '重新识别' : '',
-                        showCancel: !!correctedValue,
-                        success: function(modalRes) {
-                          if (modalRes.confirm && correctedValue) {
-                            // 自动修正选择
-                            that.setData({
-                              selectedSubStatus: correctedValue,
-                              ocrMatched: true,
-                              ocrWarning: '',
-                              canConfirm: true
-                            });
-                          }
-                        }
-                      });
-                    }
-                  } else {
-                    // 降级
-                    that.setData({
-                      capturedImage: savedPath || filePath,
-                      capturedSummary: '已留存', capturedType: docType,
-                      ocrMatched: true, canConfirm: true
-                    });
-                  }
-                }).catch(function() {
-                  // 云函数异常降级
-                  that.setData({ capturing: false });
-                  var savedPath = that.saveToLocal(docType, filePath);
-                  that.setData({
-                    capturedImage: savedPath || filePath,
-                    capturedSummary: '已留存（离线模式）',
-                    capturedType: docType,
-                    ocrMatched: true,
-                    canConfirm: true
-                  });
-                });
+        // 直接确认，无 OCR 无上传无校验
+        that.setData({
+          capturedImage: filePath,
+          capturedSummary: '已留存',
+          capturedType: docType,
+          ocrMatched: true,
+          ocrWarning: '',
+          canConfirm: true,
+          capturing: false
+        });
+      }
               },
               fail: function() {
                 that.setData({ capturing: false });
