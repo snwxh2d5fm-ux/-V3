@@ -1,0 +1,9 @@
+{
+  "name": "ai-eval",
+  "version": "1.0.0",
+  "description": "住港伴 AI回答质量自动评分 + 准确率基线",
+  "main": "index.js",
+  "dependencies": {
+    "@cloudbase/node-sdk": "^2.0.0"
+  }
+}

@@ -1,33 +1,44 @@
-# 🚀 9-Gate 复检 — post-push
-> Claude → Hermes | 2026-05-18 21:00 HKT
+# 🚀 立即执行 9-Gate — 全量安全审查修复
+> Claude → Hermes | 2026-05-18
 
-## 上轮P0修复验证
+## 本轮变更 (代码审查+安全修复，20个文件)
 
-| P0 | 状态 | commit |
-|----|:--:|------|
-| reminders/detail未注册 | ✅ app.json已补 | 674f0f1 |
-| cloud=null降级断裂 | ✅ v5已用getDb() | b640e24 |
-| conversation_logs缺失 | ✅ 21处引用已同步 | b640e24 |
-| sources断裂 | ✅ 返回sources[]数组 | b640e24 |
-| 合规扫描阻塞 | ✅ prompts.js全清 | 674f0f1 |
-
-## 本轮变更 (post-push增量)
 | 文件 | 变更 |
 |------|------|
-| cloudfunctions/ai-chat/index.js | v5同步完成 (RAG+日志+sources→生产) |
-| cloudfunctions/ai-chat/prompts.js | V8术语+V6反旧计分+K2六规则+V4快捷回复→生产 |
-| app.json | reminders/detail已注册 |
-| git push | ✅ 674f0f1 on main |
+| cloudfunctions/document-manager/index.js | P0: deleteDoc 加 _openid 归属验证 |
+| cloudfunctions/user-auth/index.js | P0: Token 从伪JWT改为HMAC-SHA256签名 |
+| cloudfunctions/payment/index.js | P0: 删除查单失败信任前端降级；S-11: V3回调签名强制开启 |
+| cloudfunctions/db-admin/index.js | P1: 管理操作加 ADMIN_OPENIDS 白名单 |
+| cloudfunctions/reminder-engine/index.js | P1: scanExpiringToday 加 openid 过滤 |
+| cloudfunctions/ocr-service/index.js | P1: abuse检查 fail-open → fail-safe |
+| cloudfunctions/ai-assess/index.js | 假数据修复: similarCases 改查DB |
+| cloudfunctions/batch-generate-guidebooks/index.js | 假数据修复: helpful/rating 清零 |
+| cloudfunctions/policy-monitor/index.js | 虚壳修复: runPolicyCheck 接入HTTP抓取+SHA-256 |
+| cloudfunctions/ai-chat/index.js | v5同步(RAG+日志+sources→生产) |
+| cloudfunctions/ai-chat/prompts.js | V8术语+V6反旧计分+K2规则 |
+| subpkg-chat/pages/chat/index.js | P0: formatReplyContent 加 HTML实体编码防XSS |
+| subpkg-chat/pages/settings/index.js | P1: deleteAccount 加云函数服务端删除 |
+| pages/home/home.js | P0: 删除模拟登录桩代码，接入user-auth |
+| pages/login/login.js | P1: fallback token 日期→随机字节 |
+| utils/crypto.js | P0: crypto.subtle→wx.getRandomValues+纯JS AES |
+| utils/ocr.js | 错误处理: identifyDocType catch从resolve改reject |
+| utils/tracker.js | 空catch块→console.warn |
+| components/progress-bar/progress-bar.js | computed块→observers(微信不支持computed) |
+| components/status-badge/status-badge.js | 身份切换从toast→跳转会员页 |
 
-## 待Hermes执行
-- Gate 1: verify.sh (扫描本次增量)
-- Gate 2: Jest smoke (聚焦ai-chat相关测试)
-- Gate 5: 玄武PM (V8术语合规验证)
-- Gate 7: git pull验证 ← 验证线上代码与本地一致
-- Gate 9: 回写3份ACL
+## 需部署云函数 (12个)
+document-manager, user-auth, payment, db-admin, reminder-engine, ocr-service, ai-assess, batch-generate-guidebooks, policy-monitor, ai-chat
 
-## 已知预存
-- ai-chat-utility.test.js: 61项失败(CI无CloudBase密钥+旧断言) → 纳入Phase 2.3
-- documents.test.js: 模板数据声明偏差 → 预存，非本次引入
+## 无需部署云函数 (前端+工具层8个文件)
+chat, settings, home, login, crypto, ocr(util), tracker, progress-bar, status-badge
 
-{"ts":"2026-05-18T21:00:00+08:00","from":"claude","action":"deploy_request","detail":"Post-push复检: P0全部修复+V8术语+git push 674f0f1. 测试预存61项失败(环境+旧断言)纳入Phase 2.3.","state":"pending_hermes_9gate"}
+## 9-Gate 执行
+🔒 代码冻结 — Hermes 禁止修改代码文件
+
+## 重点检查项
+- Gate 4 麒麟: 验证20个文件的P0修复是否完整（S-01~S-12）
+- Gate 5 玄武: 验证V8术语合规 + ai-chat K2护栏生效
+- Gate 6 CloudBase: 12个云函数逐一部署验证
+- Gate 1 verify.sh: 重点扫 crypto.js 和 payment 降级逻辑
+
+{"ts":"2026-05-18T23:00:00+08:00","from":"claude","action":"deploy_request","detail":"全量安全审查修复: 6个P0+5个P1+3个虚壳+2个假数据修复, 20个文件, 12个云函数待部署","state":"pending_hermes_9gate"}
