@@ -36,8 +36,6 @@ Page({
     qualityResult: null,         // 质量检测结果(新·6项)
 
     // 扫描件效果
-    scanMode: false,             // 是否启用扫描件增强
-    scanProcessing: false,       // 扫描件处理中
 
     // 证件双面拍摄
     photoSide: 'front',
@@ -678,7 +676,7 @@ Page({
   /** 重新识别（返回重拍） */
   retakePhoto() {
     this.setData({
-      step: 1, inputMode: '', imagePath: '', imageBase64: '', imageRotated: 0, scanMode: false,
+      step: 1, inputMode: '', imagePath: '', imageBase64: '', imageRotated: 0,
       docType: 'unknown', ocrFields: {}, rawOCRText: '',
       confidence: 0, confidencePercent: '0', ocrFieldList: [], qualityIssues: [], qualityResult: null
     });
