@@ -143,12 +143,23 @@ Page({
             confirmColor: '#d93025',
             success: (res2) => {
               if (res2.confirm) {
-                try {
-                  wx.clearStorageSync();
-                  wx.reLaunch({ url: '/pages/login/login' });
-                } catch (e) {
-                  wx.showToast({ title: '操作失败', icon: 'none' });
-                }
+                wx.showLoading({ title: '注销中...' });
+                // 调用云函数删除服务端数据
+                wx.cloud.callFunction({
+                  name: 'user-auth',
+                  data: { action: 'deleteAccount' }
+                }).then(function() {
+                  wx.hideLoading();
+                }).catch(function() {
+                  wx.hideLoading();
+                }).finally(function() {
+                  try {
+                    wx.clearStorageSync();
+                    wx.reLaunch({ url: '/pages/login/login' });
+                  } catch (e) {
+                    wx.showToast({ title: '操作失败', icon: 'none' });
+                  }
+                });
               }
             }
           });
