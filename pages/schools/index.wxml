@@ -15,7 +15,7 @@
     <view class="school-card" wx:for="{{filtered}}" wx:key="id">
       <view class="card-head">
         <text class="school-name">{{item.name}}</text>
-        <text class="school-type type-{{item.type}}">{{item.type}}</text>
+        <text class="school-type type-{{item.typeKey}}">{{item.type}}</text>
       </view>
       <view class="card-info">
         <text class="info-line">📍 {{item.region}} · {{item.net}}</text>

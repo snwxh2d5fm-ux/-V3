@@ -1,5 +1,7 @@
 var corpus = require('../../data/school-corpus.json');
 
+var TYPE_MAP = { '官立':'gov', '资助':'aid', '直资':'dss', '私立':'private', '国际':'intl' };
+
 Page({
   data: {
     schools: [],
@@ -12,10 +14,12 @@ Page({
     var all = [];
     for (var key in corpus) {
       var s = corpus[key];
+      var type = s['类别'] || '';
       all.push({
         id: s.id || key,
         name: s['学校名称'] || '',
-        type: s['类别'] || '',
+        type: type,
+        typeKey: TYPE_MAP[type] || 'gov',
         net: s['所属校网'] || '',
         region: s['地区'] || '',
         fee: s['学费/年'] || '',
