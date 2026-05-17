@@ -6,7 +6,7 @@
 const { saveFile, saveDocumentMeta, getAllDocuments } = require('../../../utils/storage');
 const { extractFields, identifyDocType, checkImageQuality } = require('../../../utils/ocr');
 const { desensitizeFields, MODES } = require('../../../utils/desensitize');
-const { getSlotGuide, getFreeDocGuide, slotToCategory, getPrivacyBars } = require('../../../data/document-guides');
+const { getSlotGuide, getFreeDocGuide, slotToCategory, getPrivacyBars } = require('../../data/document-guides');
 const constants = require('../../../data/constants');
 const app = getApp();
 
