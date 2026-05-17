@@ -39,11 +39,13 @@ Page({
     scanMode: false,             // 是否启用扫描件增强
     scanProcessing: false,       // 扫描件处理中
 
-    // 证件双面拍摄 (国徽面/人像面)
-    photoSide: 'front',          // 'front' | 'back'
-    frontPhotoPath: '',          // 人像面照片
-    backPhotoPath: '',           // 国徽面照片
-    bothSidesDone: false,        // 双面均已拍摄
+    // 证件双面拍摄
+    photoSide: 'front',
+    frontSideLabel: '人像面',    // 根据证件类型动态变化
+    backSideLabel: '国徽面',     // 港澳通行证→签注面, 护照→信息页
+    frontPhotoPath: '',
+    backPhotoPath: '',
+    bothSidesDone: false,
 
     // 一键对齐
     alignProcessing: false,
@@ -228,17 +230,13 @@ Page({
         this.setData({ scanProcessing: true });
         // 后台异步执行，不阻塞用户继续操作
         var imgProc = require('../../../utils/image-process');
+        // 仅自动旋转（安全操作），跳过crop/enhance（真机Canvas兼容性问题）
         imgProc.autoRotate(imagePath).then(function(rotated) {
-          return imgProc.cropToDocument(rotated || imagePath);
-        }).then(function(cropped) {
-          return imgProc.enhanceToScanned(cropped || imagePath);
-        }).then(function(enhanced) {
-          if (enhanced && enhanced !== imagePath) {
-            that.setData({ imagePath: enhanced, alignedPath: enhanced });
-            that.readImageBase64(enhanced);
-            wx.showToast({ title: '扫描增强完成', icon: 'success', duration: 1200 });
+          if (rotated && rotated !== imagePath) {
+            that.setData({ imagePath: rotated, alignedPath: rotated });
+            that.readImageBase64(rotated);
           }
-        }).catch(function(e) { console.log('[增强] 后台失败:', e.message); })
+        }).catch(function(e) { console.log('[增强] 跳过:', e.message); })
         .finally(function() { that.setData({ scanProcessing: false }); });
       }
     } catch (e) { console.log('[AI增强] 跳过:', e.message); }
@@ -686,7 +684,16 @@ Page({
   // ===== Bug #5+#8: 旋转+扫描件工具栏 =====
 
   /** 顺时针旋转90° — Bug #8: 存储旋转角度，confirmImage 时通过 canvas 实际旋转像素 */
-  /** 切换证件面 (人像/国徽) */
+  /** 根据证件类型设置双面标签 */
+  setSideLabels(docType) {
+    var labels = { frontSideLabel: '人像面', backSideLabel: '国徽面' };
+    if (docType === 'hk_permit' || docType === 'passport') {
+      labels.backSideLabel = docType === 'hk_permit' ? '签注面' : '信息页';
+    }
+    this.setData(labels);
+  },
+
+  /** 切换证件面 */
   onSwitchSide(e) {
     var side = e.currentTarget.dataset.side;
     var data = { photoSide: side };

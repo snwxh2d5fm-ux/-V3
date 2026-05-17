@@ -369,35 +369,25 @@ Page({
       lines.push('【参考链接】');
       links.forEach(function(l) { lines.push('🔗 ' + (typeof l === 'string' ? l : (l.label || l.url || ''))); });
     }
-    // 通过 applicable_to 显示适用范围
+    // 适用范围: 使用中文路径名
     if (task.applicable_to) {
       var at = task.applicable_to;
+      var pathMap = { qmas:'优才', 'ttps-a':'高才A', 'ttps-bc':'高才BC', asmpt:'专才', iang:'IANG', dependent:'受养人' };
+      var famMap = { single:'单身', couple:'情侣', preschool:'带娃(学龄前)', 'school-age':'带娃(中小学)', teen:'带娃(中学以上)' };
       var tags = [];
-      if (at.visa_types && at.visa_types !== 'all') tags.push('适用路径: ' + (Array.isArray(at.visa_types) ? at.visa_types.join('/') : at.visa_types));
-      if (at.family_status && at.family_status !== 'all') tags.push('家庭: ' + (Array.isArray(at.family_status) ? at.family_status.join('/') : at.family_status));
-      if (at.skip_if_existing && at.skip_if_existing.length) tags.push('已有资产可跳过');
+      if (at.visa_types && at.visa_types !== 'all') {
+        var visas = Array.isArray(at.visa_types) ? at.visa_types : [at.visa_types];
+        tags.push('适用路径: ' + visas.map(function(v) { return pathMap[v] || v; }).join('/'));
+      }
+      if (at.family_status && at.family_status !== 'all') {
+        var fams = Array.isArray(at.family_status) ? at.family_status : [at.family_status];
+        tags.push('适用家庭: ' + fams.map(function(f) { return famMap[f] || f; }).join('/'));
+      }
+      if (at.skip_if_existing && at.skip_if_existing.length) {
+        var skm = { hkid:'已有HKID', 'bank-account':'已有银行', rental:'已有租约', 'driving-license':'已有驾照' };
+        tags.push('已满足: ' + at.skip_if_existing.map(function(s) { return skm[s] || s; }).join(','));
+      }
       if (tags.length) { lines.push(''); lines.push('【适用范围】'); tags.forEach(function(t) { lines.push(t); }); }
-    }
-    // 兜底：显示补充字段（排除已处理字段和内部元数据）
-    var EXCLUDED_KEYS = [
-      'title','subtitle','urgency','time_estimate','scene_tags','phase','sequence','status',
-      'desc','description','content','summary','steps','step_list',
-      'tips','hints','tip_list','pitfalls','warnings','pitfall_list',
-      'requiredItems','required_items','material_list','materials',
-      'official_links','officialLinks','links',
-      'category','icon','createdAt','updatedAt','_openid',
-      'user_status','family_status','visa_types','applicable_to',
-      'is_active','version','source','tags'
-    ];
-    var stringKeys = Object.keys(task).filter(function(k) {
-      return k[0] !== '_' && task[k] !== null && task[k] !== undefined &&
-        typeof task[k] !== 'object' &&
-        EXCLUDED_KEYS.indexOf(k) === -1;
-    });
-    if (stringKeys.length) {
-      lines.push('');
-      lines.push('【其他信息】');
-      stringKeys.forEach(function(k) { lines.push(k + ': ' + task[k]); });
     }
     this.setData({
       expandedBrowseTask: task,
