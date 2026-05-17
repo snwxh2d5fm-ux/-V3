@@ -89,7 +89,7 @@ Page({
 
     wx.showModal({
       title: '检测到路径选择',
-      content: '你已选择「' + pathName + '」路径。是否基于该路径自动生成关键日期提醒？\n\n包含：递交日期、获批提醒、续签节点、永居窗口等。',
+      content: '你已选择「' + pathName + '」路径。是否基于该路径自动生成关键日期提醒？\n\n包含：准备材料、12项准则自评、递交申请等关键节点。',
       confirmText: '立即生成',
       cancelText: '稍后再说',
       success: function(res) {
@@ -138,14 +138,17 @@ Page({
     }
     var shiftDays = minOffset < 0 ? Math.abs(minOffset) : 0;
 
-    // 未申请用户：只显示资料准备→递交激活阶段，排除续签/永居节点
-    var EXCLUDE_TYPES = shiftDays > 0 ? ['renewal', 'pr'] : [];
+    // 未申请用户：仅保留递交前的准备阶段节点（prepare/self_assess/submit），排除获批后所有节点
+    var PREP_NODES = ['prepare', 'self_assess', 'submit'];
 
     var iconMap = { milestone: '✅', deadline: '📅', renewal: '🔄', pr: '🏁', material: '📋' };
     var count = 0;
 
     template.nodes.forEach(function(node) {
-      if (EXCLUDE_TYPES.indexOf(node.type) !== -1) return;
+      // 未申请用户：仅保留准备阶段节点
+      if (shiftDays > 0 && PREP_NODES.indexOf(node.id) === -1) return;
+      // 已申请用户：排除续签/永居节点
+      if (shiftDays === 0 && (node.type === 'renewal' || node.type === 'pr')) return;
       var date = new Date(today);
       date.setDate(date.getDate() + (node.offsetDays || 0) + shiftDays);
       var y = date.getFullYear();
