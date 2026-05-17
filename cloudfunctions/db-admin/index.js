@@ -11,7 +11,9 @@ const _ = db.command;
 var ADMIN_OPENIDS = (process.env.ADMIN_OPENIDS || '').split(',').filter(Boolean);
 
 function isAdmin(openid) {
-  return ADMIN_OPENIDS.length === 0 || ADMIN_OPENIDS.indexOf(openid) >= 0;
+  // 必须配置至少一个管理员——空列表意味着无人有权执行管理操作
+  if (ADMIN_OPENIDS.length === 0) return false;
+  return ADMIN_OPENIDS.indexOf(openid) >= 0;
 }
 
 exports.main = async (event, context) => {

@@ -26,6 +26,11 @@ async function listDocs(openid) {
 async function saveDoc(openid, { doc }) {
   const coll = db.collection('user_documents');
   if (doc._id) {
+    // 验证文档归属——仅允许更新本人的文档
+    const exists = await coll.where({ _id: doc._id, _openid: openid }).get();
+    if (!exists.data || exists.data.length === 0) {
+      return { ok: false, error: 'document_not_found_or_not_owned' };
+    }
     await coll.doc(doc._id).update({ data: { ...doc, updatedAt: new Date() } });
   } else {
     await coll.add({ data: { ...doc, _openid: openid, createdAt: new Date(), updatedAt: new Date() } });

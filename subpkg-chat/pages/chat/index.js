@@ -282,12 +282,14 @@ Page({
 
   formatAssessmentResult: function(result) {
     if (!result) return '';
+    // HTML实体编码LLM输出的所有字段，防止XSS
+    var e = this._escapeHTML;
     var text = '📊 评估结果：\n';
-    if (result.recommendedPath) text += '• 推荐路径: ' + result.recommendedPath + '\n';
-    if (result.confidence) text += '• 匹配置信度: ' + result.confidence + '%\n';
-    if (result.estimatedTimeline) text += '• 预估周期: ' + result.estimatedTimeline + '\n';
+    if (result.recommendedPath) text += '• 推荐路径: ' + e(result.recommendedPath) + '\n';
+    if (result.confidence) text += '• 匹配置信度: ' + e(String(result.confidence)) + '%\n';
+    if (result.estimatedTimeline) text += '• 预估周期: ' + e(result.estimatedTimeline) + '\n';
     if (result.gapAnalysis && result.gapAnalysis.length > 0) {
-      text += '• 待改善项: ' + result.gapAnalysis.join(', ') + '\n';
+      text += '• 待改善项: ' + e(result.gapAnalysis.join(', ')) + '\n';
     }
     text += '\n⚠️ 以上评估仅供参考，不构成法律意见。';
     return text;
