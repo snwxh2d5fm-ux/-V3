@@ -39,11 +39,6 @@
       <text class="dossier-arrow">›</text>
     </view>
 
-    <!-- 找房向导入口 — 关卡列表上方，不可错过 -->
-    <view wx:if="{{activeTab===0 && !housingWizardDone}}" class="housing-banner" bindtap="onHousingBannerTap">
-      <text>🏠 不确定住哪个区？先做找房向导（30秒）</text>
-    </view>
-
     <scroll-view scroll-y class="phase-list">
       <view wx:for="{{phases}}" wx:key="phase"
             class="phase-card {{item.unlocked===false?'locked':''}} {{item.expanded?'expanded':''}}">
@@ -59,6 +54,10 @@
         </view>
 
         <view wx:if="{{item.unlocked!==false && item.expanded}}" class="task-list">
+          <!-- 找房向导入口 — 关卡3内部 -->
+          <view wx:if="{{item.phase===3 && !housingWizardDone}}" class="housing-banner" bindtap="onHousingBannerTap">
+            <text>🏠 不确定住哪个区？先做找房向导（30秒）</text>
+          </view>
           <block wx:for="{{tasks}}" wx:key="_id" wx:for-item="task">
             <view wx:if="{{task.phase===item.phase}}" class="task-card {{task._completed?(task._materialCollected?'done-full':'done-steps'):(task._skipped?'skipped':'')}}">
               <view wx:if="{{!task._expanded}}" class="task-collapsed" data-id="{{task._id}}" catchtap="onTaskExpand">
