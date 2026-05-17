@@ -21,7 +21,8 @@ const INDEX_TEMPLATES = {
           { slotKey: 'id_card',      docName: '内地身份证',   docIcon: '🆔', requirement: 'required',    description: '人像面+国徽面', maxCount: 2 },
           { slotKey: 'hk_permit',    docName: '港澳通行证',   docIcon: '🛂', requirement: 'required',    description: '需含有效签注', maxCount: 2 },
           { slotKey: 'passport',     docName: '护照',         docIcon: '📘', requirement: 'recommended', description: '如有', maxCount: 8 },
-          { slotKey: 'photo',        docName: '证件照',       docIcon: '📷', requirement: 'required',    description: '白底50×40mm', maxCount: 1 }
+          { slotKey: 'photo',        docName: '证件照',       docIcon: '📷', requirement: 'required',    description: '白底50×40mm', maxCount: 1 },
+          { slotKey: "marriage_cert", docName: '结婚证(配偶)', docIcon: '💍', requirement: 'required', description: '如配偶随行', maxCount: 8 },
         ]
       },
       {
@@ -161,7 +162,8 @@ const INDEX_TEMPLATES = {
           { slotKey: 'id_card',   docName: '内地身份证', docIcon: '🆔', requirement: 'required', maxCount: 2 },
           { slotKey: 'hk_permit', docName: '港澳通行证', docIcon: '🛂', requirement: 'required', maxCount: 2 },
           { slotKey: 'passport',  docName: '护照',         docIcon: '📘', requirement: 'recommended', maxCount: 8 },
-          { slotKey: 'photo',     docName: '证件照',       docIcon: '📷', requirement: 'required', maxCount: 1 }
+          { slotKey: 'photo',     docName: '证件照',       docIcon: '📷', requirement: 'required', maxCount: 1 },
+          { slotKey: "marriage_cert", docName: '结婚证(配偶)', docIcon: '💍', requirement: 'required', description: '如配偶随行', maxCount: 8 },
         ]
       },
       {
@@ -200,7 +202,8 @@ const INDEX_TEMPLATES = {
           { slotKey: 'id_card',   docName: '内地身份证', docIcon: '🆔', requirement: 'required', maxCount: 2 },
           { slotKey: 'hk_permit', docName: '港澳通行证', docIcon: '🛂', requirement: 'required', maxCount: 2 },
           { slotKey: 'passport',  docName: '护照',         docIcon: '📘', requirement: 'recommended', maxCount: 8 },
-          { slotKey: 'photo',     docName: '证件照',       docIcon: '📷', requirement: 'required', maxCount: 1 }
+          { slotKey: 'photo',     docName: '证件照',       docIcon: '📷', requirement: 'required', maxCount: 1 },
+          { slotKey: "marriage_cert", docName: '结婚证(配偶)', docIcon: '💍', requirement: 'required', description: '如配偶随行', maxCount: 8 },
         ]
       },
       {
@@ -241,7 +244,8 @@ const INDEX_TEMPLATES = {
           { slotKey: 'id_card',   docName: '内地身份证', docIcon: '🆔', requirement: 'required', maxCount: 2 },
           { slotKey: 'hk_permit', docName: '港澳通行证', docIcon: '🛂', requirement: 'required', maxCount: 2 },
           { slotKey: 'passport',  docName: '护照',         docIcon: '📘', requirement: 'recommended', maxCount: 8 },
-          { slotKey: 'photo',     docName: '证件照',       docIcon: '📷', requirement: 'required', maxCount: 1 }
+          { slotKey: 'photo',     docName: '证件照',       docIcon: '📷', requirement: 'required', maxCount: 1 },
+          { slotKey: "marriage_cert", docName: '结婚证(配偶)', docIcon: '💍', requirement: 'required', description: '如配偶随行', maxCount: 8 },
         ]
       },
       {
@@ -282,7 +286,8 @@ const INDEX_TEMPLATES = {
           { slotKey: 'id_card',   docName: '内地身份证', docIcon: '🆔', requirement: 'required', maxCount: 2 },
           { slotKey: 'hk_permit', docName: '港澳通行证', docIcon: '🛂', requirement: 'required', maxCount: 2 },
           { slotKey: 'passport',  docName: '护照',         docIcon: '📘', requirement: 'recommended', maxCount: 8 },
-          { slotKey: 'photo',     docName: '证件照',       docIcon: '📷', requirement: 'required', maxCount: 1 }
+          { slotKey: 'photo',     docName: '证件照',       docIcon: '📷', requirement: 'required', maxCount: 1 },
+          { slotKey: "marriage_cert", docName: '结婚证(配偶)', docIcon: '💍', requirement: 'required', description: '如配偶随行', maxCount: 8 },
         ]
       },
       {
@@ -321,7 +326,8 @@ const INDEX_TEMPLATES = {
           { slotKey: 'id_card',   docName: '内地身份证', docIcon: '🆔', requirement: 'required', maxCount: 2 },
           { slotKey: 'hk_permit', docName: '港澳通行证', docIcon: '🛂', requirement: 'required', maxCount: 2 },
           { slotKey: 'passport',  docName: '护照',         docIcon: '📘', requirement: 'required', maxCount: 8 },
-          { slotKey: 'photo',     docName: '证件照',       docIcon: '📷', requirement: 'required', maxCount: 1 }
+          { slotKey: 'photo',     docName: '证件照',       docIcon: '📷', requirement: 'required', maxCount: 1 },
+          { slotKey: "marriage_cert", docName: '结婚证(配偶)', docIcon: '💍', requirement: 'required', description: '如配偶随行', maxCount: 8 },
         ]
       },
       {
@@ -394,7 +400,8 @@ const INDEX_TEMPLATES = {
           { slotKey: 'birth_cert', docName: '出生证明',   docIcon: '👶', requirement: 'required', maxCount: 1 },
           { slotKey: 'id_card',    docName: '身份证',     docIcon: '🆔', requirement: 'required', maxCount: 2 },
           { slotKey: 'passport',   docName: '护照',       docIcon: '📘', requirement: 'required', maxCount: 8 },
-          { slotKey: 'photo',      docName: '证件照',     docIcon: '📷', requirement: 'required', maxCount: 1 }
+          { slotKey: 'photo',      docName: '证件照',     docIcon: '📷', requirement: 'required', maxCount: 1 },
+          { slotKey: "marriage_cert", docName: '结婚证(配偶)', docIcon: '💍', requirement: 'required', description: '如配偶随行', maxCount: 8 },
         ]
       },
       {
@@ -471,7 +478,8 @@ const INDEX_TEMPLATES = {
           { slotKey: 'id_card',   docName: '内地身份证', docIcon: '🆔', requirement: 'required', maxCount: 2 },
           { slotKey: 'hk_permit', docName: '港澳通行证', docIcon: '🛂', requirement: 'required', maxCount: 2 },
           { slotKey: 'passport',  docName: '护照',         docIcon: '📘', requirement: 'required', maxCount: 8 },
-          { slotKey: 'photo',     docName: '证件照',       docIcon: '📷', requirement: 'required', maxCount: 1 }
+          { slotKey: 'photo',     docName: '证件照',       docIcon: '📷', requirement: 'required', maxCount: 1 },
+          { slotKey: "marriage_cert", docName: '结婚证(配偶)', docIcon: '💍', requirement: 'required', description: '如配偶随行', maxCount: 8 },
         ]
       },
       {
