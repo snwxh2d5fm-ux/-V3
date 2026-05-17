@@ -285,6 +285,124 @@ async function dailySample() {
 }
 
 /**
+ * Phase 3.2: 用户画像分析 — 从conversation_logs推断
+ */
+async function analyzeUser(sessionId) {
+  try {
+    var res = await db.collection('conversation_logs')
+      .where({ session_id: sessionId })
+      .orderBy('timestamp', 'desc')
+      .limit(50)
+      .get();
+
+    var logs = res.data || [];
+    if (logs.length === 0) return { code: 200, data: { profile: null, message: 'no conversations yet' } };
+
+    // 话题频率分析
+    var topicCount = {};
+    var modes = {};
+    var totalTokens = 0;
+    var totalLatency = 0;
+    var safetyIssues = 0;
+
+    for (var i = 0; i < logs.length; i++) {
+      var log = logs[i];
+      modes[log.mode] = (modes[log.mode] || 0) + 1;
+      totalTokens += (log.tokens && log.tokens.total_tokens) || 0;
+      totalLatency += log.latency_ms || 0;
+      if (log.safety_triggered && log.safety_triggered.length > 0) safetyIssues++;
+
+      if (log.rag_sources) {
+        for (var j = 0; j < log.rag_sources.length; j++) {
+          var s = log.rag_sources[j];
+          topicCount[s] = (topicCount[s] || 0) + 1;
+        }
+      }
+    }
+
+    var sortedTopics = Object.entries(topicCount).sort(function(a, b) { return b[1] - a[1]; });
+    var dominantMode = Object.entries(modes).sort(function(a, b) { return b[1] - a[1]; })[0];
+
+    var profile = {
+      session_id: sessionId,
+      total_conversations: logs.length,
+      dominant_mode: dominantMode ? dominantMode[0] : 'unknown',
+      top_topics: sortedTopics.slice(0, 5).map(function(t) { return { topic: t[0], count: t[1] }; }),
+      avg_tokens_per_call: logs.length > 0 ? Math.round(totalTokens / logs.length) : 0,
+      avg_latency_ms: logs.length > 0 ? Math.round(totalLatency / logs.length) : 0,
+      safety_issues: safetyIssues,
+      knowledge_level: totalTokens > 50000 ? 'advanced' : totalTokens > 20000 ? 'intermediate' : 'beginner'
+    };
+
+    return { code: 200, data: { profile: profile } };
+  } catch(e) {
+    return { code: 500, message: e.message };
+  }
+}
+
+/**
+ * Phase 3.4: 对话分析看板 — 聚合统计
+ */
+async function getDashboardStats() {
+  try {
+    var today = new Date();
+    today.setHours(0, 0, 0, 0);
+
+    // 今日对话数
+    var todayCount = await db.collection('conversation_logs')
+      .where({ timestamp: db.command.gte(today) }).count();
+
+    // 模式分布
+    var modeAgg = await db.collection('conversation_logs')
+      .aggregate()
+      .group({ _id: '$mode', count: { $sum: 1 } })
+      .end();
+
+    var modeDist = {};
+    (modeAgg.data || []).forEach(function(m) { modeDist[m._id] = m.count; });
+
+    // 最近准确率
+    var evalRes = await db.collection('eval_results')
+      .orderBy('timestamp', 'desc').limit(20).get();
+
+    var evalScores = (evalRes.data || []).map(function(e) { return e.score || 0; });
+    var avgAccuracy = evalScores.length > 0
+      ? Math.round(evalScores.reduce(function(s, v) { return s + v; }, 0) / evalScores.length)
+      : null;
+
+    // 安全事件
+    var safetyCount = await db.collection('conversation_logs')
+      .where({ safety_triggered: db.command.nin([[], null]) }).count();
+
+    // 总成本估算 (DeepSeek V3: ¥1/1M input, ¥2/1M output)
+    var costAgg = await db.collection('conversation_logs')
+      .aggregate()
+      .group({
+        _id: null,
+        totalPrompt: { $sum: '$tokens.prompt_tokens' },
+        totalCompletion: { $sum: '$tokens.completion_tokens' }
+      }).end();
+
+    var costData = (costAgg.data && costAgg.data[0]) || { totalPrompt: 0, totalCompletion: 0 };
+    var estCost = (costData.totalPrompt * 0.000001 + costData.totalCompletion * 0.000002).toFixed(4);
+
+    return {
+      code: 200,
+      data: {
+        today_conversations: todayCount.total,
+        mode_distribution: modeDist,
+        avg_accuracy_last_20: avgAccuracy,
+        total_safety_events: safetyCount.total,
+        estimated_total_cost_rmb: parseFloat(estCost),
+        total_tokens: { prompt: costData.totalPrompt, completion: costData.totalCompletion }
+      }
+    };
+  } catch(e) {
+    return { code: 500, message: e.message, data: null };
+  }
+}
+
+/**
  * 健康检查
  */
 async function healthCheck() {
@@ -310,6 +428,8 @@ exports.main = async function(event, context) {
     switch (action) {
       case 'daily_sample': return await dailySample();
       case 'health_check': return await healthCheck();
+      case 'analyze_user': return await analyzeUser(params.sessionId || '');
+      case 'dashboard': return await getDashboardStats();
       case 'score_single':
         var result = scoreResponse(params.question, params.answer, params.sources);
         return { code: 200, data: result };

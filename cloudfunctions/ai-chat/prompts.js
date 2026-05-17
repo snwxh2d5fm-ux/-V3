@@ -258,11 +258,40 @@ function getSystemPrompt(mode, context) {
   return base;
 }
 
+/** Phase 3: 主动对话 — 基于路径/阶段的上下文提示 */
+var STAGE_HINTS = {
+  unapplied_qmas: '用户处于优才评估阶段，可主动对比12准则，建议资格评估',
+  unapplied_ttps: '用户处于高才通评估阶段，可主动询问收入/学历背景',
+  submitted_qmas: '用户已提交优才申请，可告知审批周期、提醒材料补件窗口',
+  submitted_ttps: '用户已提交高才通申请，审批较快，提醒准备赴港计划',
+  approved_qmas: '用户已获优才签证，可讨论续签规划、在港就业、税收安排',
+  approved_ttps: '用户已获高才通签证，提醒2/3年后续签要求和材料准备',
+  permanent: '用户已永居，关注在港生活、教育、退休等长期规划'
+};
+
+function buildProactiveHint(context) {
+  if (!context) return '';
+  var key = (context.userStatus || '') + '_' + (context.selectedPath || '');
+  var hint = STAGE_HINTS[key] || '';
+
+  if (!hint && context.userStatus === 'unapplied') {
+    hint = '用户尚未申请，可引导尝试免费资格评估，比较各路径优劣';
+  }
+  if (!hint && context.selectedPath) {
+    hint = '用户选择了' + context.selectedPath + '路径，可提供针对性的深度信息';
+  }
+
+  return hint ? '\n\n【Phase 3·主动对话 — 基于用户状态的引导策略】\n' + hint +
+    '\n在回答末尾自然地提供1-2条相关的后续方向，但不要显得推销或强迫。' +
+    '\n例如："如果想了解续签的具体时间节点，我可以详细说明。"或"需要我帮你对比一下优才和高才通的续签难度吗？"' : '';
+}
+
 module.exports = {
   buildAssessmentSystemPrompt,
   buildQASystemPrompt,
   buildGeneralSystemPrompt,
   buildSolutionRecommendPrompt,
   getSystemPrompt,
+  buildProactiveHint,
   K2_SAFETY_RULES
 };

@@ -307,14 +307,24 @@ async function fetchBatch(ddb, where, maxItems) {
 }
 
 // ========== LLM 调用 ==========
-function buildDeepSeekRequest(messages, mode, contextText, streamMode) {
-  const systemPrompt = prompts.getSystemPrompt(mode);
+function buildDeepSeekRequest(messages, mode, contextText, streamMode, sessionContext) {
+  const systemPrompt = prompts.getSystemPrompt(mode, sessionContext);
 
-  // 将RAG检索结果注入system prompt
-  const enhancedPrompt = systemPrompt + contextText;
+  // Phase 3: 注入主动对话提示
+  const proactiveHint = prompts.buildProactiveHint(sessionContext);
+
+  // 将RAG检索结果+主动提示注入system prompt
+  const enhancedPrompt = systemPrompt + proactiveHint + contextText;
+
+  // Phase 3.3: A/B模型切换 — MODEL_AB_RATIO=5 则5%流量用备选模型
+  var abRatio = parseInt(process.env.MODEL_AB_RATIO || '0');
+  var modelName = process.env.DEEPSEEK_MODEL || 'deepseek-chat';
+  if (abRatio > 0 && Math.random() * 100 < abRatio) {
+    modelName = process.env.MODEL_AB_ALT || 'deepseek-reasoner';
+  }
 
   var req = {
-    model: process.env.DEEPSEEK_MODEL || 'deepseek-chat',
+    model: modelName,
     messages: [
       { role: 'system', content: enhancedPrompt }
     ].concat(messages),
@@ -518,7 +528,7 @@ exports.main = async function (event, context) {
     messages.push({ role: 'user', content: message });
 
     // ====== Step 3: 调用 LLM（含RAG上下文） ======
-    const requestBody = buildDeepSeekRequest(messages, chatMode, ragResult.contextText, streamMode);
+    const requestBody = buildDeepSeekRequest(messages, chatMode, ragResult.contextText, streamMode, sessionContext);
     const apiResult = await callDeepSeek(requestBody);
 
     let content, quickReplies, assessmentResult;
