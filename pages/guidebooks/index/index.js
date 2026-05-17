@@ -45,6 +45,13 @@ Page({
     wizardWork: '',
     wizardHasKids: false,
     wizardResults: [],
+    // 校网向导
+    showSchoolNetWizard: false,
+    snWizardStep: 0,
+    snWizardLevel: '',
+    snWizardRegion: '',
+    snWizardBudget: '',
+    snWizardResults: [],
     currentPhase: 0,
     setupStep: 0,
     setupData: { visaType: '', familyStatus: '', arrivalScenario: '', housingIntent: '', existingAssets: [] },
@@ -896,5 +903,40 @@ Page({
     wx.showToast({ title: '找房向导完成 ✓', icon: 'success' });
   },
 
-  onWizardClose: function() { this.setData({ showHousingWizard: false }); }
+  onWizardClose: function() { this.setData({ showHousingWizard: false }); },
+
+  // ── 校网向导 ──
+  onSchoolNetBannerTap: function() {
+    this.setData({ showSchoolNetWizard: true, snWizardStep: 0, snWizardLevel: '', snWizardRegion: '', snWizardBudget: '' });
+  },
+  onSNWizardNext: function(e) {
+    var step = this.data.snWizardStep;
+    var value = e.currentTarget.dataset.value;
+    if (step === 0) this.setData({ snWizardLevel: value });
+    else if (step === 1) this.setData({ snWizardRegion: value });
+    else if (step === 2) this.setData({ snWizardBudget: value });
+
+    if (step === 2) {
+      var schoolNetData = require('../../../data/school-net-data');
+      var results = schoolNetData.matchSchoolNets(
+        this.data.snWizardLevel,
+        this.data.snWizardRegion,
+        this.data.snWizardBudget
+      );
+      this.setData({ snWizardStep: 3, snWizardResults: results });
+    } else {
+      this.setData({ snWizardStep: step + 1 });
+    }
+  },
+  onSNWizardDone: function() {
+    this.setData({ showSchoolNetWizard: false });
+    wx.showToast({ title: '校网速查完成 ✓', icon: 'success' });
+    // Auto-expand phase 5
+    var phases = this.data.phases.map(function(p) {
+      if (p.phase === 5) p.expanded = true;
+      return p;
+    });
+    this.setData({ phases: phases });
+  },
+  onSNWizardClose: function() { this.setData({ showSchoolNetWizard: false }); }
 });

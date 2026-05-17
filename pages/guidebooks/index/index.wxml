@@ -58,6 +58,10 @@
           <view wx:if="{{item.phase===3}}" class="housing-banner" bindtap="onHousingBannerTap">
             <text>🏠 不确定住哪个区？先做找房向导（30秒）</text>
           </view>
+          <!-- 校网向导入口 — 关卡5内部 -->
+          <view wx:if="{{item.phase===5}}" class="housing-banner school-net-banner" bindtap="onSchoolNetBannerTap">
+            <text>📚 不知道选哪个校网？先做校网速查（30秒）</text>
+          </view>
           <block wx:for="{{tasks}}" wx:key="_id" wx:for-item="task">
             <view wx:if="{{task.phase===item.phase}}" class="task-card {{task._completed?(task._materialCollected?'done-full':'done-steps'):(task._skipped?'skipped':'')}}">
               <view wx:if="{{!task._expanded}}" class="task-collapsed" data-id="{{task._id}}" catchtap="onTaskExpand">
@@ -365,6 +369,44 @@
         <view class="wizard-done" bindtap="onWizardDone">完成向导 ✓</view>
       </view>
       <view wx:if="{{wizardStep<3}}" class="wizard-close" bindtap="onWizardClose">跳过</view>
+    </view>
+  </view>
+
+  <!-- 校网向导 -->
+  <view wx:if="{{showSchoolNetWizard}}" class="overlay">
+    <view class="wizard-dialog">
+      <text class="wizard-title">📚 校网速查</text>
+      <view wx:if="{{snWizardStep===0}}">
+        <text class="wizard-q">孩子就读阶段？</text>
+        <view wx:for="{{[{v:'幼儿园',l:'幼儿园'},{v:'小学',l:'小学'},{v:'中学',l:'中学'}]}}" wx:key="v"
+              class="wizard-opt" data-value="{{item.v}}" bindtap="onSNWizardNext">{{item.l}}</view>
+      </view>
+      <view wx:if="{{snWizardStep===1}}">
+        <text class="wizard-q">偏好地区？</text>
+        <view wx:for="{{[{v:'港岛',l:'港岛'},{v:'九龙',l:'九龙'},{v:'新界',l:'新界'},{v:'all',l:'不限'}]}}" wx:key="v"
+              class="wizard-opt" data-value="{{item.v}}" bindtap="onSNWizardNext">{{item.l}}</view>
+      </view>
+      <view wx:if="{{snWizardStep===2}}">
+        <text class="wizard-q">房租预算水平？</text>
+        <view wx:for="{{[{v:'高',l:'高预算（$40K+）'},{v:'中',l:'中预算（$25-40K）'},{v:'低',l:'低预算（<$25K）'}]}}" wx:key="v"
+              class="wizard-opt" data-value="{{item.v}}" bindtap="onSNWizardNext">{{item.l}}</view>
+      </view>
+      <view wx:if="{{snWizardStep===3}}">
+        <text class="wizard-q">推荐校网 Top {{snWizardResults.length}}</text>
+        <scroll-view scroll-y class="wizard-results">
+          <view wx:for="{{snWizardResults}}" wx:key="net" class="wizard-result-card">
+            <text class="result-name">{{item.name}}（校网{{item.net}}）</text>
+            <text class="result-stat">{{item.tier}} · {{item.vibe}}</text>
+            <text class="result-stat">代表性学校: {{item.schools}}</text>
+            <text class="result-stat">预算: {{item.budgetHint}} · 家庭友好: {{'⭐'.repeat(item.familyRating)}}</text>
+          </view>
+        </scroll-view>
+        <view wx:if="{{snWizardResults.length===0}}" class="wizard-empty">
+          <text>没有匹配的校网，请调整筛选条件</text>
+        </view>
+        <view class="wizard-done" bindtap="onSNWizardDone">完成 ✓</view>
+      </view>
+      <view wx:if="{{snWizardStep<3}}" class="wizard-close" bindtap="onSNWizardClose">跳过</view>
     </view>
   </view>
 
