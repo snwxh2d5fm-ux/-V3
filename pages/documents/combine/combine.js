@@ -461,70 +461,91 @@ Page({
     wx.navigateTo({ url: '/pages/documents/add/add' });
   },
 
-  // 完善身份画像 — Bug #11修复: 自动从证件/评估/路径读取，不再跳转"我的"
+  // 完善身份画像 — 自动从证件/评估/路径/攻略书/证件夹聚合
   navigateToProfile() {
     var that = this;
-    wx.showLoading({ title: '分析数据中...' });
+    wx.showLoading({ title: '聚合数据中...' });
 
-    // 自动读取: 证件数据 → 评估结果 → 身份状态 → 路径选择
     try {
       var app = getApp();
       var profile = wx.getStorageSync(CONSTANTS.STORAGE_KEYS.IDENTITY_PROFILE) || {};
       var session = wx.getStorageSync(CONSTANTS.STORAGE_KEYS.SESSION) || {};
-
-      // 从证件提取姓名/证件号
       var storage = require('../../../utils/storage');
+
+      // 1. 证件夹: 提取身份证明中的姓名/证件号
       var docs = storage.getAllDocuments ? storage.getAllDocuments() : [];
-      var idDoc = docs.find(function(d) { return d.category === 'identity' && d.type === 'id_card'; });
+      var idDoc = docs.find(function(d) { return d.slotKey === 'id_card' || (d.type === 'id_card'); });
       if (idDoc && idDoc.ocrData) {
         if (idDoc.ocrData.name) profile.name = idDoc.ocrData.name;
         if (idDoc.ocrData.idNumber) profile.idNumber = idDoc.ocrData.idNumber;
       }
 
-      // 从评估结果读取
+      // 2. 评估结果
       var assessment = wx.getStorageSync('__assessment_result__') || {};
       if (assessment.selectedPath) profile.selectedPath = assessment.selectedPath;
       if (assessment.persona !== undefined) profile.persona = assessment.persona;
 
-      // 从全局/会话读取
-      if (app && app.globalData) {
-        if (app.globalData.selectedPath) profile.selectedPath = app.globalData.selectedPath;
-        if (app.globalData.userStatus) profile.userStatus = app.globalData.userStatus;
+      // 3. 攻略书进度
+      var guideProgress = wx.getStorageSync('onboarding-progress') || {};
+      var guideSummary = '';
+      if (guideProgress.tasks) {
+        var completed = Object.values(guideProgress.tasks).filter(function(t) { return t.status === 'completed'; }).length;
+        var total = Object.keys(guideProgress.tasks).length;
+        guideSummary = '已完成 ' + completed + '/' + total + ' 项通关任务';
       }
-      if (session.selectedPath) profile.selectedPath = session.selectedPath;
-      if (session.userStatus) profile.userStatus = session.userStatus;
 
+      // 4. 身份状态
+      var subStatus = wx.getStorageSync(CONSTANTS.STORAGE_KEYS.USER_SUB_STATUS) || '';
+      var userStatus = app.globalData.userStatus || session.userStatus || '';
+      var statusLabel = userStatus === 'approved' ? '已获批' : userStatus === 'unapplied' ? '未申请' : '';
+
+      // 5. 路径选择
+      var path = app.globalData.selectedPath || session.selectedPath || profile.selectedPath || '';
+      var pathNames = { qmas:'优才', ttps_a:'高才A', ttps_b:'高才B', ttps_c:'高才C', asmpt:'专才', student_iang:'学生→IANG', dependent:'受养人', cies:'投资', permanent:'永居' };
+
+      // 保存
       profile.updatedAt = new Date().toISOString();
-
       wx.setStorageSync(CONSTANTS.STORAGE_KEYS.IDENTITY_PROFILE, profile);
       wx.hideLoading();
-
-      // 重新加载当前页面数据
       that.loadIdentity();
       that.refresh();
 
-      var hasName = !!profile.name;
-      var hasPath = !!profile.selectedPath;
-      if (hasName && hasPath) {
-        wx.showToast({ title: '身份画像已完善 ✅', icon: 'success' });
-      } else {
-        var missing = [];
-        if (!hasName) missing.push('姓名');
-        if (!hasPath) missing.push('申请路径');
-        wx.showModal({
-          title: '部分信息缺失',
-          content: '以下信息未能自动获取：' + missing.join('、') + '\n\n请前往「资格评估」或「我的→身份设置」手动补充。',
-          confirmText: '去资格评估',
-          cancelText: '稍后',
-          success: function(res) {
-            if (res.confirm) wx.navigateTo({ url: '/pages/assessment/index/index' });
+      // 显示聚合结果
+      var lines = [];
+      if (profile.name) lines.push('👤 ' + profile.name);
+      if (profile.idNumber) lines.push('🆔 ' + profile.idNumber);
+      if (path) lines.push('🗺️ 路径: ' + (pathNames[path] || path));
+      if (statusLabel) lines.push('📋 状态: ' + statusLabel);
+      if (guideSummary) lines.push('📖 ' + guideSummary);
+      lines.push('📎 证件: ' + docs.length + ' 份已录入');
+
+      wx.showModal({
+        title: '身份画像已聚合',
+        content: lines.join('\n') + '\n\n💡 可前往对应模块补充更多信息',
+        confirmText: '关闭',
+        showCancel: true,
+        cancelText: '补充更多',
+        success: function(res) {
+          if (!res.confirm) {
+            wx.showActionSheet({
+              itemList: ['资格评估', '流程控选择路径', '攻略书通关指南', '证件夹录入'],
+              success: function(r) {
+                var urls = [
+                  '/pages/assessment/index/index',
+                  '/pages/process/index/index',
+                  '/pages/guidebooks/index/index',
+                  '/pages/documents/index/index'
+                ];
+                var url = urls[r.tapIndex];
+                if (url) wx.navigateTo({ url: url });
+              }
+            });
           }
-        });
-      }
+        }
+      });
     } catch (e) {
       wx.hideLoading();
-      console.error('[身份画像] 自动构建失败:', e);
-      wx.showToast({ title: '数据读取失败，请手动设置', icon: 'none' });
+      wx.showToast({ title: '数据读取失败', icon: 'none' });
     }
   },
 
