@@ -423,7 +423,7 @@ module.exports = [
   // 关卡3: 安居乐业 (7项)
   // ═══════════════════════════════════════════════════════════════
   {
-    id: "onboard-301", phase: 3, sequence: 1, category: "安居乐业",
+    id: "onboard-301", phase: 3, sequence: 2, category: "安居乐业",
     title: "签署正式租约并打厘印",
     subtitle: "租约不打厘印=法律上无效——30天内必须做",
     timeEstimate: "2-3小时", urgency: "必修", icon: "home",
@@ -447,7 +447,7 @@ module.exports = [
   },
 
   {
-    id: "onboard-302", phase: 3, sequence: 2, category: "安居乐业",
+    id: "onboard-302", phase: 3, sequence: 3, category: "安居乐业",
     title: "收楼验收拍照存档",
     subtitle: "退租时保障押金全退——现在不拍以后说不清",
     timeEstimate: "1小时", urgency: "必修", icon: "camera",
@@ -469,7 +469,7 @@ module.exports = [
   },
 
   {
-    id: "onboard-303", phase: 3, sequence: 3, category: "安居乐业",
+    id: "onboard-303", phase: 3, sequence: 4, category: "安居乐业",
     title: "购买家居保险",
     subtitle: "保障个人财物+第三方责任——月均$50-100很划算",
     timeEstimate: "30分钟", urgency: "建议", icon: "shield",
@@ -491,7 +491,7 @@ module.exports = [
   },
 
   {
-    id: "onboard-304", phase: 3, sequence: 4, category: "安居乐业",
+    id: "onboard-304", phase: 3, sequence: 5, category: "安居乐业",
     title: "安装家居宽频",
     subtitle: "三大供应商1000M光纤对比——最平$68/月",
     timeEstimate: "30分钟", urgency: "必修", icon: "wifi",
@@ -513,7 +513,7 @@ module.exports = [
   },
 
   {
-    id: "onboard-305", phase: 3, sequence: 5, category: "安居乐业",
+    id: "onboard-305", phase: 3, sequence: 6, category: "安居乐业",
     title: "购买必要家电/家私",
     subtitle: "新家必需品清单——别买多了也别漏了",
     timeEstimate: "1-2小时", urgency: "建议", icon: "cart",
@@ -534,7 +534,7 @@ module.exports = [
   },
 
   {
-    id: "onboard-306", phase: 3, sequence: 6, category: "安居乐业",
+    id: "onboard-306", phase: 3, sequence: 7, category: "安居乐业",
     title: "熟悉周边环境",
     subtitle: "找到最近的超市/街市/诊所/药房/银行/邮局",
     timeEstimate: "1-2小时", urgency: "必修", icon: "map",
@@ -556,7 +556,7 @@ module.exports = [
   },
 
   {
-    id: "onboard-307", phase: 3, sequence: 7, category: "安居乐业",
+    id: "onboard-307", phase: 3, sequence: 8, category: "安居乐业",
     title: "首次搬家收尾工作",
     subtitle: "改地址+清理旧居+入伙——72小时内搞定",
     timeEstimate: "2-3小时", urgency: "建议", icon: "truck",
@@ -770,7 +770,7 @@ module.exports = [
   },
 
   {
-    id: "onboard-308", phase: 3, sequence: 8, category: "安居乐业",
+    id: "onboard-308", phase: 3, sequence: 9, category: "安居乐业",
     title: "了解购房全流程",
     subtitle: "2024撤辣后内地人买房和港人一样税",
     timeEstimate: "20分钟", urgency: "必修", icon: "home",
@@ -786,7 +786,7 @@ module.exports = [
   },
 
   {
-    id: "onboard-309", phase: 3, sequence: 9, category: "安居乐业",
+    id: "onboard-309", phase: 3, sequence: 10, category: "安居乐业",
     title: "计算印花税与按揭成数",
     subtitle: "掌握最新税率才能算出真实预算",
     timeEstimate: "15分钟", urgency: "必修", icon: "calculator",
@@ -802,7 +802,7 @@ module.exports = [
   },
 
   {
-    id: "onboard-310", phase: 3, sequence: 10, category: "安居乐业",
+    id: "onboard-310", phase: 3, sequence: 11, category: "安居乐业",
     title: "委任律师+签署临时买卖合约",
     subtitle: "临约具法律约束力，签前一定确认清楚",
     timeEstimate: "30分钟", urgency: "必修", icon: "file-sign",
@@ -818,7 +818,7 @@ module.exports = [
   },
 
   {
-    id: "onboard-311", phase: 3, sequence: 11, category: "安居乐业",
+    id: "onboard-311", phase: 3, sequence: 12, category: "安居乐业",
     title: "申请按揭+银行估值",
     subtitle: "比较多家银行利率，现在实际年息低至约3.25%",
     timeEstimate: "30分钟", urgency: "必修", icon: "bank",
@@ -834,7 +834,7 @@ module.exports = [
   },
 
   {
-    id: "onboard-312", phase: 3, sequence: 12, category: "安居乐业",
+    id: "onboard-312", phase: 3, sequence: 13, category: "安居乐业",
     title: "成交收楼",
     subtitle: "签正约+放款+验楼三步走完购房流程",
     timeEstimate: "2小时", urgency: "必修", icon: "home-check",
@@ -851,7 +851,7 @@ module.exports = [
 
   // ══ 关卡3: 找房全攻略 ══
   {
-    id: "onboard-313", phase: 3, sequence: 13, category: "安居乐业",
+    id: "onboard-313", phase: 3, sequence: 1, category: "安居乐业",
     title: "找房全攻略：在哪找、怎么挑、如何避坑",
     subtitle: "房源平台/中介筛选/问题房排查一站式指南",
     timeEstimate: "20分钟", urgency: "建议", icon: "search",

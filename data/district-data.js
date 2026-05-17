@@ -524,11 +524,12 @@ module.exports.WORK_REGIONS = [
 
 // ── 权重配置（可调） ──
 var WEIGHTS = {
-  rent:       30,   // 租金友好度
-  commute:    35,   // 通勤便利度
-  family:     20,   // 家庭友好度
-  transport:  10,   // 交通便利度（港铁线数）
-  budgetFit:   5,   // 预算匹配度
+  rent:        25,   // 租金友好度
+  commute:     30,   // 通勤便利度
+  regionMatch: 15,   // 本区优先（选港岛→港岛区加分，九龙→九龙加分）
+  family:      20,   // 家庭友好度
+  transport:    6,   // 交通便利度（港铁线数）
+  budgetFit:    4,   // 预算匹配度
 };
 
 // ── 子区域 → 通勤字段映射 ──
@@ -620,6 +621,15 @@ module.exports.matchDistricts = function (budget, workRegion, hasChildren) {
 
     // 交通便利度：港铁线数归一化
     scores.transport = Math.min(d.mtrLines.length / 4, 1);
+
+    // 本区优先：选港岛→港岛区满分，跨区递减（远程办公全中性）
+    var WORK_REGION_MAP = { 'hong-kong-island':'港岛', 'kowloon':'九龙', 'new-territories':'新界' };
+    var userRegion = WORK_REGION_MAP[workRegion] || '';
+    if (!userRegion || workRegion === 'remote') {
+      scores.regionMatch = 1; // 远程/未选：中性
+    } else {
+      scores.regionMatch = d.region === userRegion ? 1 : 0.3;
+    }
 
     // 家庭友好度（仅带娃用户计入）
     scores.family = hasChildren ? d.familyFriendly / 5 : 0.5; // 无娃时中性
