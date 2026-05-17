@@ -68,11 +68,10 @@
         <text class="cat-head__arrow {{collapsedCategories[cat.categoryKey] ? '' : 'open'}}">›</text>
       </view>
 
-      <!-- 所属人切换 (所有分类) -->
-      <view class="owner-tabs">
+      <!-- 所属人切换 (仅身份证明) -->
+      <view wx:if="{{cat.categoryKey === 'identity'}}" class="owner-tabs">
         <block wx:for="{{ownerOptions}}" wx:key="value">
           <view class="owner-tab {{identityOwner === item.value ? 'active' : ''}}"
-                wx:if="{{(cat.categoryKey !== 'education' || item.value !== 'child') && (cat.isSelfOnly ? item.value === 'self' : true)}}"
                 bindtap="switchIdentityOwner" data-value="{{item.value}}">
             <text>{{item.label}}</text>
           </view>

@@ -10,6 +10,7 @@
     "pages/assessment/result/result",
     "pages/guidebooks/index/index",
     "pages/guidebooks/detail/detail",
+    "pages/schools/index",
     "pages/documents/index/index",
     "pages/documents/add/add",
     "pages/documents/detail/detail",

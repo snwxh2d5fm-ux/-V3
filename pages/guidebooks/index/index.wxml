@@ -411,6 +411,7 @@
           <text>没有匹配的校网，请调整筛选条件</text>
         </view>
         <view class="wizard-done" bindtap="onSNWizardDone">完成 ✓</view>
+        <view class="wizard-school-link" bindtap="onSNOpenSchools">📋 查看该区域全部学校 →</view>
       </view>
       <view wx:if="{{snWizardStep<3}}" class="wizard-close" bindtap="onSNWizardClose">跳过</view>
     </view>

@@ -982,5 +982,9 @@ Page({
     });
     this.setData({ phases: phases });
   },
-  onSNWizardClose: function() { this.setData({ showSchoolNetWizard: false }); }
+  onSNWizardClose: function() { this.setData({ showSchoolNetWizard: false }); },
+  onSNOpenSchools: function() {
+    this.setData({ showSchoolNetWizard: false });
+    wx.navigateTo({ url: '/pages/schools/index' });
+  }
 });

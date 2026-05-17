@@ -584,7 +584,17 @@ function computeSlotStates(template, uploadedDocs, ownerType) {
     // 仅本人分类：始终按 'self' 过滤，不受身份切换影响
     var effectiveOwner = (SELF_ONLY_CATEGORIES.indexOf(cat.categoryKey) !== -1) ? 'self' : ownerType;
 
-    var slots = cat.slots.map(function(slot) {
+    // 按所属人过滤身份证明中的结婚证/出生证明卡槽
+    var filteredSlots = cat.slots;
+    if (cat.categoryKey === 'identity' && ownerType) {
+      filteredSlots = cat.slots.filter(function(s) {
+        if (s.slotKey === 'marriage_cert' && ownerType !== 'spouse') return false;
+        if (s.slotKey === 'birth_cert' && (ownerType === 'self' || ownerType === 'spouse')) return false;
+        return true;
+      });
+    }
+
+    var slots = filteredSlots.map(function(slot) {
       var uploaded = uploadedDocs.filter(function(d) {
         // 0) 所属人过滤：旧数据无 ownerType 视为 'self'
         if (effectiveOwner) {
