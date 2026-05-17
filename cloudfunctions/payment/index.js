@@ -396,9 +396,20 @@ async function handleV3Callback(event) {
   try {
     const body = typeof event.body === 'string' ? JSON.parse(event.body) : event.body;
 
-    // 验证签名（可选，生产环境建议开启）
-    // const wechatSig = event.headers['wechatpay-signature'];
-    // ... verify with WXPAY_CONFIG.apiV3Key
+    // 验证微信支付V3回调签名（生产环境强制开启）
+    var wechatSig = event.headers['wechatpay-signature'] || event.headers['Wechatpay-Signature'] || '';
+    var timestamp = event.headers['wechatpay-timestamp'] || event.headers['Wechatpay-Timestamp'] || '';
+    var nonce = event.headers['wechatpay-nonce'] || event.headers['Wechatpay-Nonce'] || '';
+    var rawBody = typeof event.body === 'string' ? event.body : JSON.stringify(event.body);
+    var signMessage = timestamp + '\n' + nonce + '\n' + rawBody + '\n';
+    var v3Key = WXPAY_CONFIG.apiV3Key;
+    if (v3Key && wechatSig) {
+      var computed = require('crypto').createHmac('sha256', v3Key).update(signMessage).digest('base64');
+      if (computed !== wechatSig) {
+        console.error('[payment] V3回调签名验证失败');
+        return { statusCode: 401, body: JSON.stringify({ code: 'FAIL', message: 'invalid signature' }) };
+      }
+    }
 
     // 解密 resource
     const resource = body.resource;

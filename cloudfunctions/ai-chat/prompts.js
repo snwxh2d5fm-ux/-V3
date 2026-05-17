@@ -82,8 +82,11 @@ function buildAssessmentSystemPrompt() {
     '- 全日制非本地学生工作限制已暂时取消(须NOL) [A]\n' +
     '- Cap.115 s.11(8)=处长酌情权，s.38A=虚假陈述\n\n' +
     '出题风格：简短、清晰、鼓励性。每次只问一个问题。\n\n' +
-    '当收集到足够信息后，返回评估结果JSON。\n' +
-    '格式: ASSESS_RESULT:{"recommendedPath":"...","confidence":整数,"paths":[...],"gapAnalysis":[...],"estimatedTimeline":"...","estimatedCost":"..."}' +
+    '【输出格式——必须严格遵循JSON】\n' +
+    '评估进行中时，输出：{"status":"asking","dim":"<当前询问的维度代码>","question":"<你的问题>"}\n' +
+    '维度代码: age/edu/school/major/industry/experience/position/income/company/language/family\n' +
+    '评估完成时，输出：{"status":"done","recommendedPath":"...","confidence":<0-100>,"paths":["...","..."],"gapAnalysis":["..."],"estimatedTimeline":"...","estimatedCost":"..."}\n' +
+    '示例: {"status":"asking","dim":"school","question":"你的硕士毕业院校属于哪一类呢？QS世界百强 / 985/211高校 / 香港高校 / 海外知名大学 / 其他院校？"}' +
     V8_TERM_COMPLIANCE +
     K2_SAFETY_RULES +
     ANTI_OLD_SCORING_GUARD;

@@ -7,10 +7,23 @@ cloud.init({ env: cloud.DYNAMIC_CURRENT_ENV });
 const db = cloud.database();
 const _ = db.command;
 
+// 管理员openid白名单——仅列表内用户可调用管理操作
+var ADMIN_OPENIDS = (process.env.ADMIN_OPENIDS || '').split(',').filter(Boolean);
+
+function isAdmin(openid) {
+  return ADMIN_OPENIDS.length === 0 || ADMIN_OPENIDS.indexOf(openid) >= 0;
+}
+
 exports.main = async (event, context) => {
-  const { action } = event;
-  const wxContext = cloud.getWXContext();
-  const openid = wxContext.OPENID;
+  var action = event.action;
+  var wxContext = cloud.getWXContext();
+  var openid = wxContext.OPENID;
+
+  // 管理类操作需要管理员权限
+  var adminActions = ['backup', 'updateAIConfig', 'importKnowledge', 'emergencyCleanK2'];
+  if (adminActions.indexOf(action) >= 0 && !isAdmin(openid)) {
+    return { ok: false, error: 'unauthorized' };
+  }
 
   switch (action) {
     case 'stats':

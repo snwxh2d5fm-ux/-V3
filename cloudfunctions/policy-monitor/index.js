@@ -97,15 +97,26 @@ async function runPolicyCheck() {
         ? prevSnapshot.data[0].contentHash
         : '';
 
-      // 骨架：记录检查时间
-      // 实际部署时替换为真实的 HTTP 抓取 + 内容 hash
+      // 实际HTTP抓取 + SHA-256 hash变更检测
+      var contentHash = '';
+      var hasChanges = false;
+      try {
+        var httpResult = await _fetchUrl(source.url);
+        if (httpResult && httpResult.body) {
+          contentHash = require('crypto').createHash('sha256')
+            .update(httpResult.body.slice(0, 50000)).digest('hex');
+          hasChanges = prevContent && prevContent !== contentHash;
+        }
+      } catch (fetchErr) {
+        console.warn('[policy-monitor] HTTP抓取失败，仅记录检查时间:', source.name, fetchErr.message);
+      }
       const snapshot = {
         source: source.name,
         category: source.category,
         url: source.url,
         checkedAt: now,
-        contentHash: '', // 实际应为内容的 hash
-        hasChanges: false,
+        contentHash: contentHash,
+        hasChanges: hasChanges,
         changes: []
       };
 
@@ -277,4 +288,21 @@ function _categorizeContent(text, keywords) {
   return Object.entries(categories)
     .sort((a, b) => b[1] - a[1])
     .map(([cat]) => cat);
+}
+
+// HTTP抓取辅助函数
+async function _fetchUrl(url) {
+  var https = require('https');
+  return new Promise(function(resolve, reject) {
+    var req = https.get(url, { timeout: 15000 }, function(res) {
+      var chunks = [];
+      res.on('data', function(chunk) { chunks.push(chunk); });
+      res.on('end', function() {
+        var body = Buffer.concat(chunks).toString('utf8');
+        resolve({ statusCode: res.statusCode, body: body });
+      });
+    });
+    req.on('error', reject);
+    req.on('timeout', function() { req.destroy(); reject(new Error('timeout')); });
+  });
 }

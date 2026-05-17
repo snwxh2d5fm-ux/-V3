@@ -270,7 +270,7 @@ function buildDeepSeekRequest(messages, mode, contextText, streamMode) {
   // 将RAG检索结果注入system prompt
   const enhancedPrompt = systemPrompt + contextText;
 
-  return {
+  var req = {
     model: process.env.DEEPSEEK_MODEL || 'deepseek-chat',
     messages: [
       { role: 'system', content: enhancedPrompt }
@@ -279,6 +279,13 @@ function buildDeepSeekRequest(messages, mode, contextText, streamMode) {
     max_tokens: 2048,
     stream: !!streamMode,
   };
+
+  // Phase 2: 评估模式使用JSON模式强制结构化输出
+  if (mode === 'assessment') {
+    req.response_format = { type: 'json_object' };
+  }
+
+  return req;
 }
 
 function withTimeout(promise, ms) {
@@ -476,12 +483,30 @@ exports.main = async function (event, context) {
       const llmResult = apiResult.result;
       if (llmResult && llmResult.choices && llmResult.choices.length > 0) {
         content = llmResult.choices[0].message.content;
-        assessmentResult = parseAssessmentResult(content);
 
-        if (assessmentResult) {
-          const marker = 'ASSESS_RESULT:';
-          const idx = content.indexOf(marker);
-          if (idx > -1) content = content.substring(0, idx).trim();
+        // Phase 2: 如果评估模式+JSON模式，解析结构化输出
+        if (chatMode === 'assessment') {
+          var parsed = parseAssessmentJSON(content);
+          if (parsed) {
+            if (parsed.status === 'asking') {
+              content = parsed.question || content;
+              quickReplies = generateQuickRepliesByDim(parsed.dim);
+            } else if (parsed.status === 'done') {
+              content = '评估完成！';
+              assessmentResult = parsed;
+            }
+          } else {
+            // 自然语言回退: 从答案文本检测维度
+            var detectedDim = detectAssessmentDim(content);
+            if (detectedDim) {
+              quickReplies = generateQuickRepliesByDim(detectedDim);
+            }
+            // 仍尝试旧格式
+            assessmentResult = parseAssessmentResult(content);
+          }
+        } else {
+          // 非评估模式仍用旧格式
+          assessmentResult = parseAssessmentResult(content);
         }
 
         // 扫描回答中的K2泄露
@@ -526,8 +551,9 @@ exports.main = async function (event, context) {
       }).catch(() => {});
     }
 
-    // ====== 评估模式快捷回复 ======
+    // ====== 评估模式快捷回复 (Phase 2: 由LLM输出dim驱动) ======
     if (chatMode === 'assessment' && !quickReplies && !assessmentResult) {
+      // 降级: JSON解析失败时用旧step索引
       const step = (sessionContext && sessionContext.assessmentStep) || 0;
       quickReplies = generateAssessmentQuickReplies(step);
     }
@@ -636,6 +662,71 @@ function respond(code, message, data, ctx) {
   const body = { code, message, data: data || null };
   // 如果是在HTTP trigger上下文中，需要用res.json返回
   return body;
+}
+
+// Phase 2: 评估维度→快捷回复映射
+var ASSESS_DIM_OPTIONS = {
+  age: ['18-25岁', '26-30岁', '31-39岁', '40-44岁', '45-50岁', '50岁以上'],
+  edu: ['博士', '硕士（MBA）', '硕士（其他）', '本科', '大专及以下'],
+  school: ['QS世界百强', '985/211高校', '香港高校', '海外知名大学', '其他院校'],
+  major: ['STEM', '金融/会计', '法律', '医学/护理', '教育', '其他'],
+  industry: ['金融/会计', '资讯科技', '工程/制造', '教育', '医疗/护理', '法律', '地产/建筑', '其他'],
+  experience: ['< 3年', '3-5年', '5-10年', '10年+'],
+  position: ['高管', '高级经理', '经理/主管', '高级专业人员', '专业人员', '初级'],
+  income: ['250万港币+', '100-250万', '50-100万', '30-50万', '低于30万'],
+  company: ['世界500强/上市公司', '知名企业', '中小企业', '创业/自雇', '自由职业'],
+  language: ['中文（母语）', '英语（流利）', '英语（一般）', '粤语', '其他外语'],
+  family: ['单身', '已婚无子女', '已婚有子女（1个）', '已婚有子女（2个+）']
+};
+
+function generateQuickRepliesByDim(dim) {
+  if (!dim) return undefined;
+  var opts = ASSESS_DIM_OPTIONS[dim];
+  if (!opts) return undefined;
+  return opts.map(function(text, i) {
+    return { id: dim + '_' + i, text: text };
+  });
+}
+
+// Phase 2: 自然语言回退——从LLM问题文本检测评估维度
+var DIM_KEYWORDS = {
+  age: /年龄|几岁|岁数/,
+  edu: /学历|学位|博士|硕士|本科|大专|MBA|Ph\.D/,
+  school: /学校|院校|毕业.*哪|QS|985|211|百强|海外.*大学|香港.*大学/,
+  major: /专业|学科|STEM|金融|会计|法律|医学|教育|工程/,
+  industry: /行业|从事.*什么|哪个.*领域|金融|科技|教育|医疗/,
+  experience: /工作.*年|经验|年限|干了.*多久/,
+  position: /职位|岗位|title|高管|经理|主管|CXO|VP|Director/,
+  income: /收入|年薪|月薪|工资|年包|多少.*钱|万/,
+  company: /公司|企业|雇主|500强|上市|创业|自雇|自由职业/,
+  language: /语言|英文|英语|粤语|雅思|托福|六级|母语/,
+  family: /家庭|婚姻|结婚|单身|子女|孩子|小孩/,
+};
+
+function detectAssessmentDim(question) {
+  if (!question) return null;
+  for (var dim in DIM_KEYWORDS) {
+    if (DIM_KEYWORDS[dim].test(question)) return dim;
+  }
+  return null;
+}
+
+function parseAssessmentJSON(content) {
+  if (!content) return null;
+  try {
+    // JSON模式输出直接是合法JSON
+    var trimmed = content.trim();
+    if (trimmed.startsWith('{') && trimmed.endsWith('}')) {
+      var parsed = JSON.parse(trimmed);
+      if (parsed.status && (parsed.status === 'asking' || parsed.status === 'done')) {
+        return parsed;
+      }
+    }
+  } catch(e) {
+    // 降级: 尝试从文本中提取JSON
+  }
+  // 降级: 旧格式ASSESS_RESULT:
+  return null;
 }
 
 function parseAssessmentResult(content) {

@@ -121,7 +121,8 @@ Component({
         cancelText: '取消',
         success: res => {
           if (res.confirm) {
-            wx.showToast({ title: '支付功能开发中', icon: 'none' });
+            // 跳转会员页完成身份切换
+            wx.navigateTo({ url: '/subpkg-chat/pages/membership/index' });
           }
         }
       });

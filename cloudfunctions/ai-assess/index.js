@@ -133,9 +133,15 @@ exports.main = async function (event, context) {
     var estimatedTimeline = estimateTimeline(results);
     var estimatedCost = estimateCost(results);
 
-    // 相似案例数
-    // 实际应用中应从数据库查询真实案例数
-    var similarCases = Math.floor(Math.random() * 80) + 10;
+    // 相似案例数——查询真实数据
+    var similarCases = 0;
+    try {
+      var caseResult = await db.collection('assessment_cases')
+        .where({ pathId: bestPath.pathId }).count();
+      similarCases = caseResult.total || 0;
+    } catch (e) {
+      similarCases = 0;
+    }
 
     return {
       code: 200,

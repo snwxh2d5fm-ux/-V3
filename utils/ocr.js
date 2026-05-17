@@ -81,8 +81,8 @@ function identifyDocType(imagePath) {
         resolve({ docType: 'unknown', confidence: 0 });
       }
     }).catch(err => {
-      // 离线模式：返回未知类型，用户手动选择
-      resolve({ docType: 'unknown', confidence: 0, offline: true });
+      // 网络/云函数故障——reject使调用方可区分"服务不可用"与"未识别到类型"
+      reject(err);
     });
   });
 }
@@ -122,9 +122,11 @@ async function extractFields(imagePath, docType) {
     };
   } catch (e) {
     console.error('[OCR] 字段提取失败:', e);
-    // 返回空字段供用户手动填写
+    // 可恢复错误（如单字段正则失败）返回空字段；不可恢复错误 reject
     return { fields: {}, rawText: '', confidence: 0, error: e.message };
   }
+  // 注意：extractFields 在 try/catch 内返回空结果而非 reject，
+  // 因为字段提取失败时用户可手动填写，不应阻断流程
 }
 
 // 字段提取器（基于正则）

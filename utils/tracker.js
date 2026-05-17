@@ -36,7 +36,7 @@ function track(eventType, payload) {
       console.warn('[tracker] 上报失败:', eventType, e.message);
     });
   } catch (e) {
-    // 云函数未就绪或离线时静默失败
+    console.warn('[tracker] 上报异常 (云函数未就绪或离线):', eventType, e.message);
   }
 }
 
