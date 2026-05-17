@@ -412,7 +412,7 @@ module.exports = [
     rule_id: 'R_QMAS_RENEWAL',
     trigger: { event: 'qmas_renewal_prep', date_field: 'renewalDate' },
     reminders: [
-      { label: '优才续签准备(2+3+3模式)', offset_days: 0, alerts: [180, 120, 90, 60] },
+      { label: '优才续签准备(3+3+2模式)', offset_days: 0, alerts: [180, 120, 90, 60] },
       { label: '证明在港「通常居住」— 整理证据', offset_days: 0, alerts: [90, 60, 30] },
       { label: '优才续签递交', offset_days: 0, alerts: [30, 14, 7] }
     ]

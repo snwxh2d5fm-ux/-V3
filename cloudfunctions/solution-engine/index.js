@@ -153,7 +153,7 @@ async function comparePaths(pathIds) {
   const decisionComparisons = {
     dp2_student_to_work: [
       { option:'A', label:'IANG', passRate:'>95%', cycle:'2+2+3', risk:'低', note:'不绑雇主' },
-      { option:'B', label:'优才', passRate:'~70%', cycle:'2+3+3', risk:'中', note:'需12准则≥6' }
+      { option:'B', label:'优才', passRate:'~70%', cycle:'3+3+2', risk:'中', note:'需12准则≥6' }
     ],
     dp3_renewal_strategy: [
       { option:'A', label:'雇主续签', passRate:'高', risk:'低', note:'需ID990B' },
