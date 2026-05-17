@@ -87,6 +87,10 @@
               </view>
 
               <!-- 文档信息 -->
+              <!-- 已匹配的证件缩略图 -->
+              <view class="doc-thumb" wx:if="{{item.status === 'has' && item.docData && item.docData.filePath}}">
+                <image src="{{item.docData.filePath}}" mode="aspectFill" class="doc-thumb-img" />
+              </view>
               <view class="doc-body">
                 <view class="doc-title-row">
                   <text class="doc-name">{{item.name}}</text>
