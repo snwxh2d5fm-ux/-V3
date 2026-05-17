@@ -849,25 +849,36 @@ Page({
     // 选中的分类信息
     var categoryInfo = this.data.categories.find(function(c) { return c.value === docCategory; }) || {};
 
-    // 保存图片到本地文件系统
+    // 保存图片到本地文件系统 — 先持久化再存元数据
     var filePath = imagePath;
-    var savedPath = '';
     if (imagePath) {
       try {
-        // 使用 USER_DATA_PATH 做持久化保存（wx.env.USER_DATA_PATH 不会被清理）
         var fs = wx.getFileSystemManager();
-        var ext = imagePath.split('.').pop() || 'jpg';
-        var persistName = '住港伴_' + docCategory + '_' + docId + '.' + ext;
-        var persistPath = wx.env.USER_DATA_PATH + '/' + persistName;
-        fs.copyFileSync(imagePath, persistPath);
-        savedPath = persistPath;
-        filePath = persistPath;
-        // 同时写入 vault 元数据系统
-        try { filePath = await saveFile(imagePath, docId, docCategory); } catch (ve) { console.warn('[vault] 元数据写入跳过:', ve.message); }
+        // 确保 vault 目录存在
+        var vaultBase = wx.env.USER_DATA_PATH + '/vault/';
+        try { fs.accessSync(vaultBase); } catch(_) { fs.mkdirSync(vaultBase, true); }
+        var catDir = vaultBase + docCategory + '/';
+        try { fs.accessSync(catDir); } catch(_) { fs.mkdirSync(catDir, true); }
+        // 持久化到 vault 目录
+        var ext = (imagePath.split('.').pop() || 'jpg').replace(/[^a-z0-9]/gi,'');
+        var persistPath = catDir + docId + '.' + ext;
+        try {
+          fs.copyFileSync(imagePath, persistPath);
+          filePath = persistPath;
+        } catch(ce) {
+          // copyFile失败：temp文件可能已被清理，尝试read+write
+          try {
+            var data = fs.readFileSync(imagePath);
+            fs.writeFileSync(persistPath, data, 'binary');
+            filePath = persistPath;
+          } catch(rw) {
+            console.error('[保存] 文件读写失败:', rw.message);
+            filePath = imagePath; // 降级
+          }
+        }
       } catch (e) {
-        console.error('[保存] 文件持久化失败:', e.message || e);
-        // 降级：直接使用原始路径
-        filePath = imagePath;
+        console.error('[保存] 持久化失败:', e.message);
+        filePath = imagePath; // 降级使用原始路径
       }
     }
 

@@ -299,7 +299,12 @@ Page({
     var promise = category === '全部' ? cache.fetchAllTasks() : cache.fetchTasks('bySceneTags', { tags: [category] });
     promise.then(function(r) {
       if (r && r.data) {
+        // 提取任务数组（处理CloudBase响应嵌套和缓存包装）
         var tasks = r.data.tasks || r.data.data || (Array.isArray(r.data) ? r.data : []);
+        // 安全检查：过滤掉非任务对象的元数据
+        tasks = (Array.isArray(tasks) ? tasks : []).filter(function(t) {
+          return t && typeof t.title === 'string' && t.title.length > 0;
+        });
         self.setData({ browseTasks: tasks });
       } else {
         self.setData({ browseTasks: [] });
