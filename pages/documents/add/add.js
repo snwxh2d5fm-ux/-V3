@@ -222,16 +222,25 @@ Page({
     var that = this;
     var enhancedPath = imagePath;
     try {
-      var imgProc = require('../../../utils/image-process');
-      enhancedPath = await this.withTimeout(imgProc.autoRotate(imagePath), 3000, imagePath);
-      enhancedPath = await this.withTimeout(imgProc.cropToDocument(enhancedPath), 3000, enhancedPath);
-      enhancedPath = await this.withTimeout(imgProc.enhanceToScanned(enhancedPath), 3000, enhancedPath);
-      if (enhancedPath !== imagePath) {
-        that.setData({ imagePath: enhancedPath });
-        that.readImageBase64(enhancedPath);
+      // 扫描件效果：后台运行，不阻塞UI
+      if (this.data.scanMode && !this.data.scanProcessing) {
+        var that = this;
+        this.setData({ scanProcessing: true });
+        // 后台异步执行，不阻塞用户继续操作
+        var imgProc = require('../../../utils/image-process');
+        imgProc.autoRotate(imagePath).then(function(rotated) {
+          return imgProc.cropToDocument(rotated || imagePath);
+        }).then(function(cropped) {
+          return imgProc.enhanceToScanned(cropped || imagePath);
+        }).then(function(enhanced) {
+          if (enhanced && enhanced !== imagePath) {
+            that.setData({ imagePath: enhanced, alignedPath: enhanced });
+            that.readImageBase64(enhanced);
+            wx.showToast({ title: '扫描增强完成', icon: 'success', duration: 1200 });
+          }
+        }).catch(function(e) { console.log('[增强] 后台失败:', e.message); })
+        .finally(function() { that.setData({ scanProcessing: false }); });
       }
-    } catch (e) { console.log('[AI增强] 跳过:', e.message); }
-  },
 
   /** 确认图片 → Bug #8: 应用旋转+缩放变换后再推进步骤 */
   async confirmImage() {
@@ -675,6 +684,15 @@ Page({
   // ===== Bug #5+#8: 旋转+扫描件工具栏 =====
 
   /** 顺时针旋转90° — Bug #8: 存储旋转角度，confirmImage 时通过 canvas 实际旋转像素 */
+  /** 切换证件面 (人像/国徽) */
+  onSwitchSide(e) {
+    var side = e.currentTarget.dataset.side;
+    var data = { photoSide: side };
+    if (side === 'front' && this.data.frontPhotoPath) data.imagePath = this.data.frontPhotoPath;
+    else if (side === 'back' && this.data.backPhotoPath) data.imagePath = this.data.backPhotoPath;
+    this.setData(data);
+  },
+
   onRotateImage() {
     var currentDeg = this._rotateDeg || 0;
     var newDeg = (currentDeg + 90) % 360;
@@ -833,20 +851,23 @@ Page({
 
     // 保存图片到本地文件系统
     var filePath = imagePath;
+    var savedPath = '';
     if (imagePath) {
       try {
-        filePath = await saveFile(imagePath, docId, docCategory);
-        // 并存一份到微信本地文件系统做独立持久化留存
-        try {
-          var fs = wx.getFileSystemManager();
-          var bakName = '住港伴_' + docCategory + '_' + docId + '.jpg';
-          var bakPath = wx.env.USER_DATA_PATH + '/' + bakName;
-          fs.copyFileSync(imagePath, bakPath);
-        } catch (be) { console.warn('[留存] 备份跳过:', be.message); }
+        // 使用 USER_DATA_PATH 做持久化保存（wx.env.USER_DATA_PATH 不会被清理）
+        var fs = wx.getFileSystemManager();
+        var ext = imagePath.split('.').pop() || 'jpg';
+        var persistName = '住港伴_' + docCategory + '_' + docId + '.' + ext;
+        var persistPath = wx.env.USER_DATA_PATH + '/' + persistName;
+        fs.copyFileSync(imagePath, persistPath);
+        savedPath = persistPath;
+        filePath = persistPath;
+        // 同时写入 vault 元数据系统
+        try { filePath = await saveFile(imagePath, docId, docCategory); } catch (ve) { console.warn('[vault] 元数据写入跳过:', ve.message); }
       } catch (e) {
-        console.error('[保存] 文件保存失败:', e);
-        // 仍保存元数据，但标记无文件
-        filePath = '';
+        console.error('[保存] 文件持久化失败:', e.message || e);
+        // 降级：直接使用原始路径
+        filePath = imagePath;
       }
     }
 

@@ -55,16 +55,7 @@
   <!-- 操作按钮 -->
   <view class="action-bar">
     <button class="btn--primary btn-flex" bindtap="navigateToAdd">+</button>
-    <button class="btn--outline btn-flex" bindtap="toggleGallery">🖼 画廊</button>
     <button class="btn--outline btn-flex" bindtap="onSmartCombine">📦 组合</button>
-  </view>
-
-  <!-- 画廊模式 -->
-  <view class="gallery-grid" wx:if="{{showGallery && filteredDocsWithImage.length > 0}}">
-    <view class="gallery-item" wx:for="{{filteredDocsWithImage}}" wx:key="id" bindtap="previewImage" data-index="{{index}}">
-      <image class="gallery-thumb" src="{{item.filePath}}" mode="aspectFill" aria-label="{{item.displayName || '证件'}}" />
-      <text class="gallery-label">{{item.displayName}}</text>
-    </view>
   </view>
 
   <!-- ═══════════════════ 卡槽系统 ═══════════════════ -->

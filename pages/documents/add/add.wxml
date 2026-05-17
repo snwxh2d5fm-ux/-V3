@@ -203,9 +203,26 @@
       <text class="page-header-sub">确认照片清晰可用</text>
     </view>
 
+    <!-- 证件面选择 (国徽面/人像面) -->
+    <view class="side-selector" wx:if="{{imagePath}}">
+      <view class="side-tab {{photoSide==='front'?'active':''}}" bindtap="onSwitchSide" data-side="front">
+        <text>📷 人像面</text>
+      </view>
+      <view class="side-tab {{photoSide==='back'?'active':''}}" bindtap="onSwitchSide" data-side="back">
+        <text>🏛 国徽面</text>
+      </view>
+    </view>
+
     <!-- 图片预览 + 脱敏遮罩 + 旋转样式 -->
     <view class="image-preview" wx:if="{{imagePath}}">
       <image src="{{imagePath}}" mode="aspectFit" class="preview-img" style="transform: rotate({{imageRotated}}deg)" aria-label="证件图片预览" />
+      <view class="photo-side-tag">{{photoSide==='front'?'人像面':'国徽面'}}</view>
+    </view>
+
+    <!-- 双面状态指示 -->
+    <view class="both-sides-status" wx:if="{{frontPhotoPath || backPhotoPath}}">
+      <text class="{{frontPhotoPath?'done':''}}">{{frontPhotoPath?'✅ 人像面已拍':'☐ 人像面'}}</text>
+      <text class="{{backPhotoPath?'done':''}}">{{backPhotoPath?'✅ 国徽面已拍':'☐ 国徽面'}}</text>
     </view>
 
     <!-- Bug #5: 旋转+扫描件工具栏 -->

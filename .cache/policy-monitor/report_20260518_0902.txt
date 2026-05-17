@@ -1,0 +1,228 @@
+======================================================================
+住港伴 攻略内容保鲜监控报告
+生成时间: 2026-05-18 09:02
+模式: 📧 将发送邮件至 gangban@funway.hk
+======================================================================
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+📋 第一部分: 官方政策源变更检测
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+🔴 [CRITICAL] 入境处 — 优秀人才入境计划
+   链接: https://www.immd.gov.hk/hks/services/visas/quality_migrant_admission_scheme.html
+   变更摘要: 首次监控（建立基线）
+   抓取时间: 2026-05-18T09:02:27.356858
+   内容预览 (前200字):
+   >>> <!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<META http-equiv="Content-Type" content="text/html; charset=UTF-8">
+<title>ä¼ç§äººæå¥å¢è®¡å | å¥å¢äºå¡å¤</title>
+<!--div-layout-relative-widths
+
+   📌 审核行动:
+      1. 访问链接确认变更内容
+      2. 对比攻略书现有内容
+      3. 如需更新 → 修改 guidebook-data.js
+      4. 重新部署云端 guidebook 函数
+
+🔴 [CRITICAL] 入境处 — 高端人才通行证计划
+   链接: https://www.immd.gov.hk/hks/services/visas/TTPS.html
+   变更摘要: 首次监控（建立基线）
+   抓取时间: 2026-05-18T09:02:27.820816
+   内容预览 (前200字):
+   >>> <!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<META http-equiv="Content-Type" content="text/html; charset=UTF-8">
+<title>é«ç«¯äººæéè¡è¯è®¡å | å¥å¢äºå¡å¤</title>
+<!--div-layout-relative-wid
+
+   📌 审核行动:
+      1. 访问链接确认变更内容
+      2. 对比攻略书现有内容
+      3. 如需更新 → 修改 guidebook-data.js
+      4. 重新部署云端 guidebook 函数
+
+🔴 [CRITICAL] 入境处 — 输入内地人才计划
+   链接: https://www.immd.gov.hk/hks/services/visas/ASMTP.html
+   变更摘要: 首次监控（建立基线）
+   抓取时间: 2026-05-18T09:02:27.929616
+   内容预览 (前200字):
+   >>> <!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<META http-equiv="Content-Type" content="text/html; charset=UTF-8">
+<title>è¾å¥åå°äººæè®¡å | å¥å¢äºå¡å¤</title>
+<!--div-layout-relative-widths
+
+   📌 审核行动:
+      1. 访问链接确认变更内容
+      2. 对比攻略书现有内容
+      3. 如需更新 → 修改 guidebook-data.js
+      4. 重新部署云端 guidebook 函数
+
+🔴 [CRITICAL] 入境处 — 非本地毕业生留港/回港就业安排
+   链接: https://www.immd.gov.hk/hks/services/visas/IANG.html
+   变更摘要: 首次监控（建立基线）
+   抓取时间: 2026-05-18T09:02:28.042407
+   内容预览 (前200字):
+   >>> <!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<META http-equiv="Content-Type" content="text/html; charset=UTF-8">
+<title>éæ¬å°æ¯ä¸ççæ¸¯ï¼åæ¸¯å°±ä¸å®æ | å¥å¢äºå¡å¤</title>
+<!--div-l
+
+   📌 审核行动:
+      1. 访问链接确认变更内容
+      2. 对比攻略书现有内容
+      3. 如需更新 → 修改 guidebook-data.js
+      4. 重新部署云端 guidebook 函数
+
+🔴 [MEDIUM] 香港政府一站通 — 入境事务
+   链接: https://www.gov.hk/tc/residents/immigration/
+   变更摘要: 首次监控（建立基线）
+   抓取时间: 2026-05-18T09:02:28.346850
+   内容预览 (前200字):
+   >>> <!DOCTYPE html>
+
+<html xmlns="http://www.w3.org/1999/xhtml" xml:lang="zh-hk" lang="zh-hk">
+	<head>
+		<title>GovHK 香港政府一站通：入境事務</title>
+		<META HTTP-EQUIV=REFRESH CONTENT="0;url=/tc/residents/immigra
+
+   📌 审核行动:
+      1. 访问链接确认变更内容
+      2. 对比攻略书现有内容
+      3. 如需更新 → 修改 guidebook-data.js
+      4. 重新部署云端 guidebook 函数
+
+🔴 [HIGH] 香港人才清单 (2025.3更新)
+   链接: https://www.talentlist.gov.hk/
+   变更摘要: 首次监控（建立基线）
+   抓取时间: 2026-05-18T09:02:28.494742
+   内容预览 (前200字):
+   >>> <!DOCTYPE html><html lang="en-US" dir="ltr">
+  <head>
+    <meta charset="utf-8">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <meta name="viewport" content="width=device-width, initia
+
+   📌 审核行动:
+      1. 访问链接确认变更内容
+      2. 对比攻略书现有内容
+      3. 如需更新 → 修改 guidebook-data.js
+      4. 重新部署云端 guidebook 函数
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+🔍 第二部分: 公众号信息交叉验证
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+搜索关键词: "香港优才 2026 新政策"
+  📄 [需人工检查] 香港优才 2026 新政策
+     来源: 
+     日期: 
+     链接: https://weixin.sogou.com/weixin?type=2&query=%E9%A6%99%E6%B8%AF%E4%BC%98%E6%89%8D%202026%20%E6%96%B0%E6%94%BF%E7%AD%96
+     验证: 无法自动解析，请手动访问链接查看
+
+
+搜索关键词: "香港高才通 续签 2026"
+  📄 [需人工检查] 香港高才通 续签 2026
+     来源: 
+     日期: 
+     链接: https://weixin.sogou.com/weixin?type=2&query=%E9%A6%99%E6%B8%AF%E9%AB%98%E6%89%8D%E9%80%9A%20%E7%BB%AD%E7%AD%BE%202026
+     验证: 无法自动解析，请手动访问链接查看
+
+
+搜索关键词: "香港专才 申请条件 变更"
+  📄 [需人工检查] 香港专才 申请条件 变更
+     来源: 
+     日期: 
+     链接: https://weixin.sogou.com/weixin?type=2&query=%E9%A6%99%E6%B8%AF%E4%B8%93%E6%89%8D%20%E7%94%B3%E8%AF%B7%E6%9D%A1%E4%BB%B6%20%E5%8F%98%E6%9B%B4
+     验证: 无法自动解析，请手动访问链接查看
+
+
+搜索关键词: "香港IANG 2026"
+  📄 [需人工检查] 香港IANG 2026
+     来源: 
+     日期: 
+     链接: https://weixin.sogou.com/weixin?type=2&query=%E9%A6%99%E6%B8%AFIANG%202026
+     验证: 无法自动解析，请手动访问链接查看
+
+
+搜索关键词: "香港投资移民 CIES 2026"
+  📄 [需人工检查] 香港投资移民 CIES 2026
+     来源: 
+     日期: 
+     链接: https://weixin.sogou.com/weixin?type=2&query=%E9%A6%99%E6%B8%AF%E6%8A%95%E8%B5%84%E7%A7%BB%E6%B0%91%20CIES%202026
+     验证: 无法自动解析，请手动访问链接查看
+
+
+搜索关键词: "香港人才清单 更新"
+  📄 [需人工检查] 香港人才清单 更新
+     来源: 
+     日期: 
+     链接: https://weixin.sogou.com/weixin?type=2&query=%E9%A6%99%E6%B8%AF%E4%BA%BA%E6%89%8D%E6%B8%85%E5%8D%95%20%E6%9B%B4%E6%96%B0
+     验证: 无法自动解析，请手动访问链接查看
+
+
+搜索关键词: "香港入境处 最新公告"
+  📄 [需人工检查] 香港入境处 最新公告
+     来源: 
+     日期: 
+     链接: https://weixin.sogou.com/weixin?type=2&query=%E9%A6%99%E6%B8%AF%E5%85%A5%E5%A2%83%E5%A4%84%20%E6%9C%80%E6%96%B0%E5%85%AC%E5%91%8A
+     验证: 无法自动解析，请手动访问链接查看
+
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+📅 第三部分: 攻略书内容时效检查
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+⚠️  发现 2 篇文章超过时效阈值:
+
+  📝 asmpt_002
+     最后更新: 2026-02-15 (92 天前)
+     重要度: high, 阈值: 60天
+     操作: 需人工复核内容是否仍然准确
+
+  📝 life_002
+     最后更新: 2026-02-10 (97 天前)
+     重要度: medium, 阈值: 90天
+     操作: 需人工复核内容是否仍然准确
+
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+✅ 第四部分: 人工审核流程
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+请按以下流程完成审核：
+
+  Step 1 — 确认变更真实性
+    访问上述每个 🔴 标记的官方链接，确认政策是否确实变更
+    阅读公众号交叉验证结果，判断信息一致性
+
+  Step 2 — 评估影响范围
+    确认变更影响的攻略书文章 (参考第三部分时效列表)
+    判断是否需要新增文章或仅更新现有文章
+
+  Step 3 — 内容更新
+    data/guidebook-data.js: 修改 affected 文章的 sections/faqAnswer
+    更新文章的 updated 日期
+    运行: bash scripts/verify.sh (确保通过)
+
+  Step 4 — 部署上线
+    云函数部署: 更新 guidebook 云函数代码
+    可选: 同步 guidebook_articles 云数据库
+    运行: bash scripts/verify.sh --baseline (更新基线)
+
+  Step 5 — 回复确认
+    回复此邮件，标注已完成的审核项目
+    ✅ 格式: '已审核 [日期] — 确认 [变更项数] 项，已更新 [文章数] 篇'
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+📧 本报告由住港伴 policy-monitor 自动生成
+   下次运行: 建议 2026-05-25 (每7天)
+   脚本位置: scripts/policy-monitor.py
+   配置文件: 本脚本内 OFFICIAL_SOURCES / KEY_WECHAT_ACCOUNTS
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
