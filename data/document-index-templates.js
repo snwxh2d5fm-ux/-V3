@@ -20,7 +20,7 @@ const INDEX_TEMPLATES = {
         slots: [
           { slotKey: 'id_card',      docName: '内地身份证',   docIcon: '🆔', requirement: 'required',    description: '人像面+国徽面', maxCount: 2 },
           { slotKey: 'hk_permit',    docName: '港澳通行证',   docIcon: '🛂', requirement: 'required',    description: '需含有效签注', maxCount: 2 },
-          { slotKey: 'passport',     docName: '护照',         docIcon: '📘', requirement: 'recommended', description: '如有', maxCount: 1 },
+          { slotKey: 'passport',     docName: '护照',         docIcon: '📘', requirement: 'recommended', description: '如有', maxCount: 8 },
           { slotKey: 'photo',        docName: '证件照',       docIcon: '📷', requirement: 'required',    description: '白底50×40mm', maxCount: 1 }
         ]
       },
@@ -160,7 +160,7 @@ const INDEX_TEMPLATES = {
         slots: [
           { slotKey: 'id_card',   docName: '内地身份证', docIcon: '🆔', requirement: 'required', maxCount: 2 },
           { slotKey: 'hk_permit', docName: '港澳通行证', docIcon: '🛂', requirement: 'required', maxCount: 2 },
-          { slotKey: 'passport',  docName: '护照',         docIcon: '📘', requirement: 'recommended', maxCount: 1 },
+          { slotKey: 'passport',  docName: '护照',         docIcon: '📘', requirement: 'recommended', maxCount: 8 },
           { slotKey: 'photo',     docName: '证件照',       docIcon: '📷', requirement: 'required', maxCount: 1 }
         ]
       },
@@ -199,7 +199,7 @@ const INDEX_TEMPLATES = {
         slots: [
           { slotKey: 'id_card',   docName: '内地身份证', docIcon: '🆔', requirement: 'required', maxCount: 2 },
           { slotKey: 'hk_permit', docName: '港澳通行证', docIcon: '🛂', requirement: 'required', maxCount: 2 },
-          { slotKey: 'passport',  docName: '护照',         docIcon: '📘', requirement: 'recommended', maxCount: 1 },
+          { slotKey: 'passport',  docName: '护照',         docIcon: '📘', requirement: 'recommended', maxCount: 8 },
           { slotKey: 'photo',     docName: '证件照',       docIcon: '📷', requirement: 'required', maxCount: 1 }
         ]
       },
@@ -240,7 +240,7 @@ const INDEX_TEMPLATES = {
         slots: [
           { slotKey: 'id_card',   docName: '内地身份证', docIcon: '🆔', requirement: 'required', maxCount: 2 },
           { slotKey: 'hk_permit', docName: '港澳通行证', docIcon: '🛂', requirement: 'required', maxCount: 2 },
-          { slotKey: 'passport',  docName: '护照',         docIcon: '📘', requirement: 'recommended', maxCount: 1 },
+          { slotKey: 'passport',  docName: '护照',         docIcon: '📘', requirement: 'recommended', maxCount: 8 },
           { slotKey: 'photo',     docName: '证件照',       docIcon: '📷', requirement: 'required', maxCount: 1 }
         ]
       },
@@ -281,7 +281,7 @@ const INDEX_TEMPLATES = {
         slots: [
           { slotKey: 'id_card',   docName: '内地身份证', docIcon: '🆔', requirement: 'required', maxCount: 2 },
           { slotKey: 'hk_permit', docName: '港澳通行证', docIcon: '🛂', requirement: 'required', maxCount: 2 },
-          { slotKey: 'passport',  docName: '护照',         docIcon: '📘', requirement: 'recommended', maxCount: 1 },
+          { slotKey: 'passport',  docName: '护照',         docIcon: '📘', requirement: 'recommended', maxCount: 8 },
           { slotKey: 'photo',     docName: '证件照',       docIcon: '📷', requirement: 'required', maxCount: 1 }
         ]
       },
@@ -320,7 +320,7 @@ const INDEX_TEMPLATES = {
         slots: [
           { slotKey: 'id_card',   docName: '内地身份证', docIcon: '🆔', requirement: 'required', maxCount: 2 },
           { slotKey: 'hk_permit', docName: '港澳通行证', docIcon: '🛂', requirement: 'required', maxCount: 2 },
-          { slotKey: 'passport',  docName: '护照',         docIcon: '📘', requirement: 'required', maxCount: 1 },
+          { slotKey: 'passport',  docName: '护照',         docIcon: '📘', requirement: 'required', maxCount: 8 },
           { slotKey: 'photo',     docName: '证件照',       docIcon: '📷', requirement: 'required', maxCount: 1 }
         ]
       },
@@ -352,14 +352,14 @@ const INDEX_TEMPLATES = {
         slots: [
           { slotKey: 'id_card',    docName: '内地身份证', docIcon: '🆔', requirement: 'required', maxCount: 2 },
           { slotKey: 'hk_permit',  docName: '港澳通行证', docIcon: '🛂', requirement: 'required', maxCount: 2 },
-          { slotKey: 'passport',   docName: '护照',         docIcon: '📘', requirement: 'recommended', maxCount: 1 },
+          { slotKey: 'passport',   docName: '护照',         docIcon: '📘', requirement: 'recommended', maxCount: 8 },
           { slotKey: 'photo',      docName: '证件照',       docIcon: '📷', requirement: 'required', maxCount: 1 }
         ]
       },
       {
         categoryKey: 'relationship', categoryName: '关系证明', categoryIcon: '💑',
         slots: [
-          { slotKey: 'marriage_cert', docName: '结婚证(配偶)',  docIcon: '💍', requirement: 'required', description: '如配偶随行', maxCount: 1 },
+          { slotKey: 'marriage_cert', docName: '结婚证(配偶)',  docIcon: '💍', requirement: 'required', description: '如配偶随行', maxCount: 8 },
           { slotKey: 'birth_cert',    docName: '出生证明(子女)', docIcon: '👶', requirement: 'required', description: '如子女随行', maxCount: 1 },
           { slotKey: 'household',     docName: '户口本',         docIcon: '📖', requirement: 'recommended', description: '证明家庭关系', maxCount: 2 }
         ]
@@ -392,7 +392,7 @@ const INDEX_TEMPLATES = {
         slots: [
           { slotKey: 'birth_cert', docName: '出生证明',   docIcon: '👶', requirement: 'required', maxCount: 1 },
           { slotKey: 'id_card',    docName: '身份证',     docIcon: '🆔', requirement: 'required', maxCount: 2 },
-          { slotKey: 'passport',   docName: '护照',       docIcon: '📘', requirement: 'required', maxCount: 1 },
+          { slotKey: 'passport',   docName: '护照',       docIcon: '📘', requirement: 'required', maxCount: 8 },
           { slotKey: 'photo',      docName: '证件照',     docIcon: '📷', requirement: 'required', maxCount: 1 }
         ]
       },
@@ -431,7 +431,7 @@ const INDEX_TEMPLATES = {
         categoryKey: 'identity', categoryName: '身份证明', categoryIcon: '🪪',
         slots: [
           { slotKey: 'id_card',   docName: '内地身份证', docIcon: '🆔', requirement: 'required', maxCount: 2 },
-          { slotKey: 'passport',  docName: '护照',         docIcon: '📘', requirement: 'required', maxCount: 1 },
+          { slotKey: 'passport',  docName: '护照',         docIcon: '📘', requirement: 'required', maxCount: 8 },
           { slotKey: 'photo',     docName: '证件照',       docIcon: '📷', requirement: 'required', maxCount: 1 }
         ]
       },
@@ -469,7 +469,7 @@ const INDEX_TEMPLATES = {
         slots: [
           { slotKey: 'id_card',   docName: '内地身份证', docIcon: '🆔', requirement: 'required', maxCount: 2 },
           { slotKey: 'hk_permit', docName: '港澳通行证', docIcon: '🛂', requirement: 'required', maxCount: 2 },
-          { slotKey: 'passport',  docName: '护照',         docIcon: '📘', requirement: 'required', maxCount: 1 },
+          { slotKey: 'passport',  docName: '护照',         docIcon: '📘', requirement: 'required', maxCount: 8 },
           { slotKey: 'photo',     docName: '证件照',       docIcon: '📷', requirement: 'required', maxCount: 1 }
         ]
       },
