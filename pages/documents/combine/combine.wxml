@@ -105,6 +105,8 @@
                   <text wx:if="{{item.spec.validity}}"> · 有效期{{item.spec.validity}}</text>
                   <text wx:if="{{item.spec.size}}"> · {{item.spec.size}}</text>
                 </text>
+                <!-- Bug #9: 已匹配文档的OCR提取信息 -->
+                <text class="doc-ocr-info" wx:if="{{item.ocrInfo}}">📋 {{item.ocrInfo}}</text>
               </view>
 
               <!-- 操作 -->

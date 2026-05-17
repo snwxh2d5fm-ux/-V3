@@ -94,7 +94,7 @@
           <view class="slot__info"
                 bindtap="{{slot.fillStatus === 'empty' ? 'uploadToSlot' : (slot.uploadedDocs.length > 1 ? 'previewSlotDocs' : 'navigateToDetail')}}"
                 data-slot-key="{{slot.slotKey}}" data-id="{{slot.uploadedDocs[0] ? slot.uploadedDocs[0].id : ''}}">
-            <text class="slot__name">{{slot.docName}}</text>
+            <text class="slot__name">{{slot.docName}}{{slot.uploadedCount === 1 && slot.uploadedDocs[0].sideLabel ? '·'+slot.uploadedDocs[0].sideLabel : ''}}</text>
             <text class="slot__count" wx:if="{{slot.uploadedCount > 0}}">{{slot.uploadedCount}}份</text>
           </view>
           <!-- Bug #18 修复: 右侧按钮 → 未满显示"继续添加"，满则打✓ -->

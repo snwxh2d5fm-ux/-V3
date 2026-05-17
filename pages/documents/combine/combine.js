@@ -332,6 +332,24 @@ Page({
       }
 
       var docSpec = DOC_SPECS[item.id] || {};
+
+      // Bug #9修复: 从已匹配文档提取OCR信息（姓名/证件号）
+      var ocrInfo = '';
+      if (found && found.ocrData) {
+        var parts = [];
+        if (found.ocrData.name && found.ocrData.name !== '未识别') parts.push(found.ocrData.name);
+        if (found.ocrData.idNumber && found.ocrData.idNumber !== '未识别') {
+          var idStr = String(found.ocrData.idNumber);
+          // 脱敏显示：只显示前2位+后4位
+          if (idStr.length > 6) {
+            idStr = idStr.slice(0, 2) + '****' + idStr.slice(-4);
+          }
+          parts.push(idStr);
+        }
+        if (found.ocrData.docNumber && found.ocrData.docNumber !== '未识别') parts.push(found.ocrData.docNumber);
+        if (parts.length) ocrInfo = parts.join(' · ');
+      }
+
       return {
         id: item.id,
         name: item.name,
@@ -343,7 +361,8 @@ Page({
         docData: found || null,
         expiryWarning: expiryWarning,
         expiryDays: expiryDays,
-        spec: docSpec
+        spec: docSpec,
+        ocrInfo: ocrInfo
       };
     });
 

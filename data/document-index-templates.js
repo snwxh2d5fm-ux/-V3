@@ -603,7 +603,11 @@ function computeSlotStates(template, uploadedDocs, ownerType) {
         description: slot.description,
         maxCount: slot.maxCount,
         fillStatus: fillStatus,
-        uploadedDocs: uploaded,
+        uploadedDocs: uploaded.map(function(d) {
+          var label = d.photoSide === 'front' ? '人像面' : (d.photoSide === 'back' ? '国徽面' : '');
+          d.sideLabel = label;
+          return d;
+        }),
         uploadedCount: count
       };
     });
