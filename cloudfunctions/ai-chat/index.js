@@ -20,6 +20,7 @@
  */
 const tcb = require('@cloudbase/node-sdk');
 const prompts = require('./prompts');
+const { buildUserContext } = require('./context-builder');
 
 // wx-server-sdk 初始化（优先测试mock global.cloud，生产环境使用 wx-server-sdk）
 var cloud = (typeof global !== 'undefined' && global.cloud) ? global.cloud : null;
@@ -339,6 +340,26 @@ exports.main = async function (event, context) {
       }
     }
     messages.push({ role: 'user', content: message });
+
+    // --- 用户记忆上下文 (Hermes AI-chat 能力) ---
+    try {
+      var userId = context.OPENID || event.userInfo ? event.userInfo.openId : '';
+      if (userId) {
+        var sessionData = sessionContext || {};
+        sessionData.userStatus = event.userStatus || sessionData.userStatus || '';
+        sessionData.selectedPath = event.selectedPath || sessionData.selectedPath || '';
+        sessionData.assessment = event.assessment || sessionData.assessment || {};
+        var userCtx = await buildUserContext(userId, sessionData);
+        if (userCtx && userCtx.hasData) {
+          messages.unshift({
+            role: 'system',
+            content: userCtx.contextText
+          });
+        }
+      }
+    } catch (e) {
+      console.warn('[ai-chat v3] 用户上下文构建失败，继续不带记忆:', e.message);
+    }
 
     if (sessionContext && (sessionContext.page || sessionContext.chatTopics)) {
       var ctxHint = {};

@@ -39,6 +39,16 @@ Page({
     scanMode: false,             // 是否启用扫描件增强
     scanProcessing: false,       // 扫描件处理中
 
+    // 证件双面拍摄 (国徽面/人像面)
+    photoSide: 'front',          // 'front' | 'back'
+    frontPhotoPath: '',          // 人像面照片
+    backPhotoPath: '',           // 国徽面照片
+    bothSidesDone: false,        // 双面均已拍摄
+
+    // 一键对齐
+    alignProcessing: false,
+    alignedPath: '',
+
     // 分类选项 — 对齐PRD七大类
     categories: [
       { value: 'identity',  label: '身份',   icon: '🆔', desc: '身份证/护照/回乡证等' },
