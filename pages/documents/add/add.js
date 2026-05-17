@@ -704,15 +704,27 @@ Page({
     wx.showToast({ title: '已旋转 ' + newDeg + '°', icon: 'none', duration: 800 });
   },
 
-  /** 扫描件效果增强 */
+  /** 扫描件效果增强 — Bug #2修复: 超时兜底 */
   onToggleScanMode() {
     var that = this;
     if (this.data.scanProcessing) return;
     this.setData({ scanProcessing: true });
     wx.showLoading({ title: '扫描增强中...' });
+
+    // 超时兜底: 8秒后强制结束（canvas可能回调不触发）
+    var timedOut = false;
+    var timer = setTimeout(function() {
+      timedOut = true;
+      wx.hideLoading();
+      that.setData({ scanMode: !that.data.scanMode, scanProcessing: false });
+      wx.showToast({ title: '增强超时，使用原图', icon: 'none' });
+    }, 8000);
+
     try {
       var imageProcess = require('../../../utils/image-process');
       imageProcess.enhanceToScanned(this.data.imagePath).then(function(enhancedPath) {
+        if (timedOut) return;
+        clearTimeout(timer);
         wx.hideLoading();
         that.setData({ scanMode: !that.data.scanMode, scanProcessing: false });
         if (enhancedPath && enhancedPath !== that.data.imagePath) {
@@ -720,11 +732,14 @@ Page({
         }
         wx.showToast({ title: '扫描增强完成', icon: 'success', duration: 1000 });
       }).catch(function() {
+        if (timedOut) return;
+        clearTimeout(timer);
         wx.hideLoading();
         that.setData({ scanMode: !that.data.scanMode, scanProcessing: false });
         wx.showToast({ title: '增强失败，使用原图', icon: 'none' });
       });
     } catch (e) {
+      clearTimeout(timer);
       wx.hideLoading();
       this.setData({ scanProcessing: false });
       wx.showToast({ title: '扫描增强暂不可用', icon: 'none' });

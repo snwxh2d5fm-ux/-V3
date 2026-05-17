@@ -589,7 +589,7 @@ Page({
     wx.navigateTo({ url: `/pages/documents/detail/detail?id=${id}` });
   },
 
-  // #4: 多证件槽位预览
+  // #4: 多证件槽位预览 — Bug #4修复: 显示证件面标签
   previewSlotDocs(e) {
     var slotKey = e.currentTarget.dataset.slotKey;
     var slot = null;
@@ -604,11 +604,15 @@ Page({
       wx.navigateTo({ url: '/pages/documents/detail/detail?id=' + docs[0].id });
       return;
     }
-    // 多张→弹窗选择
-    var names = docs.map(function(d, i) { return (i+1) + '. ' + (d.displayName || d.name || '证件'); }).join('\n');
-    var that = this;
+    // 多张→弹窗选择，显示证件面（人像面/国徽面）
+    function sideLabel(d) {
+      var side = d.photoSide;
+      if (side === 'front') return '人像面';
+      if (side === 'back') return '国徽面';
+      return d.displayName || d.name || '证件';
+    }
     wx.showActionSheet({
-      itemList: docs.map(function(d) { return d.displayName || d.name || '证件'; }),
+      itemList: docs.map(function(d) { return sideLabel(d); }),
       success: function(res) {
         var idx = res.tapIndex;
         wx.navigateTo({ url: '/pages/documents/detail/detail?id=' + docs[idx].id });

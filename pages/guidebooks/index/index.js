@@ -378,11 +378,21 @@ Page({
       if (at.skip_if_existing && at.skip_if_existing.length) tags.push('已有资产可跳过');
       if (tags.length) { lines.push(''); lines.push('【适用范围】'); tags.forEach(function(t) { lines.push(t); }); }
     }
-    // 兜底：显示所有简单字段
+    // 兜底：显示补充字段（排除已处理字段和内部元数据）
+    var EXCLUDED_KEYS = [
+      'title','subtitle','urgency','time_estimate','scene_tags','phase','sequence','status',
+      'desc','description','content','summary','steps','step_list',
+      'tips','hints','tip_list','pitfalls','warnings','pitfall_list',
+      'requiredItems','required_items','material_list','materials',
+      'official_links','officialLinks','links',
+      'category','icon','createdAt','updatedAt','_openid',
+      'user_status','family_status','visa_types','applicable_to',
+      'is_active','version','source','tags'
+    ];
     var stringKeys = Object.keys(task).filter(function(k) {
       return k[0] !== '_' && task[k] !== null && task[k] !== undefined &&
         typeof task[k] !== 'object' &&
-        ['title','subtitle','urgency','time_estimate','scene_tags','phase','sequence','status','desc','description','content','steps','tips','pitfalls','links'].indexOf(k) === -1;
+        EXCLUDED_KEYS.indexOf(k) === -1;
     });
     if (stringKeys.length) {
       lines.push('');

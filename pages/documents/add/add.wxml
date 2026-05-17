@@ -423,6 +423,9 @@
   <canvas type="2d" id="img-process" style="position:fixed;left:-9999px;top:0;width:300px;height:300px"></canvas>
   <!-- Old Canvas API 降级用 (Bug #8: wx.createCanvasContext 备用画布) -->
   <canvas canvas-id="img-fallback" style="position:fixed;left:-9999px;top:310px;width:300px;height:300px"></canvas>
+  <!-- Bug #2修复: 扫描增强所需 Old API 画布 -->
+  <canvas canvas-id="scan-canvas" style="position:fixed;left:-9999px;top:620px;width:300px;height:300px"></canvas>
+  <canvas canvas-id="crop-canvas" style="position:fixed;left:-9999px;top:930px;width:300px;height:300px"></canvas>
 
   <floating-ai visible="{{true}}" />
 </view>
