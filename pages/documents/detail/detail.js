@@ -109,5 +109,32 @@ Page({
     if (doc && doc.filePath) {
       wx.previewImage({ urls: [doc.filePath], current: doc.filePath });
     }
+  },
+
+  replaceDocument() {
+    var that = this;
+    var doc = this.data.doc;
+    if (!doc) return;
+
+    wx.chooseImage({
+      count: 1,
+      sizeType: ['compressed'],
+      sourceType: ['camera', 'album'],
+      success: function(res) {
+        var filePath = res.tempFilePaths[0];
+        // 保存到系统相册
+        wx.saveImageToPhotosAlbum({
+          filePath: filePath,
+          success: function() {},
+          fail: function() {}
+        });
+        // 更新文件路径
+        doc.filePath = filePath;
+        doc.updatedAt = new Date().toISOString();
+        saveDocumentMeta(doc);
+        that.setData({ doc: doc });
+        wx.showToast({ title: '已替换', icon: 'success' });
+      }
+    });
   }
 });

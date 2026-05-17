@@ -38,6 +38,9 @@
     <button class="action-item" bindtap="{{isArchived ? 'restoreDocument' : 'archiveDocument'}}">
       <text>{{isArchived ? '↩️ 恢复' : '📦 归档'}}</text>
     </button>
+    <button class="action-item" bindtap="replaceDocument" wx:if="{{!isArchived}}">
+      <text>🔄 替换</text>
+    </button>
     <button class="action-item danger" bindtap="deleteDocument">
       <text>🗑️ 删除</text>
     </button>
