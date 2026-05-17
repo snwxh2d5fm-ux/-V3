@@ -54,8 +54,8 @@
         </view>
 
         <view wx:if="{{item.unlocked!==false && item.expanded}}" class="task-list">
-          <!-- 找房向导入口 — 关卡3内部 -->
-          <view wx:if="{{item.phase===3 && !housingWizardDone}}" class="housing-banner" bindtap="onHousingBannerTap">
+          <!-- 找房向导入口 — 关卡3内部，始终可进入 -->
+          <view wx:if="{{item.phase===3}}" class="housing-banner" bindtap="onHousingBannerTap">
             <text>🏠 不确定住哪个区？先做找房向导（30秒）</text>
           </view>
           <block wx:for="{{tasks}}" wx:key="_id" wx:for-item="task">
@@ -63,7 +63,7 @@
               <view wx:if="{{!task._expanded}}" class="task-collapsed" data-id="{{task._id}}" catchtap="onTaskExpand">
                 <view class="task-status">
                   <text wx:if="{{task._completed && task._materialCollected}}">✓✓</text>
-                  <text wx:elif="{{task._completed}}">⚠️</text>
+                  <text wx:elif="{{task._completed}}">✓</text>
                   <text wx:elif="{{task._skipped}}">⊘</text>
                   <text wx:else>○</text>
                 </view>

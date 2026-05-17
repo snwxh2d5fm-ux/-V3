@@ -129,7 +129,7 @@
 .task-list { border-top: 1rpx solid var(--gray-100); }
 .task-card { border-bottom: 1rpx solid var(--gray-50); }
 .task-card.done-full { background: var(--color-success-bg); }
-.task-card.done-steps { background: var(--color-warning-bg); }
+.task-card.done-steps { background: var(--color-success-bg); }
 .task-card.skipped { opacity: 0.4; }
 .task-collapsed {
   display: flex;
