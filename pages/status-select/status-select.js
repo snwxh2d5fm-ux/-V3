@@ -99,19 +99,6 @@ Page({
           canConfirm: true,
           capturing: false
         });
-      }
-              },
-              fail: function() {
-                that.setData({ capturing: false });
-                wx.showToast({ title: '上传失败，请重试', icon: 'none' });
-              }
-            });
-          },
-          fail: function() {
-            that.setData({ capturing: false });
-            wx.showToast({ title: '图片处理失败', icon: 'none' });
-          }
-        });
       },
       fail: function(err) {
         if (err.errMsg && err.errMsg.indexOf('cancel') > -1) return;
