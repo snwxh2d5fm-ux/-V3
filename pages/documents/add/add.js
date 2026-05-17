@@ -690,8 +690,14 @@ Page({
   /** 根据证件类型设置双面标签 */
   setSideLabels(docType) {
     var labels = { frontSideLabel: '人像面', backSideLabel: '国徽面' };
-    if (docType === 'hk_permit' || docType === 'passport') {
-      labels.backSideLabel = docType === 'hk_permit' ? '签注面' : '信息页';
+    if (docType === 'hk_permit') {
+      labels.backSideLabel = '签注面';
+    } else if (docType === 'passport') {
+      labels.frontSideLabel = '信息页';
+      labels.backSideLabel = '签证页';
+    } else if (docType === 'marriage_cert') {
+      labels.frontSideLabel = '信息页';
+      labels.backSideLabel = '盖章页';
     }
     this.setData(labels);
   },
