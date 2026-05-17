@@ -760,16 +760,30 @@ Page({
   onMaterialPrompt: function(e) {
     var taskId = e.currentTarget.dataset.id;
     var self = this;
+    var task = self.data.tasks.find(function(t) { return t._id === taskId; });
+    if (!task || !task.renewal_evidence) return;
+
     wx.chooseImage({
       count: 1, sizeType: ['compressed'], sourceType: ['camera', 'album'],
       success: function(res) {
-        var task = self.data.tasks.find(function(t) { return t._id === taskId; });
-        if (task && task.renewal_evidence) {
-          var ev = task.renewal_evidence;
-          storage.completeTaskWithMaterial(taskId, res.tempFilePaths[0], ev.doc_type || '', ev.doc_category || '');
-          self.refreshProgress();
-          wx.showToast({ title: '材料已收集', icon: 'success' });
-        }
+        var filePath = res.tempFilePaths[0];
+        // 保存到手机系统相册（不做任何上传或校验）
+        wx.saveImageToPhotosAlbum({
+          filePath: filePath,
+          success: function() {
+            var ev = task.renewal_evidence;
+            // 仅标记材料已收集，不存储文件路径
+            storage.completeTaskWithMaterial(taskId, '', ev.doc_type || '', ev.doc_category || '');
+            self.refreshProgress();
+            wx.showToast({ title: '已保存到相册', icon: 'success' });
+          },
+          fail: function() {
+            // 授权被拒或保存失败，仍标记已收集
+            storage.completeTaskWithMaterial(taskId, '', ev.doc_type || '', ev.doc_category || '');
+            self.refreshProgress();
+            wx.showToast({ title: '已标记完成', icon: 'success' });
+          }
+        });
       }
     });
   },
