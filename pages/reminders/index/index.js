@@ -72,13 +72,14 @@ Page({
     this.setData({ hasPath: !!selectedPath });
     if (!selectedPath) return; // 未选路径
 
-    // 检查是否已有提醒
+    // 检查是否已有该路径的时间线提醒（而非规则引擎生成的普通提醒）
     var allReminders = getAllReminders();
-    if (allReminders.length > 0) return; // 已有提醒，不打扰
+    var hasTimelineReminders = allReminders.some(function(r) { return r.pathway === selectedPath && r.offsetDays !== undefined; });
+    if (hasTimelineReminders) return; // 已有时间线提醒，不打扰
 
-    // 检查是否已询问过（避免重复弹窗）
-    var askedKey = '__auto_reminder_asked_' + selectedPath;
-    if (wx.getStorageSync(askedKey)) return;
+    // 始终询问（每次onShow检测，除非已有时间线提醒）
+    var askedKey = '__auto_reminder_asked_' + selectedPath + '_v2';
+    // v2: 允许重新生成（用户之前可能选了"稍后再说"）
 
     var pathNames = {
       'qmas': '优才计划', 'ttps_a': '高才通A类', 'ttps_b': '高才通B类', 'ttps_c': '高才通C类',
@@ -89,7 +90,7 @@ Page({
 
     wx.showModal({
       title: '检测到路径选择',
-      content: '你已选择「' + pathName + '」路径。是否基于该路径自动生成关键日期提醒？\n\n包含：递交日期、获批提醒、续签节点、永居窗口等。',
+      content: '你已选择「' + pathName + '」路径。是否基于该路径自动生成关键日期提醒？\n\n包含：自评→材料准备→递交→获批→续签→永居全流程节点。',
       confirmText: '立即生成',
       cancelText: '稍后再说',
       success: function(res) {
