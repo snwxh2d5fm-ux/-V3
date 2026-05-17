@@ -550,7 +550,7 @@ function matchTemplate(status, path, mode) {
  * 仅本人可见的分类 — 这些材料天然属于申请人本人，配偶/子女无需提供
  * 工作经历、资产证明、申请材料（赴港计划书/无犯罪记录等）均只显示本人材料
  */
-var SELF_ONLY_CATEGORIES = ['employment', 'financial', 'application'];
+var SELF_ONLY_CATEGORIES = ['work', 'assets', 'approved', 'employment', 'financial', 'application'];
 
 /**
  * 计算槽位运行时状态
@@ -616,7 +616,8 @@ function computeSlotStates(template, uploadedDocs, ownerType) {
       categoryName: cat.categoryName,
       categoryIcon: cat.categoryIcon,
       slots: slots,
-      categoryProgress: { filled: filled, total: required.length }
+      categoryProgress: { filled: filled, total: required.length },
+      isSelfOnly: SELF_ONLY_CATEGORIES.indexOf(cat.categoryKey) !== -1
     };
   });
 }

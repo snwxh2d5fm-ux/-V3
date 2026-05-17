@@ -200,9 +200,10 @@ function scoreTTPS(answers) {
 
   // B类：合资格大学学士学位 + 过去5年内≥3年工作经验
   // C类：合资格大学学士学位 + 过去5年内<3年工作经验（年度配额10000）
+  // ⚠️ 高才通B/C仅认可合资格大学「学士学位」，硕士/博士不单独构成资格
   var isQualifiedUni = school.indexOf('QS') > -1 || school.indexOf('百强') > -1;
-  var hasDegree = edu.indexOf('本科') > -1 || edu.indexOf('硕士') > -1 || edu.indexOf('博士') > -1;
-  if (isQualifiedUni && hasDegree) {
+  var hasBachelors = edu.indexOf('本科') > -1 || edu.indexOf('学士') > -1;
+  if (isQualifiedUni && hasBachelors) {
     // 注意 "1-3年" 含 "3年" 子串，需先排除
     var isShortExp = exp.indexOf('1-3') > -1 || exp.indexOf('1年') > -1 || exp.indexOf('以下') > -1;
     var has3yrExp = (exp.indexOf('3-5') > -1 || exp.indexOf('5-10') > -1 || exp.indexOf('10年') > -1);

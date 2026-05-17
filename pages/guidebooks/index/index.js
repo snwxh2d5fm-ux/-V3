@@ -297,11 +297,17 @@ Page({
     var self = this;
     self.setData({ activeCategory: category });
     var promise = category === '全部' ? cache.fetchAllTasks() : cache.fetchTasks('bySceneTags', { tags: [category] });
-    promise.then(function(r) { 
+    promise.then(function(r) {
       if (r && r.data) {
         var tasks = r.data.tasks || r.data.data || (Array.isArray(r.data) ? r.data : []);
-        self.setData({ browseTasks: tasks }); 
+        self.setData({ browseTasks: tasks });
+      } else {
+        self.setData({ browseTasks: [] });
       }
+    }).catch(function(e) {
+      console.error('[Browse] failed:', e);
+      wx.showToast({ title: '加载失败', icon: 'none' });
+      self.setData({ browseTasks: [] });
     });
   },
   onCategoryTap: function(e) { this.loadBrowse(e.currentTarget.dataset.category); },

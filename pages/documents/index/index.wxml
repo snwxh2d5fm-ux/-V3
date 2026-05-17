@@ -81,7 +81,7 @@
       <view class="owner-tabs">
         <block wx:for="{{ownerOptions}}" wx:key="value">
           <view class="owner-tab {{identityOwner === item.value ? 'active' : ''}}"
-                wx:if="{{cat.categoryKey !== 'education' || item.value !== 'child'}}"
+                wx:if="{{(cat.categoryKey !== 'education' || item.value !== 'child') && (cat.isSelfOnly ? item.value === 'self' : true)}}"
                 bindtap="switchIdentityOwner" data-value="{{item.value}}">
             <text>{{item.label}}</text>
           </view>
