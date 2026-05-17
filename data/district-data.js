@@ -531,6 +531,22 @@ var WEIGHTS = {
   budgetFit:   5,   // 预算匹配度
 };
 
+// ── 子区域 → 通勤字段映射 ──
+var SUB_COMMUTE_MAP = {
+  'central':      'central',
+  'wanchai':      'causewayBay',
+  'quarrybay':    'causewayBay',
+  'aberdeen':     'central',
+  'tsimshatsui':  'tst',
+  'mongkok':      'tst',
+  'kwuntong':     'causewayBay',
+  'kaitak':       'tst',
+  'shatin':       'tst',
+  'tsuenwan':     'tst',
+  'tuenmun':      'tst',
+  'tko':          'causewayBay',
+};
+
 // ── 通勤时间矩阵：按工作区取最近的主要通勤参考站 ──
 function getCommute(d, workRegionId) {
   switch (workRegionId) {

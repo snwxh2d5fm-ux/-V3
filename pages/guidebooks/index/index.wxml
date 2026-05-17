@@ -344,22 +344,28 @@
               class="wizard-opt" data-value="{{item.v}}" bindtap="onWizardNext">{{item.l}}</view>
       </view>
       <view wx:if="{{wizardStep===1}}">
-        <text class="wizard-q">主要工作/上学区域？</text>
+        <text class="wizard-q">主要工作/上学在哪一区？</text>
         <view wx:for="{{[{v:'hong-kong-island',l:'港岛'},{v:'kowloon',l:'九龙'},{v:'new-territories',l:'新界'},{v:'remote',l:'远程/不固定'}]}}" wx:key="v"
               class="wizard-opt" data-value="{{item.v}}" bindtap="onWizardNext">{{item.l}}</view>
       </view>
+      <!-- 区域下钻：具体片区 -->
       <view wx:if="{{wizardStep===2}}">
+        <text class="wizard-q">具体哪个片区？</text>
+        <view wx:for="{{wizardSubRegions}}" wx:key="v"
+              class="wizard-opt" data-value="{{item.v}}" bindtap="onWizardNext">{{item.l}}</view>
+      </view>
+      <view wx:if="{{wizardStep===3}}">
         <text class="wizard-q">有学龄孩子？</text>
         <view class="wizard-opt" data-value="yes" bindtap="onWizardNext">有</view>
         <view class="wizard-opt" data-value="no" bindtap="onWizardNext">无</view>
       </view>
-      <view wx:if="{{wizardStep===3}}">
+      <view wx:if="{{wizardStep===4}}">
         <text class="wizard-q">推荐区域 Top {{wizardResults.length}}</text>
         <scroll-view scroll-y class="wizard-results">
           <view wx:for="{{wizardResults}}" wx:key="district" class="wizard-result-card">
             <text class="result-name">{{item.district}}</text>
             <text class="result-stat">呎租: HK${{item.avgRentPsf}}/ft² · {{item.vibe}}</text>
-            <text class="result-stat">通勤: 中环{{item.commute.central}}min</text>
+            <text class="result-stat">通勤: {{item._commuteLabel}}</text>
             <text wx:if="{{item._hasSchoolNet}}" class="result-stat">校网: {{item.schoolNet.primary}} · 家庭友好: {{item.stars}}</text>
           </view>
         </scroll-view>
@@ -368,7 +374,7 @@
         </view>
         <view class="wizard-done" bindtap="onWizardDone">完成向导 ✓</view>
       </view>
-      <view wx:if="{{wizardStep<3}}" class="wizard-close" bindtap="onWizardClose">跳过</view>
+      <view wx:if="{{wizardStep<4}}" class="wizard-close" bindtap="onWizardClose">跳过</view>
     </view>
   </view>
 

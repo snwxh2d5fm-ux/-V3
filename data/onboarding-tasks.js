@@ -849,9 +849,28 @@ module.exports = [
     reminderTrigger: null, documentLink: null, aiChatContext: null
   },
 
-  // ═══════════════════════════════════════════════════════════════
-  // 关卡5: 子女教育 — 轨道A: 幼儿园 (5项)
-  // ═══════════════════════════════════════════════════════════════
+  // ══ 关卡3: 找房全攻略 ══
+  {
+    id: "onboard-313", phase: 3, sequence: 13, category: "安居乐业",
+    title: "找房全攻略：在哪找、怎么挑、如何避坑",
+    subtitle: "房源平台/中介筛选/问题房排查一站式指南",
+    timeEstimate: "20分钟", urgency: "建议", icon: "search",
+    applicableTo: { visaTypes: "all", familyStatus: "all", arrivalScenario: ["fresh","delayed"], skipIfExisting: ["rental"] },
+    steps: [
+      { seq: 1, title: "三大房源平台", content: "28Hse（全港最大，房源最多，支持地图搜房）\nHouse730（中原/美联背书，Agent直联）\nSquarefoot（英文界面，外籍/高端房源多）\n辅助：Carousell（转租/合租）、Facebook群组", type: "info" },
+      { seq: 2, title: "筛选靠谱中介（5步法）", content: "①查牌：地产代理监管局eaa.org.hk查中介牌照\n②看评价：Google Maps查代理公司评分\n③实地接触：靠谱中介主动告知单位缺点\n④收费透明：佣金通常半月租，拒绝隐形收费\n⑤红线：要求私下转账/不签睇楼纸/催交定金=立即换人", type: "action" },
+      { seq: 3, title: "睇楼必查清单", content: "水电：开水龙头测水压、冲马桶、开热水器\n电器：冷气制冷、抽油烟机、洗衣机运转\n门窗：开关顺畅度、锁完好、隔音效果\n墙壁天花：水渍/发霉/裂纹（特别注意厕所天花板）\n手机信号：屋内各角落测4G/5G信号\n邻里环境：走廊整洁度、楼下噪音、垃圾房位置\n白蚁痕迹：木质家具/门框有无粉末/小孔", type: "checklist" },
+      { seq: 4, title: "问题房红线（看到就跑）", content: "🚩凶宅：property.hk查该地址历史\n🚩漏水房：天花有水渍/墙身发霉/厕所异味\n🚩违建房：阳台被封/间隔改动=可能被清拆\n🚩业主财困：银行断供中的物业=随时被收楼\n🚩噪音房：邻近马路/铁路/装修中/楼上为幼儿园", type: "info" },
+      { seq: 5, title: "签约前最后确认", content: "确认租约条款：死约/生约、免租期(通常3-7天)、维修责任、宠物条款\n确认已打厘印（法律效力）\n确认业主已递交CR109表格\n抄录水/电/煤气表读数\n拍照留底：全屋各角落+已有损坏处", type: "checklist" }
+    ],
+    officialLinks: [{ label: "28Hse", url: "https://www.28hse.com" }, { label: "地产代理监管局", url: "https://www.eaa.org.hk" }, { label: "地产资讯网(查凶宅)", url: "https://www.property.hk" }],
+    tips: ["睇楼建议白天+晚上各去一次（白天看采光，晚上看噪音）", "同一房源不同中介报价可能差$500-1000/月，多平台对比", "签约前到土地注册处iris.gov.hk查册确认业主身份", "免租期从签约日起算，不是从入住日起算"],
+    pitfalls: ["睇楼前必须签睇楼纸（有效期3个月），否则同一单位找其他中介可能被追佣", "口头承诺不算数——所有条件必须写进租约", "业主未通知银行擅自出租自住物业→断供→银行收楼→租客不获赔偿"],
+    renewalEvidence: { produces: false },
+    reminderTrigger: null, documentLink: null, aiChatContext: null
+  },
+
+  // ══ 关卡5: 子女教育 — 轨道A: 幼儿园 (5项) ══
   {
     id: "onboard-501a", phase: 5, sequence: 1, category: "子女教育",
     title: "了解香港幼儿园三类体系",

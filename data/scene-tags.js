@@ -34,6 +34,7 @@ module.exports = {
   'onboard-310': ['住房'],
   'onboard-311': ['住房'],
   'onboard-312': ['住房'],
+  'onboard-313': ['住房'],
   'onboard-401': ['交通','证件'],
   'onboard-402': ['交通'],
   'onboard-403': ['运动'],
