@@ -1140,7 +1140,7 @@ module.exports = [
 
   // 关卡6: 自雇创业专项 (4项)
   {
-    id: "onboard-610", phase: 6, sequence: 10, category: "财务税务",
+    id: "onboard-610", phase: 6, sequence: 7, category: "财务税务",
     title: "注册香港公司",
     subtitle: "自雇/创业第一步——BR+CI两证到手",
     timeEstimate: "30分钟", urgency: "建议", icon: "briefcase",
@@ -1159,7 +1159,7 @@ module.exports = [
     reminderTrigger: null, documentLink: null, aiChatContext: null
   },
   {
-    id: "onboard-611", phase: 6, sequence: 11, category: "财务税务",
+    id: "onboard-611", phase: 6, sequence: 8, category: "财务税务",
     title: "雇主强积金开户",
     subtitle: "自雇/雇主必须为雇员和自己供MPF——否则违法",
     timeEstimate: "20分钟", urgency: "建议", icon: "piggy",
@@ -1177,7 +1177,7 @@ module.exports = [
     reminderTrigger: null, documentLink: null, aiChatContext: null
   },
   {
-    id: "onboard-612", phase: 6, sequence: 12, category: "财务税务",
+    id: "onboard-612", phase: 6, sequence: 9, category: "财务税务",
     title: "公司年审与利得税报税",
     subtitle: "每年必须做的三件事——年审+报税+更新BR",
     timeEstimate: "20分钟", urgency: "建议", icon: "tax",
@@ -1196,7 +1196,7 @@ module.exports = [
     reminderTrigger: null, documentLink: null, aiChatContext: null
   },
   {
-    id: "onboard-613", phase: 6, sequence: 13, category: "财务税务",
+    id: "onboard-613", phase: 6, sequence: 10, category: "财务税务",
     title: "自雇人士个人报税",
     subtitle: "给自己发工资→个人薪俸税——自雇续签的税单来源",
     timeEstimate: "20分钟", urgency: "建议", icon: "tax",
