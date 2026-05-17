@@ -604,11 +604,12 @@ Page({
       wx.navigateTo({ url: '/pages/documents/detail/detail?id=' + docs[0].id });
       return;
     }
-    // 多张→弹窗选择，显示证件面（人像面/国徽面）
+    // 多张→弹窗选择，显示证件面（按证件类型区分背面标签）
+    var backName = slotKey === 'hk_permit' ? '签注面' : (slotKey === 'passport' ? '信息页' : '国徽面');
     function sideLabel(d) {
       var side = d.photoSide;
       if (side === 'front') return '人像面';
-      if (side === 'back') return '国徽面';
+      if (side === 'back') return backName;
       return d.displayName || d.name || '证件';
     }
     wx.showActionSheet({

@@ -604,7 +604,8 @@ function computeSlotStates(template, uploadedDocs, ownerType) {
         maxCount: slot.maxCount,
         fillStatus: fillStatus,
         uploadedDocs: uploaded.map(function(d) {
-          var label = d.photoSide === 'front' ? '人像面' : (d.photoSide === 'back' ? '国徽面' : '');
+          var backName = slot.slotKey === 'hk_permit' ? '签注面' : (slot.slotKey === 'passport' ? '信息页' : '国徽面');
+          var label = d.photoSide === 'front' ? '人像面' : (d.photoSide === 'back' ? backName : '');
           d.sideLabel = label;
           return d;
         }),

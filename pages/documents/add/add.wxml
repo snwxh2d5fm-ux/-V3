@@ -221,8 +221,8 @@
 
     <!-- 双面状态指示 -->
     <view class="both-sides-status" wx:if="{{frontPhotoPath || backPhotoPath}}">
-      <text class="{{frontPhotoPath?'done':''}}">{{frontPhotoPath?'✅ 人像面已拍':'☐ 人像面'}}</text>
-      <text class="{{backPhotoPath?'done':''}}">{{backPhotoPath?'✅ 国徽面已拍':'☐ 国徽面'}}</text>
+      <text class="{{frontPhotoPath?'done':''}}">{{frontPhotoPath ? '✅ ' + frontSideLabel + '已拍' : '☐ ' + frontSideLabel}}</text>
+      <text class="{{backPhotoPath?'done':''}}">{{backPhotoPath ? '✅ ' + backSideLabel + '已拍' : '☐ ' + backSideLabel}}</text>
     </view>
 
     <!-- Bug #5: 旋转+扫描件工具栏 -->
