@@ -276,21 +276,20 @@ Page({
     var phases = Object.keys(phaseMap).map(function(k) { return phaseMap[k]; }).sort(function(a,b){ return a.phase-b.phase; });
 
     // Lock phases based on progress.phases[].unlocked
-    // After the initOnboarding fix, all phases 0-7 are unlocked for fresh arrivals
+    // Compatible with old progress data: missing phases default to unlocked
     var phase3Unlocked = false;
     if (progress.currentPhase !== undefined) {
       phases.forEach(function(ph) {
         var stored = progress.phases && progress.phases[ph.phase];
-        if (!stored || !stored.unlocked) {
+        // Only lock if explicitly marked locked (backward compat: missing = unlocked)
+        if (stored && stored.unlocked === false) {
           ph.unlocked = false;
         }
-        // Check if phase 3 is unlocked
         if (ph.phase === 3 && ph.unlocked !== false) {
           phase3Unlocked = true;
         }
       });
     } else {
-      // No currentPhase set — all phases that appear in task data are unlocked
       phases.forEach(function(ph) {
         if (ph.phase === 3) phase3Unlocked = true;
       });
