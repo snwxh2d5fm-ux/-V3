@@ -1165,7 +1165,7 @@ module.exports = [
     id: "onboard-610", phase: 6, sequence: 10, category: "财务税务",
     title: "注册香港公司",
     subtitle: "自雇/创业第一步——BR+CI两证到手",
-    timeEstimate: "30分钟", urgency: "必修", icon: "briefcase",
+    timeEstimate: "30分钟", urgency: "建议", icon: "briefcase",
     applicableTo: { visaTypes: "all", familyStatus: "all", arrivalScenario: ["fresh","delayed"], skipIfExisting: [] },
     steps: [
       { seq: 1, title: "选择公司类型", content: "私人有限公司(Limited)=最常用，股东责任有限。注册时可选择1人公司（自雇最简）或多人公司（合伙）。无限公司不推荐——个人承担无限责任。", type: "info" },
@@ -1184,7 +1184,7 @@ module.exports = [
     id: "onboard-611", phase: 6, sequence: 11, category: "财务税务",
     title: "雇主强积金开户",
     subtitle: "自雇/雇主必须为雇员和自己供MPF——否则违法",
-    timeEstimate: "20分钟", urgency: "必修", icon: "piggy",
+    timeEstimate: "20分钟", urgency: "建议", icon: "piggy",
     applicableTo: { visaTypes: "all", familyStatus: "all", arrivalScenario: ["fresh","delayed"], skipIfExisting: [] },
     steps: [
       { seq: 1, title: "自雇人士MPF义务", content: "自雇人士（包括公司董事给自己发薪）必须登记MPF。月入>=HK$7,100须供款5%（上限HK$1,500）。即使月入<$7,100也须登记但免供款。逾期登记最高罚款HK$5,000+欠款20%附加费。", type: "info" },
@@ -1202,7 +1202,7 @@ module.exports = [
     id: "onboard-612", phase: 6, sequence: 12, category: "财务税务",
     title: "公司年审与利得税报税",
     subtitle: "每年必须做的三件事——年审+报税+更新BR",
-    timeEstimate: "20分钟", urgency: "必修", icon: "tax",
+    timeEstimate: "20分钟", urgency: "建议", icon: "tax",
     applicableTo: { visaTypes: "all", familyStatus: "all", arrivalScenario: ["fresh","delayed"], skipIfExisting: [] },
     steps: [
       { seq: 1, title: "周年申报(NAR1)", content: "每周年向公司注册处递交NAR1表格→更新董事/股东/秘书资料→费用HK$105（电子提交）→逾期42天内罚HK$870→逾期超9个月最高罚HK$3,480", type: "action" },
@@ -1221,7 +1221,7 @@ module.exports = [
     id: "onboard-613", phase: 6, sequence: 13, category: "财务税务",
     title: "自雇人士个人报税",
     subtitle: "给自己发工资→个人薪俸税——自雇续签的税单来源",
-    timeEstimate: "20分钟", urgency: "必修", icon: "tax",
+    timeEstimate: "20分钟", urgency: "建议", icon: "tax",
     applicableTo: { visaTypes: "all", familyStatus: "all", arrivalScenario: ["fresh","delayed"], skipIfExisting: [] },
     steps: [
       { seq: 1, title: "给自己发薪的税务逻辑", content: "公司给自己(董事)发月薪→公司代扣MPF→公司向税务局申报IR56B→个人收到BIR60报税→提交个人薪俸税申报→获评税通知书(税单)。月薪建议>=HK$30,000以确保续签时'在港有合理收入'", type: "info" },

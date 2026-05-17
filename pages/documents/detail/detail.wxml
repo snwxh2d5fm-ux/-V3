@@ -1,24 +1,9 @@
 <!-- pages/documents/detail/detail.wxml -->
 <view class="page">
-  <!-- 图片展示区 — Bug #6: 脱敏模式显示Canvas遮罩图 -->
-  <view class="image-area" wx:if="{{doc && (maskedImagePath || doc.filePath)}}" bindtap="previewImage">
-    <image class="detail-image" src="{{maskedImagePath || doc.filePath}}" mode="aspectFit" aria-label="{{doc.name || '证件图片'}}" />
+  <!-- 图片展示区 -->
+  <view class="image-area" wx:if="{{doc && doc.filePath}}" bindtap="previewImage">
+    <image class="detail-image" src="{{doc.filePath}}" mode="aspectFit" />
     <view class="image-tap-hint">点击查看大图</view>
-    <view class="pii-overlay-tag" wx:if="{{currentPIILevel !== 'L3'}}">
-      <text>{{currentPIILevel === 'L1' ? '🔒 绝对脱敏' : '🔓 泛化脱敏'}}</text>
-    </view>
-  </view>
-
-  <!-- 顶部操作栏 -->
-  <view class="header-actions">
-    <view class="action-btn" bindtap="togglePIILevel">
-      <text>{{currentPIILevel === 'L1' ? '🔒' : currentPIILevel === 'L2' ? '🔓' : '📖'}}</text>
-      <text>脱敏: {{currentPIILevel === 'L1' ? '绝对' : currentPIILevel === 'L2' ? '泛化' : '可保留'}}</text>
-    </view>
-    <view class="action-btn" bindtap="togglePrivacyPanel">
-      <text>🛡️</text>
-      <text>隐私</text>
-    </view>
   </view>
 
   <!-- 证件基本信息 -->
@@ -34,8 +19,7 @@
       <text class="section-title">识别信息</text>
       <view class="field-row" wx:for="{{ocrFields}}" wx:key="key">
         <text class="field-label">{{item.label}}</text>
-        <text class="field-value {{item.isPII ? 'pii' : ''}}">{{item.value}}</text>
-        <text class="field-pii-tag" wx:if="{{item.isPII}}">🔒</text>
+        <text class="field-value">{{item.value}}</text>
       </view>
     </view>
 
@@ -54,56 +38,10 @@
     <button class="action-item" bindtap="{{isArchived ? 'restoreDocument' : 'archiveDocument'}}">
       <text>{{isArchived ? '↩️ 恢复' : '📦 归档'}}</text>
     </button>
-    <button class="action-item" bindtap="exportToPDF" wx:if="{{doc && doc.filePath}}">
-      <text>📄 导出PDF</text>
-    </button>
     <button class="action-item danger" bindtap="deleteDocument">
       <text>🗑️ 删除</text>
     </button>
   </view>
-
-  <!-- 隐私面板浮层 -->
-  <view class="privacy-panel {{showPrivacyPanel ? 'show' : ''}}" wx:if="{{doc}}" role="dialog" aria-modal="true" aria-label="隐私安全面板">
-    <view class="panel-overlay" bindtap="togglePrivacyPanel"></view>
-    <view class="panel-content">
-      <view class="panel-header">
-        <text class="panel-title">隐私安全面板</text>
-        <text class="panel-close" bindtap="togglePrivacyPanel">✕</text>
-      </view>
-      <view class="privacy-score">
-        <text class="score-label">安全评分</text>
-        <view class="score-ring">
-          <text class="score-number">{{getPIIStats().securityScore}}</text>
-          <text class="score-desc">{{getPIIStats().securityScore >= 70 ? '安全' : '注意'}}</text>
-        </view>
-      </view>
-      <view class="privacy-items">
-        <view class="privacy-item">
-          <text class="item-label">加密状态</text>
-          <text class="item-value green">{{getPIIStats().encryptionStatus}}</text>
-        </view>
-        <view class="privacy-item">
-          <text class="item-label">脱敏级别</text>
-          <text class="item-value">{{getPIIStats().level}}</text>
-        </view>
-        <view class="privacy-item">
-          <text class="item-label">PII字段</text>
-          <text class="item-value">{{getPIIStats().piiCount}}/{{getPIIStats().totalCount}}</text>
-        </view>
-        <view class="privacy-item">
-          <text class="item-label">存储位置</text>
-          <text class="item-value">📱 设备本地</text>
-        </view>
-      </view>
-      <view class="panel-footer">
-        <text class="footer-text">🔐 所有敏感数据均在本设备端加密存储，不上传云端</text>
-      </view>
-      <button class="level-btn" bindtap="togglePIILevel">切换脱敏级别（当前: {{currentPIILevel}}）</button>
-    </view>
-  </view>
-
-  <!-- Bug #6: 图像脱敏Canvas 2D -->
-  <canvas type="2d" id="mask-canvas" style="position:fixed;left:-9999px;top:0;width:800px;height:600px"></canvas>
 
   <floating-ai visible="{{true}}" />
 </view>
