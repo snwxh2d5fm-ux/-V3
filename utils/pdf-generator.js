@@ -79,11 +79,33 @@ function generateSlotPDF(slotKey, slotName, uploadedDocs) {
 
   var uploadPromises = paths.map(function(p, idx) {
     return new Promise(function(resolve, reject) {
+      // 验证文件可读
+      try {
+        var fs = wx.getFileSystemManager();
+        fs.accessSync(p);
+      } catch(e) {
+        reject(new Error('文件不可读: ' + p));
+        return;
+      }
       var cloudPath = '_pdf_temp/' + Date.now() + '_' + idx + '_' + Math.random().toString(36).slice(2, 5) + '.jpg';
       wx.cloud.uploadFile({
         cloudPath: cloudPath, filePath: p,
+        config: { env: 'cloudbase-d1g17tgt7cc199a60' },
         success: function(r) { resolve(r.fileID); },
-        fail: function(e) { reject(e); }
+        fail: function(err) {
+          // 兜底：压缩后重试
+          wx.compressImage({
+            src: p, quality: 60,
+            success: function(cRes) {
+              wx.cloud.uploadFile({
+                cloudPath: cloudPath, filePath: cRes.tempFilePath,
+                success: function(r2) { resolve(r2.fileID); },
+                fail: function(e2) { reject(e2); }
+              });
+            },
+            fail: function() { reject(err); }
+          });
+        }
       });
     });
   });
