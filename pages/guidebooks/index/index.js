@@ -278,23 +278,15 @@ Page({
 
     // Lock phases based on progress.phases[].unlocked
     // Compatible with old progress data: missing phases default to unlocked
-    var phase3Unlocked = false;
-    if (progress.currentPhase !== undefined) {
-      phases.forEach(function(ph) {
-        var stored = progress.phases && progress.phases[ph.phase];
-        // Only lock if explicitly marked locked (backward compat: missing = unlocked)
-        if (stored && stored.unlocked === false) {
-          ph.unlocked = false;
-        }
-        if (ph.phase === 3 && ph.unlocked !== false) {
-          phase3Unlocked = true;
-        }
-      });
-    } else {
-      phases.forEach(function(ph) {
-        if (ph.phase === 3) phase3Unlocked = true;
-      });
-    }
+    phases.forEach(function(ph) {
+      var stored = progress.phases && progress.phases[ph.phase];
+      if (stored && stored.unlocked === false) {
+        ph.unlocked = false;
+      }
+    });
+
+    // 找房向导：关卡3任务存在且未被显式锁定即可见（不依赖 progress phases）
+    var phase3Unlocked = phaseMap['3'] && phaseMap['3'].unlocked !== false;
 
     return {
       tasks: tasks,
