@@ -573,9 +573,9 @@ function computeSlotStates(template, uploadedDocs, ownerType) {
         }
         // 1) 精确 slotKey 匹配（从卡槽点击添加的）
         if (d.slotKey && slot.slotKey && d.slotKey === slot.slotKey) return true;
-        // 2) docType 匹配 slotKey（OCR识别或分类推导的 docType）
-        if (d.type && slot.slotKey && d.type === slot.slotKey) return true;
-        // 3) 分类+名称模糊匹配兜底（category 匹配 + name 含 docName）
+        // 2) docType 匹配 slotKey — 仅当文档无 slotKey 时启用（有 slotKey 时不该靠 OCR 兜底，防止穿透）
+        if (!d.slotKey && d.type && slot.slotKey && d.type === slot.slotKey) return true;
+        // 3) 分类+名称模糊匹配兜底
         if (d.category && d.name && slot.docName) {
           if (d.category === cat.categoryKey && d.name.indexOf(slot.docName) !== -1) return true;
         }
