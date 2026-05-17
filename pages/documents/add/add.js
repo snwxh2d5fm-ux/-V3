@@ -241,6 +241,8 @@ Page({
         }).catch(function(e) { console.log('[增强] 后台失败:', e.message); })
         .finally(function() { that.setData({ scanProcessing: false }); });
       }
+    } catch (e) { console.log('[AI增强] 跳过:', e.message); }
+  },
 
   /** 确认图片 → Bug #8: 应用旋转+缩放变换后再推进步骤 */
   async confirmImage() {
