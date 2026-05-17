@@ -1,34 +1,87 @@
 /**
  * PDF 生成器 — 卡槽多页证件合成
- * 
- * 流程: 本地图片 → CloudBase 临时上传 → generate-pdf 云函数 → 下载PDF → 打开
+ *
+ * 流程: 本地图片 → CloudBase 临时上传 → generate-pdf 云函数 → 下载PDF → 存本地 → 打开
+ * 缓存: 生成后存到 vault 目录，下次直接打开，新照片上传后自动失效重新生成
+ */
+
+var STORAGE_KEY = '__slot_pdfs__'; // { slotKey: { path, docCount } }
+
+/** 获取已保存的 PDF 路径（文档数不变时才有效） */
+function getSavedPDF(slotKey, currentDocCount) {
+  try {
+    var map = wx.getStorageSync(STORAGE_KEY) || {};
+    var entry = map[slotKey];
+    if (!entry || !entry.path) return null;
+    // 文档数变了 → 缓存失效，需重新生成
+    if (currentDocCount !== undefined && entry.docCount !== currentDocCount) return null;
+    return entry.path;
+  } catch(e) { return null; }
+}
+
+/** 保存 PDF 路径（含文档计数） */
+function savePDF(slotKey, filePath, docCount) {
+  try {
+    var map = wx.getStorageSync(STORAGE_KEY) || {};
+    map[slotKey] = { path: filePath, docCount: docCount };
+    wx.setStorageSync(STORAGE_KEY, map);
+  } catch(e) {}
+}
+
+/** 清除卡槽 PDF 缓存（新增照片后调用） */
+function clearSlotPDF(slotKey) {
+  try {
+    var map = wx.getStorageSync(STORAGE_KEY) || {};
+    delete map[slotKey];
+    wx.setStorageSync(STORAGE_KEY, map);
+  } catch(e) {}
+}
+
+/**
+ * 生成卡槽 PDF（如已缓存则直接打开）
+ * @param {string} slotKey
+ * @param {string} slotName
+ * @param {Array}  uploadedDocs
  */
 function generateSlotPDF(slotKey, slotName, uploadedDocs) {
+  var docCount = (uploadedDocs || []).length;
+  // 检查缓存（文档数不变时直接打开）
+  var cached = getSavedPDF(slotKey, docCount);
+  if (cached) {
+    wx.openDocument({
+      filePath: cached,
+      fileType: 'pdf',
+      showMenu: true,
+      fail: function() {
+        // 文件丢失，清除缓存重新生成
+        clearSlotPDF(slotKey);
+        generateSlotPDF(slotKey, slotName, uploadedDocs);
+      }
+    });
+    return;
+  }
+
   if (!uploadedDocs || !uploadedDocs.length) {
     wx.showToast({ title: '无图片可合成', icon: 'none' });
     return;
   }
 
-  wx.showLoading({ title: '合成PDF中...' });
-
-  // 收集所有图片路径
   var paths = [];
   uploadedDocs.forEach(function(d) {
     if (d.filePath) paths.push(d.filePath);
   });
   if (!paths.length) {
-    wx.hideLoading();
     wx.showToast({ title: '无有效图片', icon: 'none' });
     return;
   }
 
-  // 批量上传到 CloudBase 临时目录
+  wx.showLoading({ title: '合成PDF中...' });
+
   var uploadPromises = paths.map(function(p, idx) {
     return new Promise(function(resolve, reject) {
       var cloudPath = '_pdf_temp/' + Date.now() + '_' + idx + '_' + Math.random().toString(36).slice(2, 5) + '.jpg';
       wx.cloud.uploadFile({
-        cloudPath: cloudPath,
-        filePath: p,
+        cloudPath: cloudPath, filePath: p,
         success: function(r) { resolve(r.fileID); },
         fail: function(e) { reject(e); }
       });
@@ -36,41 +89,45 @@ function generateSlotPDF(slotKey, slotName, uploadedDocs) {
   });
 
   Promise.all(uploadPromises).then(function(fileIDs) {
-    // 调用云函数合成PDF
     return wx.cloud.callFunction({
       name: 'generate-pdf',
-      data: {
-        action: 'create',
-        fileIDs: fileIDs,
-        title: slotName || '证件卡槽'
-      }
+      data: { action: 'create', fileIDs: fileIDs, title: slotName || '证件卡槽' }
     });
   }).then(function(res) {
-    wx.hideLoading();
     var result = res.result || {};
     if (result.code === 0 && result.data && result.data.pdfFileID) {
-      // 下载PDF并打开
-      wx.cloud.downloadFile({
-        fileID: result.data.pdfFileID,
-        success: function(dfRes) {
-          wx.openDocument({
-            filePath: dfRes.tempFilePath,
-            fileType: 'pdf',
-            showMenu: true,
-            success: function() {
-              wx.showToast({ title: (result.data.pageCount || '') + '页PDF已生成', icon: 'success' });
-            },
-            fail: function() {
-              wx.showToast({ title: '请用其他应用打开', icon: 'none' });
-            }
-          });
-        },
-        fail: function() {
-          wx.showToast({ title: 'PDF下载失败', icon: 'none' });
-        }
+      return new Promise(function(resolve, reject) {
+        wx.cloud.downloadFile({
+          fileID: result.data.pdfFileID,
+          success: function(dfRes) { resolve(dfRes.tempFilePath); },
+          fail: reject
+        });
       });
-    } else {
-      wx.showToast({ title: result.error || '生成失败', icon: 'none' });
+    }
+    wx.hideLoading();
+    wx.showToast({ title: (res.result || {}).error || '生成失败', icon: 'none' });
+    return null;
+  }).then(function(tempPath) {
+    if (!tempPath) return;
+    // 持久化到 vault 目录
+    var vaultBase = wx.env.USER_DATA_PATH + '/vault/';
+    var fs = wx.getFileSystemManager();
+    try { fs.accessSync(vaultBase); } catch(_) { fs.mkdirSync(vaultBase, true); }
+    var persistPath = vaultBase + 'pdf_' + slotKey + '_' + Date.now() + '.pdf';
+    try {
+      fs.copyFileSync(tempPath, persistPath);
+      savePDF(slotKey, persistPath, docCount);
+      wx.hideLoading();
+      wx.openDocument({
+        filePath: persistPath,
+        fileType: 'pdf',
+        showMenu: true,
+        success: function() { wx.showToast({ title: 'PDF已保存到卡槽', icon: 'success' }); },
+        fail: function() { wx.showToast({ title: '请用其他应用打开', icon: 'none' }); }
+      });
+    } catch(e) {
+      wx.hideLoading();
+      wx.showToast({ title: '保存失败', icon: 'none' });
     }
   }).catch(function(err) {
     wx.hideLoading();
@@ -79,4 +136,4 @@ function generateSlotPDF(slotKey, slotName, uploadedDocs) {
   });
 }
 
-module.exports = { generateSlotPDF };
+module.exports = { generateSlotPDF, getSavedPDF, clearSlotPDF };

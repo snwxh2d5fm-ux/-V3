@@ -1,4 +1,4 @@
-const { generateSlotPDF } = require("../../../utils/pdf-generator");
+const { generateSlotPDF, clearSlotPDF } = require("../../../utils/pdf-generator");
 /**
  * 住港伴 — 证件夹主页 (Tab2) · PRD v4.1 深度 UX 优化版
  * ─────────────────────────────────────────────────
