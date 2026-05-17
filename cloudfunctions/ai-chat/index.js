@@ -92,6 +92,34 @@ function fallbackTokenize(text) {
   return tokens.filter(t => t.length > 0);
 }
 
+// ========== Phase 2.4: RAG 缓存 ==========
+var ragCache = {};
+var RAG_CACHE_TTL = 5 * 60 * 1000; // 5分钟
+
+function getCacheKey(query, mode) {
+  return (mode || 'general') + '::' + query.trim().toLowerCase();
+}
+
+function getCachedRAG(query, mode) {
+  var key = getCacheKey(query, mode);
+  var entry = ragCache[key];
+  if (entry && (Date.now() - entry.ts) < RAG_CACHE_TTL) {
+    return entry.data;
+  }
+  return null;
+}
+
+function setCachedRAG(query, mode, data) {
+  var key = getCacheKey(query, mode);
+  ragCache[key] = { ts: Date.now(), data: data };
+  // 限制缓存大小
+  var keys = Object.keys(ragCache);
+  if (keys.length > 100) {
+    var oldest = keys.sort(function(a, b) { return ragCache[a].ts - ragCache[b].ts; });
+    for (var i = 0; i < 20; i++) delete ragCache[oldest[i]];
+  }
+}
+
 // ========== HTTP 工具 ==========
 function httpPostJson(url, body, headers, timeoutMs) {
   return new Promise((resolve, reject) => {
@@ -157,6 +185,14 @@ function scoreByKeywords(chunks, keywords) {
 
 async function retrieveContext(query, mode, topK) {
   topK = topK || RAG_TOP_K;
+
+  // Phase 2.4: 缓存优先
+  var cached = getCachedRAG(query, mode);
+  if (cached) {
+    console.log('[ai-chat] RAG cache hit');
+    return cached;
+  }
+
   const ddb = getDb();
   const _ = ddb.command;
 
@@ -241,7 +277,14 @@ async function retrieveContext(query, mode, topK) {
       ).join('\n\n')
     : '';
 
-  return { chunks: top.map(s => s.chunk), sources, contextText };
+  var result = { chunks: top.map(s => s.chunk), sources, contextText };
+
+  // Phase 2.4: 缓存写入
+  if (top.length > 0) {
+    setCachedRAG(query, mode, result);
+  }
+
+  return result;
 }
 
 async function fetchBatch(ddb, where, maxItems) {
@@ -419,6 +462,8 @@ async function logConversation(data) {
       tokens: data.tokens || {},
       latency_ms: data.latencyMs,
       degraded: data.degraded || false,
+      degradation_tier: data.tier || 'llm',
+      cache_hit: data.cacheHit || false,
       safety_triggered: data.safetyTriggered || [],
       timestamp: new Date(),
     }).catch(() => {});
