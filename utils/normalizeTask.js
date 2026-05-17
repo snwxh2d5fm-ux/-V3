@@ -110,6 +110,12 @@ function normalizeTask(raw, opts) {
   t.required_items = t.required_items || [];
   t.official_links = t.official_links || [];
   t.scene_tags = t.scene_tags || [];
+  // 本地任务无 scene_tags 时从映射表注入
+  if (t.scene_tags.length === 0 && (t._id || t.id)) {
+    var SCENE_TAGS_MAP = require('../data/scene-tags');
+    var tags = SCENE_TAGS_MAP[t._id] || SCENE_TAGS_MAP[t.id] || [];
+    if (tags.length) t.scene_tags = tags;
+  }
 
   return t;
 }
