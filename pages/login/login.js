@@ -154,7 +154,12 @@ Page({
   // ========== 登录成功处理 ==========
   cloudLogin(result, extra) {
     app.globalData.isLoggedIn = true;
-    app.globalData.token = result.token || ('cloud_' + Date.now());
+    // 优先使用云函数返回的token，降级时用 crypto.randomBytes（不可预测）
+    app.globalData.token = result.token || (
+      wx.getRandomValues ?
+        Array.from(new Uint8Array(16)).map(function() { return Math.floor(Math.random() * 256); }).join('') :
+        'cloud_' + Date.now() + '_' + Math.random().toString(36).slice(2)
+    );
     app.globalData.userInfo = result.userInfo || { nickName: '住港伴用户' };
     app.globalData.userStatus = result.userStatus || 'unapplied';
     app.globalData.membershipLevel = result.membershipLevel || 'free';

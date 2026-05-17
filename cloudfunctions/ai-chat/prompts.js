@@ -2,7 +2,7 @@
  * 住港伴 v4.3 — AI 对话系统提示词模块 (PRD v3.1 + V5修正 + V6反旧计分 + V8术语合规)
  * 四个模式：assessment / qa / general / solution_recommend
  * V6: 全模式加反旧计分护栏，禁止提及旧版打分/分数/80-120分等
- * V8: 术语合规强化 — 所有模式明确"持牌身份规划顾问"替代"移民顾问"
+ * V8: 术语合规强化 — 所有模式使用合规称谓（禁止使用同义词）
  */
 const CONFIDENCE = {
   A: { level: 'A', label: '法源明确', description: 'Cap.115/基本法明确，无争议' },

@@ -193,10 +193,21 @@ async function getTimeline(openid, processId) {
 }
 
 async function scanExpiringToday() {
-  const today = new Date().toISOString().slice(0,10);
-  const r = await db.collection('user_reminders').where({ status: 'pending', alertDates: _.elemMatch(_.lte(today)) }).limit(500).get();
-  const expiring = r.data.filter(rem => { const ld = rem.lastNotifiedAt ? new Date(rem.lastNotifiedAt).toISOString().slice(0,10) : null; return ld !== today; });
-  return { code: 0, data: { expiringCount: expiring.length, expiringReminders: expiring } };
+  // 仅允许定时触发器调用——无openid上下文时执行全量扫描
+  // 如有调用方openid（用户直接调用），则过滤到该用户
+  var wxContext;
+  try { wxContext = cloud.getWXContext(); } catch(e) {}
+  var openid = wxContext ? wxContext.OPENID : null;
+  var today = new Date().toISOString().slice(0,10);
+  var query = { status: 'pending', alertDates: _.elemMatch(_.lte(today)) };
+  if (openid) query._openid = openid;
+  var r = await db.collection('user_reminders').where(query).limit(openid ? 50 : 500).get();
+  var expiring = r.data.filter(function(rem) { var ld = rem.lastNotifiedAt ? new Date(rem.lastNotifiedAt).toISOString().slice(0,10) : null; return ld !== today; });
+  // 如果有openid上下文，脱敏返回（不暴露其他用户数据）
+  if (openid) {
+    return { code: 0, data: { expiringCount: expiring.length, expiringReminders: expiring } };
+  }
+  return { code: 0, data: { expiringCount: expiring.length } };
 }
 
 async function getRule(ruleId) {

@@ -688,7 +688,8 @@ async function checkAbuse(openid) {
     return { allowed: true };
   } catch (e) {
     console.warn('[ocr] 反滥用检查异常:', e);
-    return { allowed: true };
+    // 安全检查异常时拒绝而非放行——fail-safe 而非 fail-open
+    return { allowed: false, reason: 'rate_limit_check_failed' };
   }
 }
 
