@@ -27,6 +27,14 @@
       <text>暂无识别信息</text>
     </view>
 
+    <view class="doc-specs" wx:if="{{spec}}">
+      <text class="section-title">📋 材料要求</text>
+      <view class="spec-row"><text class="spec-label">格式</text><text class="spec-value">{{spec.tip}}</text></view>
+      <view class="spec-row"><text class="spec-label">有效期</text><text class="spec-value">{{spec.validity}}</text></view>
+      <view class="spec-row"><text class="spec-label">规格</text><text class="spec-value">{{spec.size}}</text></view>
+      <view class="spec-row"><text class="spec-label">份数</text><text class="spec-value">至少1份，建议备份</text></view>
+    </view>
+
     <view class="doc-time">
       <text>添加于: {{doc.createdAt || '未知'}}</text>
       <text wx:if="{{doc.updatedAt}}">更新于: {{doc.updatedAt}}</text>

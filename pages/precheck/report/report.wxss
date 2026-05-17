@@ -1,3 +1,0 @@
-.report-score { font-size: 48rpx; font-weight: 700; color: var(--color-primary); display: block; text-align: center; }
-.report-note { font-size: var(--font-xs); color: var(--color-text-muted); display: block; text-align: center; margin-top: 8rpx; }
-.report-disclaimer { font-size: var(--font-xs); color: var(--color-warning); display: block; text-align: center; margin-top: 20rpx; }

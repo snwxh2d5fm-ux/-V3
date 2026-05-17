@@ -1,6 +1,27 @@
 // pages/documents/detail/detail.js
 const { getDocumentMeta, deleteDocument: deleteDocFromVault, saveDocumentMeta } = require('../../../utils/storage');
 
+var DOC_SPECS = {
+  'id_card': { tip: '身份证正反面彩色扫描，JPG/PDF，文件<5MB', validity: '长期', size: 'A4' },
+  'hk_permit': { tip: '港澳通行证个人信息页+签注页，有效期需>6个月', validity: '6个月', size: 'A4' },
+  'passport': { tip: '护照个人信息页彩色扫描，有效期需>6个月', validity: '6个月', size: 'A4' },
+  'marriage_cert': { tip: '结婚证封面+盖章页+持证人信息页，多页录入', validity: '长期', size: 'A4' },
+  'birth_cert': { tip: '出生证明原件彩色扫描', validity: '长期', size: 'A4' },
+  'degree_cert': { tip: '学位证书原件彩色扫描+英文翻译件(如有)', validity: '长期', size: 'A4' },
+  'transcript': { tip: '官方成绩单密封件或电子认证版', validity: '长期', size: 'A4' },
+  'degree_auth': { tip: '学信网/学位网认证报告', validity: '长期', size: 'A4' },
+  'emp_letter': { tip: '公司信纸打印，注明职位/入职日期/薪资，加盖公章', validity: '3个月', size: 'A4' },
+  'bank_statement': { tip: '银行开具的中英文存款证明，近6个月流水', validity: '3个月', size: 'A4' },
+  'tax_record': { tip: '个人所得税完税证明，税务局官网下载', validity: '12个月', size: 'A4' },
+  'photo': { tip: '白底彩色证件照，33mm×48mm，JPG格式，<5MB', validity: '6个月', size: '33×48mm' },
+  'income_250w': { tip: '税单+银行流水+雇主证明，证明年收入≥250万港币', validity: '3个月', size: 'A4' },
+  'hk_id': { tip: '香港身份证正反面', validity: '长期', size: 'A4' },
+  'spouse_id': { tip: '配偶内地身份证正反面', validity: '长期', size: 'A4' },
+  'spouse_passport': { tip: '配偶港澳通行证信息页+签注页', validity: '6个月', size: 'A4' },
+  'biz_license': { tip: '营业执照原件彩色扫描，加盖公司公章', validity: '长期', size: 'A4' },
+  'biz_tax': { tip: '企业完税证明，税务局官网下载', validity: '12个月', size: 'A4' },
+};
+
 Page({
   data: {
     docId: '',
@@ -21,10 +42,12 @@ Page({
     try {
       const doc = getDocumentMeta(docId);
       if (doc) {
+        var spec = DOC_SPECS[doc.type] || DOC_SPECS[doc.slotKey] || null;
         this.setData({
           doc,
           ocrFields: this.parseOCRFields(doc),
-          isArchived: doc.status === 'archived'
+          isArchived: doc.status === 'archived',
+          spec: spec
         });
       }
     } catch (e) {
