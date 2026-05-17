@@ -136,6 +136,8 @@ Page({
         docCategory: autoCat || '',
         skipCategory: !!autoCat
       });
+      // 根据卡槽设置证件面标签（通行证→签注面, 护照→信息页, 身份证→国徽面）
+      this.setSideLabels(options.slotKey);
     } else {
       this.setData({ slotContext: false, slotGuide: null, slotDocName: '', skipCategory: false });
     }
@@ -500,6 +502,7 @@ Page({
         step: 3,
         ocrProcessing: false
       });
+      this.setSideLabels(docType);
 
     } catch (e) {
       console.error('[OCR] 识别失败:', e);
