@@ -923,6 +923,9 @@ Page({
         this.data.snWizardRegion,
         this.data.snWizardBudget
       );
+      results.forEach(function(r) {
+        r.stars = new Array(r.familyRating + 1).join('⭐');
+      });
       this.setData({ snWizardStep: 3, snWizardResults: results });
     } else {
       this.setData({ snWizardStep: step + 1 });

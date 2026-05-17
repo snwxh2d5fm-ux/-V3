@@ -398,7 +398,7 @@
             <text class="result-name">{{item.name}}（校网{{item.net}}）</text>
             <text class="result-stat">{{item.tier}} · {{item.vibe}}</text>
             <text class="result-stat">代表性学校: {{item.schools}}</text>
-            <text class="result-stat">预算: {{item.budgetHint}} · 家庭友好: {{'⭐'.repeat(item.familyRating)}}</text>
+            <text class="result-stat">预算: {{item.budgetHint}} · 家庭友好: {{item.stars}}</text>
           </view>
         </scroll-view>
         <view wx:if="{{snWizardResults.length===0}}" class="wizard-empty">
