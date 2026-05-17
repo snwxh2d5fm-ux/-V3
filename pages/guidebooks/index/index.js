@@ -513,9 +513,9 @@ Page({
       cloudTasks.forEach(function(ct) {
         var lm = ct.title ? localTitleMap[ct.title] : null;
         if (lm) {
-          if (ct._id) lm._id = ct._id; // Keep CloudBase _id for progress
+          // Local task exists — keep local _id for stable tap matching.
+          // CloudBase _id is only used for progress in Tab 0, not Tab 1.
         } else {
-          // CloudBase-only task — normalize and add
           merged.push(norm(ct));
         }
       });
