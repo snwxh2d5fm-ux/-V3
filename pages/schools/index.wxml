@@ -1,1 +1,28 @@
-<web-view src="{{url}}" bindload="onLoad" binderror="onError"></web-view>
+<view class="page">
+  <view class="search-bar">
+    <input class="search-input" placeholder="🔍 搜索学校名称、地区、校网..." value="{{keyword}}" bindinput="onSearch"/>
+  </view>
+  <scroll-view scroll-x class="filter-row">
+    <text class="filter-tag {{activeType==='全部'?'active':''}}" bindtap="onFilter" data-type="全部">全部({{schools.length}})</text>
+    <text class="filter-tag {{activeType==='官立'?'active':''}}" bindtap="onFilter" data-type="官立">官立</text>
+    <text class="filter-tag {{activeType==='资助'?'active':''}}" bindtap="onFilter" data-type="资助">资助</text>
+    <text class="filter-tag {{activeType==='直资'?'active':''}}" bindtap="onFilter" data-type="直资">直资</text>
+    <text class="filter-tag {{activeType==='私立'?'active':''}}" bindtap="onFilter" data-type="私立">私立</text>
+    <text class="filter-tag {{activeType==='国际'?'active':''}}" bindtap="onFilter" data-type="国际">国际</text>
+  </scroll-view>
+  <view class="count-bar">共 {{filtered.length}} 所学校</view>
+  <scroll-view scroll-y class="school-list">
+    <view class="school-card" wx:for="{{filtered}}" wx:key="id">
+      <view class="card-head">
+        <text class="school-name">{{item.name}}</text>
+        <text class="school-type type-{{item.type}}">{{item.type}}</text>
+      </view>
+      <view class="card-info">
+        <text class="info-line">📍 {{item.region}} · {{item.net}}</text>
+        <text class="info-line">💰 {{item.fee}} · 插班难度: {{item.difficulty}}</text>
+        <text class="info-line">📚 {{item.curriculum}}</text>
+      </view>
+    </view>
+    <view wx:if="{{filtered.length===0}}" class="empty">未找到匹配学校</view>
+  </scroll-view>
+</view>

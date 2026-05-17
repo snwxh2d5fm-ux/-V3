@@ -62,6 +62,9 @@
           <view wx:if="{{item.phase===5}}" class="housing-banner school-net-banner" bindtap="onSchoolNetBannerTap">
             <text>📚 不知道选哪个校网？先做校网速查（30秒）</text>
           </view>
+          <view wx:if="{{item.phase===5}}" class="wizard-school-link" bindtap="onSNOpenSchools">
+            <text>📋 查看该区域全部学校（150所） →</text>
+          </view>
           <block wx:for="{{tasks}}" wx:key="_id" wx:for-item="task">
             <view wx:if="{{task.phase===item.phase}}" class="task-card {{task._completed?(task._materialCollected?'done-full':'done-steps'):(task._skipped?'skipped':'')}}">
               <view wx:if="{{!task._expanded}}" class="task-collapsed" data-id="{{task._id}}" catchtap="onTaskExpand">
@@ -411,7 +414,6 @@
           <text>没有匹配的校网，请调整筛选条件</text>
         </view>
         <view class="wizard-done" bindtap="onSNWizardDone">完成 ✓</view>
-        <view class="wizard-school-link" bindtap="onSNOpenSchools">📋 查看该区域全部学校 →</view>
       </view>
       <view wx:if="{{snWizardStep<3}}" class="wizard-close" bindtap="onSNWizardClose">跳过</view>
     </view>
