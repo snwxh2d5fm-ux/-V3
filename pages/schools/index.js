@@ -1,4 +1,4 @@
-var corpus = require('../../data/school-corpus.json');
+var corpus = require('../../data/school-corpus.js');
 
 var TYPE_MAP = { '官立':'gov', '资助':'aid', '直资':'dss', '私立':'private', '国际':'intl' };
 
