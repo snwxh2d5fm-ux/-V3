@@ -129,12 +129,12 @@ Page({
 
   // 隐私中心
   showPrivacyCenter() {
-    wx.navigateTo({ url: '/pages/privacy/index/index' });
+    wx.navigateTo({ url: '/subpkg-chat/pages/privacy/index' });
   },
 
   // 会员中心
   showMembership() {
-    wx.navigateTo({ url: '/pages/membership/index/index' });
+    wx.navigateTo({ url: '/subpkg-chat/pages/membership/index' });
   },
 
   // 退出登录

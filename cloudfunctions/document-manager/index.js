@@ -34,6 +34,12 @@ async function saveDoc(openid, { doc }) {
 }
 
 async function deleteDoc(openid, { docId }) {
+  // 验证文档归属——仅允许删除本人的文档
+  const result = await db.collection('user_documents')
+    .where({ _id: docId, _openid: openid }).get();
+  if (!result.data || result.data.length === 0) {
+    return { ok: false, error: 'document_not_found_or_not_owned' };
+  }
   await db.collection('user_documents').doc(docId).update({
     data: { status: 'archived', updatedAt: new Date() }
   });

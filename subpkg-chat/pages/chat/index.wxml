@@ -1,0 +1,134 @@
+<!-- 住港伴 v5 — AI 对话页 -->
+<!-- v5: 页面级错误边界 -->
+<ux-error-boundary wx:if="{{pageError}}" type="{{pageError}}" retryable="{{true}}" bind:retry="onPageRetry" />
+
+<view class="chat-container" wx:else>
+  <!-- 顶部标题栏 -->
+  <view class="chat-header">
+    <text class="chat-title">{{modeLabel}}</text>
+    <view class="chat-actions">
+      <text class="action-btn" bindtap="onSolutionRecommend">方案推荐</text>
+      <text class="action-btn" bindtap="clearConversation">清空</text>
+      <text class="mode-badge mode-{{mode}}">{{modeLabel}}</text>
+    </view>
+  </view>
+
+  <!-- 消息列表 -->
+  <scroll-view
+    class="chat-messages"
+    scroll-y
+    scroll-with-animation
+    scroll-into-view="{{scrollToView}}"
+    enhanced
+    show-scrollbar="{{false}}"
+  >
+    <!-- V7: 永久安全提示 -->
+    <view class="permanent-notice">
+      <text>须知：AI提供流程指引和标准参考，不代替官方审核。材料合规性以入境事务处最终决定为准。</text>
+    </view>
+
+    <!-- V7: 安全横幅 -->
+    <view wx:if="{{safetyBanners.length > 0}}" class="safety-banners">
+      <block wx:for="{{safetyBanners}}" wx:key="*this">
+        <view class="safety-banner">{{item}}</view>
+      </block>
+    </view>
+
+    <view class="message-list">
+      <block wx:for="{{messages}}" wx:key="index">
+        <view id="msg-{{index}}" class="message-wrapper {{item.role}}">
+          <!-- AI头像 -->
+          <view wx:if="{{item.role === 'assistant'}}" class="avatar assistant-avatar">
+            <image src="/images/ai-avatar.png" mode="aspectFill" aria-label="AI住港伴专员" />
+          </view>
+
+          <!-- 消息气泡 -->
+          <view class="bubble {{item.role}}">
+            <rich-text class="bubble-text" nodes="<div style='font-size:28rpx;line-height:1.8;color:#374151'>{{item.content}}</div>" user-select></rich-text>
+
+            <!-- V8: RAG知识来源标注 -->
+            <view wx:if="{{item.role === 'assistant' && showSources && sources.length > 0 && index === messages.length - 2}}" class="sources-tag">
+              <text class="sources-label">📎 参考来源: </text>
+              <text class="sources-list" wx:for="{{sources}}" wx:for-item="src" wx:key="title">{{src.title}}{{src.confidence ? ' ['+src.confidence+']' : ''}}{{index > 0 ? '; ' : ''}}</text>
+            </view>
+
+            <!-- 快捷回复按钮 -->
+            <view wx:if="{{item.quickReplies && item.quickReplies.length > 0}}" class="quick-replies">
+              <view
+                wx:for="{{item.quickReplies}}"
+                wx:for-item="qr"
+                wx:key="id"
+                class="quick-reply-btn"
+                data-text="{{qr.text}}"
+                bindtap="onQuickReply"
+              >
+                {{qr.text}}
+              </view>
+            </view>
+
+            <!-- V7: 反馈按钮 (仅最后一条assistant消息) -->
+            <view wx:if="{{item.role === 'assistant' && showFeedback && index === messages.length - 2}}" class="feedback-row">
+              <text class="feedback-btn" data-type="inaccurate" bindtap="onFeedback">回答不准确</text>
+              <text class="feedback-btn" data-type="safety" bindtap="onFeedback">可能泄露信息</text>
+            </view>
+          </view>
+
+          <!-- 用户头像 -->
+          <view wx:if="{{item.role === 'user'}}" class="avatar user-avatar">
+            <text>👤</text>
+          </view>
+        </view>
+      </block>
+
+      <!-- 加载状态 -->
+      <view wx:if="{{loading}}" class="message-wrapper assistant">
+        <view class="avatar assistant-avatar">
+          <image src="/images/ai-avatar.png" mode="aspectFill" aria-label="AI住港伴专员" />
+        </view>
+        <view class="bubble assistant typing">
+          <text class="typing-dot">●</text>
+          <text class="typing-dot">●</text>
+          <text class="typing-dot">●</text>
+        </view>
+      </view>
+    </view>
+  </scroll-view>
+
+  <!-- 快捷入口栏 -->
+  <view class="quick-entries">
+    <view class="quick-entry-item" data-mode="pathTest" bindtap="onQuickEntry">
+      <text class="entry-icon">🎯</text>
+      <text>路径评估</text>
+    </view>
+    <view class="quick-entry-item" data-mode="qa" bindtap="onQuickEntry">
+      <text class="entry-icon">📋</text>
+      <text>政策问答</text>
+    </view>
+    <view class="quick-entry-item" data-mode="solution" bindtap="onQuickEntry">
+      <text class="entry-icon">🗺️</text>
+      <text>方案推荐</text>
+    </view>
+    <view class="quick-entry-item" data-mode="general" bindtap="onQuickEntry">
+      <text class="entry-icon">💬</text>
+      <text>自由提问</text>
+    </view>
+  </view>
+
+  <!-- 输入框区域 -->
+  <view class="chat-input-area">
+    <input
+      class="chat-input"
+      value="{{inputValue}}"
+      placeholder="输入问题..."
+      bindinput="onInput"
+      bindconfirm="onSendTap"
+      confirm-type="send"
+      disabled="{{loading}}"
+      maxlength="500"
+      adjust-position
+    />
+    <view class="send-btn {{inputValue ? 'active' : ''}}" bindtap="onSendTap">
+      <text>发送</text>
+    </view>
+  </view>
+</view>

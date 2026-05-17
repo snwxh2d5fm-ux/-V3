@@ -96,7 +96,13 @@ Component({
         var pageCtx = this.properties.context || {};
         // P1-1: K2隐私 — pageContext仅传脱敏页面标识，不传用户可见文本
         var safePageContext = typeof pageCtx.pageContext === 'string' ? pageCtx.pageContext.substring(0, 80) : '';
-        var res = await api.sendChatMessage(
+
+        // V8: 构建对话历史
+        var history = messages.slice(0, -1).slice(-20).map(function(m) {
+          return { role: m.role, content: m.content };
+        });
+
+        var res = await api.sendChatMessageV5(
           app.globalData.aiSessionId, text, 'general',
           {
             userStatus: app.globalData.userStatus,
@@ -109,10 +115,11 @@ Component({
             } : null,
             page: pageCtx.page || '',
             pageContext: safePageContext,
-            dataVersion: 'v5-20260508',
+            dataVersion: 'v5-20260518',
             confidenceCheck: true,
             v5Corrections: true
-          }
+          },
+          history
         );
 
         var replyContent = '抱歉，AI服务暂时不可用，请稍后再试。';
@@ -201,7 +208,7 @@ Component({
     // v4.1: 启动自评流程
     startAssessment() {
       var persona = wx.getStorageSync('__assessment_persona__') || app.globalData._persona || 0;
-      wx.navigateTo({ url: '/pages/assessment/index/index?persona=' + persona + '&from=ai_chat' });
+      wx.navigateTo({ url: '/subpkg-low/pages/assessment-index/index?persona=' + persona + '&from=ai_chat' });
     },
 
     // v4.1: 从AI对话选择路径 → 更新状态 + 写入账号

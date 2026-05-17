@@ -359,7 +359,7 @@ Page({
         content: '免费用户最多添加' + docLimit + '份证件。升级会员可无限制添加。',
         confirmText: '了解会员',
         success: (res) => {
-          if (res.confirm) wx.navigateTo({ url: '/pages/membership/index/index' });
+          if (res.confirm) wx.navigateTo({ url: '/subpkg-chat/pages/membership/index' });
         }
       });
       return;
@@ -368,7 +368,7 @@ Page({
     // Bug #7修复: 始终传递ownerType，确保谁添加就标记为谁
     const ownerParam = `&ownerType=${this.data.identityOwner || 'self'}`;
     wx.navigateTo({
-      url: `/pages/documents/add/add?slotKey=${slotKey}&docName=${encodeURIComponent(slot.docName)}&guideId=${slot.guideId || ''}${ownerParam}`
+      url: `/subpkg-docs/pages/documents-add/index?slotKey=${slotKey}&docName=${encodeURIComponent(slot.docName)}&guideId=${slot.guideId || ''}${ownerParam}`
     });
   },
 
@@ -590,18 +590,18 @@ Page({
         confirmText: '升级会员',
         cancelText: '稍后再说',
         success: (res) => {
-          if (res.confirm) wx.navigateTo({ url: '/pages/membership/index/index' });
+          if (res.confirm) wx.navigateTo({ url: '/subpkg-chat/pages/membership/index' });
         }
       });
       return;
     }
     var ownerParam = this.data.identityOwner && this.data.identityOwner !== 'self' ? '&ownerType=' + this.data.identityOwner : '';
-    wx.navigateTo({ url: '/pages/documents/add/add?ownerPass=' + (this.data.identityOwner || 'self') + ownerParam });
+    wx.navigateTo({ url: '/subpkg-docs/pages/documents-add/index?ownerPass=' + (this.data.identityOwner || 'self') + ownerParam });
   },
 
   navigateToDetail(e) {
     const id = e.currentTarget.dataset.id;
-    wx.navigateTo({ url: `/pages/documents/detail/detail?id=${id}` });
+    wx.navigateTo({ url: `/subpkg-docs/pages/documents-detail/index?id=${id}` });
   },
 
   // #4: 多证件槽位预览 — Bug #4修复: 显示证件面标签
@@ -616,7 +616,7 @@ Page({
     if (!slot || !slot.uploadedDocs || !slot.uploadedDocs.length) return;
     var docs = slot.uploadedDocs;
     if (docs.length === 1) {
-      wx.navigateTo({ url: '/pages/documents/detail/detail?id=' + docs[0].id });
+      wx.navigateTo({ url: '/subpkg-docs/pages/documents-detail/index?id=' + docs[0].id });
       return;
     }
     // 多张→弹窗选择，显示证件面（按证件类型区分背面标签）
@@ -631,13 +631,13 @@ Page({
       itemList: docs.map(function(d) { return sideLabel(d); }),
       success: function(res) {
         var idx = res.tapIndex;
-        wx.navigateTo({ url: '/pages/documents/detail/detail?id=' + docs[idx].id });
+        wx.navigateTo({ url: '/subpkg-docs/pages/documents-detail/index?id=' + docs[idx].id });
       }
     });
   },
 
   navigateToCombine() {
-    wx.navigateTo({ url: '/pages/documents/combine/combine' });
+    wx.navigateTo({ url: '/subpkg-docs/pages/documents-combine/index' });
   },
 
   // ===== 画廊功能 =====
@@ -674,7 +674,7 @@ Page({
 
   /** 账户锁定 → 跳转会员页解锁 */
   goUnlock: function() {
-    wx.navigateTo({ url: '/pages/membership/index/index' });
+    wx.navigateTo({ url: '/subpkg-chat/pages/membership/index' });
   },
 
   goSelectPath() {
@@ -690,17 +690,17 @@ Page({
         content: '升级会员解锁无限制上传',
         confirmText: '了解',
         success: (res) => {
-          if (res.confirm) wx.navigateTo({ url: '/pages/membership/index/index' });
+          if (res.confirm) wx.navigateTo({ url: '/subpkg-chat/pages/membership/index' });
         }
       });
       return;
     }
-    wx.navigateTo({ url: '/pages/documents/add/add?mode=smart' });
+    wx.navigateTo({ url: '/subpkg-docs/pages/documents-add/index?mode=smart' });
   },
 
   /** 智能组合 */
   onSmartCombine() {
-    wx.navigateTo({ url: '/pages/documents/combine/combine' });
+    wx.navigateTo({ url: '/subpkg-docs/pages/documents-combine/index' });
   },
 
   /** 隐私模式变化 */

@@ -109,7 +109,7 @@ Page({
 
   startAssessment() {
     const persona = wx.getStorageSync('__assessment_persona__') || app.globalData._persona || 0;
-    wx.navigateTo({ url: `/pages/assessment/index/index?persona=${persona}` });
+    wx.navigateTo({ url: `/subpkg-low/pages/assessment-index/index?persona=${persona}` });
   },
 
   goToDocuments() {
@@ -118,13 +118,13 @@ Page({
 
   // v5 快捷入口 (DSG-1 P0-01: 双中枢合并)
   goToGuide() {
-    wx.navigateTo({ url: '/pages/guide/index/index' });
+    wx.navigateTo({ url: '/subpkg-guide/pages/guide-index/index' });
   },
   goToPrecheck() {
     wx.showToast({ title: '预审功能已迁移至证件详情页', icon: 'none' });
   },
   goToInfo() {
-    wx.navigateTo({ url: '/pages/info/index/index' });
+    wx.navigateTo({ url: '/subpkg-process/pages/info/index' });
   },
 
   loadActiveProcess() {
@@ -317,7 +317,7 @@ Page({
       return;
     }
     wx.navigateTo({
-      url: `/pages/process/detail/detail?id=${this.data.activeProcess.id}&focus=${stageId}`
+      url: `/subpkg-process/pages/process-detail/index?id=${this.data.activeProcess.id}&focus=${stageId}`
     });
   },
 

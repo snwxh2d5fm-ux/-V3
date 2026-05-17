@@ -408,7 +408,7 @@ Page({
 
   onArticleTap: function(e) {
     var id = e.currentTarget.dataset.id;
-    if (id) { wx.navigateTo({ url: '/pages/guide/detail/detail?id=' + id }); }
+    if (id) { wx.navigateTo({ url: '/subpkg-guide/pages/guide-detail/index?id=' + id }); }
   },
 
   onTaskToggle: function(e) {
@@ -985,6 +985,6 @@ Page({
   onSNWizardClose: function() { this.setData({ showSchoolNetWizard: false }); },
   onSNOpenSchools: function() {
     this.setData({ showSchoolNetWizard: false });
-    wx.navigateTo({ url: '/pages/schools/index' });
+    wx.navigateTo({ url: '/subpkg-guide/pages/schools/index' });
   }
 });

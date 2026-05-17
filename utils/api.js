@@ -137,19 +137,38 @@ async function compareSolutionPaths(pathIds) {
   }
 }
 
-// ============ AI 对话服务 ============
+// ============ AI 对话服务 (v5: RAG增强+多轮记忆) ============
 
-async function sendChatMessage(sessionId, message, mode, context) {
+/**
+ * v5.0 增强版: 传递对话历史，启用RAG检索
+ * @param {string} sessionId
+ * @param {string} message
+ * @param {string} mode - general|assessment|qa|solution_recommend
+ * @param {object} context - 用户上下文
+ * @param {array}  history - 对话历史 [{role,content}]
+ */
+async function sendChatMessageV5(sessionId, message, mode, context, history) {
   try {
     const res = await wx.cloud.callFunction({
       name: 'ai-chat',
-      data: { sessionId, message, mode: mode || 'general', context: context || {} }
+      data: {
+        sessionId: sessionId || ('sess_' + Date.now()),
+        message,
+        mode: mode || 'general',
+        context: context || {},
+        history: history || []
+      }
     });
     return res.result;
   } catch (e) {
-    console.error('[API] AI对话失败:', e);
+    console.error('[API] AI对话V5失败:', e);
     return { code: 500, message: 'AI对话服务不可用', data: null };
   }
+}
+
+/** v4兼容接口（不传history，向后兼容） */
+async function sendChatMessage(sessionId, message, mode, context) {
+  return sendChatMessageV5(sessionId, message, mode, context, []);
 }
 
 /**
@@ -339,7 +358,7 @@ module.exports = {
   request, wechatLogin, getPhoneNumber, reportUserStatus,
   fetchGuides, fetchPolicyUpdates, fetchPlaybook,
   interact, searchPlaybook, runPreCheck,
-  sendChatMessage, submitAssessment, askPolicyQuestion,
+  sendChatMessage, sendChatMessageV5, submitAssessment, askPolicyQuestion,
   generateDocument, getDashboardData, getApprovedCases,
   uploadAnonymizedText, createPayment, createPaymentOrder, queryOrderStatus,
   checkMembershipStatus, getUserOrders, getUserSubscriptions,

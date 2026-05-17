@@ -1,4 +1,0 @@
-.ds-preview { position: relative; }
-.ds-toggle { display: flex; justify-content: space-between; align-items: center; padding: 8rpx 0; }
-.ds-mode-label { font-size: var(--font-xs); color: var(--color-warning); }
-.ds-toggle-btn { font-size: var(--font-xs); color: var(--color-primary); }

@@ -1,9 +1,10 @@
 {
   "name": "ai-chat",
-  "version": "3.0.0",
-  "description": "住港伴 AI 对话云函数 — CloudBase 内置模型 (hunyuan-v3/hy3-preview)",
+  "version": "5.0.0",
+  "description": "住港伴 AI 对话云函数 v5 — RAG增强+多轮记忆+流式响应+K2安全",
   "main": "index.js",
   "dependencies": {
-    "@cloudbase/node-sdk": "^3.16.0"
+    "@cloudbase/node-sdk": "^2.0.0",
+    "nodejieba": "^2.6.0"
   }
 }

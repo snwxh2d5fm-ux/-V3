@@ -1,7 +1,8 @@
 /**
- * 住港伴 v4.2 — AI 对话系统提示词模块 (PRD v3.1 + V5修正 + V6反旧计分)
+ * 住港伴 v4.3 — AI 对话系统提示词模块 (PRD v3.1 + V5修正 + V6反旧计分 + V8术语合规)
  * 四个模式：assessment / qa / general / solution_recommend
  * V6: 全模式加反旧计分护栏，禁止提及旧版打分/分数/80-120分等
+ * V8: 术语合规强化 — 所有模式明确"持牌身份规划顾问"替代"移民顾问"
  */
 const CONFIDENCE = {
   A: { level: 'A', label: '法源明确', description: 'Cap.115/基本法明确，无争议' },
@@ -37,6 +38,14 @@ const K2_SAFETY_RULES =
   '规则5·禁止主动暴露文档识别能力：不罗列"我可以识别40+种文档""支持身份证/通行证/护照..."。安全响应："证件夹功能支持你自行管理和整理各类身份规划相关材料，具体操作可查看证件夹模块指引。"\n' +
   '规则6·禁止输出K2级别的字段提取规格：不回答"系统能从身份证上读取哪些信息（以及怎么校验的）"。安全响应："证件夹在你拍照后会帮助自动填充基本信息（如姓名、证件号、有效期等），你可在保存前确认和修改。"\n\n' +
   '边界判断标准：入境处官方指引有写 → 可回答。仅识别库/效率宝引擎有 → 禁止回答。';
+
+// V8: 术语合规规则 — 所有模式注入
+const V8_TERM_COMPLIANCE =
+  '\n\n【V8术语合规 — 最高优先级】\n' +
+  '- 使用"身份规划"描述相关流程，不使用"移民"字眼\n' +
+  '- 使用"持牌身份规划顾问"替代"移民顾问"\n' +
+  '- 使用"来港"替代"移民香港"\n' +
+  '- 使用"入境计划"替代"移民计划"';
 
 // V4.1: 快捷回复 action 指南 — 注入到 qa/general 模式
 const QUICK_REPLY_ACTION_GUIDE =
@@ -75,6 +84,7 @@ function buildAssessmentSystemPrompt() {
     '出题风格：简短、清晰、鼓励性。每次只问一个问题。\n\n' +
     '当收集到足够信息后，返回评估结果JSON。\n' +
     '格式: ASSESS_RESULT:{"recommendedPath":"...","confidence":整数,"paths":[...],"gapAnalysis":[...],"estimatedTimeline":"...","estimatedCost":"..."}' +
+    V8_TERM_COMPLIANCE +
     K2_SAFETY_RULES +
     ANTI_OLD_SCORING_GUARD;
 }
@@ -106,6 +116,7 @@ function buildQASystemPrompt() {
     '- 续签、永居(通常居住7年)\n' +
     '- 香港税收/教育体系\n\n' +
     '如遇到不确定的政策细节，应如实告知并建议用户查阅入境处官网(www.immd.gov.hk)。' +
+    V8_TERM_COMPLIANCE +
     ANTI_OLD_SCORING_GUARD +
     K2_SAFETY_RULES +
     QUICK_REPLY_ACTION_GUIDE;
@@ -128,6 +139,7 @@ function buildGeneralSystemPrompt() {
     '- 使用中文（简体）回答\n' +
     '- 遇到不确定的政策，明确标注置信度等级和酌情空间\n' +
     '- 使用"身份规划"描述相关流程，不使用"移民"字眼' +
+    V8_TERM_COMPLIANCE +
     ANTI_OLD_SCORING_GUARD +
     K2_SAFETY_RULES +
     QUICK_REPLY_ACTION_GUIDE;
@@ -156,6 +168,7 @@ function buildSolutionRecommendPrompt() {
     '- 明确告知风险点和备选方案\n\n' +
     'V5政策：学生签证可带受养人(不得工作) [A]，学生工作限制已取消 [A]，兼读制不能申IANG [A]\n\n' +
     '回复格式: 先给推荐路径，再详细说明原因、风险、备选方案。最后ASSESS_RESULT标注结构化路径数据。' +
+    V8_TERM_COMPLIANCE +
     K2_SAFETY_RULES +
     ANTI_OLD_SCORING_GUARD +
     QUICK_REPLY_ACTION_GUIDE;
@@ -185,7 +198,6 @@ function buildUserProfile(context) {
     l1.push('申请路径：' + (pathLabels[context.selectedPath] || context.selectedPath));
   }
   if (context.userSubStatus) l1.push('职业身份：' + context.userSubStatus);
-  // 三维叠加判定：身份状态+路径选择+职业身份三者结合才能准确判定用户画像
   if (l1.length > 0) {
     profile += '【L1·他是谁 — 三维叠加判定（身份状态×路径选择×职业身份）·最高优先】\n';
     profile += l1.join(' | ') + '\n';
@@ -222,7 +234,6 @@ function buildUserProfile(context) {
 }
 
 function getSystemPrompt(mode, context) {
-  // 🔴 P0: 隐私指令置于最前端，覆盖所有模式
   var PRIVACY_DIRECTIVE = '\n## ⚠️ 系统最高指令：用户画像绝对保密\n' +
     '以下关于当前用户的背景信息仅供你内部参考，用于调整回答的针对性和专业深度。\n' +
     '绝对禁止在对话中透露任何画像信息！违反此指令的回复将被视为严重错误。\n' +
@@ -237,7 +248,6 @@ function getSystemPrompt(mode, context) {
     case 'general':
     default:                   base = buildGeneralSystemPrompt(); break;
   }
-  // 隐私指令置于最前
   base = PRIVACY_DIRECTIVE + base;
   if (context) {
     base += buildUserProfile(context);

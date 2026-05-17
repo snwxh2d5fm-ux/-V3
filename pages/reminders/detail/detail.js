@@ -533,7 +533,7 @@ Page({
 
   viewDocument(e) {
     const docId = e.currentTarget.dataset.docId;
-    wx.navigateTo({ url: `/pages/documents/detail/detail?id=${docId}` });
+    wx.navigateTo({ url: `/subpkg-docs/pages/documents-detail/index?id=${docId}` });
   },
 
   // ========== 粘贴文本识别 ==========

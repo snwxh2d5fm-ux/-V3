@@ -306,19 +306,16 @@ async function confirmPayment(openid, event) {
 
   } catch (e) {
     console.error('[payment] 查单失败:', e.response?.data || e.message);
-    // 查单失败时降级：信任前端，直接完成
-    await db.collection('orders').where({ _id: orderId }).update({
-      data: { status: 'completed', completedAt: db.serverDate() }
-    });
-    if (order.category === 'membership' && order.planId) {
-      await activateMembership(openid, order);
-    }
+    // 查单失败时不信任前端——返回错误让用户重试或联系客服
+    // 订单状态保持pending，等待V3回调或用户手动重试
     return {
-      code: 0,
+      code: 503,
+      msg: '支付验证暂时不可用，请稍后重试。如已付款，款项将在30分钟内原路退回或自动到账。',
       data: {
-        orderId: order._id, status: 'completed',
-        subscriptionActivated: true,
-        note: 'confirmed_without_verify'
+        orderId: order._id,
+        status: order.status,
+        subscriptionActivated: false,
+        retryAfter: 30000
       }
     };
   }

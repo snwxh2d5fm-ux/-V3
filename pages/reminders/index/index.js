@@ -558,7 +558,7 @@ Page({
         confirmText: '了解会员',
         cancelText: '取消',
         success: (res) => {
-          if (res.confirm) wx.navigateTo({ url: '/pages/membership/index/index' });
+          if (res.confirm) wx.navigateTo({ url: '/subpkg-chat/pages/membership/index' });
         }
       });
       return;
@@ -672,6 +672,6 @@ Page({
 
   // ========== 升级会员 ==========
   viewPremium() {
-    wx.navigateTo({ url: '/pages/membership/index/index' });
+    wx.navigateTo({ url: '/subpkg-chat/pages/membership/index' });
   }
 });

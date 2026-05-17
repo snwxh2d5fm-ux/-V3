@@ -4,37 +4,83 @@
     "pages/index/index",
     "pages/login/login",
     "pages/status-select/status-select",
-    "pages/milestone-verify/milestone-verify",
-    "pages/chat/index/index",
-    "pages/assessment/index/index",
-    "pages/assessment/result/result",
     "pages/guidebooks/index/index",
-    "pages/guidebooks/detail/detail",
-    "pages/schools/index",
     "pages/documents/index/index",
-    "pages/documents/add/add",
-    "pages/documents/detail/detail",
-    "pages/documents/combine/combine",
     "pages/reminders/index/index",
     "pages/reminders/detail/detail",
-    "pages/guide/index/index",
-    "pages/guide/detail/detail",
     "pages/process/index/index",
-    "pages/process/detail/detail",
-    "pages/info/index/index",
-    "pages/playbook/index/index",
-    "pages/playbook/detail/detail",
-    "pages/mine/index/index",
-    "pages/privacy/index/index",
-    "pages/mine/settings/settings",
-    "pages/membership/index/index",
-    "pages/mine/orders/index",
-    "pages/mine/orders/detail",
-    "pages/mine/invoice/apply",
-    "pages/mine/invoice/list",
-    "pages/mine/invoice/detail",
-    "pages/admin-db/index/index"
+    "pages/mine/index/index"
   ],
+  "subPackages": [
+    {
+      "root": "subpkg-guide",
+      "name": "guide",
+      "pages": [
+        "pages/guidebooks-detail/index",
+        "pages/guide-index/index",
+        "pages/guide-detail/index",
+        "pages/schools/index"
+      ]
+    },
+    {
+      "root": "subpkg-docs",
+      "name": "docs",
+      "pages": [
+        "pages/documents-add/index",
+        "pages/documents-detail/index",
+        "pages/documents-combine/index"
+      ]
+    },
+    {
+      "root": "subpkg-process",
+      "name": "process",
+      "pages": [
+        "pages/process-detail/index",
+        "pages/info/index",
+        "pages/playbook-index/index",
+        "pages/playbook-detail/index",
+        "pages/milestone-verify/index"
+      ]
+    },
+    {
+      "root": "subpkg-chat",
+      "name": "chat",
+      "pages": [
+        "pages/chat/index",
+        "pages/membership/index",
+        "pages/privacy/index",
+        "pages/settings/index",
+        "pages/orders/index",
+        "pages/orders-detail/index",
+        "pages/invoice-apply/index",
+        "pages/invoice-list/index",
+        "pages/invoice-detail/index"
+      ]
+    },
+    {
+      "root": "subpkg-low",
+      "name": "low",
+      "pages": [
+        "pages/assessment-index/index",
+        "pages/assessment-result/index",
+        "pages/admin-db/index"
+      ]
+    }
+  ],
+  "preloadRule": {
+    "pages/guidebooks/index/index": {
+      "network": "wifi",
+      "packages": ["guide"]
+    },
+    "pages/documents/index/index": {
+      "network": "wifi",
+      "packages": ["docs"]
+    },
+    "pages/process/index/index": {
+      "network": "wifi",
+      "packages": ["process"]
+    }
+  },
   "window": {
     "navigationBarBackgroundColor": "#1a73e8",
     "navigationBarTitleText": "住港伴",
@@ -91,7 +137,6 @@
     "progress-bar": "/components/progress-bar/progress-bar",
     "checklist": "/components/checklist/checklist",
     "milestone-lock": "/components/milestone-lock/milestone-lock",
-    "ds-preview": "/components/desensitization-preview/desensitization-preview",
     "floating-ai": "/components/floating-ai/floating-ai",
     "stage-indicator": "/components/stage-indicator/stage-indicator",
     "status-badge": "/components/status-badge/status-badge"

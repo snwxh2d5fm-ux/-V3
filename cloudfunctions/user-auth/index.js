@@ -213,11 +213,26 @@ async function handlePhoneLogin(openid, { phoneCode, loginType }) {
 // ==================== Token 验证 ====================
 async function handleValidate(openid, { token }) {
   if (!token) return { code: 400, valid: false };
+  // 新旧 token 格式兼容：新格式含HMAC签名，旧格式为base64.header.payload.cloudbase
   try {
-    const payload = JSON.parse(
-      Buffer.from(token.split('.')[1], 'base64').toString()
-    );
-    if (payload.openid !== openid) return { code: 401, valid: false };
+    var payloadStr;
+    // 尝试新格式验证
+    var verified = verifyToken(token);
+    if (verified) {
+      if (verified.openid !== openid) return { code: 401, valid: false };
+      payloadStr = verified.openid;
+    } else {
+      // 旧格式向下兼容——拆分后解析payload
+      var parts = token.split('.');
+      if (parts.length >= 2) {
+        payloadStr = JSON.parse(
+          Buffer.from(parts[1], 'base64').toString()
+        ).openid;
+        if (payloadStr !== openid) return { code: 401, valid: false };
+      } else {
+        return { code: 401, valid: false };
+      }
+    }
     // 检查用户存在性
     const { data } = await db.collection(COLLECTION)
       .where({ _openid: openid, status: _.neq('locked') })
@@ -299,14 +314,26 @@ function sanitizeUser(user) {
 }
 
 function makeToken(openid, userId) {
-  const header = { alg: 'HS256', typ: 'JWT' };
-  const payload = {
-    openid,
-    uid: userId,
-    iat: Math.floor(Date.now() / 1000),
-    exp: Math.floor(Date.now() / 1000) + 7 * 24 * 3600
-  };
-  const b64 = (obj) => Buffer.from(JSON.stringify(obj)).toString('base64');
-  // 简化版 JWT (无签名) — 用于 CloudBase 内部服务间调用
-  return `${b64(header)}.${b64(payload)}.cloudbase`;
+  // 使用 crypto.randomBytes 生成不可预测的随机令牌
+  const randomPart = require('crypto').randomBytes(32).toString('hex');
+  const hmac = require('crypto').createHmac('sha256', process.env.TOKEN_SECRET || 'zhgb-internal-key');
+  const payload = [openid, userId, Date.now(), randomPart].join(':');
+  const signature = hmac.update(payload).digest('hex');
+  return Buffer.from(payload + ':' + signature).toString('base64');
+}
+
+function verifyToken(token) {
+  try {
+    var decoded = Buffer.from(token, 'base64').toString('utf8');
+    var parts = decoded.split(':');
+    if (parts.length < 5) return null;
+    var payload = parts.slice(0, 4).join(':');
+    var sig = parts[4];
+    var hmac = require('crypto').createHmac('sha256', process.env.TOKEN_SECRET || 'zhgb-internal-key');
+    var expected = hmac.update(payload).digest('hex');
+    if (sig !== expected) return null;
+    return { openid: parts[0], uid: parts[1], iat: parseInt(parts[2]) };
+  } catch(e) {
+    return null;
+  }
 }

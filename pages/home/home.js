@@ -73,33 +73,36 @@ Page({
     if (!code) return;
 
     this.setData({ loading: true });
-    
-    // 模拟登录流程
     wx.showLoading({ title: '登录中...' });
-    setTimeout(() => {
-      wx.hideLoading();
-      
-      // 保存用户数据
-      const userData = {
-        phone: '',
-        createdAt: new Date().toISOString()
-      };
-      wx.setStorageSync('user_data', userData);
-      wx.setStorageSync('__session__', 'session_' + Date.now());
-      wx.setStorageSync('__user_profile__', { 
-        isNew: true, 
-        membership: 'free',
-        freeTrialEndAt: new Date(Date.now() + 180 * 86400000).toISOString()
-      });
 
-      // 新用户 → 状态选择
-      wx.redirectTo({ url: '/pages/status-select/status-select' });
-    }, 800);
+    // 调用云函数完成微信登录
+    wx.cloud.callFunction({
+      name: 'user-auth',
+      data: { action: 'login', code: code }
+    }).then((res) => {
+      wx.hideLoading();
+      var result = res.result || {};
+      if (result.code === 0 && result.data && result.data.token) {
+        // 保存登录态
+        wx.setStorageSync('__session__', result.data.token);
+        wx.setStorageSync('user_data', result.data.user || {});
+        // 跳转状态选择
+        wx.redirectTo({ url: '/pages/status-select/status-select' });
+      } else {
+        wx.showToast({ title: '登录失败，请重试', icon: 'none' });
+        this.setData({ loading: false });
+      }
+    }).catch((err) => {
+      wx.hideLoading();
+      console.error('[home] 登录失败:', err);
+      wx.showToast({ title: '网络异常，请检查网络后重试', icon: 'none' });
+      this.setData({ loading: false });
+    });
   },
 
   // ========== 锁定状态 ==========
   goPaywall() {
-    wx.navigateTo({ url: '/pages/membership/index/index' });
+    wx.navigateTo({ url: '/subpkg-chat/pages/membership/index' });
   },
 
   // ========== 通用 ==========
