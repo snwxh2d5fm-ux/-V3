@@ -1,3 +1,4 @@
+const { generateSlotPDF } = require("../../../utils/pdf-generator");
 /**
  * 住港伴 — 证件夹主页 (Tab2) · PRD v4.1 深度 UX 优化版
  * ─────────────────────────────────────────────────
@@ -697,6 +698,25 @@ Page({
   /** 点击云存储升级 */
   onCloudUpgrade() {
     wx.showToast({ title: '云存储功能开发中', icon: 'none' });
-  }
-});
+  },
 
+  /** 查找卡槽中的已上传文档 */
+  findSlotDocs: function(slotKey) {
+    var docs = [];
+    (this.data.slotCategories || []).forEach(function(cat) {
+      (cat.slots || []).forEach(function(s) {
+        if (s.slotKey === slotKey && s.uploadedDocs) {
+          docs = s.uploadedDocs;
+        }
+      });
+    });
+    return docs;
+  },
+
+  generateSlotPDF: function(e) {
+    var slotKey = e.currentTarget.dataset.slotKey;
+    var name = e.currentTarget.dataset.name || slotKey;
+    var docs = this.findSlotDocs(slotKey);
+    generateSlotPDF(slotKey, name, docs);
+  },
+});

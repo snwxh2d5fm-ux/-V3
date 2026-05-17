@@ -106,6 +106,9 @@
                 wx:elif="{{slot.uploadedCount < slot.maxCount || slot.maxCount === -1}}">+</text>
           <text class="slot__btn slot__btn--full"
                 wx:else>✓</text>
+          <text class="slot__btn pdf"
+                wx:if="{{slot.uploadedCount > 0}}"
+                bindtap="generateSlotPDF" data-slot-key="{{slot.slotKey}}" data-name="{{slot.docName}}">📄</text>
         </view>
       </view>
     </view>

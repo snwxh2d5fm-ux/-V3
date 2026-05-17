@@ -1,127 +1,109 @@
+const cloud = require('wx-server-sdk');
+cloud.init({ env: cloud.DYNAMIC_CURRENT_ENV });
+const db = cloud.database();
+
 /**
- * 住港伴 — PDF 导出云函数 (generate-pdf)
+ * 卡槽PDF合成云函数
  *
- * 将证件图片合成为单份 PDF 文档。
- * 前端调用: wx.cloud.callFunction({ name: 'generate-pdf', data: { action, fileIDs, title, ... } })
- *
- * 输入: { action: 'create', fileIDs: string[], title, owner, docNumber, validFrom, validTo }
- * 输出: { code: 0, data: { pdfFileID }, msg }
- *
- * 工作流:
- *   1. 从云存储下载所有图片
- *   2. 用 pdf-lib 合成 PDF（每图一页，自动适配 JPG/PNG）
- *   3. 上传 PDF 到云存储
- *   4. 返回 fileID 给前端打开
+ * 输入: { action: 'create'|'append', fileIDs: string[], title?: string, pdfFileID?: string }
+ *   create: 用 fileIDs 合成新PDF
+ *   append: 在已有 pdfFileID 基础上追加 fileIDs（暂以重合成实现）
+ * 输出: { code: 0, data: { pdfFileID, pageCount } }
  */
 
-const cloud = require('wx-server-sdk');
-const { PDFDocument, PageSizes } = require('pdf-lib');
+exports.main = async (event) => {
+  const { action, fileIDs, title, pdfFileID } = event;
 
-cloud.init({ env: cloud.DYNAMIC_CURRENT_ENV });
-
-const A4 = PageSizes.A4; // [595.28, 841.89] pt
-
-exports.main = async (event, context) => {
-  const { action } = event || {};
-
-  if (action !== 'create') {
-    return { code: -1, msg: '不支持的操作，仅支持 action=create' };
+  if (!fileIDs || !fileIDs.length) {
+    return { code: 400, error: '缺少 fileIDs' };
   }
-
-  const { fileIDs = [], title, owner, docNumber, validFrom, validTo } = event;
-
-  if (!fileIDs || fileIDs.length === 0) {
-    return { code: -1, msg: '缺少图片 fileIDs' };
-  }
-
-  console.log(`[generate-pdf] 开始合成, ${fileIDs.length} 张图片, title=${title}`);
 
   try {
-    // ── Step 1: 下载所有图片 ──
-    const downloads = fileIDs.map(async (fileID, idx) => {
-      console.log(`[generate-pdf] 下载图片 ${idx + 1}/${fileIDs.length}: ${fileID}`);
-      const res = await cloud.downloadFile({ fileID });
-      if (!res || !res.fileContent) {
-        throw new Error(`下载图片失败: ${fileID}`);
-      }
-      return { buffer: Buffer.from(res.fileContent), fileID };
-    });
+    // 收集所有需要合成的图片 fileID
+    let allFileIDs = [];
+    
+    if (action === 'append' && pdfFileID) {
+      // 追加模式：旧PDF的图片 + 新图片（简化：全部重合成）
+      // 实际场景中，storage 存了所有 fileIDs，前端传入全部即可
+      allFileIDs = fileIDs;
+    } else {
+      allFileIDs = fileIDs;
+    }
 
-    const images = await Promise.all(downloads);
-    console.log(`[generate-pdf] 下载完成, ${images.length} 张`);
+    if (allFileIDs.length === 0) {
+      return { code: 400, error: '无有效图片' };
+    }
 
-    // ── Step 2: 合成 PDF ──
-    const pdfDoc = await PDFDocument.create();
+    // 限制最多20页，避免超时
+    const maxPages = Math.min(allFileIDs.length, 20);
+    const pageFileIDs = allFileIDs.slice(0, maxPages);
 
-    let pageCount = 0;
-    for (const img of images) {
-      let embedded;
-
-      // 尝试 JPG 嵌入
+    // 下载所有图片并转为 base64
+    const images = [];
+    for (const fid of pageFileIDs) {
       try {
-        embedded = await pdfDoc.embedJpg(img.buffer);
-      } catch (_) {
-        /* 不是 JPG，尝试 PNG */
+        const res = await cloud.downloadFile({ fileID: fid });
+        const buffer = res.fileContent;
+        const base64 = buffer.toString('base64');
+        images.push('data:image/jpeg;base64,' + base64);
+      } catch (e) {
+        console.warn('下载失败:', fid, e.message);
       }
-
-      // 尝试 PNG 嵌入
-      if (!embedded) {
-        try {
-          embedded = await pdfDoc.embedPng(img.buffer);
-        } catch (_) {
-          console.warn(`[generate-pdf] 跳过不支持的图片格式: ${img.fileID}`);
-          continue;
-        }
-      }
-
-      if (!embedded) continue;
-
-      // 缩放到 A4 宽度内
-      const maxWidth = A4[0] - 40;  // 留 20pt 边距
-      const maxHeight = A4[1] - 40;
-      const scale = Math.min(maxWidth / embedded.width, maxHeight / embedded.height, 1);
-      const w = embedded.width * scale;
-      const h = embedded.height * scale;
-      const x = (A4[0] - w) / 2;
-      const y = (A4[1] - h) / 2;
-
-      const page = pdfDoc.addPage(A4);
-      page.drawImage(embedded, { x, y, width: w, height: h });
-      pageCount++;
     }
 
-    if (pageCount === 0) {
-      return { code: -1, msg: '无可用的图片格式（仅支持 JPG/PNG）' };
+    if (images.length === 0) {
+      return { code: 400, error: '所有图片下载失败' };
     }
 
-    const pdfBytes = await pdfDoc.save();
-    console.log(`[generate-pdf] PDF 合成完成, ${pageCount} 页, ${(pdfBytes.length / 1024).toFixed(1)} KB`);
+    // 动态加载 jspdf（避免首次加载超时）
+    const { jsPDF } = require('jspdf');
 
-    // ── Step 3: 上传 PDF 到云存储 ──
-    const safeTitle = (title || '证件').replace(/[\/\\:*?"<>|]/g, '_');
-    const cloudPath = `pdf_exports/${Date.now()}_${safeTitle}.pdf`;
+    // 创建PDF，A4纵向
+    const pdf = new jsPDF({ orientation: 'portrait', unit: 'mm', format: 'a4' });
+    const pageW = pdf.internal.pageSize.getWidth();
+    const pageH = pdf.internal.pageSize.getHeight();
+    const margin = 10;
+    const imgW = pageW - margin * 2;
+    const imgH = pageH - margin * 2 - 15; // 底部留标题空间
 
+    for (let i = 0; i < images.length; i++) {
+      if (i > 0) pdf.addPage();
+      
+      try {
+        pdf.addImage(images[i], 'JPEG', margin, margin, imgW, imgH, undefined, 'FAST');
+        // 页码
+        pdf.setFontSize(9);
+        pdf.setTextColor(128, 128, 128);
+        const label = (title || '证件') + ' — ' + (i + 1) + '/' + images.length;
+        pdf.text(label, pageW / 2, pageH - 8, { align: 'center' });
+      } catch (e) {
+        pdf.setFontSize(12);
+        pdf.setTextColor(200, 0, 0);
+        pdf.text('图片加载失败', pageW / 2, pageH / 2, { align: 'center' });
+      }
+    }
+
+    // 生成PDF buffer
+    const pdfBuffer = Buffer.from(pdf.output('arraybuffer'));
+
+    // 上传到云存储
+    const pdfName = 'pdf_' + Date.now() + '_' + Math.random().toString(36).slice(2, 6) + '.pdf';
     const uploadRes = await cloud.uploadFile({
-      cloudPath,
-      fileContent: Buffer.from(pdfBytes)
+      cloudPath: '_pdf_output/' + pdfName,
+      fileContent: pdfBuffer,
     });
-
-    console.log(`[generate-pdf] PDF 上传成功: ${uploadRes.fileID}`);
 
     return {
       code: 0,
       data: {
-        pdfFileID: uploadRes.fileID
-      },
-      msg: 'ok'
+        pdfFileID: uploadRes.fileID,
+        pageCount: images.length,
+        cloudPath: '_pdf_output/' + pdfName
+      }
     };
 
-  } catch (err) {
-    console.error('[generate-pdf] 失败:', err.message || err);
-    return {
-      code: -1,
-      msg: err.message || 'PDF 生成失败',
-      data: null
-    };
+  } catch (e) {
+    console.error('generate-pdf error:', e);
+    return { code: 500, error: e.message };
   }
 };
