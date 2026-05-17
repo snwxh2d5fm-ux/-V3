@@ -101,10 +101,9 @@ Page({
     });
   },
 
-  // Bug #9: 执行自动生成 — 直接基于今日生成时间线提醒，无需跳转
+  // Bug #9: 执行自动生成 — 未申请用户基于详细材料清单生成全套项目管理节点
   doAutoGenerate: function(path, pathName) {
     var that = this;
-    // 防重入：同一路径不重复生成
     if (this._generating) return;
     var existing = getAllReminders();
     var hasTimeline = existing.some(function(r) { return r.pathway === path; });
@@ -114,68 +113,89 @@ Page({
     }
     this._generating = true;
 
-    var TIMELINE_TEMPLATES = require('../../../data/timeline-templates').TIMELINE_TEMPLATES;
-    var template = TIMELINE_TEMPLATES[path];
-
-    if (!template) {
-      this._generating = false;
-      wx.showToast({ title: '暂无该路径的时间线模板', icon: 'none' });
-      return;
-    }
-
-    var today = new Date();
-    today.setHours(0, 0, 0, 0);
-
-    // 未申请用户：以今天为起点，负偏移节点(准备材料等)从现在开始而非过去
     var app = getApp();
     var session = wx.getStorageSync('__session__') || {};
     var userStatus = (app && app.globalData && app.globalData.userStatus) || session.userStatus || '';
-    var minOffset = 0;
-    if (userStatus === 'unapplied' || !userStatus) {
-      template.nodes.forEach(function(n) {
-        if (n.offsetDays < minOffset) minOffset = n.offsetDays;
-      });
-    }
-    var shiftDays = minOffset < 0 ? Math.abs(minOffset) : 0;
 
-    // 未申请用户：仅保留递交前的准备阶段节点（prepare/self_assess/submit），排除获批后所有节点
-    var PREP_NODES = ['prepare', 'self_assess', 'submit'];
-
-    var iconMap = { milestone: '✅', deadline: '📅', renewal: '🔄', pr: '🏁', material: '📋' };
+    var today = new Date();
+    today.setHours(0, 0, 0, 0);
     var count = 0;
 
-    template.nodes.forEach(function(node) {
-      // 未申请用户：仅保留准备阶段节点
-      if (shiftDays > 0 && PREP_NODES.indexOf(node.id) === -1) return;
-      // 已申请用户：排除续签/永居节点
-      if (shiftDays === 0 && (node.type === 'renewal' || node.type === 'pr')) return;
-      var date = new Date(today);
-      date.setDate(date.getDate() + (node.offsetDays || 0) + shiftDays);
-      var y = date.getFullYear();
-      var m = date.getMonth() + 1;
-      var d = date.getDate();
-      var ds = y + '-' + (m < 10 ? '0' + m : m) + '-' + (d < 10 ? '0' + d : d);
+    // 未申请用户：从详细模板生成全套材料准备节点
+    if (userStatus === 'unapplied' || !userStatus) {
+      var detailTmpl = require('../../../data/rules/timeline-templates');
 
-      var rangeText = '';
-      if (node.range) {
-        rangeText = ' (审批周期: ' + node.range[0] + '-' + node.range[1] + '天)';
-      }
+      // 累计偏移天数基值：Phase1=0天, Phase2=7天(自评完成后), Phase3=60天(材料准备完成后)
+      var phaseDetailMap = [
+        { nodes: detailTmpl.QMAS_PHASE1 || [], baseOffset: 0,  label: '自评阶段' },
+        { nodes: detailTmpl.QMAS_PHASE2 || [], baseOffset: 7,  label: '材料准备' },
+        { nodes: detailTmpl.QMAS_PHASE3 || [], baseOffset: 55, label: '线上申请' }
+      ];
 
-      saveReminder({
-        id: 'TL_' + path + '_' + node.id + '_' + Date.now(),
-        title: node.label,
-        deadline: ds,
-        description: (pathName || '') + ' · ' + (node.type || 'milestone') + rangeText + (node.desc ? '\n' + node.desc : ''),
-        type: 'rule_engine',
-        confidence: node.range ? 'C' : 'B',
-        linkedDocIds: (node.materials || []),
-        status: 'active',
-        offsetDays: (node.offsetDays || 0) + shiftDays,
-        pathway: path,
-        createdAt: new Date().toISOString()
+      phaseDetailMap.forEach(function(phase) {
+        phase.nodes.forEach(function(n) {
+          var offsetDays = phase.baseOffset + (typeof n.timeLogic === 'object' ? (n.timeLogic.offsetDays || 0) : 0);
+          var date = new Date(today);
+          date.setDate(date.getDate() + Math.max(0, offsetDays));
+          var y = date.getFullYear();
+          var m = date.getMonth() + 1;
+          var d = date.getDate();
+          var ds = y + '-' + (m < 10 ? '0' + m : m) + '-' + (d < 10 ? '0' + d : d);
+
+          saveReminder({
+            id: 'DETAIL_' + path + '_' + n.nodeId + '_' + Date.now(),
+            title: n.nodeName,
+            deadline: ds,
+            description: (pathName || '') + ' · ' + phase.label + '\n' + (n.actionDescription || ''),
+            type: 'rule_engine',
+            confidence: 'A',
+            linkedDocIds: (n.triggerMaterials || []).map(function(m) { return m.materialType; }),
+            status: 'active',
+            offsetDays: offsetDays,
+            pathway: path,
+            createdAt: new Date().toISOString()
+          });
+          count++;
+        });
       });
-      count++;
-    });
+    } else {
+      // 已申请用户：使用宏观时间线
+      var MACRO = require('../../../data/timeline-templates').TIMELINE_TEMPLATES;
+      var template = MACRO[path];
+      if (!template) {
+        this._generating = false;
+        wx.showToast({ title: '暂无该路径的时间线模板', icon: 'none' });
+        return;
+      }
+      var minOffset = 0;
+      template.nodes.forEach(function(n) { if (n.offsetDays < minOffset) minOffset = n.offsetDays; });
+      var shiftDays = minOffset < 0 ? Math.abs(minOffset) : 0;
+
+      var iconMap = { milestone: '✅', deadline: '📅', renewal: '🔄', pr: '🏁', material: '📋' };
+      template.nodes.forEach(function(node) {
+        if (node.type === 'renewal' || node.type === 'pr') return;
+        var date = new Date(today);
+        date.setDate(date.getDate() + (node.offsetDays || 0) + shiftDays);
+        var y = date.getFullYear();
+        var m = date.getMonth() + 1;
+        var d = date.getDate();
+        var ds = y + '-' + (m < 10 ? '0' + m : m) + '-' + (d < 10 ? '0' + d : d);
+        saveReminder({
+          id: 'TL_' + path + '_' + node.id + '_' + Date.now(),
+          title: node.label,
+          deadline: ds,
+          description: (pathName || '') + ' · ' + (node.type || 'milestone') + '\n' + (node.desc || ''),
+          type: 'rule_engine',
+          confidence: 'B',
+          linkedDocIds: (node.materials || []),
+          status: 'active',
+          offsetDays: (node.offsetDays || 0) + shiftDays,
+          pathway: path,
+          createdAt: new Date().toISOString()
+        });
+        count++;
+      });
+    }
 
     this._generating = false;
     wx.showToast({ title: '已生成 ' + count + ' 个提醒节点', icon: 'success' });

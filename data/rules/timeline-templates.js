@@ -286,7 +286,7 @@ const PHASE7_PR_NODES = [
 /**
  * 优才(QMAS) — Phase 1: 资格评估
  */
-const QMAS_PHASE1 = [
+var QMAS_PHASE1 = [
   { nodeId: 'QE-01', nodeName: '12项准则自评', actionDescription: '对照入境处12项准则逐项自评', timeLogic: { type: 'relative', anchorField: 'today', offsetDays: 0, estimatedDuration: '建议1周内' }, triggerMaterials: [{ materialType: 'edu', materialName: '学历证书扫描', formatStandard: null }], prerequisites: [], riskLevel: 'low', reminderSchedule: { milestones: [7, 3], frequency: 'once' } },
   { nodeId: 'QE-02', nodeName: '确定计分制类型', actionDescription: '成就计分制 vs 综合计分制 — 根据自评结果确定', timeLogic: { type: 'event_driven', anchorField: 'QE01Completed', offsetDays: 0, estimatedDuration: null }, triggerMaterials: [], prerequisites: ['QE-01'], riskLevel: 'low', reminderSchedule: { milestones: [7], frequency: 'once' } },
   { nodeId: 'QE-03', nodeName: '确认是否满足≥6项准则', actionDescription: '综合计分制需满足12项准则中≥6项', timeLogic: { type: 'event_driven', anchorField: 'QE02Completed', offsetDays: 0, estimatedDuration: null }, triggerMaterials: [], prerequisites: ['QE-02'], riskLevel: 'critical', reminderSchedule: { milestones: [7, 3], frequency: 'once' } },
@@ -297,7 +297,7 @@ const QMAS_PHASE1 = [
 /**
  * 优才(QMAS) — Phase 2: 材料准备
  */
-const QMAS_PHASE2 = [
+var QMAS_PHASE2 = [
   { nodeId: 'QM-01', nodeName: '赴港计划书初稿', actionDescription: '撰写赴港计划书(500-800字)，含个人成就+赴港计划+对港贡献', timeLogic: { type: 'relative', anchorField: 'today', offsetDays: 3, estimatedDuration: '1-2周' }, triggerMaterials: [], prerequisites: [], riskLevel: 'critical', reminderSchedule: { milestones: [14, 7, 3], frequency: 'once' } },
   { nodeId: 'QM-02', nodeName: '赴港计划书定稿', actionDescription: '修改完善计划书，最终定稿', timeLogic: { type: 'event_driven', anchorField: 'QM01Completed', offsetDays: 0, estimatedDuration: '1周' }, triggerMaterials: [{ materialType: 'document', materialName: '赴港计划书定稿', formatStandard: '中文或英文，结构完整，含个人成就+赴港计划+对港贡献' }], prerequisites: ['QM-01'], riskLevel: 'critical', reminderSchedule: { milestones: [7, 3, 1], frequency: 'once' } },
   { nodeId: 'QM-03', nodeName: '学历证明准备', actionDescription: '准备学位证+成绩单+学历认证', timeLogic: { type: 'relative', anchorField: 'today', offsetDays: 3, estimatedDuration: '1周' }, triggerMaterials: [{ materialType: 'edu', materialName: '学位证书', formatStandard: 'GD-DEGREE-01' }, { materialType: 'edu', materialName: '成绩单', formatStandard: '中英文双语' }, { materialType: 'edu', materialName: '学历认证', formatStandard: '学信网认证/公证处公证' }], prerequisites: [], riskLevel: 'high', reminderSchedule: { milestones: [7, 3], frequency: 'once' } },
@@ -313,7 +313,7 @@ const QMAS_PHASE2 = [
 /**
  * 优才(QMAS) — Phase 3: 线上申请
  */
-const QMAS_PHASE3 = [
+var QMAS_PHASE3 = [
   { nodeId: 'OL-01', nodeName: '注册/登录入境处在线系统', actionDescription: '在入境处官网注册账户或登录已有账户', timeLogic: { type: 'event_driven', anchorField: 'QM10Completed', offsetDays: 0, estimatedDuration: '当天' }, triggerMaterials: [{ materialType: 'info', materialName: '个人电邮+手机号', formatStandard: null }], prerequisites: ['QM-10'], riskLevel: 'low', reminderSchedule: { milestones: [1], frequency: 'once' } },
   { nodeId: 'QM-OL-01', nodeName: '赴港计划书系统填报', actionDescription: '在入境处系统中填报赴港计划书内容', timeLogic: { type: 'event_driven', anchorField: 'OL01Completed', offsetDays: 0, estimatedDuration: '与申请表填写同步' }, triggerMaterials: [{ materialType: 'document', materialName: '赴港计划书定稿', formatStandard: '待填入系统对应栏目' }], prerequisites: ['OL-01', 'QM-02'], riskLevel: 'critical', reminderSchedule: { milestones: [3, 1], frequency: 'once' } },
   { nodeId: 'OL-02', nodeName: '填写申请表', actionDescription: '完整填写入境处申请表全部字段', timeLogic: { type: 'event_driven', anchorField: 'OL01Completed', offsetDays: 0, estimatedDuration: '1-2小时' }, triggerMaterials: [], prerequisites: ['OL-01'], riskLevel: 'high', reminderSchedule: { milestones: [3, 1], frequency: 'once' } },
@@ -745,5 +745,8 @@ module.exports = {
   PHASE7_PR_NODES,
   PHASE4_WAITING_NODES,
   PHASE6_RENEWAL_COUNTDOWN_NODES,
-  PATH_SPECIFIC_RENEWAL_NODES
+  PATH_SPECIFIC_RENEWAL_NODES,
+  QMAS_PHASE1,
+  QMAS_PHASE2,
+  QMAS_PHASE3
 };
