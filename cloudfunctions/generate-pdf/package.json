@@ -1,9 +1,10 @@
 {
   "name": "generate-pdf",
   "version": "1.0.0",
-  "description": "住港伴 证件PDF合成云函数 — 图片合并为PDF",
+  "description": "住港伴 — PDF导出云函数：将证件图片合成为PDF",
   "main": "index.js",
   "dependencies": {
+    "wx-server-sdk": "latest",
     "pdf-lib": "^1.17.1"
   }
 }

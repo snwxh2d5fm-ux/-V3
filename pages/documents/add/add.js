@@ -925,7 +925,11 @@ Page({
       status: this.calcStatus(ocrFields.validTo || manualForm.validTo),
       archived: false,
       createdAt: now,
-      updatedAt: now
+      updatedAt: now,
+      // Bug #4 修复: 保存证件面信息，供卡槽标签使用
+      photoSide: this.data.photoSide || 'front',
+      frontPhotoPath: this.data.frontPhotoPath || '',
+      backPhotoPath: this.data.backPhotoPath || ''
     };
 
     // 保存元数据到Storage
