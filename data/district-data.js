@@ -522,114 +522,108 @@ module.exports.WORK_REGIONS = [
 // 核心推荐逻辑
 // =============================================================================
 
+// ── 权重配置（可调） ──
+var WEIGHTS = {
+  rent:       30,   // 租金友好度
+  commute:    35,   // 通勤便利度
+  family:     20,   // 家庭友好度
+  transport:  10,   // 交通便利度（港铁线数）
+  budgetFit:   5,   // 预算匹配度
+};
+
+// ── 通勤时间矩阵：按工作区取最近的主要通勤参考站 ──
+function getCommute(d, workRegionId) {
+  switch (workRegionId) {
+    case 'hong-kong-island': return d.commute.central;
+    case 'kowloon':          return d.commute.tst;
+    case 'new-territories':
+      // 新界工作在区内通勤较短，跨区用尖沙咀作中枢参考
+      return d.region === '新界' ? Math.round(d.commute.tst * 0.5) : d.commute.central;
+    case 'remote':           return 5; // 远程办公无通勤压力
+    default:                 return d.commute.central;
+  }
+}
+
 /**
  * 根据预算、上班区域和是否带娃，推荐最匹配的5个地区
  *
- * @param {number}  budget       - 月预算（HKD）
- * @param {string}  workRegion   - 上班区域ID（BUDGET_BRACKETS中的id）
- * @param {boolean} hasChildren  - 是否带娃
- * @returns {Array<Object>} 最多5个地区对象（含score字段）
+ * v2 改进：
+ *   - 加权评分替代线性加分
+ *   - 预算精确匹配档位而非仅"可负担"
+ *   - 港铁线数计入交通便利度
+ *   - 通勤分用平滑衰减替代分段函数
  */
 module.exports.matchDistricts = function (budget, workRegion, hasChildren) {
   var districts = module.exports;
   var brackets = module.exports.BUDGET_BRACKETS;
 
-  // 1. 预算过滤：找出对应档位
-  var bracket = null;
+  // 1. 确定用户预算档位
+  var userBracket = null;
   for (var i = 0; i < brackets.length; i++) {
     if (budget >= brackets[i].min && budget <= brackets[i].max) {
-      bracket = brackets[i];
-      break;
+      userBracket = brackets[i]; break;
     }
   }
-  // 如果没有精确匹配，找最接近的档位
-  if (!bracket) {
-    bracket = brackets[0];
+  if (!userBracket) {
     for (i = 0; i < brackets.length; i++) {
-      if (budget <= brackets[i].max) {
-        bracket = brackets[i];
-        break;
-      }
+      if (budget <= brackets[i].max) { userBracket = brackets[i]; break; }
     }
+    if (!userBracket) userBracket = brackets[brackets.length - 1];
   }
 
-  // 2. 可负担性判断：预算能覆盖至少studio起租价
-  function parsePriceRange(priceStr) {
-    var parts = priceStr.split("-");
-    return parseInt(parts[0].replace("K", "000"), 10);
+  // 2. 可负担性过滤
+  function parseMinRent(priceStr) {
+    return parseInt(priceStr.split('-')[0].replace(/[Kk]/,'000'), 10);
   }
 
-  var affordable = [];
+  var d, i, affordable = [];
   for (i = 0; i < districts.length; i++) {
-    var d = districts[i];
-
-    // 跳过districts数组末尾的函数和元数据
-    if (typeof d !== "object" || !d.district || !d.priceRange) continue;
-
-    var minRent = parsePriceRange(d.priceRange.studio);
-    if (budget >= minRent) {
+    d = districts[i];
+    if (typeof d !== 'object' || !d.district || !d.priceRange) continue;
+    var min2Bed = parseMinRent(d.priceRange.twoBed || d.priceRange.studio);
+    if (budget >= min2Bed || budget >= parseMinRent(d.priceRange.studio)) {
       affordable.push(d);
     }
   }
 
-  // 3. 计算匹配分数
-  function getCommuteMinutes(district, workRegionId) {
-    switch (workRegionId) {
-      case "hong-kong-island":
-        return district.commute.central;
-      case "kowloon":
-        return district.commute.tst;
-      case "new-territories":
-        // 新界地区通勤新界镇中心较短，港九则用中环作为跨区参考
-        if (district.region === "新界") {
-          return Math.round(district.commute.tst * 0.5);
-        }
-        return district.commute.central;
-      case "remote":
-        return 0;
-      default:
-        return district.commute.central;
-    }
-  }
+  // 3. 加权评分
+  var MAX_COMMUTE = 60;
+  var MAX_RENT = 60;
 
   var scored = [];
   for (i = 0; i < affordable.length; i++) {
-    var d = affordable[i];
-    var score = 0;
+    d = affordable[i];
+    var scores = {};
 
-    // 租金友好度：呎租越低分越高（满分40）
-    score += Math.max(0, (60 - d.avgRentPsf) / 60 * 40);
+    // 租金友好度：呎租越低越高（0-1归一化）
+    scores.rent = Math.max(0, (MAX_RENT - d.avgRentPsf) / MAX_RENT);
 
-    // 通勤分数：30分钟内满分40，超过则递减
-    var commute = getCommuteMinutes(d, workRegion);
-    if (commute <= 15) {
-      score += 40;
-    } else if (commute <= 30) {
-      score += 40 - (commute - 15) * 1.5;
-    } else {
-      score += Math.max(0, 17.5 - (commute - 30) * 1);
-    }
+    // 通勤便利度：用指数衰减（15min满分，60min零分）
+    var commute = getCommute(d, workRegion);
+    scores.commute = Math.exp(-commute / 18);
 
-    // 家庭友好度加分
-    if (hasChildren) {
-      score += d.familyFriendly * 5;                          // 满分25
-      if (d.familyFriendly >= 4) {
-        score += 10;                                          // 额外加分
-      }
-      // 名校网加分：小学有具体校网编号（非0）+家长超3分
-      if (d.schoolNet.primary > 0 && d.familyFriendly >= 4) {
-        score += 8;
-      }
-    }
+    // 交通便利度：港铁线数归一化
+    scores.transport = Math.min(d.mtrLines.length / 4, 1);
 
-    // 地区覆盖加分（非新界加5分，因为通勤成本低）
-    if (workRegion === "new-territories" && d.region === "新界" && d.hasNewTerritory) {
-      score += 10;
+    // 家庭友好度（仅带娃用户计入）
+    scores.family = hasChildren ? d.familyFriendly / 5 : 0.5; // 无娃时中性
+
+    // 预算匹配度：用户档位 vs 区域价格档位
+    var zoneBracket = d.avgRentPsf < 30 ? 0 : (d.avgRentPsf < 40 ? 1 : (d.avgRentPsf < 50 ? 2 : 3));
+    var userBracketIdx = brackets.indexOf(userBracket);
+    scores.budgetFit = 1 - Math.abs(zoneBracket - userBracketIdx) / 4;
+
+    // 加权总分
+    var total = 0;
+    Object.keys(WEIGHTS).forEach(function(k) { total += scores[k] * WEIGHTS[k]; });
+
+    // 新界工作的区域针对性加分
+    if (workRegion === 'new-territories' && d.region === '新界' && d.hasNewTerritory) {
+      total += 5;
     }
 
     scored.push({
-      district: d.district,
-      region: d.region,
+      district: d.district, region: d.region,
       avgRentPsf: d.avgRentPsf,
       commute: d.commute,
       schoolNet: d.schoolNet,
@@ -638,15 +632,10 @@ module.exports.matchDistricts = function (budget, workRegion, hasChildren) {
       priceRange: d.priceRange,
       bestFor: d.bestFor,
       familyFriendly: d.familyFriendly,
-      score: Math.round(score * 10) / 10
+      score: Math.round(total * 10) / 10
     });
   }
 
-  // 4. 按分数降序排列
-  scored.sort(function (a, b) {
-    return b.score - a.score;
-  });
-
-  // 5. 返回前5名
+  scored.sort(function(a, b) { return b.score - a.score; });
   return scored.slice(0, 5);
 };

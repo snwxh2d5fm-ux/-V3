@@ -64,32 +64,81 @@ module.exports = [
     familyRating: 4, budgetHint: '中', region: '新界' },
 ];
 
+// ── 权重配置 ──
+var SN_WEIGHTS = {
+  academic:    35,   // 学术实力（familyRating + tier）
+  budgetMatch: 25,   // 预算匹配度
+  regionMatch: 20,   // 区域匹配度
+  family:      20,   // 家庭友好度
+};
+
+// ── 等级映射 ──
+var TIER_SCORE = { '名校网': 5, '第二梯队': 3, '新来港推荐': 2.5 };
+
+// ── 预算映射 ──
+var BUDGET_SCORE = { '高': 3, '中': 2, '低': 1 };
+
 /**
- * 匹配推荐校网
- * @param {string} level — '幼儿园' | '小学' | '中学'
+ * 匹配推荐校网 v2 — 加权多因子评分
+ * @param {string} level — '幼儿园' | '小学' | '中学' | 'all'
  * @param {string} region — '港岛' | '九龙' | '新界' | 'all'
  * @param {string} budget — '低' | '中' | '高'
  * @returns {Array} 匹配的校网列表 (最多5条)
  */
 module.exports.matchSchoolNets = function(level, region, budget) {
   var all = module.exports;
-  var filtered = all.filter(function(net) {
-    if (typeof net.net !== 'number') return false; // filter out utility function
-    if (level !== 'all' && net.level !== level) return false;
-    if (region !== 'all' && net.region !== region) return false;
-    return true;
-  });
+  var filtered = [];
 
-  // 按家庭友好度 + 预算匹配排序
-  filtered.sort(function(a, b) {
-    var scoreA = a.familyRating;
-    var scoreB = b.familyRating;
-    if (budget === '低' && a.budgetHint === '低') scoreA += 3;
-    if (budget === '低' && b.budgetHint === '低') scoreB += 3;
-    if (budget === '中' && a.budgetHint !== '高') scoreA += 2;
-    if (budget === '中' && b.budgetHint !== '高') scoreB += 2;
-    return scoreB - scoreA;
-  });
+  for (var i = 0; i < all.length; i++) {
+    var net = all[i];
+    if (typeof net.net !== 'number' && typeof net.net !== 'string') continue;
+    if (level !== 'all' && net.level !== level) continue;
+    if (region !== 'all' && net.region !== region) continue;
+    filtered.push(net);
+  }
 
-  return filtered.slice(0, 5);
+  if (filtered.length === 0) {
+    // 放宽区域限制
+    for (i = 0; i < all.length; i++) {
+      var n = all[i];
+      if (typeof n.net !== 'number' && typeof n.net !== 'string') continue;
+      if (level !== 'all' && n.level !== level) continue;
+      filtered.push(n);
+    }
+  }
+
+  // 加权评分
+  var scored = [];
+  for (i = 0; i < filtered.length; i++) {
+    var net = filtered[i];
+    var s = {};
+
+    // 学术实力
+    s.academic = (TIER_SCORE[net.tier] || 2) / 5;
+
+    // 预算匹配
+    var netBudgetScore = BUDGET_SCORE[net.budgetHint] || 2;
+    var userBudgetScore = BUDGET_SCORE[budget] || 2;
+    s.budgetMatch = 1 - Math.abs(netBudgetScore - userBudgetScore) / 2;
+
+    // 区域匹配（精确匹配满分，跨区递减）
+    s.regionMatch = region === net.region ? 1 : (region === 'all' ? 0.8 : 0.4);
+
+    // 家庭友好度
+    s.family = net.familyRating / 5;
+
+    // 加权总分
+    var total = 0;
+    Object.keys(SN_WEIGHTS).forEach(function(k) { total += s[k] * SN_WEIGHTS[k]; });
+
+    scored.push({
+      net: net.net, name: net.name, tier: net.tier, level: net.level,
+      schools: net.schools, vibe: net.vibe, region: net.region,
+      familyRating: net.familyRating, budgetHint: net.budgetHint,
+      score: Math.round(total * 10) / 10
+    });
+  }
+
+  scored.sort(function(a, b) { return b.score - a.score; });
+  return scored.slice(0, 5);
 };
