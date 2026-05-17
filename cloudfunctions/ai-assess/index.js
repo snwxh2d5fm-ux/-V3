@@ -11,6 +11,12 @@
  * 源自: 住港伴-miniapp/src/cloud/functions/ai-assess/index.js
  * 适配: 原生小程序框架 + CommonJS
  */
+const cloud = require('wx-server-sdk');
+cloud.init({ env: cloud.DYNAMIC_CURRENT_ENV });
+const db = cloud.database();
+
+/**
+ */
 var scoring = require('./scoring');
 
 /**

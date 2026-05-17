@@ -403,12 +403,15 @@ async function handleV3Callback(event) {
     var rawBody = typeof event.body === 'string' ? event.body : JSON.stringify(event.body);
     var signMessage = timestamp + '\n' + nonce + '\n' + rawBody + '\n';
     var v3Key = WXPAY_CONFIG.apiV3Key;
-    if (v3Key && wechatSig) {
-      var computed = require('crypto').createHmac('sha256', v3Key).update(signMessage).digest('base64');
-      if (computed !== wechatSig) {
-        console.error('[payment] V3回调签名验证失败');
-        return { statusCode: 401, body: JSON.stringify({ code: 'FAIL', message: 'invalid signature' }) };
-      }
+    // 签名验证强制开启 —— 密钥未配置时拒绝所有回调
+    if (!v3Key) {
+      console.error('[payment] V3回调: apiV3Key未配置，拒绝回调处理');
+      return { statusCode: 500, body: JSON.stringify({ code: 'FAIL', message: 'server not configured' }) };
+    }
+    var computed = require('crypto').createHmac('sha256', v3Key).update(signMessage).digest('base64');
+    if (computed !== wechatSig) {
+      console.error('[payment] V3回调签名验证失败');
+      return { statusCode: 401, body: JSON.stringify({ code: 'FAIL', message: 'invalid signature' }) };
     }
 
     // 解密 resource

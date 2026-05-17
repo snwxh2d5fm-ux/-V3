@@ -102,7 +102,7 @@ async function runPolicyCheck() {
       var hasChanges = false;
       try {
         var httpResult = await _fetchUrl(source.url);
-        if (httpResult && httpResult.body) {
+        if (httpResult && httpResult.body && httpResult.statusCode >= 200 && httpResult.statusCode < 300) {
           contentHash = require('crypto').createHash('sha256')
             .update(httpResult.body.slice(0, 50000)).digest('hex');
           hasChanges = prevContent && prevContent !== contentHash;

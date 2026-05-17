@@ -768,7 +768,15 @@ function parseAssessmentJSON(content) {
       }
     }
   } catch(e) {
-    // 降级: 尝试从文本中提取JSON
+    console.warn('[ai-chat] JSON模式解析失败，降级到自然语言:', e.message);
+    // 降级: 尝试从markdown代码块中提取JSON
+    try {
+      var mdMatch = content.match(/```(?:json)?\s*([\s\S]*?)```/);
+      if (mdMatch) {
+        var inner = JSON.parse(mdMatch[1].trim());
+        if (inner.status && (inner.status === 'asking' || inner.status === 'done')) return inner;
+      }
+    } catch(e2) {}
   }
   // 降级: 旧格式ASSESS_RESULT:
   return null;
