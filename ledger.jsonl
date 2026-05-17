@@ -4,3 +4,6 @@
 {"ts":"2026-05-15T14:30:00+08:00","from":"claude","action":"deploy_request","detail":"真机测试6bug修复(P0-4/P1-6/P1-7/P1-8/P1-9)全部node -c通过，DEPLOY_NOW已写入，3ACL待Hermes执行","state":"pending_hermes_9gate"}
 {"ts":"2026-05-15T14:45:00+08:00","from":"claude","action":"deploy_request_v2","detail":"全量修复闭环: P0-4+P1-6/7/8/9真机bug + 麒麟P1-2(ES5降级)+P1-3(假阳性验证)。7文件变更, node -c全通过, 无云函数。呈报琅琊决策。","state":"pending_hermes_9gate"}
 {"ts":"2026-05-15T14:50:00+08:00","from":"claude","action":"gate_result","detail":"9-Gate复闸: G1合规✅ G2 Jest 13/13✅ G7 git push 7c37f09✅. 6bug+ES5全量修复, 麒麟P0全部闭环. 待琅琊验收真机.","state":"awaiting_device_verification"}
+{"ts":"2026-05-18T12:00:00+08:00","from":"claude","action":"deploy_request","detail":"方案C架构落地: 本地assemblePath为主+CloudBase增强。4文件变更—找房向导进度锁修复、子女教育CloudBase缺失修复、housingWizardDone持久化、字段规范化。node -c全通过, 无云函数。","state":"pending_hermes_9gate"}
+{"ts":"2026-05-18T12:15:00+08:00","from":"claude","action":"deploy_request","detail":"方案C架构落地+场景速查重构: 5文件变更。本地assemblePath为主+CloudBase增强; 找房向导进度锁修复; 子女教育本地补全; 场景速查raw dump→结构化卡片+搜索+加入指南。node -c全通过, 无云函数。","state":"pending_hermes_9gate"}
+{"ts":"2026-05-18T23:00:00+08:00","from":"claude","action":"deploy_request","detail":"攻略书方案C全域修复 + 三层测试191/191通过 + 真机冒烟清单","commit":"cf29a0c","state":"pending_hermes_9gate"}
