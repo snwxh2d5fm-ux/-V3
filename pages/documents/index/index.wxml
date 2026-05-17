@@ -77,6 +77,21 @@
             <text>{{item.label}}</text>
           </view>
         </block>
+        <view class="owner-tab owner-tab--add" bindtap="onAddChildTap">
+          <text>+</text>
+        </view>
+      </view>
+
+      <!-- 添加子女弹窗 -->
+      <view wx:if="{{showAddChild}}" class="overlay">
+        <view class="add-child-dialog">
+          <text class="add-child-title">添加子女</text>
+          <input class="add-child-input" placeholder="请输入子女姓名（如：小明）" value="{{newChildName}}" bindinput="onAddChildInput" maxlength="10"/>
+          <view class="add-child-actions">
+            <button class="add-child-cancel" bindtap="onAddChildCancel">取消</button>
+            <button class="add-child-confirm" bindtap="onAddChildConfirm">确认添加</button>
+          </view>
+        </view>
       </view>
 
       <view class="slot-list {{collapsedCategories[cat.categoryKey] ? 'hide' : ''}}">

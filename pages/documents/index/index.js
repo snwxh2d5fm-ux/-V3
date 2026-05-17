@@ -41,12 +41,11 @@ Page({
     collapsedCategories: {},
 
     // === 身份卡槽切换 ===
-    identityOwner: 'self',        // 身份分类下的当前所属人
-    ownerOptions: [
-      { value: 'self',   label: '本人' },
-      { value: 'spouse', label: '配偶' },
-      { value: 'child',  label: '子女' }
-    ],
+    identityOwner: 'self',
+    ownerOptions: [],           // 动态构建（含自定义子女）
+    showAddChild: false,        // 添加子女弹窗
+    newChildName: '',
+    customChildren: [],         // [{ value: 'child_1', label: '子女1' }]
 
     // === 溢出区（其他文件） ===
     overflowDocs: [],
@@ -99,6 +98,20 @@ Page({
   /* ============================================================
      LIFECYCLE
      ============================================================ */
+  buildOwnerOptions: function() {
+    var opts = [
+      { value: "self",   label: "本人" },
+      { value: "spouse", label: "配偶" },
+      { value: "child",  label: "子女" }
+    ];
+    try {
+      var custom = wx.getStorageSync("__custom_children__") || [];
+      this.setData({ customChildren: custom });
+      custom.forEach(function(c) { opts.push(c); });
+    } catch(e) {}
+    this.setData({ ownerOptions: opts });
+  },
+
   onShow() {
     try { var stages = getGlobalStages(); this.setData({ stageSteps: stages, stageProgress: Math.min(((getActiveStageIndex() + 1) / 7) * 100, 100) }); } catch(e) { this.setData({ stageProgress: 14 }); }
     const userStatus = app.globalData.userStatus ||
@@ -161,6 +174,7 @@ Page({
       this.loadSlotTemplate(userStatus, selectedPath);
     }
 
+    this.buildOwnerOptions();
     this.loadDocuments();
   },
 
@@ -316,7 +330,7 @@ Page({
   switchIdentityOwner(e) {
     const value = e.currentTarget.dataset.value;
     this.setData({ identityOwner: value });
-    // 重新计算身份分类的槽位填充状态 + 列表视图过滤
+    this.refreshIdentitySlots();
     if (this.data.slotCategories.length > 0) {
       this.refreshIdentitySlots();
     }
@@ -711,6 +725,22 @@ Page({
       });
     });
     return docs;
+  },
+
+  onAddChildTap: function() { this.setData({ showAddChild: true, newChildName: "" }); },
+  onAddChildCancel: function() { this.setData({ showAddChild: false }); },
+  onAddChildInput: function(e) { this.setData({ newChildName: e.detail.value }); },
+  onAddChildConfirm: function() {
+    var name = (this.data.newChildName || "").trim();
+    if (!name) { wx.showToast({ title: "请输入子女姓名", icon: "none" }); return; }
+    var custom = this.data.customChildren.slice();
+    var idx = custom.length + 1;
+    var newChild = { value: "child_" + idx, label: name };
+    custom.push(newChild);
+    wx.setStorageSync("__custom_children__", custom);
+    this.setData({ showAddChild: false, newChildName: "" });
+    this.buildOwnerOptions();
+    wx.showToast({ title: "已添加: " + name, icon: "success" });
   },
 
   generateSlotPDF: function(e) {
