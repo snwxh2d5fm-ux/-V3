@@ -73,7 +73,8 @@ Page({
   onPullDownRefresh: function() {
     var self = this;
     cache.invalidateCache();
-    this.init().finally(function() { wx.stopPullDownRefresh(); });
+    try { self.init(); } catch(e) {}
+    wx.stopPullDownRefresh();
   },
 
   /**
