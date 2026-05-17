@@ -23,6 +23,7 @@ const INDEX_TEMPLATES = {
           { slotKey: 'passport',     docName: '护照',         docIcon: '📘', requirement: 'recommended', description: '如有', maxCount: 8 },
           { slotKey: 'photo',        docName: '证件照',       docIcon: '📷', requirement: 'required',    description: '白底50×40mm', maxCount: 1 },
           { slotKey: "marriage_cert", docName: '结婚证(配偶)', docIcon: '💍', requirement: 'required', description: '如配偶随行', maxCount: 8 },
+          { slotKey: "birth_cert",   docName: '出生证明(子女)', docIcon: '👶', requirement: 'required', description: '如子女随行', maxCount: 1 },
         ]
       },
       {

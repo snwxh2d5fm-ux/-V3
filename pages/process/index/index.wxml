@@ -12,10 +12,6 @@
       <text class="tool-btn__icon">🧭</text>
       <text class="tool-btn__label">指引牌</text>
     </view>
-    <view class="tool-btn" hover-class="tool-btn--hover" bindtap="goToPrecheck">
-      <text class="tool-btn__icon">🔍</text>
-      <text class="tool-btn__label">效率宝</text>
-    </view>
     <view class="tool-btn" hover-class="tool-btn--hover" bindtap="goToInfo">
       <text class="tool-btn__icon">📋</text>
       <text class="tool-btn__label">信息栏</text>

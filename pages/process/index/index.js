@@ -121,12 +121,7 @@ Page({
     wx.navigateTo({ url: '/pages/guide/index/index' });
   },
   goToPrecheck() {
-    const documents = require('../../../utils/storage').getAllDocuments();
-    if (documents.length >= 4) {
-      wx.navigateTo({ url: '/pages/precheck/index/index' });
-    } else {
-      wx.showToast({ title: '请先添加至少4份材料', icon: 'none' });
-    }
+    wx.showToast({ title: '预审功能已迁移至证件详情页', icon: 'none' });
   },
   goToInfo() {
     wx.navigateTo({ url: '/pages/info/index/index' });

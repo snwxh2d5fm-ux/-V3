@@ -1,15 +1,73 @@
 <view class="page">
   <view class="search-bar">
-    <input class="search-input" placeholder="🔍 搜索学校名称、地区、校网..." value="{{keyword}}" bindinput="onSearch"/>
+    <input class="search-input" placeholder="🔍 搜索学校名称..." value="{{keyword}}" bindinput="onSearch"/>
   </view>
+
+  <!-- 类型筛选 -->
   <scroll-view scroll-x class="filter-row">
-    <text class="filter-tag {{activeType==='全部'?'active':''}}" bindtap="onFilter" data-type="全部">全部({{schools.length}})</text>
-    <text class="filter-tag {{activeType==='官立'?'active':''}}" bindtap="onFilter" data-type="官立">官立</text>
-    <text class="filter-tag {{activeType==='资助'?'active':''}}" bindtap="onFilter" data-type="资助">资助</text>
-    <text class="filter-tag {{activeType==='直资'?'active':''}}" bindtap="onFilter" data-type="直资">直资</text>
-    <text class="filter-tag {{activeType==='私立'?'active':''}}" bindtap="onFilter" data-type="私立">私立</text>
-    <text class="filter-tag {{activeType==='国际'?'active':''}}" bindtap="onFilter" data-type="国际">国际</text>
+    <text class="filter-tag {{activeType==='全部'?'active':''}}" bindtap="onTypeFilter" data-type="全部">全部({{schools.length}})</text>
+    <text class="filter-tag {{activeType==='官立'?'active':''}}" bindtap="onTypeFilter" data-type="官立">官立</text>
+    <text class="filter-tag {{activeType==='资助'?'active':''}}" bindtap="onTypeFilter" data-type="资助">资助</text>
+    <text class="filter-tag {{activeType==='直资'?'active':''}}" bindtap="onTypeFilter" data-type="直资">直资</text>
+    <text class="filter-tag {{activeType==='私立'?'active':''}}" bindtap="onTypeFilter" data-type="私立">私立</text>
+    <text class="filter-tag {{activeType==='国际'?'active':''}}" bindtap="onTypeFilter" data-type="国际">国际</text>
   </scroll-view>
+
+  <!-- 区域筛选 -->
+  <view class="dropdown-bar">
+    <view class="dropdown" bindtap="onToggleRegion">
+      <text>📍 {{activeRegion || '全部区域'}} ▾</text>
+    </view>
+    <view class="dropdown" bindtap="onToggleFee">
+      <text>💰 {{activeFee || '全部费用'}} ▾</text>
+    </view>
+    <view class="dropdown" bindtap="onToggleNet">
+      <text>🏫 {{activeNet || '全部校网'}} ▾</text>
+    </view>
+  </view>
+
+  <!-- 区域下拉 -->
+  <view class="dropdown-panel" wx:if="{{showRegionPanel}}">
+    <text class="dd-option {{activeRegion==='全部'?'active':''}}" bindtap="onRegionPick" data-region="全部">全部</text>
+    <text class="dd-option dd-subtitle">── 港岛 ──</text>
+    <text class="dd-option {{activeRegion==='港岛'?'active':''}}" bindtap="onRegionPick" data-region="港岛">港岛</text>
+    <text class="dd-option {{activeRegion==='中西区'?'active':''}}" bindtap="onRegionPick" data-region="中西区">中西区</text>
+    <text class="dd-option {{activeRegion==='湾仔区'?'active':''}}" bindtap="onRegionPick" data-region="湾仔区">湾仔区</text>
+    <text class="dd-option {{activeRegion==='东区'?'active':''}}" bindtap="onRegionPick" data-region="东区">东区</text>
+    <text class="dd-option {{activeRegion==='南区'?'active':''}}" bindtap="onRegionPick" data-region="南区">南区</text>
+    <text class="dd-option dd-subtitle">── 九龙 ──</text>
+    <text class="dd-option {{activeRegion==='九龙'?'active':''}}" bindtap="onRegionPick" data-region="九龙">九龙</text>
+    <text class="dd-option {{activeRegion==='油尖旺'?'active':''}}" bindtap="onRegionPick" data-region="油尖旺">油尖旺</text>
+    <text class="dd-option {{activeRegion==='深水埗'?'active':''}}" bindtap="onRegionPick" data-region="深水埗">深水埗</text>
+    <text class="dd-option {{activeRegion==='九龙城'?'active':''}}" bindtap="onRegionPick" data-region="九龙城">九龙城</text>
+    <text class="dd-option {{activeRegion==='黄大仙'?'active':''}}" bindtap="onRegionPick" data-region="黄大仙">黄大仙</text>
+    <text class="dd-option {{activeRegion==='观塘'?'active':''}}" bindtap="onRegionPick" data-region="观塘">观塘</text>
+    <text class="dd-option dd-subtitle">── 新界 ──</text>
+    <text class="dd-option {{activeRegion==='新界'?'active':''}}" bindtap="onRegionPick" data-region="新界">新界</text>
+    <text class="dd-option {{activeRegion==='沙田'?'active':''}}" bindtap="onRegionPick" data-region="沙田">沙田</text>
+    <text class="dd-option {{activeRegion==='屯门'?'active':''}}" bindtap="onRegionPick" data-region="屯门">屯门</text>
+    <text class="dd-option {{activeRegion==='元朗'?'active':''}}" bindtap="onRegionPick" data-region="元朗">元朗</text>
+    <text class="dd-option {{activeRegion==='荃湾'?'active':''}}" bindtap="onRegionPick" data-region="荃湾">荃湾</text>
+    <text class="dd-option {{activeRegion==='葵青'?'active':''}}" bindtap="onRegionPick" data-region="葵青">葵青</text>
+    <text class="dd-option {{activeRegion==='北区'?'active':''}}" bindtap="onRegionPick" data-region="北区">北区</text>
+    <text class="dd-option {{activeRegion==='西贡'?'active':''}}" bindtap="onRegionPick" data-region="西贡">西贡</text>
+  </view>
+
+  <!-- 费用下拉 -->
+  <view class="dropdown-panel" wx:if="{{showFeePanel}}">
+    <text class="dd-option {{activeFee==='全部'?'active':''}}" bindtap="onFeePick" data-fee="全部">全部</text>
+    <text class="dd-option {{activeFee==='免费'?'active':''}}" bindtap="onFeePick" data-fee="免费">免费</text>
+    <text class="dd-option {{activeFee==='收费'?'active':''}}" bindtap="onFeePick" data-fee="收费">收费</text>
+  </view>
+
+  <!-- 校网下拉 -->
+  <view class="dropdown-panel" wx:if="{{showNetPanel}}">
+    <text class="dd-option {{activeNet==='全部'?'active':''}}" bindtap="onNetPick" data-net="全部">全部</text>
+    <text class="dd-option {{activeNet==='名校网'?'active':''}}" bindtap="onNetPick" data-net="名校网">名校网(11/12/34/41)</text>
+    <text class="dd-option {{activeNet==='第二梯队'?'active':''}}" bindtap="onNetPick" data-net="第二梯队">第二梯队(31/32/35/48/62/88)</text>
+    <text class="dd-option {{activeNet==='新来港推荐'?'active':''}}" bindtap="onNetPick" data-net="新来港推荐">新来港推荐(71/74/80)</text>
+  </view>
+
   <view class="count-bar">共 {{filtered.length}} 所学校</view>
   <scroll-view scroll-y class="school-list">
     <view class="school-card" wx:for="{{filtered}}" wx:key="id">
