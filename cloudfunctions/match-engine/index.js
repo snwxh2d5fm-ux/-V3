@@ -44,7 +44,7 @@ async function _loadTemplateMaterials() {
   if (_templateCache && now < _cacheExpiry) return _templateCache;
 
   const result = await db.collection('process_templates')
-    .where({ isActive: true }).get();
+    .where({ isActive: true }).limit(100).get();
 
   const map = {};
   for (const t of result.data) {
@@ -89,7 +89,7 @@ async function _loadDocTypeMap() {
   if (_docTypeMapCache && now < _cacheExpiry) return _docTypeMapCache;
 
   const result = await db.collection('material_standards')
-    .where({ status: 'active' }).get();
+    .where({ status: 'active' }).limit(200).get();
 
   const map = {};
   for (const m of result.data) {
@@ -196,7 +196,7 @@ async function getChecklist(templateId) {
 
   // 从 material_standards 获取材料标签
   const standardsResult = await db.collection('material_standards')
-    .where({ status: 'active' }).get();
+    .where({ status: "active" }).limit(200).get();
   const labelMap = {};
   for (const m of standardsResult.data) {
     labelMap[m.materialType] = m.materialName || m.materialType;
@@ -229,7 +229,7 @@ async function getDocTypeMap() {
 
   // 从 material_standards 获取中文名
   const standardsResult = await db.collection('material_standards')
-    .where({ status: 'active' }).get();
+    .where({ status: "active" }).limit(200).get();
 
   const labelMap = {};
   for (const m of standardsResult.data) {

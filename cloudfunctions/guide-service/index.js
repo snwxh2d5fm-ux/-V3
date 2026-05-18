@@ -79,7 +79,7 @@ async function getByProcess(templateId) {
 }
 
 async function listNodes() {
-  const result = await db.collection('guide_items').where({ status: 'active' }).get();
+  const result = await db.collection('guide_items').where({ status: "active" }).limit(200).get();
   const nodes = {};
   for (const g of result.data) {
     if (!nodes[g.nodeId]) nodes[g.nodeId] = { nodeId: g.nodeId, nodeName: g.nodeName, count: 0 };

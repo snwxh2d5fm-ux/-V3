@@ -57,7 +57,7 @@ async function _loadBlockedKeywords() {
   }
 
   const result = await db.collection('content_rules')
-    .where({ ruleType: 'blocked_keyword', isActive: true }).get();
+    .where({ ruleType: "blocked_keyword", isActive: true }).limit(200).get();
 
   const keywords = [];
   const regexPatterns = [];
@@ -202,7 +202,7 @@ async function cleanText(text) {
 
   // DB 中的自定义脱敏规则
   const customCleanRules = await db.collection('content_rules')
-    .where({ ruleType: 'sanitize_pattern', isActive: true }).get();
+    .where({ ruleType: "sanitize_pattern", isActive: true }).limit(200).get();
 
   for (const rule of customCleanRules.data) {
     if (rule.pattern) {
@@ -231,13 +231,13 @@ async function cleanText(text) {
  */
 async function getRules() {
   const keywordsResult = await db.collection('content_rules')
-    .where({ ruleType: 'blocked_keyword', isActive: true }).get();
+    .where({ ruleType: "blocked_keyword", isActive: true }).limit(200).get();
 
   const sanitizeResult = await db.collection('content_rules')
-    .where({ ruleType: 'sanitize_pattern', isActive: true }).get();
+    .where({ ruleType: "sanitize_pattern", isActive: true }).limit(200).get();
 
   const piiResult = await db.collection('content_rules')
-    .where({ ruleType: 'pii_pattern', isActive: true }).get();
+    .where({ ruleType: "pii_pattern", isActive: true }).limit(200).get();
 
   return {
     code: 0,
