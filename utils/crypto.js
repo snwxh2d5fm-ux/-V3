@@ -2,6 +2,7 @@
  * 住港伴 — AES-256-GCM 客户端加密模块
  * 密钥由用户口令通过 PBKDF2 派生，永不离客户端
  * 使用微信小程序原生 API（wx.getRandomValues + 纯JS AES实现）
+ * @module crypto
  */
 var ENC_ALGO = 'AES-GCM';
 var KEY_LENGTH = 256;
