@@ -28,7 +28,7 @@
       账号一键登录
     </button>
 
-    <!-- 手机号授权登录 -->
+    <!-- 手机号授权登录 (需微信后台开通手机号能力，未开通时不可用) -->
     <button class="btn btn--outline btn--block btn--lg login-btn-phone"
             open-type="getPhoneNumber"
             bindgetphonenumber="handleWechatPhone"
