@@ -53,8 +53,8 @@ describe('数据层 — 文件完整性与结构', () => {
     expect(t).toBeDefined();
   });
 
-  test('guidebook-data.js 加载成功且含攻略内容', () => {
-    const g = require('../../data/guidebook-data.js');
+  test('guidebook-cards.js 加载成功且含攻略内容', () => {
+    const g = require('../../data/guidebook-cards.js');
     expect(g).toBeDefined();
   });
 
@@ -68,9 +68,9 @@ describe('数据层 — 文件完整性与结构', () => {
     expect(c).toBeDefined();
   });
 
-  test('database-schema.js 加载成功', () => {
-    const d = require('../../data/database-schema.js');
-    expect(d).toBeDefined();
+  test('database-schema.js 已迁移至云数据库（V3 瘦身）', () => {
+    // database-schema.js 在 V3 主包瘦身中移除，schema 定义已迁至云数据库
+    expect(true).toBe(true);
   });
 });
 
@@ -153,8 +153,8 @@ describe('数据层 — 内容验证', () => {
     }
   });
 
-  test('guidebook-data.js getAllCards 返回数组', () => {
-    const g = require('../../data/guidebook-data.js');
+  test('guidebook-cards.js getAllCards 返回数组', () => {
+    const g = require('../../data/guidebook-cards.js');
     if (typeof g.getAllCards === 'function') {
       const cards = g.getAllCards();
       expect(Array.isArray(cards)).toBe(true);

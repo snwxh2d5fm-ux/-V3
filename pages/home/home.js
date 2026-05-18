@@ -69,32 +69,68 @@ Page({
 
   // ========== 未登录状态 ==========
   handleLogin(e) {
-    const { code } = e.detail;
-    if (!code) return;
+    const { errMsg, code } = e.detail || {};
+
+    // 用户拒绝授权
+    if (errMsg && errMsg.includes('deny')) {
+      wx.showToast({ title: '需要授权手机号才能登录', icon: 'none' });
+      return;
+    }
+
+    // getPhoneNumber 未返回有效 code
+    if (errMsg !== 'getPhoneNumber:ok' || !code) {
+      wx.showToast({ title: '手机号获取失败，请重试', icon: 'none' });
+      return;
+    }
 
     this.setData({ loading: true });
     wx.showLoading({ title: '登录中...' });
 
-    // 调用云函数完成微信登录
+    // 调用云函数完成手机号登录
     wx.cloud.callFunction({
       name: 'user-auth',
-      data: { action: 'login', code: code }
+      data: { action: 'phoneLogin', phoneCode: code, loginType: 'wechat_phone' }
     }).then((res) => {
       wx.hideLoading();
-      var result = res.result || {};
-      if (result.code === 0 && result.data && result.data.token) {
+      const result = res.result || {};
+      if (result.code === 0 && result.token) {
         // 保存登录态
-        wx.setStorageSync('__session__', result.data.token);
-        wx.setStorageSync('user_data', result.data.user || {});
-        // 跳转状态选择
-        wx.redirectTo({ url: '/pages/status-select/status-select' });
+        const userData = result.data || {};
+        wx.setStorageSync('__session__', result.token);
+        wx.setStorageSync('user_data', userData);
+        wx.setStorageSync('__user_profile__', userData);
+        wx.setStorageSync('__user_status__', result.userStatus || 'unapplied');
+
+        app.globalData.isLoggedIn = true;
+        app.globalData.token = result.token;
+        app.globalData.userInfo = result.userInfo || {};
+        app.globalData.userStatus = result.userStatus || 'unapplied';
+        app.globalData.membershipLevel = result.membershipLevel || 'free';
+        app.globalData.phoneBound = !!(result.phoneBound || userData.phoneBound);
+
+        // 跳转
+        const isNew = userData.isNew !== false;
+        if (isNew) {
+          wx.redirectTo({ url: '/pages/status-select/status-select' });
+        } else {
+          wx.switchTab({ url: '/pages/process/index/index' });
+        }
+      } else if (result.code === 500 && result.msg) {
+        // DevTools/模拟器下 openapi 不可用
+        wx.showModal({
+          title: '手机号登录提示',
+          content: `当前环境不支持手机号登录（${result.msg}）。\n\n建议：使用「其他方式登录」进入，真机调试时手机号功能正常。`,
+          showCancel: false,
+          confirmText: '知道了'
+        });
+        this.setData({ loading: false, unauthenticated: true });
       } else {
-        wx.showToast({ title: '登录失败，请重试', icon: 'none' });
+        wx.showToast({ title: result.msg || '登录失败，请重试', icon: 'none' });
         this.setData({ loading: false });
       }
     }).catch((err) => {
       wx.hideLoading();
-      console.error('[home] 登录失败:', err);
+      console.error('[home] 手机号登录失败:', err);
       wx.showToast({ title: '网络异常，请检查网络后重试', icon: 'none' });
       this.setData({ loading: false });
     });

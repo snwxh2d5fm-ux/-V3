@@ -149,6 +149,10 @@ async function compareSolutionPaths(pathIds) {
  * @param {array}  history - 对话历史 [{role,content}]
  */
 async function sendChatMessageV5(sessionId, message, mode, context, history) {
+  if (!wx.cloud) {
+    console.warn('[API] wx.cloud 不可用，返回离线模式');
+    return { code: 503, message: '云服务未初始化', data: { content: '抱歉，AI服务需要云环境支持，当前不可用。', sources: [] } };
+  }
   try {
     const res = await wx.cloud.callFunction({
       name: 'ai-chat',
