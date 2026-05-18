@@ -352,11 +352,12 @@ Page({
   loadArticles: function() {
     var self = this;
     self.setData({ articleLoading: true });
-    var localGuides = require('../../../data/guidebook-data');
+    var localGuides = require('../../../data/guidebook-cards');
     var rawCards = localGuides.getAllCards ? localGuides.getAllCards() : [];
     if (rawCards.length > 0) {
       var mapped = rawCards.map(function(c) {
-        var full = localGuides.getById ? localGuides.getById(c.id) : null;
+        var full = null;
+        try { var content = require('../../subpkg-guide/data/guidebook-content'); full = content ? content[c.id] : null; } catch(e) {}
         var layers = [];
         if (c.desc) layers.push({ id: 'overview', title: '概览', content: c.desc, open: true });
         if (full && full.sections) {
