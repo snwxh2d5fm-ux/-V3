@@ -27,6 +27,43 @@
     <text style="font-size:var(--font-sm);color:var(--color-text-secondary);display:block;margin-bottom:16rpx">当前模型：DeepSeek V4 (deepseek-chat)</text>
     <button class="btn btn-outline btn-block" bindtap="updateAIModel">更新模型配置</button>
   </view>
+  <!-- Phase 3: AI对话看板 -->
+  <view class="section-header">🤖 AI对话运营</view>
+  <view class="card" style="padding:0">
+    <view class="list-item" wx:for="{{aiOps}}" wx:key="id" bindtap="onAiAction" data-id="{{item.id}}">
+      <text class="list-item-icon">{{item.icon}}</text><view class="list-item-content"><text class="list-item-title">{{item.title}}</text><text class="list-item-desc">{{item.desc}}</text></view><text class="list-item-arrow">›</text>
+    </view>
+  </view>
+
+  <view class="card" wx:if="{{aiDashboard}}" style="margin-top:16rpx">
+    <view class="card-title">📊 实时看板</view>
+    <view style="display:flex;flex-wrap:wrap;gap:16rpx">
+      <view style="flex:1;min-width:40%;background:var(--gray-50);border-radius:12rpx;padding:16rpx;text-align:center">
+        <text style="font-size:var(--font-2xl);font-weight:700;color:var(--blue);display:block">{{aiDashboard.today_conversations}}</text>
+        <text style="font-size:var(--font-xs);color:var(--gray-500)">今日对话</text>
+      </view>
+      <view style="flex:1;min-width:40%;background:var(--gray-50);border-radius:12rpx;padding:16rpx;text-align:center">
+        <text style="font-size:var(--font-2xl);font-weight:700;color:{{aiDashboard.avg_accuracy_last_20 >= 85 ? 'var(--green)' : aiDashboard.avg_accuracy_last_20 >= 70 ? 'var(--orange)' : 'var(--red)'}};display:block">{{aiDashboard.avg_accuracy_last_20 || '--'}}%</text>
+        <text style="font-size:var(--font-xs);color:var(--gray-500)">准确率(20题)</text>
+      </view>
+      <view style="flex:1;min-width:40%;background:var(--gray-50);border-radius:12rpx;padding:16rpx;text-align:center">
+        <text style="font-size:var(--font-2xl);font-weight:700;color:var(--red);display:block">{{aiDashboard.total_safety_events}}</text>
+        <text style="font-size:var(--font-xs);color:var(--gray-500)">安全事件</text>
+      </view>
+      <view style="flex:1;min-width:40%;background:var(--gray-50);border-radius:12rpx;padding:16rpx;text-align:center">
+        <text style="font-size:var(--font-2xl);font-weight:700;color:var(--purple);display:block">¥{{aiDashboard.estimated_total_cost_rmb}}</text>
+        <text style="font-size:var(--font-xs);color:var(--gray-500)">累计成本</text>
+      </view>
+    </view>
+    <view style="margin-top:16rpx;font-size:var(--font-xs);color:var(--gray-400)">
+      <text>QA:{{aiDashboard.mode_distribution.qa || 0}} 评估:{{aiDashboard.mode_distribution.assessment || 0}} 通用:{{aiDashboard.mode_distribution.general || 0}}</text>
+    </view>
+  </view>
+
+  <view class="card" wx:if="{{aiDashboardLoading}}" style="margin-top:16rpx;text-align:center">
+    <text style="color:var(--gray-400)">加载中...</text>
+  </view>
+
   <view class="card" style="background:var(--gray-50);margin-top:16rpx">
     <text style="font-size:var(--font-sm);color:var(--gray-500);display:block;line-height:1.8">💡 数据库持续迭代机制：· 每次打开应用自动增量同步 · 证件/提醒/流程数据实时云端备份 · AI对话历史本地存储（不上云） · 敏感数据脱敏后加密传输 · 支持手动全量同步</text>
   </view>
