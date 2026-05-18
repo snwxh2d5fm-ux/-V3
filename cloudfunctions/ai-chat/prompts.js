@@ -236,6 +236,23 @@ function buildUserProfile(context) {
   return profile;
 }
 
+/** Phase 3: 对话历史推断回答风格 */
+function buildAdaptiveStyle(history) {
+  if (!history || history.length < 4) return '';
+  var userMessages = history.filter(function(m) { return m.role === 'user'; });
+  var avgLen = userMessages.reduce(function(s, m) { return s + (m.content || '').length; }, 0) / Math.max(1, userMessages.length);
+  var detailPreference = avgLen > 80 ? 'detailed' : 'concise';
+  var turnCount = Math.floor(history.length / 2);
+
+  var style = '\n\n【Phase 3·自适应回答风格】\n';
+  style += '对话轮数: ' + turnCount + ' (多次追问说明用户需要深入了解)\n';
+  style += '回答偏好: ' + (detailPreference === 'detailed' ? '用户提问详细，请给出结构化、有深度的回答' : '用户提问简洁，请直接给要点，不必过度展开') + '\n';
+  if (turnCount > 3) {
+    style += '用户已经过多轮交流，说明对该话题有持续兴趣。可以在回答末尾主动提供相关的进阶方向。\n';
+  }
+  return style;
+}
+
 function getSystemPrompt(mode, context) {
   var PRIVACY_DIRECTIVE = '\n## ⚠️ 系统最高指令：用户画像绝对保密\n' +
     '以下关于当前用户的背景信息仅供你内部参考，用于调整回答的针对性和专业深度。\n' +
@@ -293,5 +310,6 @@ module.exports = {
   buildSolutionRecommendPrompt,
   getSystemPrompt,
   buildProactiveHint,
+  buildAdaptiveStyle,
   K2_SAFETY_RULES
 };

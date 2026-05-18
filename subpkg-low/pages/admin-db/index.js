@@ -8,6 +8,9 @@ Page({
     lastSyncTime: null,
     cloudStats: { documents: 0, reminders: 0, processes: 0 },
     dbStatus: 'connected',
+    // Phase 3: AI对话看板
+    aiDashboard: null,
+    aiDashboardLoading: false,
     operations: [
       { id: 'sync', icon: '🔄', title: '全量同步', desc: '将本地数据同步到云数据库' },
       { id: 'pull', icon: '📥', title: '拉取云端', desc: '从云数据库拉取最新数据' },
@@ -15,10 +18,37 @@ Page({
       { id: 'clean', icon: '🧹', title: '清理缓存', desc: '清理本地过期缓存数据' },
       { id: 'export', icon: '📤', title: '导出数据', desc: '导出脱敏后的数据报告' },
       { id: 'reset', icon: '⚠️', title: '重置数据库', desc: '清空云端数据重新开始' }
+    ],
+    aiOps: [
+      { id: 'aiDashboard', icon: '📊', title: 'AI对话看板', desc: '准确率/成本/安全事件' },
+      { id: 'aiEvalDaily', icon: '🔬', title: '每日评估采样', desc: '运行20题准确率测试' }
     ]
   },
 
   onShow() { this.loadStatus(); },
+
+  // Phase 3: AI看板
+  async loadAiDashboard() {
+    this.setData({ aiDashboardLoading: true });
+    try {
+      var res = await wx.cloud.callFunction({ name: 'ai-eval', data: { action: 'dashboard' } });
+      if (res.result && res.result.code === 200) {
+        this.setData({ aiDashboard: res.result.data, aiDashboardLoading: false });
+      }
+    } catch(e) { this.setData({ aiDashboardLoading: false }); }
+  },
+
+  onAiAction(e) {
+    var id = e.currentTarget.dataset.id;
+    if (id === 'aiDashboard') this.loadAiDashboard();
+    else if (id === 'aiEvalDaily') {
+      wx.showLoading({ title: '评估中...' });
+      wx.cloud.callFunction({ name: 'ai-eval', data: { action: 'daily_sample' } }).finally(function() {
+        wx.hideLoading();
+        wx.showToast({ title: '已提交评估任务' });
+      });
+    }
+  },
 
   async loadStatus() {
     const lastSync = wx.getStorageSync('__db_sync_state__');

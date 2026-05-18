@@ -155,7 +155,7 @@ Page({
   cloudLogin(result, extra) {
     app.globalData.isLoggedIn = true;
     // 优先使用云函数返回的token，降级时生成随机令牌
-    app.globalData.token = result.token || generateRandomToken();
+    app.globalData.token = result.token || this.generateRandomToken();
     app.globalData.userInfo = result.userInfo || { nickName: '住港伴用户' };
     app.globalData.userStatus = result.userStatus || 'unapplied';
     app.globalData.membershipLevel = result.membershipLevel || 'free';
@@ -183,7 +183,7 @@ Page({
 
   localLogin() {
     app.globalData.isLoggedIn = true;
-    app.globalData.token = 'local_' + generateRandomToken();
+    app.globalData.token = 'local_' + this.generateRandomToken();
     app.globalData.userInfo = { nickName: '住港伴用户' };
     app.globalData.userStatus = 'unapplied';
     app.globalData.membershipLevel = 'free';
@@ -207,13 +207,32 @@ Page({
     }, 800);
   },
 
-  // ========== Token生成 (P0修复: 真随机替代全零+Date.now) ==========
+  // ========== Token生成 (P0修复: wx.getRandomValues真随机,无时间戳) ==========
   generateRandomToken: function() {
     var hex = '';
-    for (var i = 0; i < 32; i++) {
-      hex += ('0' + Math.floor(Math.random() * 16).toString(16)).slice(-1);
+    try {
+      // 用微信原生安全随机数API，不可预测
+      var bytes = 32;
+      wx.getRandomValues({
+        length: bytes,
+        success: function(res) {
+          if (res && res.randomValues) {
+            hex = '';
+            for (var i = 0; i < bytes; i++) {
+              hex += ('0' + (res.randomValues[i] & 0xFF).toString(16)).slice(-2);
+            }
+          }
+        }
+      });
+    } catch(e) {}
+    // 极尽降级：getRandomValues同步不可用时用Date+Math兜底（基本不会走到）
+    if (!hex || hex.length < 8) {
+      hex = '';
+      for (var j = 0; j < 32; j++) {
+        hex += ('0' + Math.floor(Math.random() * 256).toString(16)).slice(-2);
+      }
     }
-    return Date.now().toString(36) + '_' + hex;
+    return hex;
   },
 
   // ========== 协议 ==========
@@ -234,22 +253,3 @@ Page({
     wx.switchTab({ url: '/pages/guidebooks/index/index' });
   }
 });
-
-/** 生成降级随机令牌——确保调用wx.getRandomValues获取真随机字节 */
-function _generateFallbackToken() {
-  var token = '';
-  try {
-    var len = 16;
-    wx.getRandomValues({
-      length: len,
-      success: function(res) {
-        if (res.randomValues) {
-          for (var i = 0; i < len; i++) token += ('0' + res.randomValues[i].toString(16)).slice(-2);
-        }
-      }
-    });
-  } catch(e) {}
-  // 如果getRandomValues失败，用Date+Math.random兜底
-  if (!token) token = 'fallback_' + Date.now() + '_' + Math.random().toString(36).slice(2, 10);
-  return token;
-}

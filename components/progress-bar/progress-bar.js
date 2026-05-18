@@ -5,17 +5,15 @@ Component({
     height: { type: Number, value: 8 }
   },
   observers: {
-    'percent': function(percent) {
-      this.setData({
-        barColor: percent >= 80 ? '#059669' : percent >= 50 ? '#D97706' : '#DC2626'
-      });
-    }
+    'percent': '_updateBarColor'
   },
   lifetimes: {
-    attached: function() {
-      this.setData({
-        barColor: this.data.percent >= 80 ? '#059669' : this.data.percent >= 50 ? '#D97706' : '#DC2626'
-      });
+    attached: '_updateBarColor'
+  },
+  methods: {
+    _updateBarColor: function() {
+      var p = this.data.percent;
+      this.setData({ barColor: p >= 80 ? '#059669' : p >= 50 ? '#D97706' : '#DC2626' });
     }
   }
 });

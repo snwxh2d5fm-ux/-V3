@@ -18,6 +18,7 @@
 const cloud = require('wx-server-sdk');
 const axios = require('axios');
 const crypto = require('crypto');
+const invoices = require('./invoices');
 
 const CLOUD_ENV = 'cloudbase-d1g17tgt7cc199a60';
 
@@ -56,9 +57,9 @@ exports.main = async (event, context) => {
       case 'checkSubscription':  return await checkSubscription(openid);
       case 'getSubscriptions':   return await getSubscriptions(openid);
       case 'cancelSubscription': return await cancelSubscription(openid, event);
-      case 'createInvoice':      return await createInvoice(openid, event);
-      case 'getInvoices':        return await getInvoices(openid, event);
-      case 'getInvoiceDetail':   return await getInvoiceDetail(openid, event);
+      case 'createInvoice':      return await invoices.createInvoice(openid, event, db);
+      case 'getInvoices':        return await invoices.getInvoices(openid, event, db);
+      case 'getInvoiceDetail':   return await invoices.getInvoiceDetail(openid, event, db);
       case 'deleteOrder':        return await deleteOrder(openid, event);
       default:
         return { code: 400, msg: '无效操作' };
@@ -561,188 +562,8 @@ async function cancelSubscription(openid, event) {
   return { code: 0, msg: '订阅已取消，到期后不再续费' };
 }
 
-// ==================== 发票管理 ====================
-
-/**
- * 创建发票申请
- * @param {string} openid
- * @param {object} event — { orderId, invoiceType: 'personal'|'company', title, taxNumber, email, address, phone, bankInfo }
- */
-async function createInvoice(openid, event) {
-  var orderId = (event.orderId || '').trim();
-  var invoiceType = (event.invoiceType || 'personal').trim();
-  var title = (event.title || '').trim();
-  var taxNumber = (event.taxNumber || '').trim();
-  var email = (event.email || '').trim();
-  var address = (event.address || '').trim();
-  var phone = (event.phone || '').trim();
-  var bankInfo = (event.bankInfo || '').trim();
-
-  if (!orderId) return { code: 400, msg: '缺少 orderId' };
-
-  // 发票类型白名单
-  if (!['personal', 'company'].includes(invoiceType)) {
-    return { code: 400, msg: '无效的发票类型' };
-  }
-
-  // 输入长度限制
-  if (title.length > 100) return { code: 400, msg: '发票抬头不超过100字' };
-  if (taxNumber.length > 30) return { code: 400, msg: '税号不超过30位' };
-  if (address.length > 200) return { code: 400, msg: '地址不超过200字' };
-  if (phone.length > 20) return { code: 400, msg: '电话不超过20位' };
-  if (bankInfo.length > 200) return { code: 400, msg: '银行信息不超过200字' };
-
-  // 邮箱格式校验(服务端防线)
-  var emailRe = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
-  if (email && !emailRe.test(email)) {
-    return { code: 400, msg: '邮箱格式不正确' };
-  }
-
-  // 验证订单归属 + 状态
-  var orderResult = await db.collection('orders').where({ _id: orderId, _openid: openid }).get();
-  if (orderResult.data.length === 0) return { code: 404, msg: '订单不存在' };
-  var order = orderResult.data[0];
-  if (order.status !== 'completed') return { code: 400, msg: '仅已支付订单可申请发票' };
-
-  // 检查是否已有发票申请
-  var existing = await db.collection('invoices').where({ orderId: orderId, _openid: openid }).get();
-  if (existing.data.length > 0) return { code: 400, msg: '该订单已申请过发票', data: { invoiceId: existing.data[0]._id } };
-
-  // 企业发票必填税号
-  if (invoiceType === 'company') {
-    if (!title) return { code: 400, msg: '企业发票必须填写公司名称' };
-    if (!taxNumber) return { code: 400, msg: '企业发票必须填写税号' };
-  } else {
-    title = title || '个人';
-  }
-
-  var invoiceData = {
-    _openid: openid,
-    orderId: orderId,
-    orderAmount: order.amount,
-    orderAmountYuan: order.amountYuan,
-    productName: order.productName,
-    invoiceType: invoiceType,
-    title: title,
-    taxNumber: taxNumber,
-    email: email,
-    address: address,
-    phone: phone,
-    bankInfo: bankInfo,
-    status: 'pending',
-    createdAt: db.serverDate(),
-    updatedAt: db.serverDate()
-  };
-
-  var addResult = await db.collection('invoices').add({ data: invoiceData });
-  var invoiceId = addResult._id;
-
-  // 审计日志写入失败不影响主流程
-  try {
-    await db.collection('audit_logs').add({
-      data: {
-        _openid: openid,
-        action: 'invoice_requested',
-        detail: { invoiceId: invoiceId, orderId: orderId, invoiceType: invoiceType },
-        createdAt: db.serverDate()
-      }
-    });
-  } catch (auditErr) {
-    console.error('[payment] audit_logs写入失败:', auditErr.message);
-  }
-
-  return {
-    code: 0,
-    data: {
-      invoiceId: invoiceId,
-      status: 'pending',
-      msg: '发票申请已提交，3个工作日内发送至您的邮箱'
-    }
-  };
-}
-
-/**
- * 获取用户发票列表
- */
-async function getInvoices(openid, event) {
-  var limit = Math.min((event && event.limit) || 10, 50);
-  var offset = Math.max(0, (event && event.offset) || 0);
-
-  // 总数
-  var countResult = await db.collection('invoices')
-    .where({ _openid: openid }).count();
-
-  // 分页数据(多取1条判断hasMore)
-  var result = await db.collection('invoices')
-    .where({ _openid: openid })
-    .orderBy('createdAt', 'desc')
-    .skip(offset)
-    .limit(limit + 1)
-    .get();
-
-  var items = result.data;
-  var hasMore = items.length > limit;
-  if (hasMore) items = items.slice(0, limit);
-
-  var list = items.map(function(inv) {
-    return {
-      invoiceId: inv._id,
-      orderId: inv.orderId,
-      productName: inv.productName,
-      orderAmountYuan: inv.orderAmountYuan,
-      invoiceType: inv.invoiceType,
-      title: inv.title,
-      status: inv.status,
-      createdAt: inv.createdAt,
-      issuedAt: inv.issuedAt != null ? inv.issuedAt : null
-    };
-  });
-
-  return {
-    code: 0,
-    data: {
-      list: list,
-      total: countResult.total,
-      hasMore: hasMore,
-      offset: offset,
-      limit: limit
-    }
-  };
-}
-
-/**
- * 获取单张发票详情
- */
-async function getInvoiceDetail(openid, event) {
-  var invoiceId = event.invoiceId;
-  if (!invoiceId) return { code: 400, msg: '缺少 invoiceId' };
-
-  var result = await db.collection('invoices').where({ _id: invoiceId, _openid: openid }).get();
-  if (result.data.length === 0) return { code: 404, msg: '发票记录不存在' };
-
-  var inv = result.data[0];
-  return {
-    code: 0,
-    data: {
-      invoiceId: inv._id,
-      orderId: inv.orderId,
-      productName: inv.productName,
-      orderAmountYuan: inv.orderAmountYuan,
-      invoiceType: inv.invoiceType,
-      title: inv.title,
-      taxNumber: inv.taxNumber,
-      email: inv.email,
-      address: inv.address,
-      phone: inv.phone,
-      bankInfo: inv.bankInfo,
-      status: inv.status,
-      createdAt: inv.createdAt,
-      issuedAt: inv.issuedAt != null ? inv.issuedAt : null
-    }
-  };
-}
-
 // ==================== 内部函数 ====================
+// 发票管理已提取到 ./invoices.js
 
 async function activateMembership(openid, order) {
   let level = 'basic';

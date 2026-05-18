@@ -310,11 +310,12 @@ async function fetchBatch(ddb, where, maxItems) {
 function buildDeepSeekRequest(messages, mode, contextText, streamMode, sessionContext) {
   const systemPrompt = prompts.getSystemPrompt(mode, sessionContext);
 
-  // Phase 3: 注入主动对话提示
+  // Phase 3: 注入主动对话提示 + 自适应回答风格
   const proactiveHint = prompts.buildProactiveHint(sessionContext);
+  const adaptiveStyle = prompts.buildAdaptiveStyle(messages);
 
-  // 将RAG检索结果+主动提示注入system prompt
-  const enhancedPrompt = systemPrompt + proactiveHint + contextText;
+  // 将RAG检索结果+主动提示+自适应注入system prompt
+  const enhancedPrompt = systemPrompt + proactiveHint + adaptiveStyle + contextText;
 
   // Phase 3.3: A/B模型切换 — MODEL_AB_RATIO=5 则5%流量用备选模型
   var abRatio = parseInt(process.env.MODEL_AB_RATIO || '0');
