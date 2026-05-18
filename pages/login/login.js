@@ -47,15 +47,15 @@ Page({
       }
 
       if (!result || result.code !== 0) {
-        this.localLogin();
+        await this.localLogin();
       } else {
-        this.cloudLogin(result);
+        await this.cloudLogin(result);
       }
 
       this.navigateAfterLogin();
     } catch (e) {
       console.error('[登录] 微信登录失败:', e);
-      this.localLogin();
+      await this.localLogin();
       wx.showToast({ title: '已进入本地模式', icon: 'success' });
       setTimeout(() => { wx.switchTab({ url: '/pages/guidebooks/index/index' }); }, 800);
     } finally {
@@ -105,7 +105,7 @@ Page({
 
       // ---- 云函数返回成功 ----
       if (result.code === 0) {
-        this.cloudLogin(result, { phoneBound: true });
+        await this.cloudLogin(result, { phoneBound: true });
         this.navigateAfterLogin();
         return;
       }
@@ -152,10 +152,9 @@ Page({
   },
 
   // ========== 登录成功处理 ==========
-  cloudLogin(result, extra) {
+  async cloudLogin(result, extra) {
     app.globalData.isLoggedIn = true;
-    // 优先使用云函数返回的token，降级时生成随机令牌
-    app.globalData.token = result.token || this.generateRandomToken();
+    app.globalData.token = result.token || await this.generateRandomToken();
     app.globalData.userInfo = result.userInfo || { nickName: '住港伴用户' };
     app.globalData.userStatus = result.userStatus || 'unapplied';
     app.globalData.membershipLevel = result.membershipLevel || 'free';
@@ -181,9 +180,9 @@ Page({
     });
   },
 
-  localLogin() {
+  async localLogin() {
     app.globalData.isLoggedIn = true;
-    app.globalData.token = 'local_' + this.generateRandomToken();
+    app.globalData.token = 'local_' + await this.generateRandomToken();
     app.globalData.userInfo = { nickName: '住港伴用户' };
     app.globalData.userStatus = 'unapplied';
     app.globalData.membershipLevel = 'free';
@@ -207,30 +206,45 @@ Page({
     }, 800);
   },
 
-  // ========== Token生成 (P0修复: wx.getRandomValues真随机,无时间戳) ==========
+  // ========== Token生成 (wx.getRandomValues Promise包装, 16字节 → 32 hex) ==========
   generateRandomToken: function() {
-    var hex = '';
-    try {
-      // 用微信原生安全随机数API，不可预测
-      var bytes = 32;
-      wx.getRandomValues({
-        length: bytes,
-        success: function(res) {
-          if (res && res.randomValues) {
-            hex = '';
-            for (var i = 0; i < bytes; i++) {
-              hex += ('0' + (res.randomValues[i] & 0xFF).toString(16)).slice(-2);
+    var self = this;
+    return new Promise(function(resolve) {
+      try {
+        var bytes = new Uint8Array(16);
+        wx.getRandomValues({
+          length: 16,
+          success: function(res) {
+            if (res && res.randomValues) {
+              for (var i = 0; i < 16; i++) {
+                bytes[i] = res.randomValues[i];
+              }
+              var hex = '';
+              for (var j = 0; j < 16; j++) {
+                hex += ('0' + bytes[j].toString(16)).slice(-2);
+              }
+              resolve(hex);
+            } else {
+              console.warn('[login] wx.getRandomValues returned empty, using fallback');
+              resolve(self._fallbackToken());
             }
+          },
+          fail: function(err) {
+            console.warn('[login] wx.getRandomValues failed:', err);
+            resolve(self._fallbackToken());
           }
-        }
-      });
-    } catch(e) {}
-    // 极尽降级：getRandomValues同步不可用时用Date+Math兜底（基本不会走到）
-    if (!hex || hex.length < 8) {
-      hex = '';
-      for (var j = 0; j < 32; j++) {
-        hex += ('0' + Math.floor(Math.random() * 256).toString(16)).slice(-2);
+        });
+      } catch(e) {
+        console.warn('[login] getRandomValues error:', e.message);
+        resolve(self._fallbackToken());
       }
+    });
+  },
+
+  _fallbackToken: function() {
+    var hex = '';
+    for (var j = 0; j < 16; j++) {
+      hex += ('0' + Math.floor(Math.random() * 256).toString(16)).slice(-2);
     }
     return hex;
   },

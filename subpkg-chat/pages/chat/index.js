@@ -120,6 +120,29 @@ Page({
 
       var history = this.buildHistory(messages);
       var clientBanners = this.runSafetyCheck(text);
+      var useStream = typeof wx.request !== 'undefined';
+
+      // 流式渲染回调
+      var that = this;
+      if (useStream) {
+        var streamResult = await api.sendChatMessageStream(
+          app.globalData.aiSessionId, text, this.data.mode, context, history,
+          {
+            onToken: function(token, full) {
+              that.appendStreamToken(token);
+            },
+            onDone: function(content, meta) {
+              // 流式完成时已在stream handler中处理
+            }
+          }
+        );
+        if (streamResult && streamResult.code === 200) {
+          this.finishStream(streamResult.data.content, streamResult.data.sources || []);
+          this.saveHistory(that.data.messages);
+          return;
+        }
+        // 流式失败降级到非流式
+      }
 
       var res = await api.sendChatMessageV5(
         app.globalData.aiSessionId,
@@ -336,6 +359,36 @@ Page({
       }
     }
     return banners;
+  },
+
+  // ========== 流式渲染 ==========
+  appendStreamToken: function(token) {
+    var msgs = this.data.messages;
+    var last = msgs[msgs.length - 1];
+    if (last && last.role === 'assistant' && last.isStreaming) {
+      last.content += token;
+    } else {
+      msgs.push({ role: 'assistant', content: token, timestamp: Date.now(), isStreaming: true });
+    }
+    this.setData({ messages: msgs });
+    this.scrollToBottom();
+  },
+
+  finishStream: function(content, sources) {
+    var msgs = this.data.messages;
+    var last = msgs[msgs.length - 1];
+    if (last && last.role === 'assistant') {
+      last.content = content;
+      last.isStreaming = false;
+      last.sources = sources;
+    }
+    this.setData({
+      messages: msgs,
+      loading: false,
+      sources: sources || [],
+      showSources: (sources && sources.length > 0),
+      isStreaming: false
+    });
   },
 
   // ========== 对话历史 ==========

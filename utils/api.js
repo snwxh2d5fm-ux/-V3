@@ -172,6 +172,81 @@ async function sendChatMessage(sessionId, message, mode, context) {
 }
 
 /**
+ * v5 流式接口 — HTTP SSE streaming
+ * 首字延迟<1.5s，实时渲染
+ */
+var AI_CHAT_HTTP = 'https://cloudbase-d1g17tgt7cc199a60.service.tcloudbase.com/ai-chat';
+
+function sendChatMessageStream(sessionId, message, mode, context, history, callbacks) {
+  var token = wx.getStorageSync('__token__') || '';
+  return new Promise(function(resolve, reject) {
+    var requestTask = wx.request({
+      url: AI_CHAT_HTTP,
+      method: 'POST',
+      enableChunked: true,
+      header: {
+        'Content-Type': 'application/json',
+        'Authorization': 'Bearer ' + token
+      },
+      data: {
+        sessionId: sessionId || ('sess_' + Date.now()),
+        message: message,
+        mode: mode || 'general',
+        context: context || {},
+        history: history || [],
+        stream: true
+      },
+      success: function() { /* 流式通过onChunkReceived处理 */ },
+      fail: function(err) {
+        console.error('[API] Stream request failed:', err);
+        // 降级到非流式
+        resolve(null);
+      }
+    });
+
+    var fullContent = '';
+    var meta = null;
+
+    requestTask.onChunkReceived(function(res) {
+      try {
+        var text = (res.data || '').toString().trim();
+        if (!text) return;
+        var lines = text.split('\n');
+        for (var i = 0; i < lines.length; i++) {
+          if (lines[i].startsWith('data: ')) {
+            var data = JSON.parse(lines[i].substring(6));
+            if (data.type === 'meta') {
+              meta = data;
+              if (callbacks && callbacks.onMeta) callbacks.onMeta(data);
+            } else if (data.type === 'token') {
+              fullContent += data.content;
+              if (callbacks && callbacks.onToken) callbacks.onToken(data.content, fullContent);
+            } else if (data.type === 'done') {
+              if (callbacks && callbacks.onDone) {
+                callbacks.onDone(fullContent, data);
+              }
+              resolve({
+                code: 200,
+                data: {
+                  messageId: data.trace_id || ('msg_' + Date.now()),
+                  content: fullContent,
+                  sources: meta ? (meta.sources || []) : [],
+                  quickReplies: []
+                }
+              });
+            } else if (data.type === 'error') {
+              reject(new Error(data.message || 'Stream error'));
+            }
+          }
+        }
+      } catch(e) {
+        console.warn('[API] Chunk parse error:', e);
+      }
+    });
+  });
+}
+
+/**
  * 提交资格评估 (V5: 方案库对齐版)
  */
 async function submitAssessment(answers) {
@@ -358,7 +433,7 @@ module.exports = {
   request, wechatLogin, getPhoneNumber, reportUserStatus,
   fetchGuides, fetchPolicyUpdates, fetchPlaybook,
   interact, searchPlaybook, runPreCheck,
-  sendChatMessage, sendChatMessageV5, submitAssessment, askPolicyQuestion,
+  sendChatMessage, sendChatMessageV5, sendChatMessageStream, submitAssessment, askPolicyQuestion,
   generateDocument, getDashboardData, getApprovedCases,
   uploadAnonymizedText, createPayment, createPaymentOrder, queryOrderStatus,
   checkMembershipStatus, getUserOrders, getUserSubscriptions,
