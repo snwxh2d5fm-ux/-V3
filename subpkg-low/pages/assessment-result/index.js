@@ -7,7 +7,7 @@ const constants = require('../../../data/constants');
 const { ALL_PATH_DETAILS } = require('../../../data/solution-library');
 const templates = require('../../../data/templates');
 const { saveProcessLine } = require('../../../utils/storage');
-const { getCompatibility, validateBestMatch, getPersonaName } = require('../../../data/persona-path-compat');
+const { getCompatibility, validateBestMatch, getPersonaName } = require('../../data/persona-path-compat');
 const tracker = require('../../../utils/tracker');
 
 Page({

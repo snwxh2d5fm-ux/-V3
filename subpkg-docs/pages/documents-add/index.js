@@ -230,7 +230,7 @@ Page({
         var that = this;
         this.setData({ scanProcessing: true });
         // 后台异步执行，不阻塞用户继续操作
-        var imgProc = require('../../../utils/image-process');
+        var imgProc = require('../../utils/image-process');
         // 仅自动旋转（安全操作），跳过crop/enhance（真机Canvas兼容性问题）
         imgProc.autoRotate(imagePath).then(function(rotated) {
           if (rotated && rotated !== imagePath) {
@@ -270,7 +270,7 @@ Page({
     if (rotateDeg > 0) {
       wx.showLoading({ title: '处理中...' });
       try {
-        var imgProc = require('../../../utils/image-process');
+        var imgProc = require('../../utils/image-process');
         var rotatedPath = await imgProc.rotateImage(imagePath, rotateDeg);
         var finalPath = await imgProc.resizeImage(rotatedPath, 2048, 2048);
         wx.hideLoading();
