@@ -1,0 +1,9 @@
+{
+  "name": "preaudit-engine",
+  "version": "1.0.0",
+  "description": "效率宝预审引擎 — 文档材料自动合规校验",
+  "main": "index.js",
+  "dependencies": {
+    "wx-server-sdk": "latest"
+  }
+}

@@ -113,6 +113,11 @@ async function handlePhoneLogin(openid, { phoneCode, loginType }) {
 
   // ---- 微信手机号快速验证 ----
   if (loginType === 'wechat_phone') {
+    // 检查 cloud.openapi 是否可用
+    if (!cloud.openapi || !cloud.openapi.phonenumber) {
+      console.error('[phoneLogin] cloud.openapi.phonenumber 不可用');
+      return { code: 500, msg: '手机号服务未配置，请在CloudBase控制台开通微信OpenAPI' };
+    }
     try {
       const result = await cloud.openapi.phonenumber.getPhoneNumber({
         code: phoneCode
