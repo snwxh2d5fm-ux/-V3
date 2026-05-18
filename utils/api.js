@@ -1,7 +1,8 @@
 /**
- * 住港伴 v4.1 — API 接口层 (PRD v3.1)
+ * @fileoverview 住港伴 v4.1 — API 接口层 (PRD v3.1)
  * 仅传输脱敏数据到服务端，原始文件永不上传
  * V5新增: 方案库匹配服务、法律条文校验服务
+ * @module api
  */
 const { desensitizeFields, MODES } = require('./desensitize');
 

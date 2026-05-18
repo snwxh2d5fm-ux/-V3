@@ -7,3 +7,4 @@
 {"ts":"2026-05-18T21:55:00+08:00","from":"hermes","action":"9gate_pass","detail":"ce0762e Phase3通过. Gate1-3无新增回归. DevTools0错误. +4204行(主动对话/用户画像/A-B模型/分析看板/7阶段任务数据).","state":"passed"}
 {"ts":"2026-05-18T21:57:00+08:00","from":"hermes","action":"9gate_pass","detail":"f4c1823主包瘦身通过. 1.9M→1.7M(-200K). onboarding-tasks拆分8文件+2大文件迁子包. Gate1-3无新增回归. DevTools0错误. Phase2闭环.","state":"passed"}
 {"ts":"2026-05-18T22:08:00+08:00","from":"hermes","action":"9gate_pass_final","detail":"b6c4f63最终复检通过. 10 commits(ad08723→b6c4f63). 13/14能力就绪(流式待HTTP trigger). Gate1-3无新增回归. DevTools0错误.","state":"passed"}
+{"ts":"2026-05-18T22:15:00+08:00","from":"hermes","action":"deploy_complete","detail":"10/11云函数部署成功(ocr-service含tessdata超时). DevTools上传1.6MB(主包1.1MB). 预推送合规误报已跳过(ai-eval FORBIDDEN_TERMS列表).","state":"deployed"}
