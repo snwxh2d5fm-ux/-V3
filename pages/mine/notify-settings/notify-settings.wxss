@@ -1,0 +1,188 @@
+/* 住港伴 V1 — 通知设置页 样式 */
+
+.page {
+  min-height: 100vh;
+  background: #f5f5f5;
+  padding-bottom: 80rpx;
+}
+
+/* 页面说明 */
+.intro-banner {
+  padding: 32rpx 32rpx 16rpx;
+}
+.intro-title {
+  font-size: 26rpx;
+  color: #5f6368;
+  line-height: 40rpx;
+}
+
+/* 通知卡片 */
+.card {
+  margin: 16rpx 24rpx;
+  background: #ffffff;
+  border-radius: 20rpx;
+  overflow: hidden;
+}
+
+.card-disabled {
+  opacity: 0.55;
+}
+
+.card-header {
+  display: flex;
+  align-items: center;
+  padding: 28rpx 28rpx 0;
+}
+.card-icon {
+  font-size: 40rpx;
+  margin-right: 16rpx;
+  flex-shrink: 0;
+}
+.card-title-row {
+  flex: 1;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+.card-title {
+  font-size: 32rpx;
+  font-weight: 700;
+  color: #202124;
+}
+.card-title-sm {
+  font-size: 28rpx;
+}
+
+/* 徽章 */
+.card-badge {
+  font-size: 20rpx;
+  padding: 4rpx 16rpx;
+  border-radius: 8rpx;
+  flex-shrink: 0;
+}
+.badge-locked {
+  background: #E8F0FE;
+  color: #1a73e8;
+}
+.badge-stopped {
+  background: #F3F4F6;
+  color: #9CA3AF;
+}
+
+/* 卡片内容 */
+.card-body {
+  padding: 16rpx 28rpx 0;
+}
+.card-desc {
+  font-size: 26rpx;
+  color: #5f6368;
+  line-height: 38rpx;
+}
+.danger-text {
+  color: #d93025;
+  font-weight: 600;
+}
+
+/* 不可关闭原因 */
+.reason-box {
+  margin-top: 20rpx;
+  padding: 20rpx;
+  background: #FEF7E0;
+  border-radius: 12rpx;
+  border-left: 4rpx solid #F9AB00;
+}
+.reason-permanent {
+  background: #E8F5E9;
+  border-left-color: #34A853;
+}
+.reason-label {
+  font-size: 22rpx;
+  font-weight: 700;
+  color: #E37400;
+  display: block;
+  margin-bottom: 6rpx;
+}
+.reason-permanent .reason-label {
+  color: #1E8E3E;
+}
+.reason-text {
+  font-size: 24rpx;
+  color: #5f6368;
+  line-height: 36rpx;
+}
+
+/* 卡片底部授权状态 */
+.card-footer {
+  display: flex;
+  align-items: center;
+  padding: 20rpx 28rpx 28rpx;
+  border-top: 1rpx solid #f0f0f0;
+  margin-top: 20rpx;
+}
+
+.auth-status {
+  font-size: 24rpx;
+  flex: 1;
+}
+.status-ok {
+  color: #1E8E3E;
+}
+.status-needs {
+  color: #E37400;
+}
+.status-rejected {
+  color: #d93025;
+}
+
+.auth-action {
+  font-size: 24rpx;
+  color: #1a73e8;
+  padding: 8rpx 24rpx;
+  border: 1rpx solid #1a73e8;
+  border-radius: 32rpx;
+}
+.auth-action-primary {
+  background: #1a73e8;
+  color: #ffffff;
+}
+.auth-action-warn {
+  background: #d93025;
+  color: #ffffff;
+  border-color: #d93025;
+}
+
+/* 系统权限卡片 */
+.card-system {
+  border: 1rpx solid #f0f0f0;
+}
+.card-system .card-header {
+  padding-bottom: 0;
+}
+.card-system .card-body {
+  padding-top: 8rpx;
+  padding-bottom: 0;
+}
+
+/* 分隔 */
+.divider {
+  height: 1rpx;
+  background: transparent;
+  margin: 16rpx 0;
+}
+
+/* 区域标题 */
+.section-title {
+  font-size: 24rpx;
+  color: #999;
+  padding: 16rpx 32rpx 8rpx;
+}
+
+/* 底部说明 */
+.footer-note {
+  padding: 40rpx 32rpx;
+  text-align: center;
+}
+.footer-text {
+  font-size: 22rpx;
+  color: #9CA3AF;
+}

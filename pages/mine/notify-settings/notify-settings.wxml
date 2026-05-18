@@ -1,0 +1,109 @@
+<!-- 住港伴 V1 — 通知设置页 (极简版)
+     V1 仅 2 条锁定通知 + 系统权限检测
+     页面角色: 通知告知卡，非配置面板 -->
+<view class="page">
+
+  <!-- 页面说明 -->
+  <view class="intro-banner">
+    <text class="intro-title">住港伴会通过微信服务通知，向你发送以下两类提醒：</text>
+  </view>
+
+  <!-- ========== CRT-01: 签证到期提醒 ========== -->
+  <view class="card {{isPermanent ? 'card-disabled' : ''}}">
+    <view class="card-header">
+      <text class="card-icon">🔴</text>
+      <view class="card-title-row">
+        <text class="card-title">签证到期提醒</text>
+        <text class="card-badge badge-locked" wx:if="{{!isPermanent}}">系统锁定</text>
+        <text class="card-badge badge-stopped" wx:else>已停用</text>
+      </view>
+    </view>
+
+    <view class="card-body">
+      <text class="card-desc">签证到期前 90/60/30/14/7/3/1 天逐级提醒，防止身份断签</text>
+
+      <view class="reason-box" wx:if="{{!isPermanent}}">
+        <text class="reason-label">此通知不可关闭</text>
+        <text class="reason-text">{{crt01.reason}}</text>
+      </view>
+
+      <view class="reason-box reason-permanent" wx:else>
+        <text class="reason-label">已自动停用</text>
+        <text class="reason-text">你的身份状态已变更为「已永居」，不再需要签证到期提醒</text>
+      </view>
+    </view>
+
+    <view class="card-footer" wx:if="{{!isPermanent}}">
+      <!-- 授权状态 -->
+      <block wx:if="{{crt01.tmplAuth === 'authorized'}}">
+        <text class="auth-status status-ok">✅ 已授权</text>
+      </block>
+      <block wx:elif="{{crt01.tmplAuth === 'rejected'}}">
+        <text class="auth-status status-rejected">❌ 已拒绝</text>
+        <text class="auth-action" bindtap="requestAuth">重新授权</text>
+      </block>
+      <block wx:else>
+        <text class="auth-status status-needs">⚠️ 需要授权</text>
+        <text class="auth-action auth-action-primary" bindtap="requestAuth">点击授权</text>
+      </block>
+    </view>
+  </view>
+
+  <!-- ========== ACC-01: 免费试用到期提醒 ========== -->
+  <view class="card">
+    <view class="card-header">
+      <text class="card-icon">💳</text>
+      <view class="card-title-row">
+        <text class="card-title">免费试用到期提醒</text>
+        <text class="card-badge badge-locked">系统锁定</text>
+      </view>
+    </view>
+
+    <view class="card-body">
+      <text class="card-desc">免费试用到期前 30/14/7/3/1 天提醒，避免服务突然中断</text>
+
+      <view class="reason-box">
+        <text class="reason-label">此通知不可关闭</text>
+        <text class="reason-text">{{acc01.reason}}</text>
+      </view>
+    </view>
+
+    <view class="card-footer">
+      <block wx:if="{{acc01.tmplAuth === 'authorized'}}">
+        <text class="auth-status status-ok">✅ 已授权</text>
+      </block>
+      <block wx:elif="{{acc01.tmplAuth === 'rejected'}}">
+        <text class="auth-status status-rejected">❌ 已拒绝</text>
+        <text class="auth-action" bindtap="requestAuth">重新授权</text>
+      </block>
+      <block wx:else>
+        <text class="auth-status status-needs">⚠️ 需要授权</text>
+        <text class="auth-action auth-action-primary" bindtap="requestAuth">点击授权</text>
+      </block>
+    </view>
+  </view>
+
+  <!-- 分隔 -->
+  <view class="divider"></view>
+
+  <!-- ========== 微信系统通知权限 ========== -->
+  <view class="section-title">微信通知权限</view>
+  <view class="card card-system">
+    <view class="card-header">
+      <text class="card-icon">{{systemNotifyEnabled ? '✅' : '❌'}}</text>
+      <text class="card-title card-title-sm">系统通知权限</text>
+    </view>
+    <view class="card-body" wx:if="{{!systemNotifyEnabled}}">
+      <text class="card-desc danger-text">微信系统通知权限已关闭，你将无法收到任何提醒</text>
+    </view>
+    <view class="card-footer" wx:if="{{!systemNotifyEnabled}}">
+      <text class="auth-action auth-action-warn" bindtap="openSystemSetting">前往系统设置开启 →</text>
+    </view>
+  </view>
+
+  <!-- 底部说明 -->
+  <view class="footer-note">
+    <text class="footer-text">住港伴不会推送任何广告或营销信息</text>
+  </view>
+
+</view>

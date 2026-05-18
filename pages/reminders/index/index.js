@@ -15,8 +15,6 @@ Page({
     // PRD v4: 7阶段流程指示器
     stageSteps: [],
     stageProgress: 0,
-    // 视图模式
-    viewMode: 'timeline',
     hasPath: false,
 
     // 提醒数据
@@ -440,12 +438,6 @@ Page({
     return map[chainId] || '规则链';
   },
 
-  // ========== 视图切换 ==========
-  switchView(e) {
-    const mode = e.currentTarget.dataset.mode;
-    this.setData({ viewMode: mode });
-  },
-
   // ========== 筛选 ==========
   onFilterStatus(e) {
     const status = e.currentTarget.dataset.status;
@@ -464,25 +456,17 @@ Page({
   },
 
   onFilterType(e) {
-    const type = e.currentTarget.dataset.type;
+    var type = e.currentTarget.dataset.type;
     this.setData({ filterType: type });
+    this.applyTypeFilter(type);
   },
 
-  // ========== 获取筛选后的提醒 ==========
-  getFilteredReminders() {
-    var ft = this.data.filterType;
-    var list;
-    if (this.data.filterStatus === 'completed') {
-      list = this.data.completedReminders;
-    } else if (this.data.filterStatus === 'all') {
-      list = this.data.activeReminders.concat(this.data.completedReminders);
-    } else {
-      list = this.data.activeReminders;
-    }
-    if (ft !== 'all') {
-      list = list.filter(function(r) { return r.type === ft; });
-    }
-    return list;
+  applyTypeFilter: function(type) {
+    type = type || this.data.filterType;
+    var baseReminders = this.data.filterStatus === 'completed' ? this.data.completedReminders :
+      (this.data.filterStatus === 'all' ? this.data.activeReminders.concat(this.data.completedReminders) : this.data.activeReminders);
+    if (type !== 'all') baseReminders = baseReminders.filter(function(r) { return r.type === type; });
+    this.setData({ displayChainGroups: this.buildChainGroups(baseReminders) });
   },
 
   // ========== 导航 ==========

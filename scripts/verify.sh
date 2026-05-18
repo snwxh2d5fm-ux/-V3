@@ -241,7 +241,7 @@ fi
 
 check_ok "B3 CLAUDE.md 存在" test -s CLAUDE.md
 
-for f in data/constants.js data/solution-library.js data/templates.js data/guidebook-data.js; do
+for f in data/constants.js data/solution-library.js data/templates.js data/guidebook-cards.js; do
   check_ok "B4 关键文件: $f" test -f "$f"
 done
 
