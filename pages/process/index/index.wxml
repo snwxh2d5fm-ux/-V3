@@ -42,7 +42,7 @@
       <text class="process-hero__name">{{activeProcess.name}}</text>
       <view class="process-hero__meta">
         <text class="process-hero__cycle" bindtap="showCycleHelp">⏱ {{activeProcess.totalCycle || '—'}}</text>
-        <text class="process-hero__risk" bindtap="showRiskHelp">{{activeProcess.riskLevel === 'low' ? '🟢低风险' : activeProcess.riskLevel === 'medium' ? '🟡中风险' : '🔴高风险'}}</text>
+        <text class="process-hero__risk" bindtap="showRiskHelp">{{activeProcess.riskLevel === 'low' ? '🟢低风险' : (activeProcess.riskLevel === 'medium' || activeProcess.riskLevel === 'medium_low') ? '🟡中风险' : '🔴高风险'}}</text>
         <text class="process-hero__risk" bindtap="showSelfAssessDisclaimer" wx:if="{{materialTotalCount >= 9}}">ⓘ 自评数据</text>
       </view>
 

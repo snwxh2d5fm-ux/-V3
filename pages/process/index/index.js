@@ -165,9 +165,14 @@ Page({
         var stageMap = { submitted: 3, approved: 4, permanent: 6 };
         var startStep = stageMap[userStatus] || 0;
         var pathNames = { qmas:'优才计划', ttps_a:'高才通A类', ttps_b:'高才通B类', ttps_c:'高才通C类', asmpt:'专才计划', student_iang:'学生→IANG', dependent:'受养人', cies:'CIES投资类身份规划' };
+        // 从模板数据获取 totalCycle 和 riskLevel
+        var tplList = require('../../../data/templates').processTemplates || [];
+        var matchedTpl = tplList.find(function(t) { return t.id === selectedPath; }) || {};
         var mockProcess = {
           name: pathNames[selectedPath] || selectedPath,
           pathway: selectedPath,
+          totalCycle: matchedTpl.totalCycle || '—',
+          riskLevel: matchedTpl.riskLevel || 'medium',
           stages: [
             { id:'stg_eval', name:'资格评估', phaseId:'phase0_evaluation', order:0, status:'completed' },
             { id:'stg_prep', name:'材料准备', phaseId:'phase1_preparation', order:1, status:'completed' },

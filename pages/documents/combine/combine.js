@@ -440,9 +440,71 @@ Page({
     wx.navigateTo({ url: '/pages/documents/add/add' });
   },
 
-  // 完善身份画像
+  // 完善身份画像 — Bug #11修复: 自动从证件/评估/路径读取，不再跳转"我的"
   navigateToProfile() {
-    wx.switchTab({ url: '/pages/mine/index/index' });
+    var that = this;
+    wx.showLoading({ title: '分析数据中...' });
+
+    // 自动读取: 证件数据 → 评估结果 → 身份状态 → 路径选择
+    try {
+      var app = getApp();
+      var profile = wx.getStorageSync(CONSTANTS.STORAGE_KEYS.IDENTITY_PROFILE) || {};
+      var session = wx.getStorageSync(CONSTANTS.STORAGE_KEYS.SESSION) || {};
+
+      // 从证件提取姓名/证件号
+      var storage = require('../../../utils/storage');
+      var docs = storage.getAllDocuments ? storage.getAllDocuments() : [];
+      var idDoc = docs.find(function(d) { return d.category === 'identity' && d.type === 'id_card'; });
+      if (idDoc && idDoc.ocrData) {
+        if (idDoc.ocrData.name) profile.name = idDoc.ocrData.name;
+        if (idDoc.ocrData.idNumber) profile.idNumber = idDoc.ocrData.idNumber;
+      }
+
+      // 从评估结果读取
+      var assessment = wx.getStorageSync('__assessment_result__') || {};
+      if (assessment.selectedPath) profile.selectedPath = assessment.selectedPath;
+      if (assessment.persona !== undefined) profile.persona = assessment.persona;
+
+      // 从全局/会话读取
+      if (app && app.globalData) {
+        if (app.globalData.selectedPath) profile.selectedPath = app.globalData.selectedPath;
+        if (app.globalData.userStatus) profile.userStatus = app.globalData.userStatus;
+      }
+      if (session.selectedPath) profile.selectedPath = session.selectedPath;
+      if (session.userStatus) profile.userStatus = session.userStatus;
+
+      profile.updatedAt = new Date().toISOString();
+
+      wx.setStorageSync(CONSTANTS.STORAGE_KEYS.IDENTITY_PROFILE, profile);
+      wx.hideLoading();
+
+      // 重新加载当前页面数据
+      that.loadIdentity();
+      that.refresh();
+
+      var hasName = !!profile.name;
+      var hasPath = !!profile.selectedPath;
+      if (hasName && hasPath) {
+        wx.showToast({ title: '身份画像已完善 ✅', icon: 'success' });
+      } else {
+        var missing = [];
+        if (!hasName) missing.push('姓名');
+        if (!hasPath) missing.push('申请路径');
+        wx.showModal({
+          title: '部分信息缺失',
+          content: '以下信息未能自动获取：' + missing.join('、') + '\n\n请前往「资格评估」或「我的→身份设置」手动补充。',
+          confirmText: '去资格评估',
+          cancelText: '稍后',
+          success: function(res) {
+            if (res.confirm) wx.navigateTo({ url: '/pages/assessment/index/index' });
+          }
+        });
+      }
+    } catch (e) {
+      wx.hideLoading();
+      console.error('[身份画像] 自动构建失败:', e);
+      wx.showToast({ title: '数据读取失败，请手动设置', icon: 'none' });
+    }
   },
 
   // 导出
