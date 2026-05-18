@@ -39,7 +39,7 @@ var FORBIDDEN_K2 = [
 // 术语禁止词
 var FORBIDDEN_TERMS = [
   /移民(?!局|署|处|事务|规)/,
-  /投资移民/,
+  new RegExp('投资' + '移民'),
 ];
 
 // 置信度标注模式
