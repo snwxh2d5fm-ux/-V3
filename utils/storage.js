@@ -1,244 +1,201 @@
 /**
- * 住港伴 — 本地存储引擎
+ * @fileoverview 住港伴 — 本地存储引擎
  * 基于微信小程序本地文件系统和 Storage API
  * 所有用户原始材料存储在设备本地，不上传服务端
  */
-const FILE_BASE = `${wx.env.USER_DATA_PATH}/vault/`;
-const META_KEY = '__vault_meta__';
-const REMINDER_KEY = '__reminders__';
-const PROCESS_KEY = '__processes__';
-const USER_KEY = '__user_data__';
-const CONFIG_KEY = '__config__';
 
-// 初始化存储目录
-async function initStorage() {
-  try {
-    const fs = wx.getFileSystemManager();
-    try { fs.accessSync(FILE_BASE); } catch (e) { fs.mkdirSync(FILE_BASE, true); }
-    // 初始化子目录
-    const dirs = ['identities', 'education', 'employment', 'assets', 'visas', 'renewal', 'family', 'custom'];
-    dirs.forEach(dir => {
-      try { fs.accessSync(FILE_BASE + dir); } catch (e) { fs.mkdirSync(FILE_BASE + dir, true); }
-    });
-    // 初始化元数据结构
-    if (!wx.getStorageSync(META_KEY)) {
-      wx.setStorageSync(META_KEY, { documents: {}, version: 1 });
-    }
-    if (!wx.getStorageSync(REMINDER_KEY)) {
-      wx.setStorageSync(REMINDER_KEY, { items: [], version: 1 });
-    }
-    if (!wx.getStorageSync(PROCESS_KEY)) {
-      wx.setStorageSync(PROCESS_KEY, { lines: [], version: 1 });
-    }
-    console.log('[存储] 初始化完成');
-    return true;
-  } catch (e) {
-    console.error('[存储] 初始化失败:', e);
-    return false;
-  }
+/** @const {string} 证件文件存储根目录 */
+var FILE_BASE = wx.env.USER_DATA_PATH + '/vault/';
+/** @const {string} 证件元数据storage key */
+var META_KEY = '__vault_meta__';
+/** @const {string} 提醒数据storage key */
+var REMINDER_KEY = '__reminders__';
+/** @const {string} 流程数据storage key */
+var PROCESS_KEY = '__processes__';
+/** @const {string} 用户数据storage key */
+var USER_KEY = '__user_data__';
+/** @const {string} 配置storage key */
+var CONFIG_KEY = '__config__';
+
+/**
+ * 初始化存储目录结构和元数据
+ * @returns {Promise<boolean>}
+ */
+function initStorage() {
+  return new Promise(function(resolve) {
+    try {
+      var fs = wx.getFileSystemManager();
+      try { fs.accessSync(FILE_BASE); } catch(e) { fs.mkdirSync(FILE_BASE, true); }
+      var dirs = ['identities', 'education', 'employment', 'assets', 'visas', 'renewal', 'family', 'custom'];
+      dirs.forEach(function(dir) {
+        try { fs.accessSync(FILE_BASE + dir); } catch(e) { fs.mkdirSync(FILE_BASE + dir, true); }
+      });
+      if (!wx.getStorageSync(META_KEY)) wx.setStorageSync(META_KEY, { documents: {}, version: 1 });
+      if (!wx.getStorageSync(REMINDER_KEY)) wx.setStorageSync(REMINDER_KEY, []);
+      if (!wx.getStorageSync(PROCESS_KEY)) wx.setStorageSync(PROCESS_KEY, []);
+      resolve(true);
+    } catch(e) { resolve(false); }
+  });
 }
 
-// 保存证件元数据
+/** @param {object} doc @returns {object} */
 function saveDocumentMeta(doc) {
-  const meta = wx.getStorageSync(META_KEY) || { documents: {}, version: 1 };
-  meta.documents[doc.id] = doc;
-  meta.version = (meta.version || 1) + 1;
+  var meta = wx.getStorageSync(META_KEY) || { documents: {}, version: 1 };
+  meta.documents[doc.id] = Object.assign({}, meta.documents[doc.id] || {}, doc, { updatedAt: new Date().toISOString() });
+  if (!doc.createdAt) meta.documents[doc.id].createdAt = new Date().toISOString();
+  meta.version = (meta.version || 0) + 1;
   wx.setStorageSync(META_KEY, meta);
+  return doc;
 }
 
-// 获取证件元数据
+/** @param {string} docId @returns {object|null} */
 function getDocumentMeta(docId) {
-  const meta = wx.getStorageSync(META_KEY);
-  return meta && meta.documents ? meta.documents[docId] : null;
+  var meta = wx.getStorageSync(META_KEY);
+  return (meta && meta.documents && meta.documents[docId]) ? meta.documents[docId] : null;
 }
 
-// 获取所有证件
+/** @returns {Array<object>} */
 function getAllDocuments() {
-  const meta = wx.getStorageSync(META_KEY);
-  return meta && meta.documents ? Object.values(meta.documents) : [];
+  var meta = wx.getStorageSync(META_KEY);
+  if (!meta || !meta.documents) return [];
+  return Object.keys(meta.documents).map(function(k) { return meta.documents[k]; });
 }
 
-// 按类型获取证件
+/** @param {string} type @returns {Array<object>} */
 function getDocumentsByType(type) {
-  return getAllDocuments().filter(d => d.category === type);
+  return getAllDocuments().filter(function(d) { return d.category === type || d.type === type; });
 }
 
-// 保存文件到本地
+/** @param {string} tempPath @param {string} docId @param {string} category @returns {string} */
 function saveFile(tempPath, docId, category) {
-  return new Promise((resolve, reject) => {
-    const fs = wx.getFileSystemManager();
-    const ext = tempPath.split('.').pop() || 'jpg';
-    const targetPath = `${FILE_BASE}${category}/${docId}.${ext}`;
-    fs.copyFile({
-      srcPath: tempPath,
-      destPath: targetPath,
-      success: () => resolve(targetPath),
-      fail: (err) => reject(err)
-    });
-  });
+  var fs = wx.getFileSystemManager();
+  var ext = (tempPath.split('.').pop() || 'jpg').replace(/[^a-z0-9]/gi, '');
+  var dir = FILE_BASE + (category || 'custom') + '/';
+  try { fs.accessSync(dir); } catch(e) { fs.mkdirSync(dir, true); }
+  var persistPath = dir + docId + '.' + ext;
+  try { fs.copyFileSync(tempPath, persistPath); } catch(ce) {
+    var data = fs.readFileSync(tempPath);
+    fs.writeFileSync(persistPath, data, 'binary');
+  }
+  return persistPath;
 }
 
-// 读取文件
+/** @param {string} filePath @returns {string} */
 function readFile(filePath) {
-  return new Promise((resolve, reject) => {
-    const fs = wx.getFileSystemManager();
-    fs.readFile({
-      filePath,
-      encoding: 'base64',
-      success: (res) => resolve(res.data),
-      fail: (err) => reject(err)
-    });
-  });
+  try {
+    var fs = wx.getFileSystemManager();
+    var data = fs.readFileSync(filePath, 'base64');
+    return 'data:image/jpeg;base64,' + data;
+  } catch(e) { return ''; }
 }
 
-// 删除证件
+/** @param {string} docId @returns {boolean} */
 function deleteDocument(docId) {
-  const meta = wx.getStorageSync(META_KEY);
-  if (!meta || !meta.documents[docId]) return false;
-  const doc = meta.documents[docId];
-  // 删除文件
-  try {
-    const fs = wx.getFileSystemManager();
-    if (doc.filePath) fs.unlinkSync(doc.filePath);
-  } catch (e) { /* 文件可能不存在 */ }
-  // 删除元数据
-  delete meta.documents[docId];
-  wx.setStorageSync(META_KEY, meta);
+  var doc = getDocumentMeta(docId);
+  if (!doc) return false;
+  if (doc.filePath) {
+    try { var fs = wx.getFileSystemManager(); fs.unlinkSync(doc.filePath); } catch(e) {}
+  }
+  var meta = wx.getStorageSync(META_KEY);
+  if (meta && meta.documents) { delete meta.documents[docId]; wx.setStorageSync(META_KEY, meta); }
   return true;
 }
 
-// 搜索证件
+/** @param {string} query @returns {Array<object>} */
 function searchDocuments(query) {
-  const docs = getAllDocuments();
-  const q = query.toLowerCase();
-  return docs.filter(d =>
-    (d.name && d.name.toLowerCase().includes(q)) ||
-    (d.category && d.category.toLowerCase().includes(q)) ||
-    (d.docNumber && d.docNumber.includes(q))
-  );
+  var q = query.toLowerCase();
+  return getAllDocuments().filter(function(d) {
+    return (d.name && d.name.toLowerCase().indexOf(q) >= 0) || (d.category && d.category.indexOf(q) >= 0) || (d.docNumber && d.docNumber.indexOf(q) >= 0);
+  });
 }
 
-// --- 提醒相关 ---
+/** @param {object} reminder @returns {object} */
 function saveReminder(reminder) {
-  const data = wx.getStorageSync(REMINDER_KEY) || { items: [], version: 1 };
-  data.items.push(reminder);
-  data.version += 1;
-  wx.setStorageSync(REMINDER_KEY, data);
+  var reminders = getAllReminders();
+  if (!reminder.id) reminder.id = 'rem_' + Date.now() + '_' + Math.random().toString(36).slice(2, 8);
+  var idx = reminders.findIndex(function(r) { return r.id === reminder.id; });
+  if (idx >= 0) reminders[idx] = Object.assign({}, reminders[idx], reminder, { updatedAt: new Date().toISOString() });
+  else reminders.push(Object.assign({}, reminder, { createdAt: new Date().toISOString(), updatedAt: new Date().toISOString() }));
+  wx.setStorageSync(REMINDER_KEY, reminders);
+  return reminder;
 }
 
-function getAllReminders() {
-  const data = wx.getStorageSync(REMINDER_KEY);
-  return data ? data.items : [];
-}
+/** @returns {Array<object>} */
+function getAllReminders() { return wx.getStorageSync(REMINDER_KEY) || []; }
 
+/** @param {string} reminderId @param {object} updates @returns {object|null} */
 function updateReminder(reminderId, updates) {
-  const data = wx.getStorageSync(REMINDER_KEY) || { items: [], version: 1 };
-  const idx = data.items.findIndex(r => r.id === reminderId);
-  if (idx >= 0) {
-    data.items[idx] = { ...data.items[idx], ...updates };
-    data.version += 1;
-    wx.setStorageSync(REMINDER_KEY, data);
-    return true;
-  }
-  return false;
+  var reminders = getAllReminders();
+  var idx = reminders.findIndex(function(r) { return r.id === reminderId; });
+  if (idx < 0) return null;
+  reminders[idx] = Object.assign({}, reminders[idx], updates, { updatedAt: new Date().toISOString() });
+  wx.setStorageSync(REMINDER_KEY, reminders);
+  return reminders[idx];
 }
 
+/** @param {string} reminderId @returns {boolean} */
 function deleteReminder(reminderId) {
-  const data = wx.getStorageSync(REMINDER_KEY) || { items: [], version: 1 };
-  data.items = data.items.filter(r => r.id !== reminderId);
-  data.version += 1;
-  wx.setStorageSync(REMINDER_KEY, data);
+  var reminders = getAllReminders();
+  var filtered = reminders.filter(function(r) { return r.id !== reminderId; });
+  wx.setStorageSync(REMINDER_KEY, filtered);
+  return true;
 }
 
-// --- 流程相关 ---
+/** @param {object} processLine @returns {object} */
 function saveProcessLine(processLine) {
-  const data = wx.getStorageSync(PROCESS_KEY) || { lines: [], version: 1 };
-  const idx = data.lines.findIndex(p => p.id === processLine.id);
-  if (idx >= 0) {
-    data.lines[idx] = processLine;
-  } else {
-    data.lines.push(processLine);
-  }
-  data.version += 1;
-  wx.setStorageSync(PROCESS_KEY, data);
+  var lines = getAllProcessLines();
+  if (!processLine.id) processLine.id = 'proc_' + Date.now() + '_' + Math.random().toString(36).slice(2, 8);
+  var idx = lines.findIndex(function(l) { return l.id === processLine.id; });
+  if (idx >= 0) lines[idx] = Object.assign({}, lines[idx], processLine, { updatedAt: new Date().toISOString() });
+  else lines.push(Object.assign({}, processLine, { createdAt: new Date().toISOString(), updatedAt: new Date().toISOString() }));
+  wx.setStorageSync(PROCESS_KEY, lines);
+  return processLine;
 }
 
-function getProcessLine(processId) {
-  const data = wx.getStorageSync(PROCESS_KEY);
-  return data ? data.lines.find(p => p.id === processId) : null;
-}
+/** @param {string} processId @returns {object|null} */
+function getProcessLine(processId) { return (getAllProcessLines().find(function(l) { return l.id === processId; })) || null; }
 
-function getAllProcessLines() {
-  const data = wx.getStorageSync(PROCESS_KEY);
-  return data ? data.lines : [];
-}
+/** @returns {Array<object>} */
+function getAllProcessLines() { return wx.getStorageSync(PROCESS_KEY) || []; }
 
-function saveProcessLines(processLines) {
-  const data = { lines: processLines, version: (wx.getStorageSync(PROCESS_KEY)?.version || 1) + 1 };
-  wx.setStorageSync(PROCESS_KEY, data);
-}
+/** @param {Array<object>} processLines */
+function saveProcessLines(processLines) { wx.setStorageSync(PROCESS_KEY, processLines); }
 
-// --- 配置 ---
-function getConfig(key) {
-  const config = wx.getStorageSync(CONFIG_KEY) || {};
-  return config[key];
-}
+/** @param {string} key @returns {*} */
+function getConfig(key) { var c = wx.getStorageSync(CONFIG_KEY) || {}; return c[key]; }
 
-function setConfig(key, value) {
-  const config = wx.getStorageSync(CONFIG_KEY) || {};
-  config[key] = value;
-  wx.setStorageSync(CONFIG_KEY, config);
-}
+/** @param {string} key @param {*} value */
+function setConfig(key, value) { var c = wx.getStorageSync(CONFIG_KEY) || {}; c[key] = value; wx.setStorageSync(CONFIG_KEY, c); }
 
-// --- 批量保存（云端同步用） ---
+/** @param {Array<object>} docs */
 function saveDocuments(docs) {
-  const meta = wx.getStorageSync(META_KEY) || { documents: {}, version: 1 };
-  docs.forEach(d => { meta.documents[d.id] = d; });
-  meta.version += 1;
+  var meta = wx.getStorageSync(META_KEY) || { documents: {}, version: 1 };
+  docs.forEach(function(d) { meta.documents[d.id] = Object.assign({}, meta.documents[d.id] || {}, d); });
+  meta.version = (meta.version || 0) + 1;
   wx.setStorageSync(META_KEY, meta);
 }
 
-function saveReminders(reminders) {
-  const data = { items: reminders, version: (wx.getStorageSync(REMINDER_KEY)?.version || 1) + 1 };
-  wx.setStorageSync(REMINDER_KEY, data);
-}
+/** @param {Array<object>} reminders */
+function saveReminders(reminders) { wx.setStorageSync(REMINDER_KEY, reminders); }
 
-// --- 云端同步 ---
-async function initDBSync() {
-  try {
-    const lastSync = wx.getStorageSync('__db_sync_state__');
-    return lastSync?.status === 'synced';
-  } catch (e) { return false; }
-}
+function initDBSync() { var s = wx.getStorageSync('__db_sync_state__'); return s === 'synced' || s === 'syncing'; }
 
-async function syncAllToCloud() {
-  const app = getApp();
-  if (!app || !app.globalData.cloudReady) return;
-  const documents = getAllDocuments();
-  const reminders = getAllReminders();
-  const processes = getAllProcessLines();
-  try {
-    await wx.cloud.callFunction({
-      name: 'db-admin',
-      data: {
-        action: 'sync',
-        data: { documents, reminders, processes }
-      }
-    });
-    wx.setStorageSync('__db_sync_state__', { status: 'synced', time: Date.now() });
-  } catch (e) {
-    console.error('[Storage] sync failed:', e);
-    throw e;
-  }
+function syncAllToCloud() {
+  return new Promise(function(resolve, reject) {
+    var app = getApp();
+    if (!app || !app.globalData.cloudReady) { resolve(false); return; }
+    wx.cloud.callFunction({ name: 'db-admin', data: { action: 'sync', data: { documents: getAllDocuments(), reminders: getAllReminders(), processes: getAllProcessLines() } }, success: function() { wx.setStorageSync('__db_sync_state__', 'synced'); resolve(true); }, fail: reject });
+  });
 }
 
 module.exports = {
-  initStorage, initDBSync, syncAllToCloud,
-  saveDocumentMeta, getDocumentMeta, getAllDocuments, getDocumentsByType,
-  saveFile, readFile, deleteDocument, searchDocuments,
-  saveReminder, getAllReminders, updateReminder, deleteReminder,
-  saveProcessLine, getProcessLine, getAllProcessLines, saveProcessLines,
-  saveDocuments, saveReminders,
-  getConfig, setConfig,
-  FILE_BASE, META_KEY, REMINDER_KEY, PROCESS_KEY
+  initStorage: initStorage, saveDocumentMeta: saveDocumentMeta, getDocumentMeta: getDocumentMeta,
+  getAllDocuments: getAllDocuments, getDocumentsByType: getDocumentsByType, saveFile: saveFile,
+  readFile: readFile, deleteDocument: deleteDocument, searchDocuments: searchDocuments,
+  saveReminder: saveReminder, getAllReminders: getAllReminders, updateReminder: updateReminder,
+  deleteReminder: deleteReminder, saveProcessLine: saveProcessLine, getProcessLine: getProcessLine,
+  getAllProcessLines: getAllProcessLines, saveProcessLines: saveProcessLines,
+  getConfig: getConfig, setConfig: setConfig, saveDocuments: saveDocuments, saveReminders: saveReminders,
+  initDBSync: initDBSync, syncAllToCloud: syncAllToCloud,
+  FILE_BASE: FILE_BASE, META_KEY: META_KEY, REMINDER_KEY: REMINDER_KEY, PROCESS_KEY: PROCESS_KEY
 };
