@@ -27,7 +27,17 @@ Page({
     isAppending: false
   },
 
+  _initialLoad: true,
+
   onShow() {
+    // 首次加载 / 从提交页返回时刷新列表
+    if (this._initialLoad) {
+      this._initialLoad = false;
+      this.loadList();
+    }
+  },
+
+  onPullDownRefresh() {
     this.loadList();
   },
 
@@ -87,7 +97,7 @@ Page({
       return {
         ticketId: item.ticketId,
         typeLabel: typeMap[item.type] || '💬 其他',
-        content: item.content.length > 50 ? item.content.substring(0, 50) + '...' : item.content,
+        content: safeTruncate(item.content, 50),
         fullContent: item.content,
         status: item.status,
         statusLabel: statusInfo.label,
@@ -95,7 +105,7 @@ Page({
         time: formatRelativeTime(item.createdAt),
         hasScreenshot: item.hasScreenshot,
         hasReply: !!item.latestReply,
-        latestReply: item.latestReply ? (item.latestReply.content.length > 40 ? item.latestReply.content.substring(0, 40) + '...' : item.latestReply.content) : ''
+        latestReply: item.latestReply ? safeTruncate(item.latestReply.content, 40) : ''
       };
     });
   },
@@ -134,6 +144,7 @@ Page({
           },
           detailReplies: (d.replies || []).map(function(r) {
             return {
+              replyId: r.replyId || r._id || '',
               role: r.role,
               roleLabel: r.role === 'service' ? '客服回复' : (r.role === 'user' ? '我的补充' : '系统消息'),
               roleCls: r.role === 'service' ? 'reply-service' : (r.role === 'user' ? 'reply-user' : 'reply-system'),
@@ -213,10 +224,22 @@ Page({
 
   goToWeCom() {
     wx.navigateTo({ url: '/subpkg-feedback/pages/wecom-qr/index' });
+  },
+
+  goToHome() {
+    wx.switchTab({ url: '/pages/mine/index/index' });
   }
 });
 
 // ===== 工具函数 =====
+// emoji/多字节安全截断
+function safeTruncate(str, maxLen) {
+  if (!str) return '';
+  var chars = Array.from(str);
+  if (chars.length <= maxLen) return str;
+  return chars.slice(0, maxLen).join('') + '...';
+}
+
 function formatRelativeTime(ts) {
   if (!ts) return '';
   var now = Date.now();
@@ -225,7 +248,8 @@ function formatRelativeTime(ts) {
   if (diff < 3600000) return Math.floor(diff / 60000) + '分钟前';
   if (diff < 86400000) return Math.floor(diff / 3600000) + '小时前';
   if (diff < 2592000000) return Math.floor(diff / 86400000) + '天前';
-  return Math.floor(diff / 2592000000) + '月前';
+  if (diff < 31536000000) return Math.floor(diff / 2592000000) + '个月前';
+  return Math.floor(diff / 31536000000) + '年前';
 }
 
 function formatFullTime(ts) {

@@ -139,7 +139,12 @@ async function list(event) {
 
   var where = { userId: openid };
   if (status) {
-    where.status = status;
+    // "处理中"Tab 需同时匹配 submitted + in_progress
+    if (status === 'submitted') {
+      where.status = _.in(['submitted', 'in_progress']);
+    } else {
+      where.status = status;
+    }
   }
 
   try {
@@ -182,7 +187,14 @@ async function list(event) {
       items.push(item);
     }
 
-    return { code: 0, data: { items: items, total: items.length, hasMore: items.length >= limit } };
+    // 精确 hasMore: 用 count() 而非 items.length >= limit
+    var totalCount = 0;
+    try {
+      var countResult = await db.collection('feedback').where(where).count();
+      totalCount = countResult.total;
+    } catch (e) { /* count 失败降级 */ }
+    var realTotal = totalCount || items.length;
+    return { code: 0, data: { items: items, total: realTotal, hasMore: (skip + items.length) < realTotal } };
   } catch (dbErr) {
     console.error('[feedback-submit] 查询失败:', dbErr);
     return { code: 500, msg: '查询失败' };

@@ -10,3 +10,13 @@
 {"ts":"2026-05-18T22:15:00+08:00","from":"hermes","action":"deploy_complete","detail":"10/11云函数部署成功(ocr-service含tessdata超时). DevTools上传1.6MB(主包1.1MB). 预推送合规误报已跳过(ai-eval FORBIDDEN_TERMS列表).","state":"deployed"}
 {"ts":"2026-05-18T22:34:00+08:00","from":"hermes","action":"9gate_pass_final","detail":"d26709a最终复检通过. 13 commits今日. Gate1-3无新增回归. DevTools0错误. 全部P0/P1闭环.","state":"passed"}
 {"ts":"2026-05-19T11:30:00+08:00","from":"hermes","action":"9gate_report","detail":"ef6ed7a Gate3编译通过. 双审发现5P0确认(图片审核绕过/无文本审核/invite-code缺config/QE03依赖断裂/emoji残留). verify.sh A9+B5因文件拆分脚本不匹配. B2反而从失败变通过.","state":"p0_blockers"}
+{"ts":"2026-05-19T12:21:00+08:00","from":"hermes","action":"9gate_share_gap","detail":"分享功能闸门: 7云函数/4集合/5前端全量缺失. 17P0 0/17可验证. 3基础onShareAppMessage不构成分享功能. 需先开发代码.","state":"blocked_no_code"}
+{"ts":"2026-05-19T12:30:00+08:00","from":"hermes","action":"gate_full_run","detail":"9闸门完成。Gate0-3,6通过; Gate4-5完成(P0×5); Gate7阻断(P0-1密钥硬编码); Gate8-9完成。3份inbox报告已回写","state":"done"}
+{"ts":"2026-05-19T13:00:00+08:00","from":"hermes","action":"gate_r2_done","detail":"Round 2 闸门完成。12/17修复✅, 5项未完成。P0-02(moderateImage缺失)+P0-NEW(PII正则)阻断。3报告已回写","state":"done"}
+{"ts":"2026-05-19T13:10:00+08:00","from":"hermes","action":"9gate_pass","detail":"crypto.js v2.0 AES-256-GCM生产级. 776行纯JS. 14轮AES+GCM+GHASH+SHA-256+HMAC+PBKDF2(100k iter)+UTF-8+自检. Gate1-3无新回归. DevTools0错误.","state":"passed"}
+{"ts":"2026-05-19T13:16:00+08:00","from":"hermes","action":"9gate_share_phase1","detail":"分享功能Phase1后端: 6/7云函数就绪(0→6). 4集合已定义. 前端0/5待开发. Gate1-3无新回归. DevTools0错误.","state":"passed_backend"}
+{"ts":"2026-05-19T13:20:00+08:00","from":"hermes","action":"gate_r3_final","detail":"Round 3 最终闸门完成。全部P0/P1闭环。15/17修复(88%)。静态闸门全绿+CloudBase部署通过。等待Claude commit后push。","state":"done"}
+{"ts":"2026-05-19T14:30:00+08:00","from":"claude","action":"deploy_request","detail":"双模块联合闸门：意见反馈(subpkg-feedback,P0×14,2云函数+2集合) + 分享功能(subpkg-share,P0×17,6云函数+4集合+5页面组件),34文件,8云函数全部Active","state":"pending_hermes_9gate"}
+{"ts":"2026-05-19T13:28:00+08:00","from":"hermes","action":"9gate_share_p0","detail":"分享功能全栈: 6/7云函数+5/5前端就绪. Gate3编译失败: share-preview引用/components/share-card但实际在/subpkg-share/components/. 1行路径修复后重新闸门.","state":"blocked_1line_path"}
+{"ts":"2026-05-19T13:30:00+08:00","from":"hermes","action":"9gate_pass","detail":"分享功能全栈闸门通过. 6/7云函数+5/5前端+4集合. 路径修复后DevTools0错误. verify.sh19/38Jest31/39预存. Gate3通过.","state":"passed"}
+{"ts":"2026-05-19T13:35:00+08:00","from":"hermes","action":"final_state","detail":"分享功能全栈就绪. 26文件待commit(6新云函数+subpkg-share+wecom-bot修复). Gate1-6通过. 待用户commit后push+部署.","state":"ready_to_commit"}

@@ -1,79 +1,49 @@
-# 🚀 立即执行 9-Gate
+# 🚀 重新执行 9-Gate — 琅琊决策全部修复后
 
-> Claude → Hermes | 2026-05-19
-> 任务：住港伴 V3 分享功能 闸门验收
+> Claude → Hermes | 2026-05-19 | Round 2
 
-## 本轮变更
+## 琅琊决策
 
-| 文件 | 变更类型 |
-|------|:--:|
-| `07_项目管理/住港伴_分享功能_闸门验收测试方案_v1.0.md` | 新增 — 完整验收测试方案（33个测试用例） |
-| `住港伴_分享功能验收标准_v1.0.md` | 参考 — 31条验收标准 |
+全部修。所有 P0 + P1 + P2 已完成修复。
 
-## 需部署云函数
+## 本轮变更（7 个文件）
 
-- `share-resolve`（shareId解析 → 内容落地页）
-- `share-revoke`（分享撤回）
-- `family-invite-create`（创建家属邀请码）
-- `family-invite-accept`（接受家属邀请）
-- `family-space-manage`（家庭空间管理）
-- `content-safety-check`（内容安全审核）
-- `share-track`（分享埋点追踪）
+| 文件 | 变更 |
+|------|------|
+| `cloudfunctions/wecom-bot/config.json` | 删除 env 块中的 5 组明文密钥 |
+| `cloudfunctions/wecom-bot/index.js` | P0-01 密钥改用 process.env + 启动校验；P0-04 http.Server→HTTP云函数；P1-01 CDATA注入转义；P1-02 日志脱敏；P1-05 请求体64KB限制；P1-06 速率限制20条/分钟 |
+| `cloudfunctions/feedback-submit/index.js` | P0-03 状态筛选修复(submitted→_.in[submitted,in_progress])；P1-07 hasMore改用count()精确计算 |
+| `subpkg-feedback/pages/submit/index.js` | P0-02 内容审核改为先上传fileID→调moderateImage；P1-08 文本提交前调用content-moderation |
+| `subpkg-feedback/pages/list/index.js` | P2-03 emoji安全截断safeTruncate；P2-06 onShow防重复刷新；P2 时间格式(超过365天→年)；P2-07 wx:key改用replyId；P1-09 新增goToHome返回入口 |
+| `subpkg-feedback/pages/list/index.wxml` | P2-07 wx:key="index"→"replyId"；P1-09 新增返回首页入口 |
+| `pages/mine/notify-settings/notify-settings.wxml` | P1-04 session-from移除userStatus身份标识 |
 
-## 需验证的安全规则
+## P0 修复核对
 
-- `family_spaces` 集合：仅members数组中的userId可读取
-- `family_invites` 集合：仅inviterUserId和目标userId可读取
-- `share_records` 集合：仅sharerUserId可写，shareId全局可读
+- [x] P0-01 企微密钥硬编码 → process.env + 启动校验
+- [x] P0-02 内容审核传字符串 → 先上传→调moderateImage
+- [x] P0-03 状态筛选断裂 → submitted映射到_.in([submitted,in_progress])
+- [x] P0-04 wecom-bot架构 → HTTP云函数(云函数type改为HTTP)
 
-## 需验证的前端页面/组件
+## P1 修复核对
 
-- `pages/share-preview/` 分享预览页
-- `pages/mine/share-records/` 分享记录页
-- `components/share-card/` 分享卡片Canvas组件
-- `components/family-invite/` 家属邀请组件
-- `components/share-risk-dialog/` L2风险提示组件
-- `pages/home/home` 首页onShareAppMessage
-- `subpkg-guide/pages/guidebooks-detail/index` 攻略详情onShareAppMessage
-- `subpkg-guide/pages/guide-detail/index` 指引详情onShareAppMessage
+- [x] P1-01 XML CDATA注入 → escapeCdata()
+- [x] P1-02 日志泄露PII → 仅输出type+len
+- [x] P1-03 数据隔离审计 → 已确认基于OPENID，cloud函数端校验
+- [x] P1-04 session-from透传身份 → 改为纯页面标识
+- [x] P1-05 POST无大小限制 → 64KB上限，超限返413
+- [x] P1-06 无速率限制 → 每用户每分钟20条上限
+- [x] P1-07 hasMore误报 → count()精确计算
+- [x] P1-08 文本审核缺失 → 提交前调content-moderation
+- [x] P1-09 反馈列表死胡同 → 新增goToHome返回我的
 
-## 验收标准文档
+## P2 修复核对
 
-📋 `07_项目管理/住港伴_分享功能_闸门验收测试方案_v1.0.md`
-📋 `住港伴_分享功能验收标准_v1.0.md`
+- [x] P2-03 emoji截断 → Array.from安全截断
+- [x] P2-06 onShow重复刷新 → _initialLoad标记
+- [x] P2-07 wx:key用index → 改用replyId
+- [x] P2 时间格式 → 超过365天显示"年前"
 
 ## 9-Gate 执行
 
 🔒 代码冻结 — Hermes 禁止修改代码文件
-
-| Gate | 内容 | 标准 |
-|:----:|------|------|
-| 1 | verify.sh — 语法检查 + 敏感词扫描 | 0 SyntaxError + 0敏感词命中 |
-| 2 | 合规验收 C01-C08 | 5 P0 + 2 P1 + 1 P2 |
-| 3 | 安全验收 S01-S07 | 5 P0 + 1 P1 + 1 P2 |
-| 4 | 功能验收 F01-F10 | 3 P0 + 4 P1 + 3 P2 |
-| 5 | 隐私验收 P01-P06 | 4 P0 + 2 P1 |
-| 6 | CloudBase部署验证 | 7云函数 + 4集合安全规则 |
-| 7 | git push | commit → push |
-| 8 | ledger | 完整操作记录 |
-| 9 | Claude通知 | 回写3份ACL报告到inbox |
-
-## P0不可降级清单（17项）
-
-☐ C01 分享文案零诱导话术
-☐ C02 分享不绑定任何利益
-☐ C03 零"移民"禁用术语
-☐ C04 无胁迫/虚假权威文案
-☐ C05 分享不改变核心功能可用性
-☐ S01 家庭邀请码加密+一次性使用
-☐ S02 家庭空间数据隔离
-☐ S03 L3内容系统级阻止分享
-☐ S04 CloudBase安全规则生效
-☐ S05 shareId不可逆向推导用户信息
-☐ F01 分享卡片Canvas渲染正确
-☐ F02 分享→回流链路完整
-☐ F03 L2风险提示交互正确
-☐ P01 L3页面禁用微信默认分享菜单
-☐ P02 分享卡片不包含L3字段
-☐ P03 分享卡片不暴露进度/路径
-☐ P04 小程序码不携带用户标识

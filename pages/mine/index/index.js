@@ -28,12 +28,14 @@ Page({
       { id: 'documents', icon: '📁', title: '我的证件', desc: '', url: '/pages/documents/index/index', tab: true },
       { id: 'process', icon: '📊', title: '我的流程', desc: '', url: '/pages/process/index/index', tab: true },
       { id: 'privacy', icon: '🛡', title: '隐私中心', desc: '', url: 'privacy-center' },
-      { id: 'membership', icon: '💳', title: '会员中心', desc: '', url: 'membership' }
+      { id: 'membership', icon: '💳', title: '会员中心', desc: '', url: 'membership' },
+      { id: 'family', icon: '👨‍👩‍👧', title: '家庭空间', desc: '', url: 'family-space' }
     ],
     settingsItems: [
       { id: 'notify', icon: '🔔', title: '通知设置' },
       { id: 'about', icon: 'ℹ️', title: '关于住港伴' },
       { id: 'feedback', icon: '💬', title: '意见反馈', url: 'feedback' },
+      { id: 'share-records', icon: '📤', title: '分享记录', url: 'share-records' },
       // admin-db 入口仅内部使用，C端不暴露
     ]
   },
@@ -122,6 +124,10 @@ Page({
       this.showMembership();
     } else if (url === 'feedback') {
       wx.navigateTo({ url: '/subpkg-feedback/pages/submit/index' });
+    } else if (url === 'family-space') {
+      wx.navigateTo({ url: '/subpkg-share/pages/family-invite/index' });
+    } else if (url === 'share-records') {
+      wx.navigateTo({ url: '/subpkg-share/pages/share-records/index' });
     } else if (tab) {
       wx.switchTab({ url });
     } else {

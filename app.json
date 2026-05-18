@@ -74,6 +74,15 @@
         "pages/list/index",
         "pages/wecom-qr/index"
       ]
+    },
+    {
+      "root": "subpkg-share",
+      "name": "share",
+      "pages": [
+        "pages/share-preview/index",
+        "pages/share-records/index",
+        "pages/family-invite/index"
+      ]
     }
   ],
   "preloadRule": {

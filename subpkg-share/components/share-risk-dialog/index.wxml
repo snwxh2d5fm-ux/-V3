@@ -1,0 +1,45 @@
+<view
+  class="risk-overlay {{ visible ? 'risk-overlay--visible' : '' }}"
+  catchtap="onCancel"
+>
+  <view
+    class="risk-dialog"
+    catchtap=""
+  >
+    <view class="risk-dialog__icon">
+      <text>⚠️</text>
+    </view>
+
+    <text class="risk-dialog__title">分享前请注意</text>
+
+    <text class="risk-dialog__desc">
+      此操作涉及您的身份规划相关信息。建议仅分享给您完全信任的人。分享后您可随时在"分享记录"中撤回。
+    </text>
+
+    <view class="risk-dialog__checkbox" bindtap="onCheck">
+      <view class="risk-dialog__checkbox-box {{ checked ? 'risk-dialog__checkbox-box--checked' : '' }}">
+        <text
+          wx:if="{{ checked }}"
+          class="risk-dialog__checkbox-icon"
+        >✓</text>
+      </view>
+      <text class="risk-dialog__checkbox-label">我已了解，确认继续</text>
+    </view>
+
+    <view class="risk-dialog__actions">
+      <button
+        class="risk-dialog__btn risk-dialog__btn--cancel"
+        bindtap="onCancel"
+      >
+        取消
+      </button>
+      <button
+        class="risk-dialog__btn risk-dialog__btn--confirm {{ !checked ? 'risk-dialog__btn--disabled' : '' }}"
+        disabled="{{ !checked }}"
+        bindtap="onConfirm"
+      >
+        确认
+      </button>
+    </view>
+  </view>
+</view>

@@ -1,0 +1,683 @@
+/* 住港伴 V3 — 家庭空间邀请页样式 */
+
+.page {
+  min-height: 100vh;
+  background: #f5f5f5;
+  padding: 24rpx 24rpx 0;
+  box-sizing: border-box;
+}
+
+/* ===== 加载状态 ===== */
+.loading-wrap {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  padding: 120rpx 0;
+}
+
+.spinner {
+  width: 60rpx;
+  height: 60rpx;
+  border: 4rpx solid #e0e0e0;
+  border-top: 4rpx solid #1a73e8;
+  border-radius: 50%;
+  animation: spin 0.8s linear infinite;
+}
+
+@keyframes spin {
+  from { transform: rotate(0deg); }
+  to { transform: rotate(360deg); }
+}
+
+.loading-text {
+  margin-top: 24rpx;
+  font-size: 26rpx;
+  color: #999;
+}
+
+/* ===== 空状态 ===== */
+.empty-state {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  padding: 120rpx 40rpx;
+}
+
+.empty-icon {
+  font-size: 80rpx;
+  margin-bottom: 24rpx;
+}
+
+.empty-title {
+  font-size: 34rpx;
+  font-weight: 700;
+  color: #333;
+  margin-bottom: 12rpx;
+}
+
+.empty-desc {
+  font-size: 26rpx;
+  color: #999;
+  text-align: center;
+  line-height: 1.6;
+  margin-bottom: 40rpx;
+}
+
+/* ===== 通用卡片 ===== */
+.card {
+  background: #fff;
+  border-radius: 16rpx;
+  padding: 28rpx;
+  margin-bottom: 20rpx;
+  box-shadow: 0 2rpx 8rpx rgba(0,0,0,0.04);
+}
+
+/* ===== 成员列表 ===== */
+.section-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 20rpx;
+}
+
+.section-title {
+  font-size: 30rpx;
+  font-weight: 700;
+  color: #333;
+}
+
+.member-count {
+  font-size: 24rpx;
+  color: #999;
+  background: #f5f5f5;
+  padding: 4rpx 16rpx;
+  border-radius: 20rpx;
+}
+
+.member-card {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 20rpx 0;
+  border-bottom: 1rpx solid #f0f0f0;
+}
+
+.member-card:last-child {
+  border-bottom: none;
+}
+
+.member-info {
+  display: flex;
+  align-items: flex-start;
+  flex: 1;
+}
+
+.member-avatar {
+  font-size: 44rpx;
+  width: 60rpx;
+  height: 60rpx;
+  line-height: 60rpx;
+  text-align: center;
+  margin-right: 16rpx;
+  background: #f0f7ff;
+  border-radius: 30rpx;
+}
+
+.member-detail {
+  flex: 1;
+  min-width: 0;
+}
+
+.member-top {
+  display: flex;
+  align-items: center;
+  margin-bottom: 6rpx;
+}
+
+.member-name {
+  font-size: 28rpx;
+  font-weight: 600;
+  color: #333;
+  margin-right: 12rpx;
+}
+
+.member-role {
+  font-size: 22rpx;
+  padding: 2rpx 14rpx;
+  border-radius: 10rpx;
+  font-weight: 500;
+}
+
+.role-spouse {
+  background: #fef3e2;
+  color: #e6a23c;
+}
+
+.role-child {
+  background: #e8f5e9;
+  color: #4caf50;
+}
+
+.member-date {
+  font-size: 22rpx;
+  color: #bbb;
+  display: block;
+  margin-bottom: 8rpx;
+}
+
+.member-permissions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8rpx;
+}
+
+.member-actions {
+  margin-left: 16rpx;
+}
+
+.action-btn {
+  font-size: 24rpx;
+  padding: 8rpx 20rpx;
+  border-radius: 8rpx;
+}
+
+.action-btn.danger {
+  color: #d93025;
+  background: #fef2f2;
+}
+
+/* ===== 添加家属卡片 ===== */
+.add-card {
+  padding: 0;
+}
+
+.add-inner {
+  display: flex;
+  align-items: center;
+  padding: 28rpx;
+}
+
+.add-icon {
+  font-size: 40rpx;
+  width: 60rpx;
+  height: 60rpx;
+  line-height: 60rpx;
+  text-align: center;
+  background: #e8f0fe;
+  color: #1a73e8;
+  border-radius: 16rpx;
+  margin-right: 16rpx;
+  font-weight: 700;
+}
+
+.add-texts {
+  flex: 1;
+}
+
+.add-title {
+  font-size: 28rpx;
+  font-weight: 600;
+  color: #333;
+  display: block;
+}
+
+.add-desc {
+  font-size: 24rpx;
+  color: #999;
+  display: block;
+  margin-top: 4rpx;
+}
+
+.add-arrow {
+  font-size: 36rpx;
+  color: #ccc;
+}
+
+/* ===== 创建邀请面板 ===== */
+.create-panel {
+  margin-top: 8rpx;
+}
+
+.create-panel-title {
+  font-size: 30rpx;
+  font-weight: 700;
+  color: #333;
+  display: block;
+  margin-bottom: 24rpx;
+}
+
+.picker-label {
+  font-size: 26rpx;
+  color: #666;
+  font-weight: 600;
+  display: block;
+  margin-bottom: 14rpx;
+}
+
+/* 角色选择 */
+.role-picker {
+  margin-bottom: 24rpx;
+}
+
+.role-options {
+  display: flex;
+  gap: 16rpx;
+}
+
+.role-option {
+  display: flex;
+  align-items: center;
+  flex: 1;
+  padding: 20rpx;
+  border: 2rpx solid #e0e0e0;
+  border-radius: 12rpx;
+  gap: 12rpx;
+}
+
+.role-option.active {
+  border-color: #1a73e8;
+  background: #e8f0fe;
+}
+
+.role-option-icon {
+  font-size: 36rpx;
+}
+
+.role-option-text {
+  font-size: 26rpx;
+  color: #333;
+  font-weight: 500;
+}
+
+/* 权限选择 */
+.permission-picker {
+  margin-bottom: 28rpx;
+}
+
+.permission-options {
+  display: flex;
+  flex-direction: column;
+  gap: 12rpx;
+}
+
+.perm-option {
+  display: flex;
+  align-items: center;
+  padding: 18rpx;
+  border: 2rpx solid #e0e0e0;
+  border-radius: 12rpx;
+  gap: 14rpx;
+}
+
+.perm-option.active {
+  border-color: #1a73e8;
+  background: #f8faff;
+}
+
+.perm-check {
+  width: 36rpx;
+  height: 36rpx;
+  line-height: 36rpx;
+  text-align: center;
+  border: 2rpx solid #ccc;
+  border-radius: 8rpx;
+  font-size: 24rpx;
+  color: transparent;
+  flex-shrink: 0;
+}
+
+.perm-option.active .perm-check {
+  background: #1a73e8;
+  border-color: #1a73e8;
+  color: #fff;
+}
+
+.perm-info {
+  flex: 1;
+}
+
+.perm-title {
+  font-size: 26rpx;
+  font-weight: 600;
+  color: #333;
+  display: block;
+}
+
+.perm-desc {
+  font-size: 22rpx;
+  color: #bbb;
+  display: block;
+  margin-top: 2rpx;
+}
+
+/* ===== 邀请码展示 ===== */
+.invite-code-card {
+  text-align: center;
+}
+
+.invite-code-title {
+  font-size: 30rpx;
+  font-weight: 700;
+  color: #333;
+  display: block;
+  margin-bottom: 20rpx;
+}
+
+.invite-code-box {
+  background: #f8faff;
+  border: 2rpx dashed #1a73e8;
+  border-radius: 12rpx;
+  padding: 24rpx;
+  margin-bottom: 16rpx;
+}
+
+.invite-code {
+  font-size: 36rpx;
+  font-weight: 800;
+  color: #1a73e8;
+  letter-spacing: 4rpx;
+  font-family: 'Courier New', monospace;
+}
+
+.invite-code-expiry {
+  font-size: 24rpx;
+  color: #999;
+  display: block;
+  margin-bottom: 24rpx;
+}
+
+.invite-code-actions {
+  display: flex;
+  gap: 16rpx;
+}
+
+.invite-code-actions .action {
+  flex: 1;
+}
+
+/* ===== 按钮 ===== */
+.btn {
+  width: 100%;
+  height: 80rpx;
+  line-height: 80rpx;
+  border-radius: 12rpx;
+  font-size: 28rpx;
+  font-weight: 600;
+  text-align: center;
+  padding: 0;
+  border: none;
+}
+
+.btn-primary {
+  background: #1a73e8;
+  color: #fff;
+}
+
+.btn-primary:active {
+  background: #1557b0;
+}
+
+.btn-outline {
+  background: transparent;
+  color: #1a73e8;
+  border: 2rpx solid #1a73e8;
+}
+
+.btn-outline:active {
+  background: #e8f0fe;
+}
+
+.btn-ghost {
+  background: transparent;
+  border: 2rpx solid #e0e0e0;
+  color: #666;
+}
+
+/* ===== 邀请卡片（接受端） ===== */
+.invite-card {
+  background: #fff;
+  border-radius: 16rpx;
+  margin: 40rpx 24rpx;
+  padding: 40rpx 32rpx;
+  box-shadow: 0 4rpx 20rpx rgba(0,0,0,0.06);
+}
+
+.invite-header {
+  text-align: center;
+  margin-bottom: 32rpx;
+}
+
+.invite-icon {
+  font-size: 80rpx;
+  display: block;
+  margin-bottom: 16rpx;
+}
+
+.invite-title {
+  font-size: 34rpx;
+  font-weight: 700;
+  color: #333;
+}
+
+.invite-detail {
+  margin-bottom: 28rpx;
+}
+
+.detail-row {
+  display: flex;
+  align-items: flex-start;
+  padding: 14rpx 0;
+  border-bottom: 1rpx solid #f5f5f5;
+}
+
+.detail-row:last-child {
+  border-bottom: none;
+}
+
+.detail-label {
+  font-size: 26rpx;
+  color: #999;
+  width: 140rpx;
+  flex-shrink: 0;
+}
+
+.detail-value {
+  font-size: 26rpx;
+  color: #333;
+  flex: 1;
+}
+
+/* 权限标签 */
+.permission-chips {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8rpx;
+}
+
+.perm-chip {
+  font-size: 22rpx;
+  padding: 4rpx 16rpx;
+  background: #e8f0fe;
+  color: #1a73e8;
+  border-radius: 10rpx;
+}
+
+.perm-chip.mini {
+  font-size: 20rpx;
+  padding: 2rpx 12rpx;
+}
+
+.role-tag {
+  font-weight: 600;
+}
+
+.role-tag.spouse {
+  color: #e6a23c;
+}
+
+.role-tag.child {
+  color: #4caf50;
+}
+
+/* 风险提示 */
+.risk-notice {
+  display: flex;
+  align-items: flex-start;
+  gap: 10rpx;
+  background: #fff8e1;
+  padding: 16rpx;
+  border-radius: 12rpx;
+  margin-bottom: 28rpx;
+}
+
+.risk-notice-icon {
+  font-size: 28rpx;
+  flex-shrink: 0;
+}
+
+.risk-notice-text {
+  font-size: 24rpx;
+  color: #8d6e28;
+  line-height: 1.5;
+}
+
+.accept-error {
+  text-align: center;
+  color: #d93025;
+  font-size: 24rpx;
+  margin-top: 16rpx;
+}
+
+/* ===== 成功视图 ===== */
+.success-view {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  padding: 120rpx 40rpx;
+}
+
+.success-icon {
+  font-size: 100rpx;
+  margin-bottom: 24rpx;
+}
+
+.success-title {
+  font-size: 36rpx;
+  font-weight: 700;
+  color: #333;
+  margin-bottom: 32rpx;
+}
+
+.success-card {
+  background: #f8faff;
+  border-radius: 12rpx;
+  padding: 24rpx;
+  width: 100%;
+  margin-bottom: 40rpx;
+  text-align: center;
+}
+
+.success-label {
+  font-size: 24rpx;
+  color: #999;
+  display: block;
+  margin-bottom: 8rpx;
+}
+
+.success-value {
+  font-size: 28rpx;
+  color: #333;
+  font-weight: 600;
+  font-family: 'Courier New', monospace;
+}
+
+/* ===== 风险弹窗 ===== */
+.overlay {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background: rgba(0,0,0,0.5);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 1000;
+}
+
+.risk-modal {
+  background: #fff;
+  border-radius: 20rpx;
+  padding: 40rpx 32rpx;
+  width: 580rpx;
+  max-height: 80vh;
+  overflow-y: auto;
+}
+
+.risk-modal-icon {
+  font-size: 60rpx;
+  display: block;
+  text-align: center;
+  margin-bottom: 16rpx;
+}
+
+.risk-modal-title {
+  font-size: 32rpx;
+  font-weight: 700;
+  color: #333;
+  display: block;
+  text-align: center;
+  margin-bottom: 20rpx;
+}
+
+.risk-modal-body {
+  margin-bottom: 32rpx;
+}
+
+.risk-modal-text {
+  font-size: 26rpx;
+  color: #666;
+  display: block;
+  margin-bottom: 16rpx;
+  line-height: 1.5;
+}
+
+.risk-modal-permissions {
+  margin-bottom: 16rpx;
+}
+
+.risk-modal-perm {
+  font-size: 26rpx;
+  color: #1a73e8;
+  display: block;
+  padding: 6rpx 0;
+  font-weight: 500;
+}
+
+.risk-modal-warning {
+  font-size: 24rpx;
+  color: #999;
+  display: block;
+  line-height: 1.5;
+  background: #fff8e1;
+  padding: 16rpx;
+  border-radius: 10rpx;
+  color: #8d6e28;
+}
+
+.risk-modal-actions {
+  display: flex;
+  gap: 16rpx;
+}
+
+.risk-modal-actions .btn {
+  flex: 1;
+}
+
+/* ===== 安全底部 ===== */
+.safe-bottom {
+  height: 48rpx;
+}

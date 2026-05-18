@@ -55,6 +55,7 @@ exports.main = async (event) => {
   var action = event.action;
   try {
     if (action === 'moderateText')  return await moderateText(event);
+    if (action === 'moderateImage') return await moderateImage(event);
     if (action === 'moderateBatch') return await moderateBatch(event);
     if (action === 'checkStatus')   return await checkStatus();
     return { code: 400, msg: '不支持 action: ' + action };
@@ -118,6 +119,103 @@ async function moderateText(event) {
   }
   
   return { code: 0, data: { suggestion: result.suggestion, label: result.label, score: result.score, keywords: result.keywords || [], cached: false } };
+}
+
+// ============ 图片审核（腾讯云 IMS ImageModeration） ============
+async function moderateImage(event) {
+  var fileID = event.fileID;
+  if (!fileID) return { code: 400, msg: '缺少 fileID' };
+
+  // 1. 从云存储下载图片
+  var buffer;
+  try {
+    var downloadRes = await cloud.downloadFile({ fileID: fileID });
+    buffer = downloadRes.fileContent;
+  } catch (e) {
+    console.error('[content-moderation] 图片下载失败:', e.message);
+    return { code: 500, msg: '图片下载失败' };
+  }
+
+  // 2. Base64编码
+  var base64 = buffer.toString('base64');
+
+  // 3. 调用 IMS API
+  try {
+    var result = await callIMS(base64, fileID);
+    var blocked = result.suggestion === 'Block';
+    return { code: 0, data: { suggestion: result.suggestion, label: result.label, score: result.score, blocked: blocked } };
+  } catch (apiErr) {
+    console.error('[content-moderation] IMS API 失败:', apiErr.message);
+    // 降级：API 不可用时放行
+    return { code: 0, data: { suggestion: 'Pass', label: 'Normal', score: 0, blocked: false, degraded: true } };
+  }
+}
+
+// ============ 调用 IMS API（TC3-HMAC-SHA256，同 TMS 签名模式） ============
+async function callIMS(base64Content, dataId) {
+  var crypto = require('crypto');
+  var https = require('https');
+
+  var payload = JSON.stringify({
+    FileContent: base64Content,
+    BizType: ENV.bizType,
+    DataId: dataId || ''
+  });
+
+  var host = 'ims.tencentcloudapi.com';
+  var service = 'ims';
+  var action = 'ImageModeration';
+  var version = '2020-12-29';
+  var algorithm = 'TC3-HMAC-SHA256';
+  var timestamp = Math.floor(Date.now() / 1000);
+  var date = new Date(timestamp * 1000).toISOString().substring(0, 10);
+
+  var hashedPayload = crypto.createHash('sha256').update(payload).digest('hex');
+  var canonicalRequest = 'POST\n/\n\ncontent-type:application/json; charset=utf-8\nhost:' + host + '\n\ncontent-type;host\n' + hashedPayload;
+  var hashedCanonicalRequest = crypto.createHash('sha256').update(canonicalRequest).digest('hex');
+  var credentialScope = date + '/' + service + '/tc3_request';
+  var stringToSign = algorithm + '\n' + timestamp + '\n' + credentialScope + '\n' + hashedCanonicalRequest;
+
+  var kDate = crypto.createHmac('sha256', 'TC3' + ENV.secretKey).update(date).digest();
+  var kService = crypto.createHmac('sha256', kDate).update(service).digest();
+  var kSigning = crypto.createHmac('sha256', kService).update('tc3_request').digest();
+  var signature = crypto.createHmac('sha256', kSigning).update(stringToSign).digest('hex');
+
+  var authorization = algorithm + ' Credential=' + ENV.secretId + '/' + credentialScope + ', SignedHeaders=content-type;host, Signature=' + signature;
+
+  return new Promise(function(resolve, reject) {
+    var req = https.request({
+      hostname: host, port: 443, path: '/', method: 'POST',
+      timeout: 15000,
+      headers: {
+        'Content-Type': 'application/json; charset=utf-8',
+        'Host': host,
+        'Authorization': authorization,
+        'X-TC-Action': action,
+        'X-TC-Version': version,
+        'X-TC-Timestamp': timestamp,
+        'X-TC-Region': 'ap-guangzhou'
+      }
+    }, function(res) {
+      var body = '';
+      res.on('data', function(c) { body += c; });
+      res.on('end', function() {
+        try {
+          var parsed = JSON.parse(body);
+          if (parsed.Response && parsed.Response.Error) {
+            reject(new Error(parsed.Response.Error.Message));
+            return;
+          }
+          var r = parsed.Response || {};
+          resolve({ suggestion: r.Suggestion || 'Pass', label: r.Label || 'Normal', score: r.Score || 0 });
+        } catch (err) { reject(err); }
+      });
+    });
+    req.on('timeout', function() { req.destroy(new Error('IMS API request timeout')); });
+    req.on('error', reject);
+    req.write(payload);
+    req.end();
+  });
 }
 
 // ============ 批量文本审核 ============

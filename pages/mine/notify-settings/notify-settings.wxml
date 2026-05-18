@@ -116,7 +116,7 @@
         <text class="service-desc">通知收不到？授权遇到问题？联系我们获取帮助</text>
       </view>
       <button class="service-btn" open-type="contact"
-        session-from="{{'notify-settings|' + userStatus + '|' + crt01.tmplAuth}}"
+        session-from="notify-settings"
         send-message-title="通知设置帮助"
         send-message-path="/pages/mine/notify-settings/notify-settings"
         show-message-card="{{true}}">

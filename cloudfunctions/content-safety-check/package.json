@@ -1,0 +1,7 @@
+{
+  "name": "content-safety-check",
+  "version": "1.0.0",
+  "description": "住港伴 — 内容安全检测：禁用术语/PII/诱导话术/内容等级校验，分享类云函数前置依赖",
+  "main": "index.js",
+  "dependencies": { "wx-server-sdk": "~2.6.0" }
+}

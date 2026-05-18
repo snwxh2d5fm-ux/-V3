@@ -84,23 +84,40 @@ Page({
           }
         } catch (e) { /* 忽略 */ }
 
-        // 图片安全检测
+        // 先上传获取fileID → 再调内容审核
         that.setData({ isUploading: true });
-        wx.cloud.callFunction({
-          name: 'content-moderation',
-          data: { action: 'moderateText', content: 'image_upload' }
-        }).catch(function() { /* 降级 */ });
 
-        // 上传到云存储
         var cloudPath = 'feedback/screenshots/' + Date.now() + '_' + Math.random().toString(36).substring(2, 8) + '.jpg';
         wx.cloud.uploadFile({
           cloudPath: cloudPath,
           filePath: tempPath,
           success: function(uploadRes) {
-            that.setData({
-              screenshotPath: tempPath,
-              screenshotFileID: uploadRes.fileID,
-              isUploading: false
+            // 图片上传成功后 → 调内容审核
+            wx.cloud.callFunction({
+              name: 'content-moderation',
+              data: { action: 'moderateImage', fileID: uploadRes.fileID }
+            }).then(function(modRes) {
+              var result = modRes.result || {};
+              if (result.code === 0 && result.data && result.data.blocked) {
+                // 审核不通过 → 删除已上传文件 → 阻断
+                wx.cloud.deleteFile({ fileList: [uploadRes.fileID] }).catch(function(){});
+                wx.showToast({ title: '图片内容不合规，请更换', icon: 'none' });
+                that.setData({ isUploading: false });
+                return;
+              }
+              that.setData({
+                screenshotPath: tempPath,
+                screenshotFileID: uploadRes.fileID,
+                isUploading: false
+              });
+            }).catch(function() {
+              // 审核服务降级: 仅记录日志，不阻断上传
+              console.warn('[feedback] content-moderation unavailable');
+              that.setData({
+                screenshotPath: tempPath,
+                screenshotFileID: uploadRes.fileID,
+                isUploading: false
+              });
             });
           },
           fail: function() {
@@ -141,23 +158,34 @@ Page({
     var that = this;
     this.setData({ isSubmitting: true });
 
-    // 文本安全检测
+    // 文本安全审核 → 通过后才提交
     wx.cloud.callFunction({
-      name: 'feedback-submit',
-      data: {
-        action: 'submit',
-        type: this.data.selectedType,
-        content: this.data.content.trim(),
-        screenshot: this.data.screenshotFileID,
-        isAnonymous: this.data.isAnonymous,
-        contact: {
-          nickname: this.data.isAnonymous ? '' : this.data.nickname
-        }
+      name: 'content-moderation',
+      data: { action: 'moderateText', content: this.data.content.trim() }
+    }).then(function(modRes) {
+      var result = modRes.result || {};
+      if (result.code === 0 && result.data && result.data.blocked) {
+        wx.showToast({ title: '内容包含违规信息，请修改', icon: 'none' });
+        that.setData({ isSubmitting: false });
+        return;
       }
+      // 审核通过 → 提交
+      return wx.cloud.callFunction({
+        name: 'feedback-submit',
+        data: {
+          action: 'submit',
+          type: that.data.selectedType,
+          content: that.data.content.trim(),
+          screenshot: that.data.screenshotFileID,
+          isAnonymous: that.data.isAnonymous,
+          contact: { nickname: that.data.isAnonymous ? '' : that.data.nickname }
+        }
+      });
     }).then(function(res) {
-      var result = res.result;
-      if (result.code === 0) {
-        var ticketId = result.data.ticketId;
+      if (!res) return; // 审核拦截
+      var submitResult = res.result;
+      if (submitResult.code === 0) {
+        var ticketId = submitResult.data.ticketId;
         wx.showModal({
           title: '提交成功',
           content: '工单号: ' + ticketId + '\n\n我们会尽快处理你的反馈。',
@@ -172,7 +200,7 @@ Page({
           }
         });
       } else {
-        wx.showToast({ title: result.msg || '提交失败', icon: 'none' });
+        wx.showToast({ title: submitResult.msg || '提交失败', icon: 'none' });
         that.setData({ isSubmitting: false, canSubmit: true });
       }
     }).catch(function() {

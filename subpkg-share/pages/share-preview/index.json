@@ -1,0 +1,6 @@
+{
+  "usingComponents": {
+    "share-card": "/subpkg-share/components/share-card/index"
+  },
+  "navigationBarTitleText": "内容分享"
+}

@@ -61,7 +61,7 @@
             <image
               class="detail-screenshot"
               src="{{detailData.screenshot}}"
-              mode="aspectFill"
+              mode="aspectFit"
               data-url="{{detailData.screenshot}}"
               bindtap="onPreviewScreenshot"
             />
@@ -73,7 +73,7 @@
           <!-- 回复列表 -->
           <view wx:if="{{detailReplies.length > 0}}" class="reply-section">
             <text class="reply-title">回复记录</text>
-            <view wx:for="{{detailReplies}}" wx:key="index" class="reply-item {{item.roleCls}}">
+            <view wx:for="{{detailReplies}}" wx:key="replyId" class="reply-item {{item.roleCls}}">
               <view class="reply-header">
                 <text class="reply-role">{{item.roleLabel}}</text>
                 <text class="reply-time">{{item.time}}</text>
@@ -110,8 +110,13 @@
   </view>
 
   <!-- 底部企微入口 -->
-  <view class="bottom-bar" bindtap="goToWeCom">
-    <text class="bottom-text">💬 添加客服微信，1对1沟通 ›</text>
+  <view class="bottom-bar">
+    <text class="bottom-text" bindtap="goToWeCom">💬 添加客服微信，1对1沟通 ›</text>
+  </view>
+
+  <!-- 返回首页入口 -->
+  <view class="bottom-back" bindtap="goToHome">
+    <text class="bottom-back-text">← 返回我的</text>
   </view>
 
   <view class="safe-bottom"></view>

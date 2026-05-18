@@ -1,0 +1,71 @@
+<view class="page-share-preview">
+  <!-- 加载状态 -->
+  <view class="loading-container" wx:if="{{loading || isCreating}}">
+    <view class="loading-spinner"></view>
+    <text class="loading-text" wx:if="{{isCreating}}">正在生成分享卡片...</text>
+    <text class="loading-text" wx:else>正在加载...</text>
+  </view>
+
+  <!-- 内容区域 -->
+  <view class="content-area" wx:else>
+    <!-- 标题 -->
+    <view class="section-header">
+      <text class="section-title">分享预览</text>
+      <text class="content-type-badge">{{contentType}}</text>
+    </view>
+
+    <!-- 分享卡片预览区 -->
+    <view class="card-preview-area" wx:if="{{imagePath}}">
+      <share-card
+        title="{{contentTitle}}"
+        digest="{{contentDigest}}"
+        imagePath="{{imagePath}}"
+      />
+    </view>
+
+    <!-- 文本预览兜底 -->
+    <view class="text-preview-area" wx:else>
+      <view class="preview-card">
+        <text class="preview-title">{{contentTitle}}</text>
+        <text class="preview-digest" wx:if="{{contentDigest}}">{{contentDigest}}</text>
+        <view class="preview-footer">
+          <text class="preview-brand">来自 住港伴</text>
+        </view>
+      </view>
+    </view>
+
+    <!-- 操作按钮 -->
+    <view class="action-area">
+      <button
+        class="btn btn-primary"
+        open-type="share"
+        data-type="friend"
+      >
+        <text class="btn-icon">&#x1f91d;</text>
+        <text class="btn-text">分享给朋友</text>
+      </button>
+
+      <button
+        class="btn btn-outline"
+        bindtap="onSaveImage"
+        disabled="{{!imagePath}}"
+      >
+        <text class="btn-icon">&#x1f5bc;</text>
+        <text class="btn-text">保存图片</text>
+      </button>
+
+      <button
+        class="btn btn-outline"
+        bindtap="onCopyLink"
+      >
+        <text class="btn-icon">&#x1f4cb;</text>
+        <text class="btn-text">复制链接</text>
+      </button>
+    </view>
+
+    <!-- 免责声明 -->
+    <view class="disclaimer-area">
+      <text class="disclaimer-text">分享内容不含你的个人信息</text>
+    </view>
+  </view>
+</view>

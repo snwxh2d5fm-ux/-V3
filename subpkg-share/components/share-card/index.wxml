@@ -1,0 +1,25 @@
+<canvas
+  canvas-id="shareCardCanvas"
+  style="position:fixed;left:-9999rpx;top:0;width:750rpx;height:1000rpx;"
+/>
+<view class="share-card">
+  <image
+    wx:if="{{ imagePath }}"
+    class="share-card__preview"
+    src="{{ imagePath }}"
+    mode="aspectFit"
+  />
+  <view
+    wx:if="{{ !imagePath }}"
+    class="share-card__placeholder"
+  >
+    <text class="share-card__placeholder-text">点击下方按钮生成分享卡片</text>
+  </view>
+  <button
+    class="share-card__btn {{ generating ? 'share-card__btn--disabled' : '' }}"
+    disabled="{{ generating }}"
+    bindtap="onGenerateTap"
+  >
+    {{ generating ? '生成中...' : '保存图片' }}
+  </button>
+</view>

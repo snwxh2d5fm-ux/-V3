@@ -1,0 +1,72 @@
+<view class="page-share-records">
+  <!-- 加载状态 -->
+  <view class="loading-container" wx:if="{{loading}}">
+    <view class="loading-spinner"></view>
+    <text class="loading-text">加载中...</text>
+  </view>
+
+  <!-- 空状态 -->
+  <view class="empty-container" wx:elif="{{empty}}">
+    <text class="empty-icon">&#x1f4e4;</text>
+    <text class="empty-text">暂无分享记录</text>
+    <text class="empty-hint">分享攻略或文档后，记录将展示在这里</text>
+  </view>
+
+  <!-- 记录列表 -->
+  <scroll-view
+    class="records-list"
+    wx:else
+    scroll-y
+    enable-back-to-top
+  >
+    <view
+      class="record-card"
+      wx:for="{{records}}"
+      wx:key="shareId"
+      data-share-id="{{item.shareId}}"
+    >
+      <view class="card-header">
+        <text class="content-type-icon">
+          <text wx:if="{{item.contentType === 'guide'}}">&#x1f4da;</text>
+          <text wx:elif="{{item.contentType === 'doc_template'}}">&#x1f4cb;</text>
+          <text wx:elif="{{item.contentType === 'policy'}}">&#x1f4f0;</text>
+          <text wx:else>&#x1f4c4;</text>
+        </text>
+        <text class="content-title">{{item.contentTitle}}</text>
+      </view>
+
+      <view class="card-meta">
+        <text class="meta-type">{{item.contentTypeLabel}}</text>
+        <text class="meta-time">{{item.createdAt}}</text>
+      </view>
+
+      <view class="card-footer">
+        <!-- 状态徽章 -->
+        <view class="status-badge-wrap">
+          <view class="status-badge status-active" wx:if="{{item.status === 'active'}}">
+            <view class="status-dot dot-green"></view>
+            <text class="status-text">生效中</text>
+          </view>
+          <view class="status-badge status-revoked" wx:elif="{{item.status === 'revoked'}}">
+            <view class="status-dot dot-red"></view>
+            <text class="status-text">已撤回</text>
+          </view>
+          <view class="status-badge status-expired" wx:elif="{{item.status === 'expired'}}">
+            <view class="status-dot dot-gray"></view>
+            <text class="status-text">已过期</text>
+          </view>
+        </view>
+
+        <!-- 撤回按钮 -->
+        <view
+          class="revoke-btn"
+          wx:if="{{item.status === 'active'}}"
+          bindtap="onRevoke"
+          data-share-id="{{item.shareId}}"
+        >
+          <text class="revoke-btn-text">撤回</text>
+        </view>
+      </view>
+    </view>
+  </scroll-view>
+</view>
