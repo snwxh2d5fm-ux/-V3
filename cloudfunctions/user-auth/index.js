@@ -118,18 +118,27 @@ async function handlePhoneLogin(openid, { phoneCode, loginType }) {
         code: phoneCode
       });
       if (result.errCode !== 0) {
-        console.error('[phoneLogin] getPhoneNumber 错误:', result);
-        return { code: 500, msg: '手机号服务异常' };
+        console.error('[phoneLogin] getPhoneNumber errCode:', result.errCode, result.errMsg);
+        // 真机常见错误码映射
+        var errMap = {
+          '-80076': '小程序未开通手机号快速验证能力，请在微信公众平台开通',
+          '-1': '当前环境不支持手机号验证',
+          '-80001': '网络异常，请检查网络后重试'
+        };
+        var errMsg = errMap[String(result.errCode)] || ('手机号服务异常(errCode:' + result.errCode + ')');
+        return { code: 500, msg: errMsg };
       }
       phoneNumber = result.phoneInfo.purePhoneNumber;
     } catch (e) {
-      // DevTools 模拟器下 openapi 不可用 — 降级处理
-      if (e.errCode === -1 || (e.message && e.message.includes('not supported'))) {
-        console.warn('[phoneLogin] 当前环境不支持 openapi，使用模拟模式');
+      console.error('[phoneLogin] 异常:', JSON.stringify({errCode: e.errCode, errMsg: e.errMsg, message: e.message, err: String(e)}));
+      // DevTools/模拟器降级
+      if (e.errCode === -1 || (e.message && /not support|not available/i.test(e.message))) {
+        console.warn('[phoneLogin] 使用模拟模式');
         phoneNumber = 'dev_' + openid.slice(-8);
+      } else if (e.errCode === -80076) {
+        return { code: 500, msg: '小程序未开通手机号快速验证能力，请在微信公众平台开通' };
       } else {
-        console.error('[phoneLogin] 手机号解密异常:', e);
-        return { code: 500, msg: '手机号服务异常' };
+        return { code: 500, msg: '手机号服务异常，请稍后重试或使用微信一键登录' };
       }
     }
   } else {
