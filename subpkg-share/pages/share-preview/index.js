@@ -46,9 +46,10 @@ Page({
         var result = res.result;
         if (result && result.code === 0) {
           var data = result.data || {};
+          var digest = data.contentDigest || {};
           that.setData({
-            contentTitle: data.contentTitle || '',
-            contentDigest: data.contentDigest || '',
+            contentTitle: digest.title || '',
+            contentDigest: digest.summary || '',
             contentType: data.contentType || '',
             imagePath: data.imagePath || '',
             loading: false
@@ -70,7 +71,7 @@ Page({
     that.setData({ isCreating: true });
 
     wx.cloud.callFunction({
-      name: 'share-resolve',
+      name: 'share-create',
       data: {
         action: 'create',
         contentType: options.contentType,

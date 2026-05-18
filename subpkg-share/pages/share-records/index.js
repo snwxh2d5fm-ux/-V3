@@ -64,28 +64,9 @@ Page({
   },
 
   queryByOpenid: function (db) {
-    var that = this;
-
-    db.collection('share_records')
-      .where({
-        _openid: '{openid}'
-      })
-      .orderBy('createdAt', 'desc')
-      .limit(50)
-      .get()
-      .then(function (res) {
-        var list = res.data || [];
-        var formatted = that.formatRecords(list);
-        that.setData({
-          records: formatted,
-          loading: false,
-          empty: formatted.length === 0
-        });
-      })
-      .catch(function () {
-        wx.showToast({ title: '加载失败', icon: 'none' });
-        that.setData({ loading: false, empty: true });
-      });
+    // 降级方案: user-auth 不可用时提示用户重新登录
+    wx.showToast({ title: '请重新登录后查看', icon: 'none' });
+    this.setData({ loading: false, empty: true });
   },
 
   formatRecords: function (list) {

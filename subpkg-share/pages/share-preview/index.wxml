@@ -17,9 +17,8 @@
     <!-- 分享卡片预览区 -->
     <view class="card-preview-area" wx:if="{{imagePath}}">
       <share-card
-        title="{{contentTitle}}"
-        digest="{{contentDigest}}"
-        imagePath="{{imagePath}}"
+        content-title="{{contentTitle}}"
+        content-digest="{{contentDigest}}"
       />
     </view>
 

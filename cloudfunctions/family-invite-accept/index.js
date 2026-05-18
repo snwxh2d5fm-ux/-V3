@@ -6,8 +6,14 @@ const _ = db.command;
 exports.main = async (event) => {
   try {
     var { action } = event;
+
+    // action='load': 查询邀请信息（用于接受前预览）
+    if (action === 'load') {
+      return await loadInvite(event);
+    }
+
     if (action !== 'accept') {
-      return { code: 400, msg: '无效的操作类型' };
+      return { code: 400, msg: '无效的操作类型，支持: load/accept' };
     }
 
     var wxContext = cloud.getWXContext();
@@ -138,3 +144,35 @@ exports.main = async (event) => {
     return { code: 500, msg: '服务异常' };
   }
 };
+
+// ============ loadInvite: 查询邀请信息（接受前预览） ============
+async function loadInvite(event) {
+  var { inviteCode } = event;
+  if (!inviteCode) return { code: 400, msg: '缺少邀请码' };
+
+  var inviteResult = await db.collection('family_invites').where({
+    inviteCode: inviteCode,
+    status: 'pending'
+  }).get();
+
+  if (inviteResult.data.length === 0) {
+    return { code: 404, msg: '邀请不存在或已失效' };
+  }
+
+  var invite = inviteResult.data[0];
+  var now = new Date();
+  var expiresAt = new Date(invite.expiresAt);
+  if (now > expiresAt) {
+    return { code: 400, msg: '邀请已过期（48小时有效）' };
+  }
+
+  return {
+    code: 0,
+    data: {
+      inviteCode: invite.inviteCode,
+      role: invite.role,
+      permissions: invite.permissions,
+      expiresAt: invite.expiresAt
+    }
+  };
+}

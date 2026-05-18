@@ -56,10 +56,10 @@ Page({
       data: { action: 'get-space' }
     }).then(function(res) {
       var result = res.result || {};
-      if (result.success && result.space) {
+      if (result.code === 0 && result.data && result.data.hasSpace) {
         that.setData({
           hasSpace: true,
-          members: result.space.members || [],
+          members: result.data.members || [],
           loading: false
         });
       } else {
@@ -86,15 +86,15 @@ Page({
       data: { action: 'load', inviteCode: this.data.inviteCode }
     }).then(function(res) {
       var result = res.result || {};
-      if (result.success && result.invite) {
+      if (result.code === 0 && result.data) {
         that.setData({
-          inviteInfo: result.invite,
+          inviteInfo: result.data,
           loading: false
         });
       } else {
         that.setData({
           loading: false,
-          acceptError: result.error || '邀请信息无效或已过期'
+          acceptError: result.msg || '邀请信息无效或已过期'
         });
       }
     }).catch(function() {
@@ -129,16 +129,16 @@ Page({
       }
     }).then(function(res) {
       var result = res.result || {};
-      if (result.success && result.inviteCode) {
+      if (result.code === 0 && result.data && result.data.inviteCode) {
         that.setData({
-          newInviteCode: result.inviteCode,
-          newInviteExpiresAt: result.expiresAt,
+          newInviteCode: result.data.inviteCode,
+          newInviteExpiresAt: result.data.expiresAt,
           creating: false
         });
         wx.showToast({ title: '邀请已生成', icon: 'success' });
       } else {
         that.setData({ creating: false });
-        wx.showToast({ title: result.error || '生成失败', icon: 'none' });
+        wx.showToast({ title: result.msg || '生成失败', icon: 'none' });
       }
     }).catch(function() {
       that.setData({ creating: false });
@@ -258,18 +258,18 @@ Page({
       data: { action: 'accept', inviteCode: this.data.inviteCode }
     }).then(function(res) {
       var result = res.result || {};
-      if (result.success) {
+      if (result.code === 0) {
         that.setData({
           accepting: false,
           acceptResult: 'success',
           showSuccess: true,
-          spaceId: result.spaceId || ''
+          spaceId: (result.data && result.data.spaceId) || ''
         });
         wx.showToast({ title: '已加入家庭空间', icon: 'success' });
       } else {
         that.setData({
           accepting: false,
-          acceptError: result.error || '加入失败',
+          acceptError: result.msg || '加入失败',
           showSuccess: false
         });
       }
