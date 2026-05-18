@@ -84,7 +84,7 @@ async function dailyCheck() {
  */
 async function checkUser(openid) {
   const result = await db.collection('users')
-    .where({ _openid: openid }).get();
+    .where({ _openid: openid }).limit(1).get();
   if (result.data.length === 0) return { code: 404, msg: '用户不存在' };
 
   const user = result.data[0];
@@ -112,7 +112,7 @@ async function checkUser(openid) {
  */
 async function getTrialStatus(openid) {
   const result = await db.collection('users')
-    .where({ _openid: openid }).get();
+    .where({ _openid: openid }).limit(1).get();
   if (result.data.length === 0) return { code: 404, msg: '用户不存在' };
 
   const user = result.data[0];

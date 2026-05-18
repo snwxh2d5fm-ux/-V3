@@ -36,7 +36,7 @@ exports.main = async function(event, context) {
     var fieldCheck = buildFieldScanQuery();
     var fieldRes = await db.collection('knowledge_chunks')
       .where(fieldCheck)
-      .field({ _id: true, doc_id: true, name_zh: true })
+      .field({ _id: true, doc_id: true, name_zh: true, visual_features: true, validation_rules: true, vault_mode: true, privacy_level: true })
       .limit(50)
       .get();
 

@@ -144,21 +144,34 @@ function enhanceToScanned(imagePath) {
         // 绘制原图
         ctx.drawImage(imagePath, 0, 0, w, h);
 
-        // 模拟扫描增强：半透明白色底+对比度提升
-        // 因为canvas不直接支持CSS滤镜，用叠加层模拟
-        ctx.setFillStyle('rgba(255,255,255,0.08)');
-        ctx.fillRect(0, 0, w, h);
-
-        ctx.draw(false, function() {
-          wx.canvasToTempFilePath({
+        // 扫描件增强：先绘制原图→获取像素→提高对比度+锐化
+        ctx.drawImage(imagePath, 0, 0, w, h);
+        ctx.draw(true, function() {
+          wx.canvasGetImageData({
             canvasId: 'scan-canvas',
-            success: function(res) {
-              // 如果支持，用图片编辑API进一步增强
-              tryEnhancedResult(res.tempFilePath, resolve, reject);
+            x: 0, y: 0, width: w, height: h,
+            success: function(imgData) {
+              var pixels = imgData.data; // RGBA array
+              // 对比度增强：factor > 1 增加对比度
+              var contrast = 1.15;
+              var brightness = 5;
+              for (var i = 0; i < pixels.length; i += 4) {
+                pixels[i] = Math.min(255, Math.max(0, (pixels[i] - 128) * contrast + 128 + brightness));
+                pixels[i+1] = Math.min(255, Math.max(0, (pixels[i+1] - 128) * contrast + 128 + brightness));
+                pixels[i+2] = Math.min(255, Math.max(0, (pixels[i+2] - 128) * contrast + 128 + brightness));
+              }
+              // 回写像素→导出
+              var ctx2 = wx.createCanvasContext('scan-canvas');
+              ctx2.putImageData({ data: pixels, width: w, height: h }, 0, 0);
+              ctx2.draw(false, function() {
+                wx.canvasToTempFilePath({
+                  canvasId: 'scan-canvas',
+                  success: function(res) { resolve(res.tempFilePath); },
+                  fail: function() { resolve(imagePath); }
+                });
+              });
             },
-            fail: function() {
-              resolve(imagePath); // 降级返回原图
-            }
+            fail: function() { resolve(imagePath); }
           });
         });
       },

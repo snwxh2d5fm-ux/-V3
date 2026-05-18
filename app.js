@@ -286,8 +286,25 @@ App({
 
   onError(err) {
     console.error('[住港伴] 全局错误:', err);
-    const safeError = { message: err.message, timestamp: Date.now() };
+    var safeError = { message: err.message || String(err), timestamp: Date.now(), page: '' };
+    try { var pages = getCurrentPages(); if (pages.length > 0) safeError.page = pages[pages.length-1].route; } catch(e) {}
     wx.setStorageSync(constants.STORAGE_KEYS.ERROR_LOG, safeError);
+    // 异步上报到云端（静默失败不影响用户体验）
+    if (this.globalData.cloudReady) {
+      wx.cloud.callFunction({ name: 'usage-tracker', data: { action: 'track', eventType: 'app_error', payload: safeError } }).catch(function(){});
+    }
+  },
+
+  /** 性能打点：记录首屏渲染时间 */
+  _perfStartTime: 0,
+  markPerfComplete: function() {
+    if (!this._perfStartTime) return;
+    var elapsed = Date.now() - this._perfStartTime;
+    console.log('[住港伴] 首屏渲染完成: ' + elapsed + 'ms');
+    if (elapsed > 3000) console.warn('[住港伴] ⚠️ 首屏超过3秒: ' + elapsed + 'ms');
+    if (this.globalData.cloudReady) {
+      wx.cloud.callFunction({ name: 'usage-tracker', data: { action: 'track', eventType: 'perf_launch', payload: { elapsedMs: elapsed } } }).catch(function(){});
+    }
   },
 
   // ========== 锁定状态同步 ==========
