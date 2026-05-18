@@ -227,7 +227,7 @@ module.exports = {
     // ========== 路径6: 优才QMAS ==========
     {
       "id": "qmas",
-      "name": "优才计划·综合计分制",
+      "name": "优才计划·12项评核准则",
       "pathType": APPLICATION_PATHS.QMAS,
       "totalCycle": "7-8年",
       "firstVisa": "24月",

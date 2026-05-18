@@ -570,7 +570,7 @@ Page({
     if (path === 'qmas') {
       // 优才计划 — 基于 Task Table_20260505
       prepNodes = [
-        { label: '自我评估 (需求80分以上)', offsetDays: 1, type: 'milestone', desc: '自评工具+名校/国际经验/名企/高管加分核实' },
+        { label: '12项准则自评 (满足≥6项)', offsetDays: 1, type: 'milestone', desc: '对照入境处12项是/否评核准则逐项自评' },
         { label: '学历学位认证', offsetDays: 20, type: 'material', desc: '学信网/留服认证(15-20工作日)·海外学历需成绩单' },
         { label: '工作经验证明', offsetDays: 25, type: 'material', desc: '每段工作需公司名+时间+职位一致·组织架构图' },
         { label: '雇主推荐信 (每段工作一份)', offsetDays: 30, type: 'material', desc: '公司抬头纸+盖章+授权人签署·职责成就详述' },

@@ -1,0 +1,75 @@
+/* 意见反馈 - 提交页 V1 */
+.page { min-height:100vh; background:var(--gray-100); padding-bottom:60rpx; }
+
+/* 标题区 */
+.header { padding:48rpx 32rpx 32rpx; }
+.header-title { font-size:36rpx; font-weight:700; color:#202124; display:block; }
+.header-desc { font-size:26rpx; color:#999; margin-top:8rpx; display:block; }
+
+/* 卡片 */
+.card { margin:0 24rpx 16rpx; background:var(--white); border-radius:20rpx; padding:28rpx; }
+.card-label { font-size:28rpx; font-weight:600; color:#202124; display:block; margin-bottom:8rpx; }
+.card-note { font-size:22rpx; color:#999; display:block; margin-bottom:16rpx; }
+
+/* 类型选择 */
+.type-row { display:flex; gap:16rpx; }
+.type-item {
+  flex:1; display:flex; flex-direction:column; align-items:center; padding:20rpx 8rpx;
+  border-radius:16rpx; border:2rpx solid var(--gray-200); background:var(--gray-100);
+  transition:all 0.2s;
+}
+.type-item.active {
+  border-color:var(--blue); background:#EFF6FF;
+}
+.type-icon { font-size:36rpx; }
+.type-label { font-size:24rpx; color:#5f6368; margin-top:6rpx; }
+.type-item.active .type-label { color:var(--blue); font-weight:600; }
+
+/* 文字输入 */
+.content-input {
+  width:100%; min-height:180rpx; font-size:28rpx; line-height:1.6;
+  padding:16rpx; border-radius:12rpx; background:var(--gray-100);
+  box-sizing:border-box;
+}
+.count-bar { text-align:right; margin-top:8rpx; }
+.count-text { font-size:24rpx; color:#999; }
+.count-text.warn { color:var(--red); }
+
+/* 截图 */
+.upload-btn {
+  display:flex; flex-direction:column; align-items:center; justify-content:center;
+  width:200rpx; height:200rpx; border-radius:16rpx; border:2rpx dashed var(--gray-300);
+  background:var(--gray-100);
+}
+.upload-icon { font-size:48rpx; }
+.upload-text { font-size:22rpx; color:#999; margin-top:8rpx; }
+.preview-box { position:relative; width:200rpx; height:200rpx; border-radius:16rpx; overflow:hidden; }
+.preview-img { width:100%; height:100%; }
+.preview-mask { position:absolute; top:0; right:0; width:48rpx; height:48rpx; background:rgba(0,0,0,0.5); border-radius:0 16rpx 0 16rpx; display:flex; align-items:center; justify-content:center; }
+.remove-btn { color:#FFF; font-size:28rpx; font-weight:700; }
+
+/* 匿名 */
+.anon-row { display:flex; justify-content:space-between; align-items:center; padding:16rpx 0; }
+.anon-row:first-child { border-bottom:1rpx solid var(--gray-100); }
+.anon-left { flex:1; }
+.anon-label { font-size:28rpx; color:#202124; display:block; }
+.anon-hint { font-size:22rpx; color:#999; display:block; margin-top:2rpx; }
+.contact-nick { font-size:26rpx; color:#5f6368; }
+
+/* 提交 */
+.submit-area { padding:32rpx 24rpx; }
+.submit-btn {
+  width:100%; height:96rpx; line-height:96rpx; border-radius:48rpx;
+  background:var(--blue); color:#FFF; font-size:32rpx; font-weight:700;
+  border:none; display:flex; align-items:center; justify-content:center;
+}
+.submit-btn.disabled { background:var(--gray-300); color:#999; }
+
+/* 底部链接 */
+.bottom-links { margin:0 24rpx; background:var(--white); border-radius:20rpx; overflow:hidden; }
+.link-row { display:flex; justify-content:space-between; align-items:center; padding:28rpx; border-bottom:1rpx solid var(--gray-100); }
+.link-row:last-child { border-bottom:none; }
+.link-text { font-size:28rpx; color:#202124; }
+.link-arrow { font-size:32rpx; color:#ccc; }
+
+.safe-bottom { height:60rpx; }

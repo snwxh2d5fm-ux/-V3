@@ -1,0 +1,9 @@
+{
+  "name": "invite-code",
+  "version": "1.0.0",
+  "description": "住港伴V3 — 邀请内测码云函数，支持码生成、兑换、查询、撤销、统计、会员状态",
+  "main": "index.js",
+  "dependencies": {
+    "wx-server-sdk": "~2.6.0"
+  }
+}

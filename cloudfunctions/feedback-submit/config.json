@@ -1,0 +1,8 @@
+{
+  "permissions": {
+    "openapi": []
+  },
+  "env": {
+    "TZ": "Asia/Hong_Kong"
+  }
+}

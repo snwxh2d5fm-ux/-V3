@@ -1,0 +1,9 @@
+{
+  "name": "feedback-submit",
+  "version": "1.0.0",
+  "description": "住港伴意见反馈云函数 V1",
+  "main": "index.js",
+  "dependencies": {
+    "wx-server-sdk": "latest"
+  }
+}

@@ -3,20 +3,25 @@
   <stage-indicator stages="{{stageSteps}}" progress="{{stageProgress}}" />
   <status-badge />
 
-  <!-- Header -->
-  <view class="section-header">
-    <view class="section-header-row">
-      <text class="section-title">提醒器</text>
-      <view class="section-actions">
-        <view class="action-btn" bindtap="manualGenerateTimeline" wx:if="{{hasPath}}">
-          <view class="action-icon action-icon--calendar"></view>
+  <!-- Header — VI对齐蓝色渐变 -->
+  <view class="page-header">
+    <view class="page-header-bg"></view>
+    <view class="page-header-content">
+      <view class="page-header-row">
+        <view class="page-header-left">
+          <text class="page-header-title">提醒器</text>
+          <text class="page-header-sub">关键时间不遗漏 · {{stats.active}} 项待办</text>
         </view>
-        <view class="action-btn" bindtap="navigateToList">
-          <view class="action-icon action-icon--list"></view>
+        <view class="page-header-actions">
+          <view class="page-header-btn" bindtap="manualGenerateTimeline" wx:if="{{hasPath}}">
+            <view class="page-header-icon page-header-icon--calendar"></view>
+          </view>
+          <view class="page-header-btn" bindtap="navigateToList">
+            <view class="page-header-icon page-header-icon--list"></view>
+          </view>
         </view>
       </view>
     </view>
-    <text class="section-sub">关键时间不遗漏 · {{stats.active}} 项待办</text>
   </view>
 
   <!-- Stats + Filter 合并工具栏 -->

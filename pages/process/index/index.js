@@ -46,7 +46,7 @@ Page({
     directSelectedPath: '',
     directSelectedPathLabel: '',
     directPathOptions: [
-      { id: 'qmas', name: '优才计划', icon: '🎯', desc: '综合计分制 · 12项准则≥6项' },
+      { id: 'qmas', name: '优才计划', icon: '🎯', desc: '12项评核准则 · 满足≥6项可申请' },
       { id: 'ttps_a', name: '高才通A类', icon: '💰', desc: '年收入≥250万港币' },
       { id: 'ttps_b', name: '高才通B类', icon: '🎓', desc: '百强本科+3年工作经验' },
       { id: 'ttps_c', name: '高才通C类', icon: '🏃', desc: '百强本科(<3年经验)·限额' },
