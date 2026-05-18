@@ -32,7 +32,8 @@ Component({
       { id: 'assess', icon: '🎯', label: '资格自评', mode: 'assessment' },
       { id: 'policy', icon: '📋', label: '政策问答', mode: 'qa' },
       { id: 'guide', icon: '📖', label: '攻略指引', mode: 'general' },
-      { id: 'doc', icon: '📄', label: '材料咨询', mode: 'general' }
+      { id: 'doc', icon: '📄', label: '材料咨询', mode: 'general' },
+      { id: 'chat', icon: '💬', label: '完整对话', mode: 'openChat' }
     ],
     quickReplies: [],
     scrollToView: ''
@@ -153,8 +154,12 @@ Component({
     onQuickEntry(e) {
       var mode = e.currentTarget.dataset.mode;
       if (mode === 'assessment') {
-        // 直接跳转自评页面
         this.startAssessment();
+        return;
+      }
+      // 统一入口：打开完整对话页
+      if (mode === 'openChat') {
+        wx.navigateTo({ url: '/subpkg-chat/pages/chat/index' });
         return;
       }
       var prompts = {
