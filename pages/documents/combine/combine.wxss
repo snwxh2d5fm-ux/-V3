@@ -167,6 +167,7 @@
 .doc-tag.identity-adapted { background: #D1FAE5; color: var(--color-success); }
 .doc-expiry-warn { font-size: 18rpx; color: var(--red); background: var(--color-error-bg); padding: 2rpx 8rpx; border-radius: 6rpx; }
 .doc-meta { font-size: 22rpx; color: var(--gray-400); margin-top: 4rpx; display: block; }
+.doc-ocr-info { font-size: 20rpx; color: var(--color-accent, #2563EB); margin-top: 4rpx; display: block; background: #EFF6FF; padding: 4rpx 10rpx; border-radius: 6rpx; }
 
 .doc-action { flex-shrink: 0; }
 .doc-arrow { font-size: 26rpx; color: var(--gray-400); padding: 8rpx; }

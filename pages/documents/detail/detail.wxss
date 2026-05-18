@@ -218,3 +218,18 @@
   color: #999;
   font-size: 28rpx;
 }
+
+/* Bug #6: 图像脱敏浮层标签 */
+.pii-overlay-tag {
+  position: absolute;
+  top: 16rpx;
+  left: 50%;
+  transform: translateX(-50%);
+  background: rgba(239, 68, 68, 0.88);
+  color: #FFFFFF;
+  font-size: 22rpx;
+  padding: 6rpx 20rpx;
+  border-radius: 20rpx;
+  z-index: 10;
+  pointer-events: none;
+}

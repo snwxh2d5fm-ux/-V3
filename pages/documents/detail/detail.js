@@ -9,7 +9,10 @@ Page({
     ocrFields: [],
     currentPIILevel: 'L1', // L1绝对脱敏/L2泛化/L3可保留
     isArchived: false,
-    showPrivacyPanel: false
+    showPrivacyPanel: false,
+    // Bug #6: Canvas渲染的脱敏图像
+    maskedImagePath: '',
+    _maskTimer: null
   },
 
   onLoad(options) {
@@ -24,7 +27,6 @@ Page({
     try {
       const doc = getDocumentMeta(docId);
       if (doc) {
-        // Bug #27 修复: 先设currentPIILevel，parseOCRFields依赖它读取脱敏等级
         var piiLevel = wx.getStorageSync(CONSTANTS.STORAGE_KEYS.PRIVACY_MODE) || 'L1';
         this.setData({ currentPIILevel: piiLevel });
         this.setData({
@@ -32,6 +34,8 @@ Page({
           ocrFields: this.parseOCRFields(doc),
           isArchived: doc.status === 'archived'
         });
+        // Bug #6: 加载后自动渲染脱敏图像
+        this.renderMaskedImage();
       }
     } catch (e) {
       wx.showToast({ title: '加载失败', icon: 'error' });
@@ -73,7 +77,7 @@ Page({
     const level = this.data.currentPIILevel;
     const PII_LEVELS = CONSTANTS.PII_LEVELS;
     
-    if (level === PII_LEVELS.L3) return value; // 可保留
+    if (level === PII_LEVELS.L3) return value;
     
     const piiKeys = {
       name: 'name',
@@ -85,12 +89,10 @@ Page({
     if (!piiKeys[key]) return value;
 
     if (level === PII_LEVELS.L1) {
-      // 绝对脱敏：完全占位符
       if (key === 'idNumber') return '**** **** **** ****';
       if (key === 'name') return '***';
       return '****';
     } else {
-      // L2 泛化脱敏
       if (key === 'idNumber') {
         return value.length > 6 ? value.slice(0, 3) + '****' + value.slice(-2) : '****';
       }
@@ -110,12 +112,117 @@ Page({
     this.setData({ currentPIILevel: newLevel });
     wx.setStorageSync(CONSTANTS.STORAGE_KEYS.PRIVACY_MODE, newLevel);
     
-    // 刷新OCR字段显示
     if (this.data.doc) {
       this.setData({ ocrFields: this.parseOCRFields(this.data.doc) });
+      // Bug #6: 脱敏级别变更重新渲染图像遮罩
+      this.renderMaskedImage();
     }
-    wx.showToast({ title: `切换至${CONSTANTS.PII_LEVELS[newLevel].label || newLevel}`, icon: 'none' });
+    wx.showToast({ title: '切换至' + (CONSTANTS.PII_LEVELS[newLevel].label || newLevel), icon: 'none' });
   },
+
+  // ═══════════ Bug #6: 图像级脱敏 ═══════════
+
+  /**
+   * 入口: 防抖调用Canvas渲染
+   */
+  renderMaskedImage() {
+    var that = this;
+    var doc = this.data.doc;
+    var level = this.data.currentPIILevel;
+
+    if (level === 'L3') {
+      this.setData({ maskedImagePath: '' });
+      return;
+    }
+    if (!doc || !doc.filePath) return;
+
+    if (this.data._maskTimer) clearTimeout(this.data._maskTimer);
+    this.data._maskTimer = setTimeout(function() {
+      that._doRenderMask(doc.filePath, level);
+    }, 300);
+  },
+
+  _doRenderMask(imagePath, level) {
+    var that = this;
+    var query = wx.createSelectorQuery();
+    query.select('#mask-canvas').fields({ node: true, size: true }).exec(function(res) {
+      if (!res || !res[0] || !res[0].node) {
+        console.warn('[脱敏] Canvas节点未找到，降级原图');
+        that.setData({ maskedImagePath: '' });
+        return;
+      }
+
+      var canvas = res[0].node;
+      var ctx = canvas.getContext('2d');
+
+      wx.getImageInfo({
+        src: imagePath,
+        success: function(info) {
+          canvas.width = info.width;
+          canvas.height = info.height;
+          var img = canvas.createImage();
+          img.onload = function() {
+            ctx.drawImage(img, 0, 0, info.width, info.height);
+            that._drawPIIMasks(ctx, info.width, info.height, level);
+            wx.canvasToTempFilePath({
+              canvas: canvas,
+              success: function(out) { that.setData({ maskedImagePath: out.tempFilePath }); },
+              fail: function() { that.setData({ maskedImagePath: '' }); }
+            });
+          };
+          img.onerror = function() { that.setData({ maskedImagePath: '' }); };
+          img.src = imagePath;
+        },
+        fail: function() { that.setData({ maskedImagePath: '' }); }
+      });
+    });
+  },
+
+  _drawPIIMasks(ctx, w, h, level) {
+    var regions = [
+      { x: 0.05, y: 0.08, w: 0.18, h: 0.28, label: '照片',   l1: true,  l2: false },
+      { x: 0.30, y: 0.08, w: 0.45, h: 0.18, label: '个人信息', l1: true,  l2: true  },
+      { x: 0.10, y: 0.30, w: 0.70, h: 0.22, label: '住址',    l1: true,  l2: true  },
+      { x: 0.15, y: 0.72, w: 0.60, h: 0.10, label: '证件号',  l1: true,  l2: true  }
+    ];
+
+    regions.forEach(function(r) {
+      var should = (level === 'L1' && r.l1) || (level === 'L2' && r.l2);
+      if (!should) return;
+
+      var rx = r.x * w, ry = r.y * h, rw = r.w * w, rh = r.h * h;
+
+      if (level === 'L1') {
+        ctx.fillStyle = 'rgba(17, 24, 39, 0.92)';
+        ctx.fillRect(rx, ry, rw, rh);
+        var fs = Math.max(12, Math.min(rh * 0.4, 24));
+        ctx.fillStyle = '#FFFFFF';
+        ctx.font = fs + 'px sans-serif';
+        ctx.textAlign = 'center';
+        ctx.textBaseline = 'middle';
+        ctx.fillText('🔒 ' + r.label, rx + rw / 2, ry + rh / 2);
+      } else {
+        ctx.fillStyle = 'rgba(59, 130, 246, 0.35)';
+        ctx.fillRect(rx, ry, rw, rh);
+        ctx.strokeStyle = 'rgba(59, 130, 246, 0.25)';
+        ctx.lineWidth = 2;
+        for (var i = 0; i < rw; i += 10) {
+          ctx.beginPath();
+          ctx.moveTo(rx + i, ry);
+          ctx.lineTo(rx + i, ry + rh);
+          ctx.stroke();
+        }
+        var fs2 = Math.max(10, Math.min(rh * 0.35, 20));
+        ctx.fillStyle = 'rgba(255,255,255,0.9)';
+        ctx.font = 'bold ' + fs2 + 'px sans-serif';
+        ctx.textAlign = 'center';
+        ctx.textBaseline = 'middle';
+        ctx.fillText('泛化脱敏', rx + rw / 2, ry + rh / 2);
+      }
+    });
+  },
+
+  // ═══════════ 证件操作 ═══════════
 
   archiveDocument() {
     const that = this;
@@ -169,7 +276,6 @@ Page({
       success(res) {
         if (res.confirm) {
           try {
-            // ✅ 从保险库(__vault_meta__)删除元数据 + 物理文件
             const deleted = deleteDocFromVault(that.data.docId);
             if (deleted) {
               wx.showToast({ title: '已删除', icon: 'success' });
@@ -195,9 +301,7 @@ Page({
     const totalCount = fields.length;
     const level = this.data.currentPIILevel;
     const levelLabel = CONSTANTS.PII_LEVELS[level]?.label || level;
-    
     const securityScore = level === 'L1' ? 100 : level === 'L2' ? 70 : 30;
-    
     return {
       piiCount,
       totalCount,
@@ -207,7 +311,6 @@ Page({
     };
   },
 
-  /** 点击图片全屏预览 */
   previewImage() {
     var doc = this.data.doc;
     if (doc && doc.filePath) {
@@ -218,7 +321,6 @@ Page({
     }
   },
 
-  /** Bug #8: 导出证件照片为PDF */
   exportToPDF() {
     var that = this;
     var doc = this.data.doc;
@@ -229,7 +331,6 @@ Page({
 
     wx.showLoading({ title: '生成PDF中...' });
 
-    // 收集该证件所有照片（通过元数据查找同一docId的关联文件）
     var allDocs = [];
     try {
       var storage = require('../../../utils/storage');
@@ -237,20 +338,17 @@ Page({
     } catch (e) { allDocs = []; }
 
     var docPhotos = [doc.filePath];
-    // 搜索同一卡槽/同一证件的关联照片
     allDocs.forEach(function(d) {
       if (d.id !== doc.id && d.slotKey === doc.slotKey && d.filePath && docPhotos.indexOf(d.filePath) < 0) {
         docPhotos.push(d.filePath);
       }
     });
 
-    var imagePaths = docPhotos.slice(0, 10); // 最多10页
+    var imagePaths = docPhotos.slice(0, 10);
 
-    // 方案：上传图片到云存储 → 调云函数合成PDF → 下载打开
     var app = getApp();
     if (!app.globalData.cloudReady) {
       wx.hideLoading();
-      // 降级方案：直接用微信分享图片
       wx.showModal({
         title: 'PDF导出',
         content: '云端服务暂不可用。是否以图片方式分享？',
@@ -265,7 +363,6 @@ Page({
       return;
     }
 
-    // 上传图片到云存储
     var uploadPromises = imagePaths.map(function(path, idx) {
       return new Promise(function(resolve, reject) {
         var cloudPath = '_pdf_temp/' + Date.now() + '_' + idx + '.jpg';
@@ -295,7 +392,6 @@ Page({
       wx.hideLoading();
       var result = res.result || {};
       if (result.code === 0 && result.data && result.data.pdfFileID) {
-        // 下载PDF并打开
         wx.cloud.downloadFile({
           fileID: result.data.pdfFileID,
           success: function(dfRes) {

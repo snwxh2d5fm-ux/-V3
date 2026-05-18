@@ -1,9 +1,12 @@
 <!-- pages/documents/detail/detail.wxml -->
 <view class="page">
-  <!-- 图片展示区 -->
-  <view class="image-area" wx:if="{{doc && doc.filePath}}" bindtap="previewImage">
-    <image class="detail-image" src="{{doc.filePath}}" mode="aspectFit" aria-label="{{doc.name || '证件图片'}}" />
+  <!-- 图片展示区 — Bug #6: 脱敏模式显示Canvas遮罩图 -->
+  <view class="image-area" wx:if="{{doc && (maskedImagePath || doc.filePath)}}" bindtap="previewImage">
+    <image class="detail-image" src="{{maskedImagePath || doc.filePath}}" mode="aspectFit" aria-label="{{doc.name || '证件图片'}}" />
     <view class="image-tap-hint">点击查看大图</view>
+    <view class="pii-overlay-tag" wx:if="{{currentPIILevel !== 'L3'}}">
+      <text>{{currentPIILevel === 'L1' ? '🔒 绝对脱敏' : '🔓 泛化脱敏'}}</text>
+    </view>
   </view>
 
   <!-- 顶部操作栏 -->
@@ -27,7 +30,6 @@
       </view>
     </view>
 
-    <!-- OCR字段列表 -->
     <view class="ocr-fields" wx:if="{{ocrFields.length}}">
       <text class="section-title">识别信息</text>
       <view class="field-row" wx:for="{{ocrFields}}" wx:key="key">
@@ -37,12 +39,10 @@
       </view>
     </view>
 
-    <!-- 无OCR数据时 -->
     <view class="empty-ocr" wx:else>
       <text>暂无识别信息</text>
     </view>
 
-    <!-- 时间戳 -->
     <view class="doc-time">
       <text>添加于: {{doc.createdAt || '未知'}}</text>
       <text wx:if="{{doc.updatedAt}}">更新于: {{doc.updatedAt}}</text>
@@ -54,7 +54,6 @@
     <button class="action-item" bindtap="{{isArchived ? 'restoreDocument' : 'archiveDocument'}}">
       <text>{{isArchived ? '↩️ 恢复' : '📦 归档'}}</text>
     </button>
-    <!-- Bug #8: PDF导出按钮 -->
     <button class="action-item" bindtap="exportToPDF" wx:if="{{doc && doc.filePath}}">
       <text>📄 导出PDF</text>
     </button>
@@ -102,6 +101,9 @@
       <button class="level-btn" bindtap="togglePIILevel">切换脱敏级别（当前: {{currentPIILevel}}）</button>
     </view>
   </view>
+
+  <!-- Bug #6: 图像脱敏Canvas 2D -->
+  <canvas type="2d" id="mask-canvas" style="position:fixed;left:-9999px;top:0;width:800px;height:600px"></canvas>
 
   <floating-ai visible="{{true}}" />
 </view>
