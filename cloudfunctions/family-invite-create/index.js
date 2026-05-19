@@ -64,8 +64,22 @@ exports.main = async (event) => {
       ownerUserId: openid
     }).get();
 
+    var spaceId;
     if (existingSpace.data.length > 0) {
-      return { code: 400, msg: '已有家庭空间，请在家庭空间管理中添加成员' };
+      // 已有空间：仅追加新邀请，不重复创建空间
+      spaceId = existingSpace.data[0].spaceId;
+    } else {
+      // 首次创建空间
+      spaceId = generateSpaceId();
+      await db.collection('family_spaces').add({
+        data: {
+          spaceId: spaceId,
+          ownerUserId: openid,
+          members: [],
+          createdAt: db.serverDate(),
+          updatedAt: db.serverDate()
+        }
+      });
     }
 
     // 生成邀请码
@@ -75,28 +89,17 @@ exports.main = async (event) => {
     var now = Date.now();
     var expiresAt = new Date(now + 48 * 3600000).toISOString();
 
-    // 写入邀请记录
+    // 写入邀请记录（关联到已有或新建的空间）
     await db.collection('family_invites').add({
       data: {
         inviteCode: inviteCode,
         inviterUserId: openid,
+        spaceId: spaceId,
         role: role,
         permissions: permissions,
         status: 'pending',
         createdAt: db.serverDate(),
         expiresAt: expiresAt
-      }
-    });
-
-    // 创建家庭空间
-    var spaceId = generateSpaceId();
-    await db.collection('family_spaces').add({
-      data: {
-        spaceId: spaceId,
-        ownerUserId: openid,
-        members: [],
-        createdAt: db.serverDate(),
-        updatedAt: db.serverDate()
       }
     });
 

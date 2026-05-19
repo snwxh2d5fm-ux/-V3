@@ -870,5 +870,9 @@ Page({
   onSNWizardNext: function(e) { wizards.schoolNetWizard(this).onSNWizardNext(e); },
   onSNWizardDone: function() { wizards.schoolNetWizard(this).onSNWizardDone(); },
   onSNWizardClose: function() { wizards.schoolNetWizard(this).onSNWizardClose(); },
-  onSNOpenSchools: function() { wizards.schoolNetWizard(this).onSNOpenSchools(); }
+  onSNOpenSchools: function() { wizards.schoolNetWizard(this).onSNOpenSchools(); },
+
+  onShareAppMessage() {
+    return { title: '我正在使用住港伴，你也来看看', path: '/pages/guidebooks/index/index' };
+  }
 });

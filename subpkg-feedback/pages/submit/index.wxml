@@ -25,7 +25,7 @@
 
   <!-- 文字输入 -->
   <view class="card">
-    <text class="card-label">问题描述（必填，10-500字）</text>
+    <text class="card-label">问题描述（必填，至少2字）</text>
     <textarea
       class="content-input"
       placeholder="{{placeholder}}"
@@ -35,7 +35,8 @@
       auto-height
     />
     <view class="count-bar">
-      <text class="count-text {{contentLen > 0 && contentLen < 10 ? 'warn' : ''}}">{{contentLen}}/500</text>
+      <text class="count-text {{contentLen > 0 && contentLen < 2 ? 'warn' : ''}}">{{contentLen}}/500</text>
+      <text class="count-hint" wx:if="{{contentLen > 0 && contentLen < 2}}">至少输入2个字</text>
     </view>
   </view>
 
@@ -85,6 +86,10 @@
     >
       {{isSubmitting ? '提交中...' : '提交反馈'}}
     </button>
+    <view class="submit-hint" wx:if="{{!canSubmit && !isSubmitting}}">
+      <text wx:if="{{!hasType}}">请先选择反馈类型</text>
+      <text wx:elif="{{!hasContent}}">请输入至少2个字的问题描述</text>
+    </view>
   </view>
 
   <!-- 底部入口 -->

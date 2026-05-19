@@ -52,7 +52,7 @@ function extractContext(text, idx, dateStr) {
   var before = text.substring(Math.max(0, idx - 20), idx).replace(/\s+/g, '');
   var after = text.substring(idx + dateStr.length, Math.min(text.length, idx + dateStr.length + 30)).trim();
   // 去掉日期前的修饰词
-  before = before.replace(/[之前此后至到应须须在从于於]/g, '').trim();
+  before = before.replace(/[之前此后至到应须在从于於]/g, '').trim();
   // 日期后紧跟的关键词提示
   if (/^前/.test(after)) {
     return (before || '') + (after.substring(1).trim() || '截止日');

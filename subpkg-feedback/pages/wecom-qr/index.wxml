@@ -1,45 +1,53 @@
-<!-- 意见反馈 - 扫码咨询客服 V1.2 -->
 <view class="page">
   <view wx:if="{{isLoading}}" class="loading-box">
     <text class="loading-text">加载中...</text>
   </view>
 
-  <view wx:elif="{{loadError}}" class="error-box">
-    <text class="error-icon">😵</text>
-    <text class="error-text">二维码加载失败</text>
-    <text class="error-hint">请稍后重试</text>
-  </view>
-
   <view wx:else class="content">
     <!-- 标题 -->
     <view class="header">
-      <text class="header-title">扫码咨询客服</text>
-      <text class="header-desc">微信扫码添加企微客服，1对1沟通</text>
+      <text class="header-title">添加客服微信</text>
+      <text class="header-desc">扫码或搜索微信号添加企微客服，1对1沟通</text>
     </view>
 
-    <!-- 二维码 -->
-    <view class="qr-wrap">
+    <!-- 二维码（优先云存储，失败用本地兜底） -->
+    <view class="qr-wrap" wx:if="{{qrUrl}}">
       <image
         class="qr-img"
         src="{{qrUrl}}"
         mode="aspectFit"
         show-menu-by-longpress="{{true}}"
         bindtap="onPreviewQR"
+        binderror="onQRError"
       />
+    </view>
+
+    <!-- 二维码失败 / 无云存储文件时：显示文字指引 -->
+    <view class="fallback-card" wx:if="{{showFallback}}">
+      <text class="fallback-icon">💬</text>
+      <text class="fallback-title">扫码不可用</text>
+      <text class="fallback-desc">请通过以下方式添加客服微信</text>
+      <view class="fallback-wechat">
+        <text class="wechat-label">微信号</text>
+        <view class="wechat-row">
+          <text class="wechat-id">{{wechatId}}</text>
+          <button class="copy-btn" bindtap="copyWechatId">复制</button>
+        </view>
+      </view>
     </view>
 
     <!-- 指引步骤 -->
     <view class="steps">
-      <view class="step">
+      <view class="step" wx:if="{{qrUrl}}">
         <view class="step-num"><text>1</text></view>
         <text class="step-text">长按上方二维码保存至相册</text>
       </view>
       <view class="step">
-        <view class="step-num"><text>2</text></view>
-        <text class="step-text">打开微信扫一扫，选择相册中的二维码</text>
+        <view class="step-num"><text>{{qrUrl ? '2' : '1'}}</text></view>
+        <text class="step-text">{{qrUrl ? '打开微信扫一扫，选择相册中的二维码' : '复制上方微信号，打开微信添加朋友'}}</text>
       </view>
       <view class="step">
-        <view class="step-num"><text>3</text></view>
+        <view class="step-num"><text>{{qrUrl ? '3' : '2'}}</text></view>
         <text class="step-text">添加企微后发送工单号，客服更快了解你的问题</text>
       </view>
     </view>

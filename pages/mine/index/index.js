@@ -33,8 +33,7 @@ Page({
       { id: 'family', icon: '👨‍👩‍👧', title: '家庭空间', desc: '', url: 'family-space' }
     ],
     settingsItems: [
-      { id: 'notify', icon: '🔔', title: '通知设置' },
-      { id: 'about', icon: 'ℹ️', title: '关于住港伴' },
+      { id: 'notify', icon: '🔔', title: '通知设置', url: 'notify-settings' },
       { id: 'feedback', icon: '💬', title: '意见反馈', url: 'feedback' },
       { id: 'share-records', icon: '📤', title: '分享记录', url: 'share-records' },
       // admin-db 入口仅内部使用，C端不暴露
@@ -128,9 +127,11 @@ Page({
     } else if (url === 'feedback') {
       wx.navigateTo({ url: '/subpkg-feedback/pages/submit/index' });
     } else if (url === 'family-space') {
-      wx.navigateTo({ url: '/subpkg-share/pages/family-invite/index' });
+      this.goFamilySpace();
     } else if (url === 'share-records') {
       wx.navigateTo({ url: '/subpkg-share/pages/share-records/index' });
+    } else if (url === 'notify-settings') {
+      wx.navigateTo({ url: '/pages/mine/notify-settings/notify-settings' });
     } else if (tab) {
       wx.switchTab({ url });
     } else {
@@ -146,6 +147,33 @@ Page({
   // 会员中心
   showMembership() {
     wx.navigateTo({ url: '/subpkg-chat/pages/membership/index' });
+  },
+
+  // 家庭空间（基础会员及以上可用）
+  goFamilySpace() {
+    if (!this.data.isPayingUser) {
+      wx.showModal({
+        title: '会员功能',
+        content: '家庭空间为基础会员及以上专属功能，升级后即可添加家属共享证件与提醒。',
+        confirmText: '去升级',
+        success: function(res) {
+          if (res.confirm) {
+            wx.navigateTo({ url: '/subpkg-chat/pages/membership/index' });
+          }
+        }
+      });
+      return;
+    }
+    wx.navigateTo({ url: '/subpkg-share/pages/family-invite/index' });
+  },
+
+  // 分享
+  onShareAppMessage() {
+    return {
+      title: '我正在使用住港伴，你也来看看',
+      path: '/pages/index/index',
+      imageUrl: '/images/share-cover.png'
+    };
   },
 
   // 退出登录

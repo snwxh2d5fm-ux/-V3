@@ -94,21 +94,42 @@ Page({
           planId: 'basic', planName: '基础会员', level: 'basic',
           priceMonthly: 3990, priceYearly: 39900,
           priceMonthlyYuan: '39.90', priceYearlyYuan: '399', savingsPercent: 20,
-          features: ['无限AI问答', '个性化材料清单', '申请时间线', '政策追踪提醒', '7年路径规划'],
+          features: [
+            '无限AI智能问答',
+            '无限证件位 · 无限流程线',
+            '个性化材料清单',
+            '申请时间线与进度追踪',
+            '政策变动实时提醒',
+            '7年全路径规划'
+          ],
           highlighted: false, badge: '热门'
         },
         {
           planId: 'pro', planName: '专业会员', level: 'pro',
           priceMonthly: 29990, priceYearly: 299900,
           priceMonthlyYuan: '299.90', priceYearlyYuan: '2,999', savingsPercent: 20,
-          features: ['基础会员全部权益', 'AI材料生成（6类文档）', '续签仪表盘', '文档审查', '面试模拟', '优先响应'],
+          features: [
+            '基础会员全部权益',
+            'AI材料生成（6类官方文档）',
+            '续签条件自助评估仪表盘',
+            '文档合规审查与纠错',
+            '入境面试模拟演练',
+            '优先响应 · 专属客服通道'
+          ],
           highlighted: true, badge: '推荐'
         },
         {
           planId: 'premium', planName: '尊享会员', level: 'premium',
           priceMonthly: 69990, priceYearly: 699900,
           priceMonthlyYuan: '699.90', priceYearlyYuan: '6,999', savingsPercent: 20,
-          features: ['专业会员全部权益', '香港AI创业孵化', '跨境电商资源整合', '政府创业补贴政策资讯'],
+          features: [
+            '专业会员全部权益',
+            'AI创业孵化 · 香港资源对接',
+            '跨境电商合规与落地支持',
+            '政府创业补贴政策全程指引',
+            '实体证件收纳套装（免费赠送）',
+            '加密云存储空间 50GB'
+          ],
           highlighted: false, badge: '尊享'
         }
       ];

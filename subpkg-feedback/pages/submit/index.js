@@ -26,7 +26,9 @@ Page({
 
     // 提交状态
     isSubmitting: false,
-    canSubmit: false
+    canSubmit: false,
+    hasType: false,
+    hasContent: false
   },
 
   onLoad() {
@@ -147,8 +149,11 @@ Page({
 
   // ===== 检查提交条件 =====
   checkCanSubmit() {
-    var can = this.data.selectedType && this.data.content.trim().length >= 10 && !this.data.isSubmitting;
-    this.setData({ canSubmit: can });
+    var hasType = !!this.data.selectedType;
+    var hasContent = this.data.content.trim().length >= 2;
+    var notSubmitting = !this.data.isSubmitting;
+    var can = hasType && hasContent && notSubmitting;
+    this.setData({ canSubmit: can, hasType: hasType, hasContent: hasContent });
   },
 
   // ===== 提交反馈 =====

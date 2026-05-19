@@ -425,5 +425,9 @@ Page({
     this.setData({ showTemplateSelect: false });
     wx.showToast({ title: '流程已创建', icon: 'success' });
     this.loadActiveProcess();
+  },
+
+  onShareAppMessage() {
+    return { title: '我正在使用住港伴，你也来看看', path: '/pages/process/index/index' };
   }
 });

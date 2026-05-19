@@ -375,7 +375,6 @@ const INDEX_TEMPLATES = {
         slots: [
           
           { slotKey: "birth_cert",   docName: "出生证明(子女)", docIcon: "👶", requirement: "required", description: "如子女随行", maxCount: 1 },
-          { slotKey: 'birth_cert',    docName: '出生证明(子女)', docIcon: '👶', requirement: 'required', description: '如子女随行', maxCount: 1 },
           { slotKey: 'household',     docName: '户口本',         docIcon: '📖', requirement: 'recommended', description: '证明家庭关系', maxCount: 2 }
         ]
       },

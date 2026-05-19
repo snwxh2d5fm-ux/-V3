@@ -9,7 +9,8 @@
     "pages/reminders/index/index",
     "pages/reminders/detail/detail",
     "pages/process/index/index",
-    "pages/mine/index/index"
+    "pages/mine/index/index",
+    "pages/mine/notify-settings/notify-settings"
   ],
   "subPackages": [
     {

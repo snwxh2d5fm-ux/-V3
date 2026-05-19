@@ -41,6 +41,7 @@ module.exports = {
   'onboard-404': ['医疗'],
   'onboard-405': ['社区'],
   'onboard-406': ['社区'],
+  'onboard-407': ['户籍'],
   'onboard-408': ['社区'],
   'onboard-501a': ['教育'],
   'onboard-502a': ['教育'],

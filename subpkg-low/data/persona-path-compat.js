@@ -11,7 +11,15 @@ const PERSONAS = {
   STUDENT: 1,      // 在校学生
   EMPLOYED: 2,     // 在职人士
   OWNER: 4,        // 企业主
-  OVERSEAS: 7      // 海外华人
+  OVERSEAS: 7,     // 海外华人
+  PROFESSIONAL: 3,  // 专业人士
+  PARTTIME: 5,      // 兼读进修者
+  SELF_EMPLOYED: 6, // 自雇人士
+  FRESH_GRAD: 8,    // 应届毕业生
+  PARENT: 9,        // 陪读家长
+  INVESTOR: 10,     // 投资移民
+  EXCHANGE: 11,     // 交换生
+  RETIREE: 12       // 退休人士
 };
 
 const COMPATIBILITY = {
@@ -86,15 +94,69 @@ const MATRIX = {
     exchange:        'incompatible',
     minor_student:   'incompatible',
     parttime_qmas:   'incompatible'
-  }
+  },
+  [PERSONAS.PROFESSIONAL]: {
+    asmpt: 'compatible', qmas: 'compatible', techtas: 'compatible',
+    ttps_a: 'compatible', ttps_b: 'compatible', cies: 'compatible',
+    ttps_c: 'conditional', retirement: 'conditional', dependent: 'conditional',
+    student_iang: 'conditional', parttime_qmas: 'conditional',
+    exchange: 'incompatible', minor_student: 'incompatible'
+  },
+  [PERSONAS.PARTTIME]: {
+    parttime_qmas: 'compatible', qmas: 'compatible',
+    dependent: 'conditional', asmpt: 'conditional', ttps_a: 'conditional',
+    ttps_b: 'conditional', ttps_c: 'conditional', student_iang: 'conditional',
+    exchange: 'incompatible', techtas: 'incompatible', cies: 'incompatible',
+    retirement: 'incompatible', minor_student: 'incompatible'
+  },
+  [PERSONAS.SELF_EMPLOYED]: {
+    asmpt: 'compatible', cies: 'compatible', ttps_a: 'compatible',
+    qmas: 'compatible', techtas: 'compatible', retirement: 'compatible',
+    ttps_b: 'conditional', ttps_c: 'conditional', dependent: 'conditional',
+    student_iang: 'conditional', parttime_qmas: 'conditional',
+    exchange: 'incompatible', minor_student: 'incompatible'
+  },
+  [PERSONAS.FRESH_GRAD]: {
+    student_iang: 'compatible', ttps_c: 'compatible',
+    ttps_b: 'conditional', dependent: 'conditional', parttime_qmas: 'conditional',
+    qmas: 'incompatible', ttps_a: 'incompatible', asmpt: 'incompatible',
+    techtas: 'incompatible', cies: 'incompatible', retirement: 'incompatible',
+    exchange: 'incompatible', minor_student: 'incompatible'
+  },
+  [PERSONAS.PARENT]: {
+    dependent: 'compatible', minor_student: 'compatible',
+    retirement: 'conditional', ttps_a: 'conditional', cies: 'conditional',
+    student_iang: 'conditional', ttps_b: 'conditional', ttps_c: 'conditional',
+    qmas: 'conditional', asmpt: 'conditional', techtas: 'conditional',
+    parttime_qmas: 'conditional', exchange: 'incompatible'
+  },
+  [PERSONAS.INVESTOR]: {
+    cies: 'compatible', ttps_a: 'compatible', retirement: 'compatible',
+    qmas: 'compatible', asmpt: 'conditional', dependent: 'conditional',
+    techtas: 'conditional', ttps_b: 'conditional',
+    ttps_c: 'incompatible', student_iang: 'incompatible', parttime_qmas: 'incompatible',
+    exchange: 'incompatible', minor_student: 'incompatible'
+  },
+  [PERSONAS.EXCHANGE]: {
+    exchange: 'compatible',
+    student_iang: 'conditional', minor_student: 'conditional',
+    qmas: 'incompatible', ttps_a: 'incompatible', ttps_b: 'incompatible',
+    ttps_c: 'incompatible', asmpt: 'incompatible', techtas: 'incompatible',
+    cies: 'incompatible', retirement: 'incompatible', dependent: 'incompatible',
+    parttime_qmas: 'incompatible'
+  },
+  [PERSONAS.RETIREE]: {
+    retirement: 'compatible', cies: 'compatible',
+    dependent: 'conditional', ttps_a: 'conditional',
+    qmas: 'conditional', asmpt: 'conditional',
+    ttps_b: 'incompatible', ttps_c: 'incompatible', techtas: 'incompatible',
+    student_iang: 'incompatible', parttime_qmas: 'incompatible',
+    exchange: 'incompatible', minor_student: 'incompatible'
+  },
+
 };
 
-/**
- * 获取某个路径对某个画像的兼容级别
- * @param {number} persona - 画像ID (1|2|4|7)
- * @param {string} path - 路径key (如 'qmas', 'ttps_a')
- * @returns {object} { level, label, color, bg }
- */
+
 function getCompatibility(persona, path) {
   if (!MATRIX[persona]) {
     return { level: 'conditional', ...COMPATIBILITY.conditional };
@@ -125,7 +187,7 @@ function validateBestMatch(persona, bestPath) {
 }
 
 function getPersonaName(persona) {
-  const names = { 1: '在校学生', 2: '在职人士', 4: '企业主', 7: '海外华人' };
+  const names = { 1: '在校学生', 2: '在职人士', 3: '专业人士', 4: '企业主', 5: '兼读进修者', 6: '自雇人士', 7: '海外华人', 8: '应届毕业生', 9: '陪读家长', 10: '投资移民', 11: '交换生', 12: '退休人士' };
   return names[persona] || '未知';
 }
 

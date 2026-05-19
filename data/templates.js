@@ -323,6 +323,86 @@ module.exports = {
           "steps": [{ "id": "s4_1", "name": "永居申请(通常≥7年 [A])", "confidence": "A" }] }
       ],
       "keyRisks": [{ "risk": "资产变现可能影响身份 [B]", "level": "medium", "confidence": "B" }]
+    },
+
+    {
+      "id": "dependent",
+      "name": "受养人来港通道",
+      "pathType": "dependent",
+      "totalCycle": "7年+",
+      "firstVisa": "受养人签证(与保证人同步)",
+      "riskLevel": "medium",
+      "decisionPoints": ["dp3_renewal_strategy", "dp6_family_sync"],
+      "phases": [
+        { "id": "phase1_evaluation", "order": 1, "name": "资格评估", "duration": "1-2月", "confidence": "A",
+          "steps": [{ "id": "s1_1", "name": "确认保证人身份获批 [A]", "confidence": "A" }, { "id": "s1_2", "name": "准备关系证明+经济能力证明 [B]", "confidence": "B" }] },
+        { "id": "phase2_onboarding", "order": 2, "name": "获批与激活", "duration": "0-2月", "confidence": "A",
+          "steps": [{ "id": "s2_1", "name": "递交ID 997->审批4-6周->激活 [A]", "confidence": "A" }] },
+        { "id": "phase3_maintenance", "order": 3, "name": "中期维持", "duration": "1-7年", "confidence": "B",
+          "steps": [{ "id": "s3_1", "name": "与保证人同步续签 [A]", "confidence": "A" }] },
+        { "id": "phase4_pr_sprint", "order": 4, "name": "永居冲刺", "duration": "第7年", "confidence": "A",
+          "steps": [{ "id": "s4_1", "name": "通常居住满7年->永居申请 [A]", "confidence": "A" }] }
+      ]
+    },
+
+    {
+      "id": "minor_student",
+      "name": "未成年学生签证",
+      "pathType": "minor_student",
+      "totalCycle": "按学制",
+      "firstVisa": "学生签证(按学年续)",
+      "riskLevel": "low",
+      "decisionPoints": ["dp1_initial_path"],
+      "phases": [
+        { "id": "phase1_evaluation", "order": 1, "name": "资格评估", "duration": "1-3月", "confidence": "A",
+          "steps": [{ "id": "s1_1", "name": "获香港学校录取(中小学/幼稚园) [A]", "confidence": "A" }] },
+        { "id": "phase2_onboarding", "order": 2, "name": "获批与激活", "duration": "0-2月", "confidence": "A",
+          "steps": [{ "id": "s2_1", "name": "递交ID 995A->审批->赴港入学 [A]", "confidence": "A" }] },
+        { "id": "phase3_maintenance", "order": 3, "name": "中期维持", "duration": "按学年", "confidence": "A",
+          "steps": [{ "id": "s3_1", "name": "每年续签(需在读证明 [A])", "confidence": "A" }] },
+        { "id": "phase4_pr_sprint", "order": 4, "name": "永居冲刺", "duration": "第7年+", "confidence": "B",
+          "steps": [{ "id": "s4_1", "name": "成年后转其他身份路径->永居 [B]", "confidence": "B" }] }
+      ]
+    },
+
+    {
+      "id": "exchange",
+      "name": "交换生签证",
+      "pathType": "exchange",
+      "totalCycle": "1学期-1年",
+      "firstVisa": "学生签证(短期)",
+      "riskLevel": "low",
+      "decisionPoints": ["dp1_initial_path"],
+      "phases": [
+        { "id": "phase1_evaluation", "order": 1, "name": "资格评估", "duration": "1-2月", "confidence": "A",
+          "steps": [{ "id": "s1_1", "name": "获交换项目录取 [A]", "confidence": "A" }] },
+        { "id": "phase2_onboarding", "order": 2, "name": "获批与激活", "duration": "0-1月", "confidence": "A",
+          "steps": [{ "id": "s2_1", "name": "递交学生签证->审批->赴港报到 [A]", "confidence": "A" }] },
+        { "id": "phase3_maintenance", "order": 3, "name": "交换期间", "duration": "1学期", "confidence": "A",
+          "steps": [{ "id": "s3_1", "name": "完成交换学习 [A]", "confidence": "A" }] },
+        { "id": "phase4_pr_sprint", "order": 4, "name": "交换结束", "duration": "N/A", "confidence": "A",
+          "steps": [{ "id": "s4_1", "name": "签证到期返回原校 [A]", "confidence": "A" }] }
+      ]
+    },
+
+    {
+      "id": "retirement",
+      "name": "退休人士签证",
+      "pathType": "retirement",
+      "totalCycle": "长期",
+      "firstVisa": "退休签证(2年续)",
+      "riskLevel": "medium",
+      "decisionPoints": ["dp3_renewal_strategy"],
+      "phases": [
+        { "id": "phase1_evaluation", "order": 1, "name": "资格评估", "duration": "1-3月", "confidence": "B",
+          "steps": [{ "id": "s1_1", "name": "证明退休身份+经济自给能力 [B]", "confidence": "B" }] },
+        { "id": "phase2_onboarding", "order": 2, "name": "获批与激活", "duration": "0-2月", "confidence": "B",
+          "steps": [{ "id": "s2_1", "name": "递交申请->审批->赴港定居 [B]", "confidence": "B" }] },
+        { "id": "phase3_maintenance", "order": 3, "name": "中期维持", "duration": "每2年", "confidence": "B",
+          "steps": [{ "id": "s3_1", "name": "证明经济能力维持+续签 [B]", "confidence": "B" }] },
+        { "id": "phase4_pr_sprint", "order": 4, "name": "永居冲刺", "duration": "第7年+", "confidence": "C",
+          "steps": [{ "id": "s4_1", "name": "通常居住满7年->永居申请 [C]", "confidence": "C" }] }
+      ]
     }
   ]
 };
