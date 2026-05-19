@@ -1,4 +1,4 @@
-// 住港伴 关卡4: 出行融入 (8项)
+// 住港伴 关卡4: TODO_PHASE_NAME (8项)
 module.exports = [
   {
     "id": "onboard-401",
@@ -138,7 +138,12 @@ module.exports = [
       "八达通+AlipayHK已覆盖绝大部分交通工具",
       "隧道已采用HKeToll电子收费"
     ],
-    "pitfalls": [],
+    "pitfalls": [
+      "学生八达通需每年到港铁客务中心续期——过期自动转成人价，通勤成本翻倍",
+      "的士起表$27（2026年），过海附加费使车费翻倍",
+      "香港行人靠左、过马路先看右边——与内地相反",
+      "部分巴士不设普通话报站——建议开Google Maps实时追踪防止坐过站"
+    ],
     "renewalEvidence": {
       "produces": false,
       "docType": null,
@@ -199,7 +204,11 @@ module.exports = [
       "健身室需先完成'正确使用健身室设施简介会'",
       "游泳池无需预约，开放时段前排队"
     ],
-    "pitfalls": [],
+    "pitfalls": [
+      "SmartPLAY实名预约+抽签制——热门时段（周末晚）需提前7天抢号，羽毛球场中签率可能低于30%",
+      "系统绑定HK身份证——刚入境未获身份证者无法注册",
+      "预约取消须至少提前24小时——多次违规会暂停预约资格30-90天"
+    ],
     "renewalEvidence": {
       "produces": false,
       "docType": null,
@@ -312,7 +321,11 @@ module.exports = [
         "type": "action"
       }
     ],
-    "requiredItems": [],
+    "requiredItems": [
+      "香港身份证（参加大多数社区活动的基础证件）",
+      "住址证明（部分社区中心要求所在区域居住证明）",
+      "费用：大部分免费或低廉（HKD 50-200/期），长者中心更低（HKD 20-50/次）"
+    ],
     "officialLinks": [
       {
         "label": "康文署·社区活动",
@@ -332,7 +345,11 @@ module.exports = [
       "兴趣班是认识本地朋友的最快方式",
       "很多NGO提供免费广东话班"
     ],
-    "pitfalls": [],
+    "pitfalls": [
+      "广东话兴趣班居多——普通话/英语活动覆盖面有限，建议先查该中心是否提供",
+      "社区活动报名往往需现场办理会员卡（带身份证+住址证明），不能全线上完成",
+      "港大SPACE等大学进修粤语班收费HKD 2000-5000/期，与免费社区活动不同"
+    ],
     "renewalEvidence": {
       "produces": false,
       "docType": null,
@@ -379,7 +396,11 @@ module.exports = [
         "type": "action"
       }
     ],
-    "requiredItems": [],
+    "requiredItems": [
+      "WhatsApp/微信账号（香港社交主力工具）",
+      "LinkedIn账号（专业人士脉圈）",
+      "部分付费组织（如香港总商会）需会费HKD 1000-3000/年"
+    ],
     "officialLinks": [
       {
         "label": "Meetup 香港·社交活动",
@@ -395,7 +416,11 @@ module.exports = [
       "Meetup上有很多Expats和Local混合的群组",
       "不要害羞——香港人比想象中友好"
     ],
-    "pitfalls": [],
+    "pitfalls": [
+      "Facebook/Meetup使用率低于内地预期——真正活跃本地社交在WhatsApp群组和微信",
+      "行山群等大量聚集在Facebook群组，内地手机需稳定网络",
+      "港漂群商业化倾向显著——部分群为保险/身份规划行业运营，需辨别信息真实性"
+    ],
     "renewalEvidence": {
       "produces": false,
       "docType": null,
@@ -535,7 +560,11 @@ module.exports = [
       "记录最近医院/警署/消防局的地址",
       "如在偏远地区行山→下载'郊野公园远足安全App'"
     ],
-    "pitfalls": [],
+    "pitfalls": [
+      "999是统一紧急号码——但非紧急情况请勿拨打，滥用可被检控",
+      "证件丢失须先报警拿报案回执——这是所有后续补办的基础文件，非直接去中旅社/入境处",
+      "公立急症室HKD 180/次但轮候4-8小时——普通门诊须提前预约（HKD 50/次）"
+    ],
     "renewalEvidence": {
       "produces": false,
       "docType": null,
