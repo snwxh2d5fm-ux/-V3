@@ -1,0 +1,6 @@
+{
+  "envId": "cloudbase-d1g17tgt7cc199a60",
+  "cloudrun": {
+    "name": "wecom-bot"
+  }
+}

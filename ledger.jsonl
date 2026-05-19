@@ -20,3 +20,4 @@
 {"ts":"2026-05-19T13:28:00+08:00","from":"hermes","action":"9gate_share_p0","detail":"分享功能全栈: 6/7云函数+5/5前端就绪. Gate3编译失败: share-preview引用/components/share-card但实际在/subpkg-share/components/. 1行路径修复后重新闸门.","state":"blocked_1line_path"}
 {"ts":"2026-05-19T13:30:00+08:00","from":"hermes","action":"9gate_pass","detail":"分享功能全栈闸门通过. 6/7云函数+5/5前端+4集合. 路径修复后DevTools0错误. verify.sh19/38Jest31/39预存. Gate3通过.","state":"passed"}
 {"ts":"2026-05-19T13:35:00+08:00","from":"hermes","action":"final_state","detail":"分享功能全栈就绪. 26文件待commit(6新云函数+subpkg-share+wecom-bot修复). Gate1-6通过. 待用户commit后push+部署.","state":"ready_to_commit"}
+{"ts":"2026-05-19T15:04:00+08:00","from":"hermes","action":"9gate_R4_pass","detail":"d976a5d R4闸门通过. 5P0修复(云函数名/字段/属性/响应/字面量). verify.sh19/38预存. DevTools0错误. 4轮闸门20P0闭环.","state":"passed"}

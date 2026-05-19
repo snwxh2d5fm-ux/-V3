@@ -1,16 +1,12 @@
 /**
- * wecom-bot v1.0 — 企业微信AI机器人回调云函数
+ * wecom-bot v1.1 — 企业微信AI机器人 HTTP 云函数
  *
- * 功能：
- *   GET  / — URL验证（企业微信回调配置验证）
- *   POST / — 接收用户消息 → 语义匹配 → 自动回复
+ * 路径：/wecom/callback
+ *   GET  — URL验证
+ *   POST — 接收消息 → 自动回复
  *
- * 配置（环境变量）：
- *   WECOM_CORP_ID       — 企业ID
- *   WECOM_TOKEN         — 回调Token
- *   WECOM_ENCODING_AES_KEY — 消息加密密钥
- *   WECOM_AGENT_SECRET  — 应用Secret（用于主动发消息）
- *   WECOM_AGENT_ID      — 应用AgentId
+ * 配置（CloudBase 环境变量）：
+ *   WECOM_CORP_ID / WECOM_TOKEN / WECOM_ENCODING_AES_KEY / WECOM_AGENT_SECRET / WECOM_AGENT_ID
  */
 
 const crypto = require('crypto');
@@ -39,20 +35,20 @@ const CONFIG = {
   agentId: process.env.WECOM_AGENT_ID
 };
 
-// 启动时校验必需环境变量
-['WECOM_CORP_ID','WECOM_TOKEN','WECOM_ENCODING_AES_KEY'].forEach(function(k) {
-  if (!process.env[k]) throw new Error('缺少必需环境变量: ' + k);
-});
-
 // AES Key = Base64.decode(EncodingAESKey + "=")
-var AESKey = Buffer.from(CONFIG.encodingAESKey + '=', 'base64');
+var AESKey = CONFIG.encodingAESKey ? Buffer.from(CONFIG.encodingAESKey + '=', 'base64') : null;
 
-// ============ CloudBase HTTP 云函数入口 ============
+// ============ SCF HTTP 云函数入口 ============
 exports.main = async (event, context) => {
+  // 延迟校验：仅在首次请求时检查，避免模块加载时崩溃
+  if (!AESKey) {
+    return { statusCode: 500, body: 'ENV not configured' };
+  }
   try {
-    if (event.httpMethod === 'GET') {
+    var method = (event.httpMethod || '').toUpperCase();
+    if (method === 'GET') {
       return await handleVerify(event);
-    } else if (event.httpMethod === 'POST') {
+    } else if (method === 'POST') {
       return await handleMessage(event);
     }
     return { statusCode: 405, body: 'Method Not Allowed' };
