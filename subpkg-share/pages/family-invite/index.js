@@ -32,7 +32,8 @@ Page({
   },
 
   onLoad: function(options) {
-    var inviteCode = options.inviteCode;
+    var inviteCode = options.inviteCode || options.query?.inviteCode || '';
+    console.log('[family-invite] onLoad options:', JSON.stringify(options), 'inviteCode:', inviteCode);
     if (inviteCode) {
       this.setData({
         mode: 'accept',
@@ -85,26 +86,33 @@ Page({
   /** 加载邀请信息（接受端） */
   loadInvite: function() {
     var that = this;
+    var code = this.data.inviteCode;
+    console.log('[family-invite] loadInvite code:', code);
     wx.cloud.callFunction({
       name: 'family-invite-accept',
-      data: { action: 'load', inviteCode: this.data.inviteCode }
+      data: { action: 'load', inviteCode: code }
     }).then(function(res) {
       var result = res.result || {};
+      console.log('[family-invite] loadInvite result:', JSON.stringify(result));
       if (result.code === 0 && result.data) {
         that.setData({
           inviteInfo: result.data,
-          loading: false
+          loading: false,
+          acceptError: ''
         });
       } else {
         that.setData({
           loading: false,
-          acceptError: result.msg || '邀请信息无效或已过期'
+          acceptError: (result.msg || '邀请信息无效或已过期') + ' (' + result.code + ')',
+          acceptCode: code
         });
       }
-    }).catch(function() {
+    }).catch(function(err) {
+      console.error('[family-invite] loadInvite error:', err);
       that.setData({
         loading: false,
-        acceptError: '加载邀请信息失败'
+        acceptError: '网络异常，请检查网络后重试',
+        acceptCode: code
       });
     });
   },

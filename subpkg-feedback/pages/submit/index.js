@@ -86,7 +86,7 @@ Page({
           }
         } catch (e) { /* 忽略 */ }
 
-        // 先上传获取fileID → 再调内容审核
+        // 直接上传获取fileID，不经过内容审核（与文本提交一致：直送不阻塞）
         that.setData({ isUploading: true });
 
         var cloudPath = 'feedback/screenshots/' + Date.now() + '_' + Math.random().toString(36).substring(2, 8) + '.jpg';
@@ -94,32 +94,10 @@ Page({
           cloudPath: cloudPath,
           filePath: tempPath,
           success: function(uploadRes) {
-            // 图片上传成功后 → 调内容审核
-            wx.cloud.callFunction({
-              name: 'content-moderation',
-              data: { action: 'moderateImage', fileID: uploadRes.fileID }
-            }).then(function(modRes) {
-              var result = modRes.result || {};
-              if (result.code === 0 && result.data && result.data.blocked) {
-                // 审核不通过 → 删除已上传文件 → 阻断
-                wx.cloud.deleteFile({ fileList: [uploadRes.fileID] }).catch(function(){});
-                wx.showToast({ title: '图片内容不合规，请更换', icon: 'none' });
-                that.setData({ isUploading: false });
-                return;
-              }
-              that.setData({
-                screenshotPath: tempPath,
-                screenshotFileID: uploadRes.fileID,
-                isUploading: false
-              });
-            }).catch(function() {
-              // 审核服务降级: 仅记录日志，不阻断上传
-              console.warn('[feedback] content-moderation unavailable');
-              that.setData({
-                screenshotPath: tempPath,
-                screenshotFileID: uploadRes.fileID,
-                isUploading: false
-              });
+            that.setData({
+              screenshotPath: tempPath,
+              screenshotFileID: uploadRes.fileID,
+              isUploading: false
             });
           },
           fail: function() {
@@ -156,41 +134,38 @@ Page({
     this.setData({ canSubmit: can, hasType: hasType, hasContent: hasContent });
   },
 
-  // ===== 提交反馈 =====
+  // ===== 提交反馈 — 直送不阻塞 =====
   onSubmit() {
     if (!this.data.canSubmit || this.data.isSubmitting) return;
 
     var that = this;
     this.setData({ isSubmitting: true });
 
-    // 文本安全审核 → 通过后才提交
+    // 轻量关键词过滤（替代阻塞式TMS审核，合规底线）
+    var BLOCK_WORDS = /赌博|博彩|色情|毒品|枪支|诈骗|贷款|套现|办证|刻章|假币|迷药|嫖|赌|毒/;
+    if (BLOCK_WORDS.test(content)) {
+      wx.showToast({ title: '内容包含违规信息，请修改后提交', icon: 'none' });
+      this.setData({ isSubmitting: false, canSubmit: true });
+      return;
+    }
+
+    // 直接提交反馈，不经过内容审核阻塞
+    // PII 脱敏在 feedback-submit 云函数端强制执行
     wx.cloud.callFunction({
-      name: 'content-moderation',
-      data: { action: 'moderateText', content: this.data.content.trim() }
-    }).then(function(modRes) {
-      var result = modRes.result || {};
-      if (result.code === 0 && result.data && result.data.blocked) {
-        wx.showToast({ title: '内容包含违规信息，请修改', icon: 'none' });
-        that.setData({ isSubmitting: false });
-        return;
+      name: 'feedback-submit',
+      data: {
+        action: 'submit',
+        type: that.data.selectedType,
+        content: that.data.content.trim(),
+        screenshot: that.data.screenshotFileID,
+        isAnonymous: that.data.isAnonymous,
+        contact: { nickname: that.data.isAnonymous ? '' : that.data.nickname }
       }
-      // 审核通过 → 提交
-      return wx.cloud.callFunction({
-        name: 'feedback-submit',
-        data: {
-          action: 'submit',
-          type: that.data.selectedType,
-          content: that.data.content.trim(),
-          screenshot: that.data.screenshotFileID,
-          isAnonymous: that.data.isAnonymous,
-          contact: { nickname: that.data.isAnonymous ? '' : that.data.nickname }
-        }
-      });
     }).then(function(res) {
-      if (!res) return; // 审核拦截
-      var submitResult = res.result;
+      var submitResult = res.result || {};
       if (submitResult.code === 0) {
         var ticketId = submitResult.data.ticketId;
+        that.setData({ isSubmitting: false });
         wx.showModal({
           title: '提交成功',
           content: '工单号: ' + ticketId + '\n\n我们会尽快处理你的反馈。',
@@ -212,6 +187,14 @@ Page({
       wx.showToast({ title: '网络异常，请重试', icon: 'none' });
       that.setData({ isSubmitting: false, canSubmit: true });
     });
+
+    // 20秒兜底超时
+    setTimeout(function() {
+      if (that.data.isSubmitting) {
+        that.setData({ isSubmitting: false, canSubmit: true });
+        wx.showToast({ title: '提交超时，请重试', icon: 'none' });
+      }
+    }, 20000);
   },
 
   // ===== 跳转我的反馈 =====

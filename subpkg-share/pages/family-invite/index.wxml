@@ -15,7 +15,14 @@
       <text class="empty-icon">😞</text>
       <text class="empty-title">邀请无效</text>
       <text class="empty-desc">{{acceptError}}</text>
-      <button class="btn btn-primary" bindtap="onGoHome">返回我的</button>
+      <view class="empty-code" wx:if="{{acceptCode}}">
+        <text class="empty-code-label">邀请码：</text>
+        <text class="empty-code-value" selectable="true">{{acceptCode}}</text>
+      </view>
+      <view class="empty-actions">
+        <button class="btn btn-outline" bindtap="loadInvite">🔄 重试</button>
+        <button class="btn btn-primary" bindtap="onGoHome">返回我的</button>
+      </view>
     </view>
 
     <!-- 邀请详情 -->

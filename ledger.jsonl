@@ -34,3 +34,5 @@
 {"ts":"2026-05-19T19:10:00+08:00","from":"claude","action":"deploy_request","detail":"关于住港伴页面(6项法务声明)+feedback-daily-summary云函数(反馈+开票每日汇总发送gangban@funway.hk), 9文件新增/修改, 1云函数已部署CloudBase Active","state":"pending_hermes_9gate"}
 {"ts":"2026-05-20T11:58:00+08:00","from":"hermes","action":"gate_phase1_closed","detail":"Phase1 9-Gate全闭环。a1c52ec pushed。344 tests, DevTools 0 errors, 2 cloud functions deployed, smoke invoke 0 ErrMsg。Gate 8 ledger + Gate 9 ACL done。","state":"done"}
 {"ts":"2026-05-20T14:58:00+08:00","from":"hermes","action":"9gate_full","detail":"88b5191+工作区全9道闸门完成. Gate1-3无新增. 麒麟P0×1+玄武P0×5. 3报告回写+同步. 5文件待commit. cloudbaserc缺4云函数注册.","state":"passed"}
+{"ts":"2026-05-20T16:34:00+08:00","from":"hermes","action":"9gate_full","detail":"客服接入+反馈直送全9道闸门. Gate1-3无新增. 麒麟P0×2(图片审核未移除/wecom-bot文案). 玄武P0×2(文本审核绕过/wecom-qr与PRD偏离). verify.sh19→20(A6子包迁移预存).","state":"passed"}
+{"ts":"2026-05-20T17:27:00+08:00","from":"hermes","action":"9gate_full","detail":"攻略书87字段+guidebook-enrich全9道闸门. Gate1-3无新增. 麒麟P0×3(字段snake_case混用/TODO占位符/catch无日志). 4P0已确认修复(图片审核移除/文案修复/关键词过滤/wecom-qr正向偏离). guidebook-enrich+wecom-bot已部署.","state":"passed"}

@@ -109,9 +109,12 @@
     </view>
   </view>
 
-  <!-- 底部企微入口 -->
+  <!-- 底部客服入口 — 微信原生客服会话 -->
   <view class="bottom-bar">
-    <text class="bottom-text" bindtap="goToWeCom">💬 添加客服微信，1对1沟通 ›</text>
+    <button class="bottom-cs-btn" open-type="contact">
+      <text class="bottom-cs-icon">💬</text>
+      <text class="bottom-cs-text">联系客服</text>
+    </button>
   </view>
 
   <!-- 返回首页入口 -->

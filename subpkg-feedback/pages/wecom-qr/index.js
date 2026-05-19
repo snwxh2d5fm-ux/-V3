@@ -1,64 +1,29 @@
 /**
- * 意见反馈 - 添加客服微信
- * 优先加载云存储二维码，失败则显示微信号文字兜底
+ * 联系客服 — 微信原生客服会话
+ * 使用 open-type="contact" 按钮直接唤起微信客服对话
+ * 前提：小程序后台已绑定微信客服（「功能 > 客服」中配置）
  */
-var WECHAT_ID = 'ZhuGangBanKF';  // 企微客服微信号（运营方可修改）
-
 Page({
-  data: {
-    qrUrl: '',
-    isLoading: true,
-    showFallback: false,
-    wechatId: WECHAT_ID
-  },
+  data: {},
 
   onLoad() {
-    this.loadQRCode();
+    // 无需额外加载，button 原生唤起
   },
 
-  // 从云存储加载企微客服二维码
-  loadQRCode() {
-    var that = this;
-    var fileID = 'cloud://feedback-assets/wecom-customer-service-qr.png';
-
-    wx.cloud.getTempFileURL({
-      fileList: [fileID],
-      success: function(res) {
-        var item = res.fileList && res.fileList[0];
-        if (item && item.tempFileURL && item.status === 0) {
-          that.setData({ qrUrl: item.tempFileURL, isLoading: false, showFallback: false });
-        } else {
-          // 文件存在但无临时链接
-          that.setData({ isLoading: false, showFallback: true });
-        }
-      },
-      fail: function() {
-        // 云存储文件不存在，直接显示文字兜底
-        that.setData({ isLoading: false, showFallback: true });
-      }
-    });
+  /** 客服按钮回调（可选，用于记录触点来源） */
+  onContactCallback(e) {
+    console.log('[客服] 用户点击客服入口', e.detail);
   },
 
-  // 二维码图片加载失败（云存储文件存在但图片损坏等）
-  onQRError() {
-    this.setData({ qrUrl: '', showFallback: true });
-  },
-
-  // 长按预览大图
-  onPreviewQR() {
-    if (!this.data.qrUrl) return;
-    wx.previewImage({
-      urls: [this.data.qrUrl],
-      current: this.data.qrUrl
-    });
-  },
-
-  // 复制微信号
-  copyWechatId() {
-    wx.setClipboardData({
-      data: this.data.wechatId,
+  /** 备用：如果按钮不生效，尝试 API 方式 */
+  openCS() {
+    wx.openCustomerServiceConversation({
       success: function() {
-        wx.showToast({ title: '已复制微信号', icon: 'success' });
+        console.log('[客服] 对话窗口已打开');
+      },
+      fail: function(err) {
+        console.error('[客服] 打开失败:', err);
+        wx.showToast({ title: '客服功能暂不可用，请稍后重试', icon: 'none' });
       }
     });
   }
