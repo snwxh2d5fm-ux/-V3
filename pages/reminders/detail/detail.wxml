@@ -195,12 +195,18 @@
       </view>
     </view>
 
-    <!-- 手动输入兜底 -->
-    <view class="card" wx:if="{{ocrResult && ocrResult.dates && ocrResult.dates.length === 0}}">
-      <text class="section-title">或手动输入</text>
-      <input class="form-input" placeholder="提醒标题" value="{{formTitle}}" bindinput="onTitleInput" />
-      <input class="form-input" placeholder="截止日期 (YYYY-MM-DD)" value="{{formDeadline}}" bindinput="onDeadlineInput" />
-      <button class="btn btn-primary btn-block" bindtap="addManualReminder">保存提醒</button>
+    <!-- 手动输入（始终显示，不依赖OCR结果） -->
+    <view class="card">
+      <text class="section-title">{{ocrImagePath ? '或手动输入' : '手动添加提醒'}}</text>
+      <input class="form-input form-input-large" placeholder="提醒标题（必填）" value="{{formTitle}}" bindinput="onTitleInput" />
+      <view class="date-input-row">
+        <text class="date-label">截止日期</text>
+        <picker mode="date" value="{{formDeadline}}" bindchange="onDeadlinePickerChange">
+          <view class="date-picker-value">{{formDeadline || '请选择日期'}}</view>
+        </picker>
+      </view>
+      <textarea class="form-textarea" placeholder="备注说明（选填）" value="{{formDescription}}" bindinput="onDescriptionInput" auto-height maxlength="200" />
+      <button class="btn btn-primary btn-block" bindtap="addManualReminder">💾 保存提醒</button>
     </view>
   </block>
 

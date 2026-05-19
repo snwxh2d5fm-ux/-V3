@@ -149,7 +149,11 @@
 
 /* ===== 表单 ===== */
 .form-input { width: 100%; padding: 20rpx 16rpx; margin-bottom: 16rpx; border: 1rpx solid var(--gray-200); border-radius: 12rpx; font-size: 28rpx; background: var(--color-bg-card); box-sizing: border-box; }
+.form-input-large { padding: 28rpx 20rpx; font-size: 32rpx; }
 .form-textarea { width: 100%; min-height: 160rpx; padding: 20rpx 16rpx; margin-bottom: 16rpx; border: 1rpx solid var(--gray-200); border-radius: 12rpx; font-size: 28rpx; background: var(--color-bg-card); box-sizing: border-box; }
+.date-input-row { display: flex; align-items: center; margin-bottom: 16rpx; }
+.date-label { font-size: 28rpx; color: var(--gray-600); margin-right: 16rpx; flex-shrink: 0; }
+.date-picker-value { flex: 1; padding: 28rpx 20rpx; border: 2rpx solid var(--color-primary); border-radius: 12rpx; font-size: 32rpx; color: var(--color-primary); font-weight: 600; text-align: center; background: var(--color-bg-card); }
 
 /* ===== 规则引擎 ===== */
 .rule-list { margin-bottom: 20rpx; }

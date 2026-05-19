@@ -465,6 +465,7 @@ Page({
 
   onTitleInput(e) { this.setData({ formTitle: e.detail.value }); },
   onDeadlineInput(e) { this.setData({ formDeadline: e.detail.value }); },
+  onDeadlinePickerChange(e) { this.setData({ formDeadline: e.detail.value }); },
   onDescriptionInput(e) { this.setData({ formDescription: e.detail.value }); },
   onConfidenceChange(e) { this.setData({ formConfidence: e.detail.value }); },
 
@@ -578,8 +579,18 @@ Page({
 
   async runOCR(imagePath) {
     this.setData({ ocrParsing: true, ocrResult: null });
+
+    // 10秒超时兜底
+    var timeoutId = setTimeout(() => {
+      if (this.data.ocrParsing) {
+        this.setData({
+          ocrResult: { dates: [], message: '识别超时，请在下方手动输入' },
+          ocrParsing: false
+        });
+      }
+    }, 10000);
+
     try {
-      // 压缩→上传云存储→获取fileID→调用云函数
       var compressedPath = imagePath;
       try {
         var compressRes = await new Promise((resolve, reject) => {
@@ -588,42 +599,42 @@ Page({
         compressedPath = compressRes;
       } catch (e) { /* 压缩失败用原图 */ }
 
-      // 上传到云存储
       var cloudPath = '_ocr_temp/reminder_' + Date.now() + '.jpg';
       var uploadRes = await new Promise((resolve, reject) => {
         wx.cloud.uploadFile({ cloudPath, filePath: compressedPath, success: resolve, fail: reject });
       });
       var fileID = uploadRes.fileID;
 
-      // 调用云函数识别日期
       var cloudRes = await wx.cloud.callFunction({
         name: 'ocr-service',
         data: { action: 'recognizeDates', fileID: fileID }
       });
 
+      clearTimeout(timeoutId);
+
       var result = cloudRes.result || {};
       if (result.code === 0 && result.data && result.data.dates && result.data.dates.length > 0) {
         this.setData({ ocrResult: result.data, ocrParsing: false });
+        // 自动填入第一个识别到的日期
+        var first = result.data.dates[0];
+        this.setData({
+          formDeadline: first.date || first,
+          formTitle: first.label || '自动识别提醒'
+        });
         return;
       }
 
-      // 无日期
       this.setData({
-        ocrResult: result.data || { dates: [], message: '未能识别到有效日期，请尝试手动输入' },
+        ocrResult: result.data || { dates: [], message: '未识别到日期，请在下方手动输入' },
         ocrParsing: false
       });
     } catch (e) {
-      console.error('[OCR] 识别失败:', e);
+      clearTimeout(timeoutId);
       this.setData({
-        ocrResult: { dates: [], message: '识别失败，请重试或手动输入' },
+        ocrResult: { dates: [], message: '识别失败，请在下方手动输入' },
         ocrParsing: false
       });
     }
-  },
-
-  runLocalOCR(imagePath) {
-    // 本地无法真正OCR，此处为占位
-    return null;
   },
 
   useOCRDate(e) {

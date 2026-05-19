@@ -27,3 +27,4 @@
 {"ts":"2026-05-19T18:30:00+08:00","from":"claude","action":"p1_iteration","detail":"3项P1修复: 迁移日志+用户提示+token检查. commit 4e4aa77. 1文件+32/-8. 质量门禁全通过.","state":"pending_hermes_p1_recheck"}
 {"ts":"2026-05-19T18:05:00+08:00","from":"hermes","action":"gate_home_p1_fix","detail":"home.js 3项P1修复闸门完成。9道全绿。commit链:3e0cb89→ed39b1c→4e4aa77→2346bf1。","state":"done"}
 {"ts":"2026-05-19T18:10:00+08:00","from":"hermes","action":"delivery_complete","detail":"今日交付链6 commits全部推送。ba49d02@origin/main。累计P0×5 P1×12 P2×4修复。3轮闸门+2轮增量。状态:done。","state":"done"}
+{"ts":"2026-05-19T18:40:00+08:00","from":"hermes","action":"gate_24fixes_final","detail":"24项修复终审完成。9道闸门全绿。23/24通过。新发现P0:ASMTP/ASMPT拼写Bug。","state":"done"}

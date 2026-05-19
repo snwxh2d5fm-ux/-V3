@@ -12,5 +12,12 @@
     "action": "deploy_retry",
     "detail": "琅琊决策全部修复 — 4P0 + 9P1 + 4P2 fixed across 7 files. node -c passed. Re-running 9-Gate.",
     "state": "pending_hermes_9gate_round2"
+  },
+  {
+    "ts": "2026-05-19T22:00:00+08:00",
+    "from": "claude",
+    "action": "deploy_request",
+    "detail": "Claude 130文件全量审查 + 24项修复(P0×7+P1×9+P2×8), 18 files, +337/-68, commit 7e2b563, pre-push 7/7 passed, 9-Gate requested",
+    "state": "pending_hermes_9gate_round3"
   }
 ]
