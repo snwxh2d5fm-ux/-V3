@@ -20,7 +20,8 @@
     { "name": "free-trial-monitor", "timeout": 30 },
     { "name": "db-seed", "timeout": 60 },
     { "name": "knowledge-import", "timeout": 60 },
-    { "name": "guidebook-sync", "timeout": 15 }
+    { "name": "guidebook-sync", "timeout": 15 },
+    { "name": "guidebook-enrich", "timeout": 60 }
   ],
   "ai": {
     "defaultAgent": "codebuddy",

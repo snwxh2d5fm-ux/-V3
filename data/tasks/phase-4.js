@@ -1,4 +1,4 @@
-// 住港伴 关卡4: TODO_PHASE_NAME (8项)
+// 住港伴 关卡4: 出行融入 (8项)
 module.exports = [
   {
     "id": "onboard-401",
@@ -419,7 +419,7 @@ module.exports = [
     "pitfalls": [
       "Facebook/Meetup使用率低于内地预期——真正活跃本地社交在WhatsApp群组和微信",
       "行山群等大量聚集在Facebook群组，内地手机需稳定网络",
-      "港漂群商业化倾向显著——部分群为保险/身份规划行业运营，需辨别信息真实性"
+      "港漂群商业化倾向显著——部分群由商业机构运营（如保险销售），需辨别信息真实性"
     ],
     "renewalEvidence": {
       "produces": false,

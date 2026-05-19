@@ -1,0 +1,7 @@
+{
+  "name": "guidebook-enrich",
+  "version": "1.0.0",
+  "description": "攻略书场景速查完整性批量补充——一次性批量为life_guide_tasks注入requiredItems/tips/pitfalls/officialLinks",
+  "main": "index.js",
+  "dependencies": { "wx-server-sdk": "~2.6.0" }
+}
