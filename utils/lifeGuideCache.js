@@ -147,7 +147,6 @@ function fetchTasks(mode, params) {
         if (result.data && Array.isArray(result.data)) {
           var deduped = [];
           var seenId = {};
-          var 
           result.data.forEach(function(t) {
             if (t._id && seenId[t._id]) return;
                         if (t._id) seenId[t._id] = true;
