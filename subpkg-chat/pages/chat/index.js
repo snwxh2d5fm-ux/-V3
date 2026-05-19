@@ -378,7 +378,8 @@ Page({
     var msgs = this.data.messages;
     var last = msgs[msgs.length - 1];
     if (last && last.role === 'assistant') {
-      last.content = content;
+      // S-02 fix: 流式完成后对完整内容做 HTML 实体编码，防止 XSS
+      last.content = this.formatReplyContent(content);
       last.isStreaming = false;
       last.sources = sources;
     }
