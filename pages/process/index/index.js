@@ -147,17 +147,26 @@ Page({
 
   // ★ 通道A: 完成当前阶段所有步骤 → 自动推进
   completeAllSteps: async function(e) {
+    console.log('[completeAllSteps] 触发', JSON.stringify(e.currentTarget.dataset));
+    try {
     var index = e.currentTarget.dataset.stageIndex;
+    console.log('[completeAllSteps] index=' + index + ' phases.length=' + (this.data.phases ? this.data.phases.length : 0));
     var phase = this.data.phases[index];
-    if (!phase || phase.status !== 'current') {
-      wx.showToast({ title: '阶段状态异常，请刷新重试', icon: 'none' });
+    if (!phase) {
+      wx.showToast({ title: '阶段不存在 index=' + index, icon: 'none', duration: 2000 });
+      return;
+    }
+    console.log('[completeAllSteps] phase.status=' + phase.status + ' phase.name=' + phase.name);
+    if (phase.status !== 'current') {
+      wx.showToast({ title: '当前阶段是"' + (phase.name||'?') + '"(' + phase.status + ')，非进行中', icon: 'none', duration: 2000 });
       return;
     }
 
     var app = getApp();
     var activeProcess = app.globalData.activeProcess;
+    console.log('[completeAllSteps] activeProcess=' + (activeProcess ? 'YES' : 'NO') + ' stages=' + (activeProcess && activeProcess.stages ? activeProcess.stages.length : 0));
     if (!activeProcess || !activeProcess.stages) {
-      wx.showToast({ title: '未找到活跃流程', icon: 'none' });
+      wx.showToast({ title: '未找到活跃流程，请先选择路径', icon: 'none' });
       return;
     }
 

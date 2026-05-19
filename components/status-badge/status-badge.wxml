@@ -23,8 +23,8 @@
       <text class="paywall__note">验证费用 · 切换后历史数据将重置</text>
     </view>
     <view class="paywall__actions">
-      <button class="btn btn--outline" catchtap="closePaywall">取消</button>
-      <button class="btn btn--primary" catchtap="confirmPaywall">支付 ¥599</button>
+      <view class="btn btn--outline" catchtap="closePaywall">取消</view>
+      <view class="btn btn--primary" catchtap="confirmPaywall">支付 ¥599</view>
     </view>
   </view>
 </view>
