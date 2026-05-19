@@ -1,0 +1,167 @@
+<!-- 关于住港伴 — 产品介绍 + 法律声明 + 版本信息 -->
+<view class="page">
+  <!-- 品牌标识区 -->
+  <view class="brand-hero">
+    <view class="logo-area">
+      <text class="logo-icon">🏠</text>
+      <text class="app-name">住港伴</text>
+      <text class="app-version">v{{appVersion}}</text>
+    </view>
+    <text class="app-tagline">香港身份全流程陪伴工具</text>
+    <text class="app-motto">隐私 · 合规 · 好用</text>
+  </view>
+
+  <!-- 产品简介 -->
+  <view class="card">
+    <text class="card-title">产品简介</text>
+    <text class="card-text">住港伴是一款专注于香港身份规划全流程管理的微信小程序工具。我们从用户“想申请香港身份”到“获得永居”的完整旅程出发，提供证件管理、时间提醒、流程指引、政策同步、材料预审和结构化攻略等陪伴式服务。</text>
+    <text class="card-text">我们相信，身份规划顾问的绝大部分工作——材料整理、时间提醒、政策查询、标准比对、攻略收集——可以通过确定性规则引擎和结构化数据处理来实现，而无需依赖大语言模型的自由文本生成。</text>
+  </view>
+
+  <!-- 核心功能 -->
+  <view class="card">
+    <text class="card-title">七大核心模块</text>
+    <view class="feature-list">
+      <view class="feature-item">
+        <text class="feature-icon">📁</text>
+        <view class="feature-body">
+          <text class="feature-name">证件夹</text>
+          <text class="feature-desc">本地加密存储证件材料，OCR智能识别，一键组合材料清单</text>
+        </view>
+      </view>
+      <view class="feature-item">
+        <text class="feature-icon">⏰</text>
+        <view class="feature-body">
+          <text class="feature-name">提醒器</text>
+          <text class="feature-desc">智能识别关键日期，自动生成完整提醒链，不错过任何节点</text>
+        </view>
+      </view>
+      <view class="feature-item">
+        <text class="feature-icon">📊</text>
+        <view class="feature-body">
+          <text class="feature-name">流程控</text>
+          <text class="feature-desc">13条身份路径全覆盖，分阶段任务清单，进度可视化追踪</text>
+        </view>
+      </view>
+      <view class="feature-item">
+        <text class="feature-icon">🧭</text>
+        <view class="feature-body">
+          <text class="feature-name">指引牌</text>
+          <text class="feature-desc">颗粒度到操作细节的标准化指引，从拍照要求到填表规范</text>
+        </view>
+      </view>
+      <view class="feature-item">
+        <text class="feature-icon">🔍</text>
+        <view class="feature-body">
+          <text class="feature-name">效率宝</text>
+          <text class="feature-desc">规则驱动的格式/内容/一致性检查，矫正标注辅助材料准备</text>
+        </view>
+      </view>
+      <view class="feature-item">
+        <text class="feature-icon">📡</text>
+        <view class="feature-body">
+          <text class="feature-name">信息栏</text>
+          <text class="feature-desc">官方政策动态监控，模拟用户视角解读，互动信号推送</text>
+        </view>
+      </view>
+      <view class="feature-item">
+        <text class="feature-icon">📖</text>
+        <view class="feature-body">
+          <text class="feature-name">攻略书</text>
+          <text class="feature-desc">系统化清洗外部平台内容，结构化通关攻略，港漂通关手册</text>
+        </view>
+      </view>
+    </view>
+  </view>
+
+  <!-- 服务边界与免责声明（法务重点） -->
+  <view class="card legal-card">
+    <text class="card-title">服务范围与免责声明</text>
+
+    <view class="legal-section">
+      <text class="legal-heading">服务性质</text>
+      <text class="card-text">住港伴是一款信息管理工具，提供结构化指引、时间提醒、材料整理和政策信息同步服务。我们不持有任何牌照，不提供法律意见，不代理递交任何申请，不代为与政府部门沟通。</text>
+    </view>
+
+    <view class="legal-section">
+      <text class="legal-heading">不构成法律建议</text>
+      <text class="card-text">本产品提供的所有信息、指引和攻略仅供参考，不构成法律建议。香港身份规划的法规、政策和审批标准可能随时调整，用户应以香港特别行政区政府入境事务处官方网站公布的现行规定为准。因依赖本产品信息而产生的任何后果，住港伴及其运营方不承担法律责任。</text>
+    </view>
+
+    <view class="legal-section">
+      <text class="legal-heading">数据隐私</text>
+      <text class="card-text">我们采用“隐私优先”架构：用户的证件材料默认仅在本地设备加密存储，采用AES-256-GCM加密算法。仅当用户主动使用需要服务端处理的功能时，脱敏后的数据才会传输至云端。用户可在隐私中心随时查看和管理授权范围。详细说明见《隐私政策》。</text>
+    </view>
+
+    <view class="legal-section">
+      <text class="legal-heading">服务边界</text>
+      <text class="card-text">住港伴的服务范围限定于香港身份规划的信息管理。我们不涉及以下服务：子女教育选校、求职招聘、保险或投资产品推荐、社区论坛或社交功能、持牌法律咨询、代理递交服务。上述领域如有需求，建议咨询对应持牌专业机构。</text>
+    </view>
+
+    <view class="legal-section">
+      <text class="legal-heading">知识产权</text>
+      <text class="card-text">住港伴的名称、标识、界面设计、结构化指引内容、算法和软件代码均受知识产权法律保护。未经书面授权，禁止复制、修改、分发或创建衍生作品。产品中引用的政策原文归原发布机构所有，我们仅做客观援引。</text>
+    </view>
+
+    <view class="legal-section">
+      <text class="legal-heading">终止与变更</text>
+      <text class="card-text">我们保留随时修改、暂停或终止服务的权利。服务条款和本声明如发生重大变更，我们将通过小程序内通知或订阅消息告知用户。继续使用本产品即视为同意更新后的条款。</text>
+    </view>
+  </view>
+
+  <!-- 法律文档入口 -->
+  <view class="card">
+    <text class="card-title">法律文档</text>
+    <view class="doc-link" bindtap="openPrivacy">
+      <text class="doc-icon">📜</text>
+      <text class="doc-name">隐私政策</text>
+      <text class="doc-arrow">›</text>
+    </view>
+    <view class="doc-link" bindtap="openTerms">
+      <text class="doc-icon">📋</text>
+      <text class="doc-name">用户服务协议</text>
+      <text class="doc-arrow">›</text>
+    </view>
+  </view>
+
+  <!-- 联系方式 -->
+  <view class="card">
+    <text class="card-title">联系我们</text>
+    <view class="contact-row">
+      <text class="contact-label">意见反馈</text>
+      <text class="contact-value" bindtap="goFeedback">小程序内提交 ›</text>
+    </view>
+    <view class="contact-row">
+      <text class="contact-label">客服邮箱</text>
+      <text class="contact-value">{{contactEmail}}</text>
+    </view>
+    <view class="contact-row">
+      <text class="contact-label">运营主体</text>
+      <text class="contact-value">{{companyName}}</text>
+    </view>
+  </view>
+
+  <!-- 版本信息 -->
+  <view class="card version-card">
+    <view class="version-row">
+      <text class="version-label">当前版本</text>
+      <text class="version-value">v{{appVersion}}</text>
+    </view>
+    <view class="version-row">
+      <text class="version-label">构建号</text>
+      <text class="version-value">{{buildNumber}}</text>
+    </view>
+    <view class="version-row">
+      <text class="version-label">更新日期</text>
+      <text class="version-value">{{updateDate}}</text>
+    </view>
+  </view>
+
+  <view class="copyright">
+    <text>Copyright © {{currentYear}} {{companyName}}</text>
+    <text>All Rights Reserved</text>
+    <text class="icp-text" wx:if="{{icpNumber}}">{{icpNumber}}</text>
+  </view>
+
+  <view class="safe-bottom"></view>
+</view>

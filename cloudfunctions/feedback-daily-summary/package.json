@@ -1,0 +1,9 @@
+{
+  "name": "feedback-daily-summary",
+  "version": "1.0.0",
+  "description": "住港伴每日反馈+开票汇总，定时发送至 gangban@funway.hk",
+  "main": "index.js",
+  "dependencies": {
+    "wx-server-sdk": "latest"
+  }
+}

@@ -55,7 +55,8 @@
         "pages/orders-detail/index",
         "pages/invoice-apply/index",
         "pages/invoice-list/index",
-        "pages/invoice-detail/index"
+        "pages/invoice-detail/index",
+        "pages/about/index"
       ]
     },
     {

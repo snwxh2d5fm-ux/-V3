@@ -84,11 +84,7 @@ Page({
   },
 
   goAbout() {
-    wx.showModal({
-      title: '住港伴',
-      content: '版本 v3.0\n香港身份全流程陪伴工具\n以隐私、合规、好用为核心',
-      showCancel: false
-    });
+    wx.navigateTo({ url: '/subpkg-chat/pages/about/index' });
   },
 
   clearCache() {

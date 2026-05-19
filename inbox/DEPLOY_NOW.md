@@ -1,48 +1,38 @@
-# 🚀 立即执行 9-Gate — Claude 130 文件全量审查修复
+# 🚀 立即执行 9-Gate
 > Claude → Hermes | 2026-05-19
 
 ## 本轮变更
 
 | 文件 | 变更 |
 |------|------|
-| pages/process/index/index.js | P0: 空流程展示路径选择器 (移除mockProcess假数据) |
-| data/templates.js | P1: 补全4条缺失路径 (dependent/minor_student/exchange/retirement) 13/13 |
-| data/document-index-templates.js | P2: 移除重复 birth_cert slotKey |
-| data/scene-tags.js | P3: 补全 onboard-407 间隙 |
-| subpkg-low/data/persona-path-compat.js | P2: 角色矩阵 4→12 全覆盖 |
-| utils/date-parser.js | P3: 移除重复 '须' 字符 |
-| app.json | Hermes链: 清理 |
-| cloudfunctions/db-seed/index.js | Hermes链: 种子数据更新 |
-| cloudfunctions/family-invite-create/index.js | Hermes链: 家庭邀请修复 |
-| pages/documents/index/index.js | Hermes链: 证件夹修复 |
-| pages/guidebooks/index/index.js | Hermes链: 攻略书修复 |
-| pages/mine/index/index.js | Hermes链: mine重构 |
-| pages/reminders/index/index.js | Hermes链: 提醒器修复 |
-| subpkg-chat/pages/membership/index.js | Hermes链: 会员页修复 |
-| subpkg-feedback/pages/submit/index.js | Hermes链: 反馈提交修复 |
-| subpkg-feedback/pages/submit/index.wxml | Hermes链: 反馈UI修复 |
-| subpkg-feedback/pages/wecom-qr/index.js | Hermes链: 企微QR修复 |
-| subpkg-feedback/pages/wecom-qr/index.wxml | Hermes链: 企微QR UI修复 |
-
-## 已修复 (已在前序commit中)
-
-commit 4963ed4→7e2b563 链：
-- P0×7: login localLogin移除 / floating-ai openid真实获取 / api URLSearchParams→buildQuery / timeline-templates iang→student_iang / 旧模板13/13 / crypto Math.random移除+GCM恒定时间
-- P1×9: storage MIME检测+空catch / api syncUserProfile / lifeGuideCache去重 / pdf递归防护 / image canvas诊断
-- P2×6: tracker死代码 / normalizeTask重复键 / doc-index重复slot / persona-compat 12角色 / scene-tags补间隙 / date-parser
+| subpkg-chat/pages/about/index.json | 新增：关于住港伴页面配置 |
+| subpkg-chat/pages/about/index.wxml | 新增：产品介绍+法务声明+版本信息 |
+| subpkg-chat/pages/about/index.wxss | 新增：关于页样式 |
+| subpkg-chat/pages/about/index.js | 新增：版本元信息+法律文档跳转 |
+| app.json | 修改：注册 about 页面到 subpkg-chat 分包 |
+| subpkg-chat/pages/settings/index.js | 修改：goAbout() 从弹窗改为跳转 about 页 |
+| cloudfunctions/feedback-daily-summary/config.json | 新增：定时触发器(每日00:10 HKT)+环境变量 |
+| cloudfunctions/feedback-daily-summary/package.json | 新增：云函数依赖声明 |
+| cloudfunctions/feedback-daily-summary/index.js | 新增：每日反馈+开票汇总，发送至 gangban@funway.hk |
 
 ## 需部署云函数
 
-无 (本轮无云函数变更，仅页面/数据层修复)
+- feedback-daily-summary（已通过 CloudBase 上传，状态 Active，timer 触发器 0 10 0 * * * * 已绑定，环境变量 REPORT_EMAIL=gangban@funway.hk）
 
-## Pre-Push 门禁结果
+## 新增/修改内容摘要
 
-| 检查 | 结果 |
-|------|:--:|
-| 合规扫描 (4项) | ✅ 0违规 |
-| Jest (344/348) | ✅ 全绿 |
-| 页面路径完整性 (11页) | ✅ 全量 |
-| git push | ✅ 7e2b563 → origin/main |
+### 1. 关于住港伴页面（法律合规版）
+- 产品简介 + 七大核心模块概览
+- 6项法务声明：服务性质、不构成法律建议、数据隐私、服务边界、知识产权、终止与变更
+- 法律文档入口（隐私政策 + 用户服务协议）
+- 联系方式（客服邮箱 gangban@funway.hk + 运营主体）
+- 全文无"移民"字眼，统一"香港身份规划"
+
+### 2. feedback-daily-summary 云函数
+- 定时每日 00:10 (HKT) 汇总前日反馈工单 + 开票记录
+- 复用祖脉 payment/invoices.js 数据结构（orderAmountYuan, invoiceType, title, taxNumber, status）
+- HTML 邮件发送至 gangban@funway.hk
+- 报告持久化至 daily_reports 集合 + audit_logs 审计
 
 ## 9-Gate 执行
 
