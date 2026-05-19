@@ -1,0 +1,118 @@
+<!-- 意见反馈 - 列表/详情合并页 V1 -->
+<view class="page">
+  <!-- 状态筛选 -->
+  <scroll-view class="tab-bar" scroll-x>
+    <view
+      wx:for="{{tabs}}"
+      wx:key="key"
+      class="tab-item {{activeTab === item.key ? 'active' : ''}}"
+      data-tab="{{item.key}}"
+      bindtap="onTabChange"
+    >
+      {{item.label}}
+    </view>
+  </scroll-view>
+
+  <!-- 加载中 -->
+  <view wx:if="{{isLoading}}" class="loading-box">
+    <text class="loading-text">加载中...</text>
+  </view>
+
+  <!-- 空状态 -->
+  <view wx:elif="{{isEmpty}}" class="empty-box">
+    <text class="empty-icon">📭</text>
+    <text class="empty-title">还没有反馈记录</text>
+    <text class="empty-desc">遇到问题？告诉我们，我们会尽快帮你解决</text>
+    <button class="empty-btn" bindtap="goToSubmit">去反馈</button>
+  </view>
+
+  <!-- 反馈列表 -->
+  <view wx:else class="list-wrap">
+    <view wx:for="{{items}}" wx:key="ticketId" class="feedback-card">
+      <!-- 卡片主体 -->
+      <view class="card-main" data-id="{{item.ticketId}}" bindtap="onToggleDetail">
+        <view class="card-top">
+          <text class="card-type">{{item.typeLabel}}</text>
+          <view class="card-badge {{item.statusCls}}">
+            <text>{{item.statusLabel}}</text>
+          </view>
+        </view>
+        <text class="card-content">{{item.content}}</text>
+        <view class="card-bottom">
+          <text class="card-time">{{item.time}}</text>
+          <text wx:if="{{item.hasReply}}" class="card-reply-hint">有回复</text>
+        </view>
+      </view>
+
+      <!-- 展开的详情 -->
+      <view wx:if="{{expandedId === item.ticketId}}" class="detail-panel">
+        <view wx:if="{{isLoadingDetail}}" class="detail-loading">
+          <text>加载中...</text>
+        </view>
+        <view wx:else class="detail-body">
+          <!-- 完整内容 -->
+          <view class="detail-section">
+            <text class="detail-label">{{detailData.typeLabel}}</text>
+            <text class="detail-text">{{detailData.content}}</text>
+          </view>
+
+          <!-- 截图 -->
+          <view wx:if="{{detailData.screenshot}}" class="detail-section">
+            <image
+              class="detail-screenshot"
+              src="{{detailData.screenshot}}"
+              mode="aspectFill"
+              data-url="{{detailData.screenshot}}"
+              bindtap="onPreviewScreenshot"
+            />
+          </view>
+
+          <!-- 提交时间 -->
+          <text class="detail-time">提交于 {{detailData.createdAt}}</text>
+
+          <!-- 回复列表 -->
+          <view wx:if="{{detailReplies.length > 0}}" class="reply-section">
+            <text class="reply-title">回复记录</text>
+            <view wx:for="{{detailReplies}}" wx:key="index" class="reply-item {{item.roleCls}}">
+              <view class="reply-header">
+                <text class="reply-role">{{item.roleLabel}}</text>
+                <text class="reply-time">{{item.time}}</text>
+              </view>
+              <text class="reply-content">{{item.content}}</text>
+            </view>
+          </view>
+
+          <!-- 追加补充（已关闭的不可追加） -->
+          <view wx:if="{{detailData.status !== 'closed'}}" class="append-section">
+            <textarea
+              class="append-input"
+              placeholder="还有补充？在这里说明..."
+              maxlength="500"
+              value="{{appendText}}"
+              bindinput="onAppendInput"
+              auto-height
+            />
+            <button
+              class="append-btn"
+              loading="{{isAppending}}"
+              disabled="{{!appendText}}"
+              bindtap="onAppend"
+            >
+              {{isAppending ? '发送中...' : '发送'}}
+            </button>
+          </view>
+          <view wx:else class="closed-hint">
+            <text>该反馈已关闭，无法追加说明</text>
+          </view>
+        </view>
+      </view>
+    </view>
+  </view>
+
+  <!-- 底部企微入口 -->
+  <view class="bottom-bar" bindtap="goToWeCom">
+    <text class="bottom-text">💬 添加客服微信，1对1沟通 ›</text>
+  </view>
+
+  <view class="safe-bottom"></view>
+</view>

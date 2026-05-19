@@ -1,0 +1,12 @@
+{
+  "permissions": {
+    "openapi": []
+  },
+  "env": {
+    "WECOM_CORP_ID": "ww6dd588ba1ed37cd0",
+    "WECOM_TOKEN": "vdNbgJJVfxd7H4YlwzpnPz5B",
+    "WECOM_ENCODING_AES_KEY": "Mp1D2ErPUkR4KYbfksr8coB2HEzimUieKTGJcREgXza",
+    "WECOM_AGENT_SECRET": "Vda6DjM2U2TPjezaUUVxjANPvNyu07Rr4wsIbhC-2Fo",
+    "WECOM_AGENT_ID": "1000002"
+  }
+}

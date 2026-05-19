@@ -1,0 +1,9 @@
+[
+  {
+    "ts": "2026-05-19T19:00:00+08:00",
+    "from": "claude",
+    "action": "deploy_request",
+    "detail": "分享功能闸门验收 — 31条标准(17P0+9P1+5P2)，33个测试用例，7个云函数，4个集合安全规则",
+    "state": "pending_hermes_9gate"
+  }
+]

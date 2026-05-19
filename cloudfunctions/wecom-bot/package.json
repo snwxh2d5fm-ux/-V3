@@ -1,0 +1,7 @@
+{
+  "name": "wecom-bot",
+  "version": "1.0.0",
+  "description": "住港伴企业微信AI机器人回调服务",
+  "main": "index.js",
+  "dependencies": {}
+}

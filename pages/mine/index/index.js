@@ -33,7 +33,7 @@ Page({
     settingsItems: [
       { id: 'notify', icon: '🔔', title: '通知设置' },
       { id: 'about', icon: 'ℹ️', title: '关于住港伴' },
-      { id: 'feedback', icon: '💬', title: '意见反馈' },
+      { id: 'feedback', icon: '💬', title: '意见反馈', url: 'feedback' },
       // admin-db 入口仅内部使用，C端不暴露
     ]
   },
@@ -120,6 +120,8 @@ Page({
       this.showPrivacyCenter();
     } else if (url === 'membership') {
       this.showMembership();
+    } else if (url === 'feedback') {
+      wx.navigateTo({ url: '/subpkg-feedback/pages/submit/index' });
     } else if (tab) {
       wx.switchTab({ url });
     } else {

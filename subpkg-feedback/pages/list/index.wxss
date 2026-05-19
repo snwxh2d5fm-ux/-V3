@@ -1,0 +1,71 @@
+/* 意见反馈 - 列表/详情合并页 V1 */
+.page { min-height:100vh; background:var(--gray-100); padding-bottom:60rpx; }
+
+/* 筛选Tab */
+.tab-bar { white-space:nowrap; padding:16rpx 24rpx; background:var(--white); }
+.tab-item {
+  display:inline-block; padding:12rpx 28rpx; margin-right:16rpx;
+  font-size:26rpx; color:#5f6368; border-radius:32rpx; background:var(--gray-100);
+}
+.tab-item.active { background:var(--blue); color:#FFF; font-weight:600; }
+
+/* 加载/空 */
+.loading-box { padding:120rpx 0; text-align:center; }
+.loading-text { font-size:26rpx; color:#999; }
+.empty-box { padding:120rpx 48rpx; text-align:center; display:flex; flex-direction:column; align-items:center; }
+.empty-icon { font-size:72rpx; margin-bottom:24rpx; }
+.empty-title { font-size:30rpx; font-weight:600; color:#202124; display:block; margin-bottom:8rpx; }
+.empty-desc { font-size:24rpx; color:#999; display:block; margin-bottom:32rpx; }
+.empty-btn { width:240rpx; height:80rpx; line-height:80rpx; border-radius:40rpx; background:var(--blue); color:#FFF; font-size:28rpx; }
+
+/* 列表 */
+.list-wrap { padding:16rpx 24rpx; }
+.feedback-card { margin-bottom:16rpx; background:var(--white); border-radius:20rpx; overflow:hidden; }
+
+/* 卡片主体 */
+.card-main { padding:28rpx; }
+.card-top { display:flex; justify-content:space-between; align-items:center; margin-bottom:12rpx; }
+.card-type { font-size:26rpx; color:#5f6368; }
+.card-badge { padding:4rpx 16rpx; border-radius:16rpx; font-size:22rpx; }
+.status-pending { background:#FFF3E0; color:#E65100; }
+.status-replied { background:#E8F5E9; color:#2E7D32; }
+.status-closed { background:var(--gray-100); color:#999; }
+.card-content { font-size:26rpx; color:#202124; line-height:1.5; display:block; margin-bottom:12rpx; }
+.card-bottom { display:flex; justify-content:space-between; align-items:center; }
+.card-time { font-size:22rpx; color:#999; }
+.card-reply-hint { font-size:22rpx; color:var(--blue); }
+
+/* 展开详情 */
+.detail-panel { border-top:1rpx solid var(--gray-100); padding:28rpx; background:#FAFBFC; }
+.detail-loading { text-align:center; padding:40rpx 0; font-size:24rpx; color:#999; }
+.detail-body {}
+.detail-section { margin-bottom:20rpx; }
+.detail-label { font-size:24rpx; color:#999; display:block; margin-bottom:8rpx; }
+.detail-text { font-size:28rpx; color:#202124; line-height:1.7; display:block; white-space:pre-wrap; }
+.detail-screenshot { width:200rpx; height:200rpx; border-radius:12rpx; }
+.detail-time { font-size:22rpx; color:#999; display:block; margin-bottom:24rpx; }
+
+/* 回复 */
+.reply-section { margin-top:8rpx; }
+.reply-title { font-size:26rpx; font-weight:600; color:#202124; display:block; margin-bottom:16rpx; }
+.reply-item { padding:20rpx; border-radius:12rpx; margin-bottom:12rpx; }
+.reply-item.reply-service { background:#EFF6FF; }
+.reply-item.reply-user { background:var(--gray-100); }
+.reply-item.reply-system { background:#FFF8E1; }
+.reply-header { display:flex; justify-content:space-between; align-items:center; margin-bottom:8rpx; }
+.reply-role { font-size:24rpx; font-weight:600; color:#202124; }
+.reply-time { font-size:20rpx; color:#999; }
+.reply-content { font-size:26rpx; color:#202124; line-height:1.6; display:block; white-space:pre-wrap; }
+
+/* 追加补充 */
+.append-section { display:flex; gap:16rpx; align-items:flex-end; margin-top:24rpx; padding-top:24rpx; border-top:1rpx solid var(--gray-200); }
+.append-input { flex:1; min-height:72rpx; font-size:26rpx; padding:12rpx 16rpx; border-radius:12rpx; background:var(--white); border:1rpx solid var(--gray-200); box-sizing:border-box; }
+.append-btn { width:120rpx; height:72rpx; line-height:72rpx; border-radius:12rpx; background:var(--blue); color:#FFF; font-size:26rpx; padding:0; display:flex; align-items:center; justify-content:center; }
+.append-btn[disabled] { background:var(--gray-300); color:#999; }
+.closed-hint { text-align:center; padding:20rpx 0; font-size:24rpx; color:#999; }
+
+/* 底部 */
+.bottom-bar { margin:16rpx 24rpx; padding:24rpx 28rpx; background:var(--white); border-radius:20rpx; }
+.bottom-text { font-size:26rpx; color:var(--blue); }
+
+.safe-bottom { height:60rpx; }

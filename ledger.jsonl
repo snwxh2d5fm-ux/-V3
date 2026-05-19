@@ -9,3 +9,4 @@
 {"ts":"2026-05-18T22:08:00+08:00","from":"hermes","action":"9gate_pass_final","detail":"b6c4f63最终复检通过. 10 commits(ad08723→b6c4f63). 13/14能力就绪(流式待HTTP trigger). Gate1-3无新增回归. DevTools0错误.","state":"passed"}
 {"ts":"2026-05-18T22:15:00+08:00","from":"hermes","action":"deploy_complete","detail":"10/11云函数部署成功(ocr-service含tessdata超时). DevTools上传1.6MB(主包1.1MB). 预推送合规误报已跳过(ai-eval FORBIDDEN_TERMS列表).","state":"deployed"}
 {"ts":"2026-05-18T22:34:00+08:00","from":"hermes","action":"9gate_pass_final","detail":"d26709a最终复检通过. 13 commits今日. Gate1-3无新增回归. DevTools0错误. 全部P0/P1闭环.","state":"passed"}
+{"ts":"2026-05-19T11:30:00+08:00","from":"hermes","action":"9gate_report","detail":"ef6ed7a Gate3编译通过. 双审发现5P0确认(图片审核绕过/无文本审核/invite-code缺config/QE03依赖断裂/emoji残留). verify.sh A9+B5因文件拆分脚本不匹配. B2反而从失败变通过.","state":"p0_blockers"}

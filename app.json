@@ -65,6 +65,15 @@
         "pages/assessment-result/index",
         "pages/admin-db/index"
       ]
+    },
+    {
+      "root": "subpkg-feedback",
+      "name": "feedback",
+      "pages": [
+        "pages/submit/index",
+        "pages/list/index",
+        "pages/wecom-qr/index"
+      ]
     }
   ],
   "preloadRule": {

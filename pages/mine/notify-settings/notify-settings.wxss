@@ -179,10 +179,59 @@
 
 /* 底部说明 */
 .footer-note {
-  padding: 40rpx 32rpx;
+  padding: 40rpx 32rpx 24rpx;
   text-align: center;
 }
 .footer-text {
   font-size: 22rpx;
   color: #9CA3AF;
+}
+
+/* ===== 客服入口 ===== */
+.card-service {
+  border: 1rpx solid #E8F0FE;
+  background: #FAFDFF;
+}
+.service-row {
+  display: flex;
+  align-items: center;
+  padding: 28rpx;
+}
+.service-icon {
+  font-size: 44rpx;
+  margin-right: 20rpx;
+  flex-shrink: 0;
+}
+.service-info {
+  flex: 1;
+  min-width: 0;
+}
+.service-title {
+  font-size: 28rpx;
+  font-weight: 600;
+  color: #202124;
+  display: block;
+}
+.service-desc {
+  font-size: 24rpx;
+  color: #5f6368;
+  margin-top: 4rpx;
+  display: block;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+.service-btn {
+  flex-shrink: 0;
+  margin-left: 16rpx;
+  padding: 12rpx 28rpx;
+  font-size: 24rpx;
+  background: #1a73e8;
+  color: #ffffff;
+  border-radius: 32rpx;
+  border: none;
+  line-height: 1.4;
+}
+.service-btn::after {
+  border: none;
 }

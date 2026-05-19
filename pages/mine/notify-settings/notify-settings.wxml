@@ -106,4 +106,23 @@
     <text class="footer-text">住港伴不会推送任何广告或营销信息</text>
   </view>
 
+  <!-- ========== 客服入口 ========== -->
+  <view class="section-title">需要帮助？</view>
+  <view class="card card-service">
+    <view class="service-row">
+      <text class="service-icon">💬</text>
+      <view class="service-info">
+        <text class="service-title">联系客服</text>
+        <text class="service-desc">通知收不到？授权遇到问题？联系我们获取帮助</text>
+      </view>
+      <button class="service-btn" open-type="contact"
+        session-from="{{'notify-settings|' + userStatus + '|' + crt01.tmplAuth}}"
+        send-message-title="通知设置帮助"
+        send-message-path="/pages/mine/notify-settings/notify-settings"
+        show-message-card="{{true}}">
+        在线客服
+      </button>
+    </view>
+  </view>
+
 </view>
