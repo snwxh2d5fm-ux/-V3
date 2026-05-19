@@ -222,7 +222,7 @@
     </view>
 
     <!-- ===== 接收邀请入口（手动输入邀请码） ===== -->
-    <view class="card accept-entry" wx:if="{{hasSpace || !hasSpace}}">
+    <view class="card accept-entry" wx:if="{{mode === 'manage'}}">
       <text class="accept-entry-title">🔑 接收家庭邀请</text>
       <text class="accept-entry-desc">如果你收到了家人的邀请码，在此输入即可加入</text>
       <view class="accept-entry-row">

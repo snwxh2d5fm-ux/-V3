@@ -37,3 +37,4 @@
 {"ts":"2026-05-20T16:34:00+08:00","from":"hermes","action":"9gate_full","detail":"客服接入+反馈直送全9道闸门. Gate1-3无新增. 麒麟P0×2(图片审核未移除/wecom-bot文案). 玄武P0×2(文本审核绕过/wecom-qr与PRD偏离). verify.sh19→20(A6子包迁移预存).","state":"passed"}
 {"ts":"2026-05-20T17:27:00+08:00","from":"hermes","action":"9gate_full","detail":"攻略书87字段+guidebook-enrich全9道闸门. Gate1-3无新增. 麒麟P0×3(字段snake_case混用/TODO占位符/catch无日志). 4P0已确认修复(图片审核移除/文案修复/关键词过滤/wecom-qr正向偏离). guidebook-enrich+wecom-bot已部署.","state":"passed"}
 {"ts":"2026-05-20T18:12:00+08:00","from":"hermes","action":"9gate_final","detail":"b2b1322全闸闭环. 敏感词4/4+365/369单元测试+11页注册. 麒麟3P0已修复. 4P0全部闭环. 攻略书66/66(100%). guidebook-enrich+wecom-bot已部署.","state":"all_clear"}
+{"ts":"2026-05-20T18:20:00+08:00","from":"hermes","action":"9gate_pass","detail":"6412320两处真机崩溃修复(completeAllSteps stages:[]+content裸变量→that.data.content). Gate3 DevTools0错误. 工作树干净.","state":"passed"}
