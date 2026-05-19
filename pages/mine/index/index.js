@@ -21,6 +21,7 @@ Page({
     documentCount: 0,
     documentLimit: 10,          // 免费用户10，付费用户∞
     documentLimitDisplay: '10',  // 展示用（免费=10，付费=∞）
+    usagePercent: 0,
     reminderCount: 0,
     authorizedFields: 0,
     privacyDays: 0,
@@ -74,6 +75,7 @@ Page({
       documentCount: documents.length,
       documentLimit: maxDocs,
       documentLimitDisplay: docLimitDisplay,
+      usagePercent: isPayingUser ? 0 : Math.min(100, Math.round(documents.length / maxDocs * 100)),
       reminderCount: reminders.filter(r => r.status === 'active').length,
       authorizedFields: fields ? fields.length : 0,
       privacyDays: Math.floor((Date.now() - new Date('2025-12-30').getTime()) / 86400000)
@@ -101,6 +103,7 @@ Page({
           isPayingUser: isPayingUser,
           documentLimit: maxDocs,
           documentLimitDisplay: isPayingUser ? '∞' : String(maxDocs),
+          usagePercent: isPayingUser ? 0 : Math.min(100, Math.round(documents.length / maxDocs * 100)),
           membershipDays: data.daysRemaining || 0,
           isLocked: data.isLocked || false
         });
