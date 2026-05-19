@@ -297,6 +297,12 @@ Page({
       if (t.urgency === '必修' && t._completed) phaseMap[p].requiredCompleted++;
     });
 
+    // TC-3.1.1 fix: 补齐全部8关 (空关卡也渲染)
+    for (var p = 0; p <= 7; p++) {
+      if (!phaseMap[p]) {
+        phaseMap[p] = { phase: p, name: phaseNames[p] || ('关卡' + p), totalRequired: 0, totalTasks: 0, requiredCompleted: 0, unlocked: true };
+      }
+    }
     var phases = Object.keys(phaseMap).map(function(k) { return phaseMap[k]; }).sort(function(a,b){ return a.phase-b.phase; });
 
     // ── 关卡解锁判定 (Phase 1: 双通道里程碑解锁) ──
