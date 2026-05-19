@@ -35,6 +35,8 @@ Page({
     loadError: false,
     showPathSetup: false,
     showMilestone: false,
+    isMember: false,
+    hasLockedPhases: false,
     milestoneMsg: '',
     dataSource: '',
     // Housing wizard — persisted in storage.flags.housingWizardDone
@@ -363,6 +365,50 @@ Page({
     storage.initOnboarding(params);
     this.setData({ showPathSetup: false });
     this.init();
+  },
+
+  // ★ ¥9.90 即刻提前解锁全部关卡
+  unlockAllPhasesPay: async function() {
+    var self = this;
+    wx.showLoading({ title: '处理中...' });
+    try {
+      var res = await wx.cloud.callFunction({
+        name: 'payment',
+        data: { action: 'unlockAllPhases' }
+      });
+      wx.hideLoading();
+      if (res.result.code === 0) {
+        var payData = res.result.data;
+        wx.requestPayment({
+          timeStamp: payData.payment.timeStamp,
+          nonceStr: payData.payment.nonceStr,
+          package: payData.payment.package,
+          signType: payData.payment.signType || 'RSA',
+          paySign: payData.payment.paySign,
+          success: function() {
+            wx.showToast({ title: '全部关卡已解锁！', icon: 'success' });
+            self.init();
+          },
+          fail: function(err) {
+            if (err.errMsg.indexOf('cancel') === -1) {
+              wx.showToast({ title: '支付失败，请重试', icon: 'none' });
+            }
+          }
+        });
+      } else if (res.result.code === 409) {
+        wx.showToast({ title: res.result.msg, icon: 'none' });
+      } else {
+        wx.showToast({ title: res.result.msg || '支付创建失败', icon: 'none' });
+      }
+    } catch(e) {
+      wx.hideLoading();
+      wx.showToast({ title: '网络异常，请重试', icon: 'none' });
+    }
+  },
+
+  // ★ 跳转会员中心
+  goMembership: function() {
+    wx.navigateTo({ url: '/subpkg-chat/pages/membership/index' });
   },
 
   // ── Tab switching ──
@@ -726,6 +772,8 @@ Page({
       progress: progress,
       renewalDossier: progress.renewalDossier || {},
       phase3Unlocked: merged.phase3Unlocked || false,
+      isMember: (getApp().globalData && getApp().globalData.membershipLevel !== 'free') || false,
+      hasLockedPhases: phases.some(function(p) { return p.unlocked === false; }),
       browseTasks: browseTasks,
       expandedBrowseTaskId: '',
       expandedBrowseTask: null,

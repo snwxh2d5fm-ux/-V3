@@ -1,0 +1,9 @@
+{
+  "name": "guidebook-sync",
+  "version": "1.0.0",
+  "description": "攻略书进度云端同步",
+  "main": "index.js",
+  "dependencies": {
+    "wx-server-sdk": "latest"
+  }
+}

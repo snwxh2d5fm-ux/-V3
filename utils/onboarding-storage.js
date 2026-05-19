@@ -28,6 +28,15 @@ function saveProgress(progress) {
   try {
     progress.updatedAt = new Date().toISOString();
     wx.setStorageSync(STORAGE_KEY, progress);
+    // 异步同步到云端 (失败不影响本地)
+    if (wx.cloud && wx.cloud.callFunction) {
+      wx.cloud.callFunction({
+        name: 'guidebook-sync',
+        data: { action: 'saveProgress', progress: progress }
+      }).catch(function(e) {
+        console.warn('[OnboardingStorage] Cloud sync failed (non-blocking):', e.errMsg);
+      });
+    }
   } catch (e) {
     console.error('[OnboardingStorage] saveProgress error:', e);
   }
