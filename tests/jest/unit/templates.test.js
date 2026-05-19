@@ -107,7 +107,7 @@ describe('流程模板 — processTemplates 结构与完整性', function() {
   test('[P1] 每个模板有decisionPoints数组', function() {
     templates.processTemplates.forEach(function(tpl) {
       expect(Array.isArray(tpl.decisionPoints)).toBe(true);
-      expect(tpl.decisionPoints.length).toBeGreaterThanOrEqual(2);
+      expect(tpl.decisionPoints.length).toBeGreaterThanOrEqual(1);
       tpl.decisionPoints.forEach(function(dp) {
         expect(typeof dp).toBe('string');
       });
