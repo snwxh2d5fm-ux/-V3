@@ -23,3 +23,5 @@
 {"ts":"2026-05-19T15:04:00+08:00","from":"hermes","action":"9gate_R4_pass","detail":"d976a5d R4闸门通过. 5P0修复(云函数名/字段/属性/响应/字面量). verify.sh19/38预存. DevTools0错误. 4轮闸门20P0闭环.","state":"passed"}
 {"ts":"2026-05-19T17:32:00+08:00","from":"hermes","action":"9gate_pass","detail":"1311138双模块(subpkg-feedback+subpkg-share)闸门通过. verify.sh19/38预存. Jest31/39预存. DevTools0错误. pre-push质量门禁4/4+344test.","state":"passed"}
 {"ts":"2026-05-19T18:20:00+08:00","from":"claude","action":"deploy_request","detail":"S-02 XSS流式修复+手机号快捷登录fix. commit 3e0cb89. 7云函数部署. 质量门禁全通过(合规4/4+Jest344+路径10). pre-push通过.","state":"pending_hermes_9gate"}
+{"ts":"2026-05-19T18:00:00+08:00","from":"hermes","action":"gate_mine_refactor","detail":"mine页面重构闸门完成。9道全绿(verify.sh/Jest155/DevTools零error/双审无问题/CloudBase跳过)。等待Claude commit后push。","state":"done"}
+{"ts":"2026-05-19T18:30:00+08:00","from":"claude","action":"p1_iteration","detail":"3项P1修复: 迁移日志+用户提示+token检查. commit 4e4aa77. 1文件+32/-8. 质量门禁全通过.","state":"pending_hermes_p1_recheck"}
