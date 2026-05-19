@@ -97,11 +97,40 @@ Page({
     var id = e.currentTarget.dataset.id;
     var opts = this.data.directPathOptions;
     var label = '';
+    var desc = '';
     for (var i = 0; i < opts.length; i++) {
-      if (opts[i].id === id) { label = opts[i].name; break; }
+      if (opts[i].id === id) { label = opts[i].name; desc = opts[i].desc || ''; break; }
     }
-    // 一触即选：点击即确认，无需二次按钮
+    // 一触即选：点击即确认，创建最小流程线
     app.globalData.selectedPath = id;
+
+    // 持久化路径到 storage（证件夹/其他页面依赖此 key）
+    wx.setStorageSync('__selected_path__', id);
+
+    // 创建最小 processLine — 路径已选但材料未开始
+    var processLine = {
+      id: 'direct_' + Date.now(),
+      name: label,
+      templateId: id,
+      pathType: id,
+      riskLevel: (constants.PATH_RISK_LEVELS && constants.PATH_RISK_LEVELS[id]) ? constants.PATH_RISK_LEVELS[id].level : 'medium',
+      totalCycle: (constants.PATH_RISK_LEVELS && constants.PATH_RISK_LEVELS[id]) ? (constants.PATH_RISK_LEVELS[id].cycle || '7年') : '7年',
+      phases: [],
+      stages: [],
+      status: 'active',
+      progress: 0,
+      currentStage: '资格评估',
+      readyMaterials: 0,
+      totalMaterials: 0,
+      createdAt: new Date().toISOString(),
+      source: 'direct_pick'
+    };
+
+    saveProcessLine(processLine);
+    app.globalData.activeProcessId = processLine.id;
+    app.globalData.activeProcess = processLine;
+    wx.setStorageSync('__active_process_id__', processLine.id);
+
     this.setData({ showDirectPathPicker: false, directSelectedPath: '', directSelectedPathLabel: '' });
     wx.showToast({ title: '已选择：' + label, icon: 'success', duration: 1500 });
     this.loadActiveProcess();
