@@ -157,7 +157,98 @@ var TIMELINE_TEMPLATES = {
       { id: 'pr_window', label: '永居申请窗口', offsetDays: 2525, type: 'pr',
         desc: '在港居住满7年', materials: ['hk_id','tax_7y','residence_proof'] }
     ]
+  },
+
+  dependent: {
+    name: '受养人签证', visaYears: 2,
+    nodes: [
+      { id: 'sponsor_approved', label: '保证人获批身份', offsetDays: 0, type: 'milestone', desc: '配偶/父母获批香港身份后申请', materials: ['sponsor_id','marriage_cert','birth_cert'] },
+      { id: 'submit', label: '递交受养人申请', offsetDays: 7, type: 'milestone', desc: 'ID 997表格+关系证明', materials: ['id_form_997','sponsor_emp','bank_statement'] },
+      { id: 'approval', label: '获批受养人签证', offsetDays: 45, type: 'milestone', desc: '通常4-6周审批', materials: [], range: [30, 60] },
+      { id: 'activate', label: '赴港激活签证', offsetDays: 60, type: 'deadline', desc: '获批后3个月内入境', materials: ['hk_permit','visa_label'] },
+      { id: 'hkid', label: '办理香港身份证', offsetDays: 74, type: 'milestone', desc: '11岁以上须办理', materials: ['photo'] },
+      { id: 'first_expiry', label: '首次签证到期', offsetDays: 730, type: 'deadline', desc: '与保证人同步续签', materials: ['sponsor_emp','marriage_cert','bank_statement'] },
+      { id: 'pr_window', label: '永居申请窗口', offsetDays: 2525, type: 'pr', desc: '在港通常居住满7年', materials: ['hk_id','tax_7y','residence_proof'] }
+    ]
+  },
+
+  cies: {
+    name: 'CIES投资类身份规划', visaYears: 2,
+    nodes: [
+      { id: 'invest_verify', label: '完成合资格投资(>=3000万)', offsetDays: 0, type: 'milestone', desc: '投资于获许金融资产', materials: ['investment_proof','bank_statement'] },
+      { id: 'submit', label: '递交CIES申请', offsetDays: 7, type: 'milestone', desc: '原则上批准后6个月内完成投资', materials: ['id_card','investment_proof','net_worth_cert'] },
+      { id: 'approval', label: '正式批准', offsetDays: 30, type: 'milestone', desc: '', materials: [], range: [14, 60] },
+      { id: 'activate', label: '赴港激活签证', offsetDays: 45, type: 'deadline', desc: '', materials: ['hk_permit'] },
+      { id: 'hkid', label: '办理香港身份证', offsetDays: 60, type: 'milestone', desc: '', materials: ['photo'] },
+      { id: 'first_expiry', label: '首次签证到期', offsetDays: 730, type: 'deadline', desc: '需维持投资', materials: ['investment_proof'] },
+      { id: 'pr_window', label: '永居申请窗口', offsetDays: 2525, type: 'pr', desc: '在港通常居住满7年', materials: ['hk_id','investment_proof_7y'] }
+    ]
+  },
+
+  techtas: {
+    name: '科技人才入境计划', visaYears: 2,
+    nodes: [
+      { id: 'job_offer', label: '获科技公司聘用', offsetDays: 0, type: 'milestone', desc: '雇主须为创新科技署认可机构', materials: ['emp_letter','company_cert'] },
+      { id: 'submit', label: '递交TechTAS申请', offsetDays: 14, type: 'milestone', desc: '雇主代为申请配额', materials: ['id_card','degree_cert','emp_letter'] },
+      { id: 'quota_approval', label: '配额获批', offsetDays: 28, type: 'milestone', desc: '通常2-4周', materials: [], range: [14, 30] },
+      { id: 'visa_apply', label: '申请工作签证', offsetDays: 35, type: 'milestone', desc: '', materials: ['photo','hk_permit'] },
+      { id: 'activate', label: '赴港入职', offsetDays: 50, type: 'deadline', desc: '', materials: ['hk_permit','visa_label'] },
+      { id: 'hkid', label: '办理香港身份证', offsetDays: 65, type: 'milestone', desc: '', materials: ['photo'] },
+      { id: 'first_expiry', label: '首次签证到期', offsetDays: 730, type: 'deadline', desc: '需维持受雇状态', materials: ['emp_letter','tax_record'] },
+      { id: 'pr_window', label: '永居申请窗口', offsetDays: 2525, type: 'pr', desc: '在港通常居住满7年', materials: ['hk_id','tax_7y','residence_proof'] }
+    ]
+  },
+
+  parttime_qmas: {
+    name: '兼读进修->优才', visaYears: 1,
+    nodes: [
+      { id: 'enroll', label: '入读兼读制课程', offsetDays: 0, type: 'milestone', desc: '香港高校兼读制硕士/博士', materials: ['admission_letter','student_visa'] },
+      { id: 'grad', label: '毕业取得学位', offsetDays: 365, type: 'milestone', desc: '毕业后可申请IANG或优才', materials: ['degree_cert','transcript'] },
+      { id: 'apply_iang', label: '申请IANG签证', offsetDays: 372, type: 'milestone', desc: '毕业后6个月内无需雇主', materials: ['degree_cert','photo'] },
+      { id: 'activate', label: '开始留港工作', offsetDays: 400, type: 'deadline', desc: '', materials: ['hk_permit'] },
+      { id: 'first_expiry', label: '首次IANG到期', offsetDays: 730, type: 'deadline', desc: '1年后续签', materials: ['emp_letter','tax_record'] },
+      { id: 'pr_window', label: '永居申请窗口', offsetDays: 2525, type: 'pr', desc: '在港通常居住满7年', materials: ['hk_id','tax_7y','residence_proof'] }
+    ]
+  },
+
+  minor_student: {
+    name: '未成年学生签证', visaYears: 1,
+    nodes: [
+      { id: 'school_admit', label: '获香港学校录取', offsetDays: 0, type: 'milestone', desc: '中小学或幼稚园录取', materials: ['admission_letter'] },
+      { id: 'submit', label: '递交学生签证申请', offsetDays: 7, type: 'milestone', desc: 'ID 995A表格', materials: ['birth_cert','guardian_id','school_letter'] },
+      { id: 'approval', label: '获批学生签证', offsetDays: 45, type: 'milestone', desc: '通常4-6周', materials: [], range: [30, 60] },
+      { id: 'activate', label: '赴港入学', offsetDays: 60, type: 'deadline', desc: '', materials: ['hk_permit','visa_label'] },
+      { id: 'hkid', label: '办理香港身份证', offsetDays: 75, type: 'milestone', desc: '11岁以上须办理', materials: ['photo'] },
+      { id: 'renew_yearly', label: '年度签证续期', offsetDays: 365, type: 'renewal', desc: '每年续签，需在读证明', materials: ['school_letter','guardian_id'] },
+      { id: 'pr_window', label: '永居申请窗口', offsetDays: 2525, type: 'pr', desc: '在港通常居住满7年', materials: ['hk_id','residence_proof'] }
+    ]
+  },
+
+  exchange: {
+    name: '交换生签证', visaYears: 1,
+    nodes: [
+      { id: 'exchange_accept', label: '获交换项目录取', offsetDays: 0, type: 'milestone', desc: '内地与香港高校交换', materials: ['admission_letter','exchange_agreement'] },
+      { id: 'submit', label: '递交学生签证申请', offsetDays: 7, type: 'milestone', desc: 'ID 995A表格', materials: ['id_card','student_id','school_letter'] },
+      { id: 'approval', label: '获批学生签证', offsetDays: 35, type: 'milestone', desc: '通常3-5周', materials: [], range: [21, 42] },
+      { id: 'activate', label: '赴港报到', offsetDays: 45, type: 'deadline', desc: '', materials: ['hk_permit'] },
+      { id: 'program_end', label: '交换结束/离港', offsetDays: 180, type: 'milestone', desc: '交换期通常1学期', materials: [] },
+      { id: 'visa_expire', label: '学生签证到期', offsetDays: 365, type: 'deadline', desc: '不可续签（短期交换）', materials: [] }
+    ]
+  },
+
+  retirement: {
+    name: '退休人士签证', visaYears: 2,
+    nodes: [
+      { id: 'qualify', label: '确认退休身份', offsetDays: 0, type: 'milestone', desc: '需证明已退休+有经济能力', materials: ['retirement_cert','pension_proof','bank_statement'] },
+      { id: 'submit', label: '递交签证申请', offsetDays: 14, type: 'milestone', desc: '需证明可在港自给自足', materials: ['id_card','pension_proof','medical_insurance'] },
+      { id: 'approval', label: '获批签证', offsetDays: 45, type: 'milestone', desc: '通常4-6周', materials: [], range: [30, 60] },
+      { id: 'activate', label: '赴港定居', offsetDays: 60, type: 'deadline', desc: '获批后3个月内入境', materials: ['hk_permit','visa_label'] },
+      { id: 'hkid', label: '办理香港身份证', offsetDays: 75, type: 'milestone', desc: '', materials: ['photo'] },
+      { id: 'first_expiry', label: '首次签证到期', offsetDays: 730, type: 'deadline', desc: '需证明经济能力维持', materials: ['bank_statement','medical_insurance'] },
+      { id: 'pr_window', label: '永居申请窗口', offsetDays: 2525, type: 'pr', desc: '在港通常居住满7年', materials: ['hk_id','tax_7y','residence_proof'] }
+    ]
   }
+
 };
 
 module.exports = { TIMELINE_TEMPLATES };

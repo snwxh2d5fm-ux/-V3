@@ -34,7 +34,7 @@ function initStorage() {
       if (!wx.getStorageSync(REMINDER_KEY)) wx.setStorageSync(REMINDER_KEY, []);
       if (!wx.getStorageSync(PROCESS_KEY)) wx.setStorageSync(PROCESS_KEY, []);
       resolve(true);
-    } catch(e) { resolve(false); }
+    } catch(e) { console.error('[storage] initVault 失败:', e); resolve(false); }
   });
 }
 
@@ -85,7 +85,10 @@ function readFile(filePath) {
   try {
     var fs = wx.getFileSystemManager();
     var data = fs.readFileSync(filePath, 'base64');
-    return 'data:image/jpeg;base64,' + data;
+    var ext = (filePath.split('.').pop() || 'jpeg').toLowerCase();
+    var mimeMap = { png: 'image/png', jpg: 'image/jpeg', jpeg: 'image/jpeg', gif: 'image/gif', webp: 'image/webp', pdf: 'application/pdf' };
+    var mime = mimeMap[ext] || 'image/jpeg';
+    return 'data:' + mime + ';base64,' + data;
   } catch(e) { return ''; }
 }
 
@@ -94,7 +97,7 @@ function deleteDocument(docId) {
   var doc = getDocumentMeta(docId);
   if (!doc) return false;
   if (doc.filePath) {
-    try { var fs = wx.getFileSystemManager(); fs.unlinkSync(doc.filePath); } catch(e) {}
+    try { var fs = wx.getFileSystemManager(); fs.unlinkSync(doc.filePath); } catch(e) { console.warn('[storage] deleteDocument 文件删除失败:', e.message); }
   }
   var meta = wx.getStorageSync(META_KEY);
   if (meta && meta.documents) { delete meta.documents[docId]; wx.setStorageSync(META_KEY, meta); }

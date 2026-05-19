@@ -438,6 +438,7 @@ async function syncUserProfile(profileData) {
     });
   } catch (e) {
     console.error('[API] syncProfile failed:', e);
+    return { code: 500, message: e.message || '同步失败', data: null };
   }
 }
 

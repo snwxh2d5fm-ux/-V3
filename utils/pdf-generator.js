@@ -46,6 +46,7 @@ function clearSlotPDF(slotKey) {
 function generateSlotPDF(slotKey, slotName, uploadedDocs) {
   var docCount = (uploadedDocs || []).length;
   // 检查缓存（文档数不变时直接打开）
+  var retryCount = slotKey._pdfRetry || 0;
   var cached = getSavedPDF(slotKey, docCount);
   if (cached) {
     wx.openDocument({
@@ -53,18 +54,25 @@ function generateSlotPDF(slotKey, slotName, uploadedDocs) {
       fileType: 'pdf',
       showMenu: true,
       fail: function() {
-        // 文件丢失，清除缓存重新生成
+        if (retryCount >= 3) {
+          wx.showToast({ title: 'PDF 打开失败，请重试', icon: 'none' });
+          clearSlotPDF(slotKey);
+          return;
+        }
+        slotKey._pdfRetry = retryCount + 1;
         clearSlotPDF(slotKey);
         generateSlotPDF(slotKey, slotName, uploadedDocs);
       }
     });
     return;
   }
+  slotKey._pdfRetry = 0;
 
   if (!uploadedDocs || !uploadedDocs.length) {
     wx.showToast({ title: '无图片可合成', icon: 'none' });
     return;
   }
+  slotKey._pdfRetry = 0;
 
   var paths = [];
   uploadedDocs.forEach(function(d) {
@@ -74,6 +82,7 @@ function generateSlotPDF(slotKey, slotName, uploadedDocs) {
     wx.showToast({ title: '无有效图片', icon: 'none' });
     return;
   }
+  slotKey._pdfRetry = 0;
 
   wx.showLoading({ title: '合成PDF中...' });
 

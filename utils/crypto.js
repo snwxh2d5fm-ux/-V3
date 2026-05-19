@@ -4,7 +4,7 @@
  * 密钥由用户口令通过 PBKDF2-HMAC-SHA-256 派生，永不离客户端。
  * 纯 JS 实现，完整 AES-256（14轮）+ GCM 认证加密 + SHA-256。
  *
- * 随机数来源：wx.getRandomValues（降级：Math.random）
+ * 随机数来源：wx.getRandomValues（安全硬件随机数）
  *
  * @module crypto
  * @version 2.0.0
@@ -27,28 +27,60 @@ var cryptoReady = false;
 
 function _wxRandomBytes(length) {
   var arr = new Uint8Array(length);
+  var filled = false;
+  var errMsg = null;
   try {
     wx.getRandomValues({
       length: length,
       success: function(res) {
-        if (res.randomValues) {
+        if (res && res.randomValues) {
           for (var i = 0; i < length && i < res.randomValues.length; i++) {
             arr[i] = res.randomValues[i];
           }
+          filled = true;
         }
       },
-      fail: function() {
-        for (var i = 0; i < length; i++) {
-          arr[i] = Math.floor(Math.random() * 256);
-        }
+      fail: function(err) {
+        errMsg = (err && err.errMsg) || 'getRandomValues failed';
       }
     });
   } catch (e) {
-    for (var i = 0; i < length; i++) {
-      arr[i] = Math.floor(Math.random() * 256);
-    }
+    errMsg = e.message || 'getRandomValues unavailable';
   }
+
+  // 同步回调未触发 → 随机数未填充，抛出错误而非静默使用不安全回退
+  if (!filled) {
+    throw new Error('[crypto] 安全随机数生成失败: ' + (errMsg || 'callback not invoked'));
+  }
+
   return arr;
+}
+
+/** Promise 版 _wxRandomBytes — 用于异步调用链中确保回调完成 */
+function _wxRandomBytesAsync(length) {
+  return new Promise(function(resolve, reject) {
+    var arr = new Uint8Array(length);
+    try {
+      wx.getRandomValues({
+        length: length,
+        success: function(res) {
+          if (res && res.randomValues) {
+            for (var i = 0; i < length && i < res.randomValues.length; i++) {
+              arr[i] = res.randomValues[i];
+            }
+            resolve(arr);
+          } else {
+            reject(new Error('[crypto] getRandomValues returned empty'));
+          }
+        },
+        fail: function(err) {
+          reject(new Error('[crypto] getRandomValues failed: ' + ((err && err.errMsg) || 'unknown')));
+        }
+      });
+    } catch (e) {
+      reject(new Error('[crypto] getRandomValues unavailable: ' + (e.message || 'unknown')));
+    }
+  });
 }
 
 // ============================================================
@@ -507,10 +539,13 @@ function _gcmDecrypt(keyBytes, iv, ciphertext, tag, aad) {
   tagInput.set(J0);
   var encJ0 = _aesEncryptBlock(keySchedule, tagInput);
 
+  // 恒定时间比较 — 避免时序侧信道泄漏
+  var mismatch = 0;
   for (var k = 0; k < TAG_LENGTH; k++) {
-    if (tag[k] !== (computedGhash[k] ^ encJ0[k])) {
-      throw new Error('[加密] 认证失败：数据可能被篡改或密钥不正确');
-    }
+    mismatch |= tag[k] ^ (computedGhash[k] ^ encJ0[k]);
+  }
+  if (mismatch !== 0) {
+    throw new Error('[加密] 认证失败：数据可能被篡改或密钥不正确');
   }
 
   // Decrypt
