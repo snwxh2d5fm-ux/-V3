@@ -1,0 +1,46 @@
+{
+  "lines": [{
+    "id": "e2e-test-process",
+    "name": "学生→IANG",
+    "templateId": "student_iang",
+    "pathType": "student_iang",
+    "riskLevel": "low",
+    "totalCycle": "7年",
+    "status": "active",
+    "source": "manual",
+    "stages": [
+      {
+        "id": "s1",
+        "name": "资格评估",
+        "phaseId": "phase1",
+        "order": 0,
+        "status": "completed",
+        "unlocked": true,
+        "steps": [{"name": "学校录取"}, {"name": "签证获批"}],
+        "completedSteps": [0, 1]
+      },
+      {
+        "id": "s2",
+        "name": "获批激活",
+        "phaseId": "phase2",
+        "order": 1,
+        "status": "current",
+        "unlocked": true,
+        "steps": [{"name": "入境激活"}, {"name": "办理身份证"}, {"name": "银行开户"}],
+        "completedSteps": [0]
+      },
+      {
+        "id": "s3",
+        "name": "中期维持",
+        "phaseId": "phase3",
+        "order": 2,
+        "status": "pending",
+        "unlocked": false,
+        "steps": [{"name": "全日制学习"}, {"name": "IANG申请"}],
+        "completedSteps": []
+      }
+    ],
+    "currentStage": "获批激活"
+  }],
+  "version": 1
+}
