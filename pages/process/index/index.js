@@ -161,18 +161,25 @@ Page({
       return;
     }
 
-    // 从 activeProcess.stages 找到当前阶段（UI index → 数据层 stage）
+    // 通过 phaseId 匹配当前阶段（本地流程 stages 使用模板特定的 stageId）
     var allStages = activeProcess.stages;
     var BRIDGE = require('../../data/constants').STAGE_BRIDGE_MAP;
-    var stageId = BRIDGE.ui_to_phase[index];
+    var phaseId = BRIDGE.ui_to_phase[index];
     var currentStage = allStages.find(function(s) {
-      return s.stageId === stageId || s.phaseId === stageId;
+      return (s.phaseId && s.phaseId === phaseId) ||
+             (s.stageId && s.stageId === phaseId);
     });
+    // 兜底: 按 order 匹配（index+1 = 第N个阶段）
+    if (!currentStage && index < allStages.length) {
+      var sortedStages = allStages.slice().sort(function(a, b) { return (a.order || 0) - (b.order || 0); });
+      currentStage = sortedStages[index];
+    }
     if (!currentStage) {
-      wx.showToast({ title: '未找到对应阶段数据', icon: 'none' });
+      wx.showToast({ title: '未找到对应阶段数据 index=' + index, icon: 'none', duration: 2000 });
       return;
     }
 
+    var stageId = currentStage.stageId || currentStage.id;
     // 收集未完成步骤
     var pendingSteps = (currentStage.steps || []).filter(function(st) {
       return st.status !== 'completed';
