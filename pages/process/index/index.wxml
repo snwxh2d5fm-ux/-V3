@@ -147,6 +147,20 @@
             <text class="step-row__icon">📭</text>
             <text class="step-row__name">该阶段材料将在完成前置步骤后解锁</text>
           </view>
+
+          <!-- 通道A: 无里程碑 → 步骤完成后自动推进 -->
+          <view class="step-row step-row--action" wx:if="{{item.status === 'current' && !item.isMilestone}}">
+            <text class="step-row__icon">✅</text>
+            <text class="step-row__name">所有步骤已完成，解锁下一阶段</text>
+            <button class="btn btn--xs btn--primary" bindtap="completeAllSteps" data-stage-index="{{index}}">完成阶段</button>
+          </view>
+
+          <!-- 通道B: 有里程碑 → 需上传材料验证 -->
+          <view class="step-row step-row--action" wx:if="{{item.status === 'current' && item.isMilestone}}">
+            <text class="step-row__icon">📤</text>
+            <text class="step-row__name">上传{{item.milestoneDocType || '里程碑材料'}}，验证后解锁</text>
+            <button class="btn btn--xs btn--primary" bindtap="uploadMilestone" data-stage-index="{{index}}">上传验证</button>
+          </view>
         </view>
       </view>
     </view>

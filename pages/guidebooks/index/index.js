@@ -286,12 +286,36 @@ Page({
 
     var phases = Object.keys(phaseMap).map(function(k) { return phaseMap[k]; }).sort(function(a,b){ return a.phase-b.phase; });
 
-    // Lock phases based on progress.phases[].unlocked
-    // Compatible with old progress data: missing phases default to unlocked
+    // ── 关卡解锁判定 (Phase 1: 双通道里程碑解锁) ──
+    // 优先级: guidebookAllUnlocked(¥9.90) > 会员 > processStage(流程控联动) > 默认
+    var BRIDGE = require('../../../data/constants').STAGE_BRIDGE_MAP;
+    var app = getApp();
+    var membershipLevel = (app.globalData && app.globalData.membershipLevel) || 'free';
+    var guidebookAllUnlocked = (app.globalData && app.globalData.guidebookAllUnlocked) || false;
+
+    // process_stage 读取 (默认0 = 流程控未推进, 关卡0~2始终解锁)
+    var processStage = 0;
+    try {
+      var psVal = wx.getStorageSync('__process_stage__');
+      if (psVal !== null && psVal !== undefined && psVal !== '' && !isNaN(Number(psVal))) {
+        processStage = Math.max(0, Math.min(6, Number(psVal)));
+      }
+    } catch(e) {}
+
+    var unlockState = BRIDGE.getGuideUnlockState(processStage);
+
     phases.forEach(function(ph) {
-      var stored = progress.phases && progress.phases[ph.phase];
-      if (stored && stored.unlocked === false) {
-        ph.unlocked = false;
+      // 优先级1: ¥9.90 或 会员 → 全部解锁
+      if (guidebookAllUnlocked || membershipLevel !== 'free') {
+        ph.unlocked = true;
+        return;
+      }
+      // 优先级2: 流程控联动
+      if (unlockState[ph.phase] !== undefined) {
+        ph.unlocked = unlockState[ph.phase];
+      } else {
+        // 优先级3: 默认 (关卡0~2始终解锁)
+        ph.unlocked = (Number(ph.phase) <= 2);
       }
     });
 
@@ -417,6 +441,14 @@ Page({
     var taskId = e.currentTarget.dataset.id || e.currentTarget.dataset.taskId;
     var task = this.data.tasks.find(function(t) { return t._id === taskId; });
     if (!task || task._completed) return;
+
+    // 锁定关卡不可操作
+    var phaseObj = this.data.phases.find(function(p) { return p.phase === task.phase; });
+    if (phaseObj && phaseObj.unlocked === false) {
+      wx.showToast({ title: '请先解锁本关卡', icon: 'none' });
+      return;
+    }
+
     storage.completeTask(taskId);
     this.refreshProgress();
     this.checkPhaseComplete(task.phase);

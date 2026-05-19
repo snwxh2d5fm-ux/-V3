@@ -57,6 +57,8 @@ exports.main = async (event, context) => {
       case 'checkSubscription':  return await checkSubscription(openid);
       case 'getSubscriptions':   return await getSubscriptions(openid);
       case 'cancelSubscription': return await cancelSubscription(openid, event);
+      case 'identityReset':      return await identityReset(openid, event);
+      case 'unlockAllPhases':    return await unlockAllPhases(openid, event);
       case 'createInvoice':      return await invoices.createInvoice(openid, event, db);
       case 'getInvoices':        return await invoices.getInvoices(openid, event, db);
       case 'getInvoiceDetail':   return await invoices.getInvoiceDetail(openid, event, db);
@@ -391,6 +393,144 @@ async function deleteOrder(openid, event) {
  *
  * V3 回调体格式:
  *   { id, create_time, resource_type, event_type, summary,
+// ==================== ¥599 身份重置 ====================
+
+async function identityReset(openid, event) {
+  if (!WXPAY_CONFIG.mchid || !WXPAY_CONFIG.privateKey) {
+    return { code: 500, msg: '支付服务未配置' };
+  }
+
+  const AMOUNT = 59900; // ¥599.00 (分)
+  const productName = '身份状态重置';
+  const category = 'identity_reset';
+
+  // 前置检查: 7天内是否已有重置
+  const recentReset = await db.collection('orders')
+    .where({
+      _openid: openid, category: 'identity_reset', status: 'completed',
+      createdAt: _.gte(new Date(Date.now() - 7 * 86400000))
+    }).get();
+  if (recentReset.data.length > 0) {
+    return { code: 429, msg: '7天内已进行过身份重置，请稍后再试' };
+  }
+
+  const { _id: orderId } = await db.collection('orders').add({
+    data: {
+      _openid: openid, productId: 'identity_reset', productName,
+      amount: AMOUNT, amountYuan: '599.00',
+      category, status: 'pending', createdAt: db.serverDate()
+    }
+  });
+
+  try {
+    const urlPath = '/v3/pay/transactions/jsapi';
+    const reqBody = JSON.stringify({
+      appid: WXPAY_CONFIG.appid, mchid: WXPAY_CONFIG.mchid,
+      description: `住港伴 - ${productName}`,
+      out_trade_no: orderId,
+      notify_url: `https://${CLOUD_ENV}.service.tcloudbase.com/payment/callback`,
+      amount: { total: AMOUNT, currency: 'CNY' },
+      payer: { openid }
+    });
+
+    const auth = buildAuthorization('POST', urlPath, reqBody);
+    const resp = await axios.post(`${WXPAY_CONFIG.baseUrl}${urlPath}`, reqBody, {
+      headers: { 'Content-Type': 'application/json', Authorization: auth }
+    });
+
+    if (!resp.data || !resp.data.prepay_id) {
+      return { code: 500, msg: '微信支付下单失败', detail: resp.data };
+    }
+
+    const prepayId = resp.data.prepay_id;
+    const nonceStr = crypto.randomBytes(16).toString('hex');
+    const timeStamp = String(Math.floor(Date.now() / 1000));
+    const pkg = 'prepay_id=' + prepayId;
+    const signStr = [WXPAY_CONFIG.appid, timeStamp, nonceStr, pkg].join('\n') + '\n';
+    const paySign = crypto.createSign('RSA-SHA256').update(signStr).sign(WXPAY_CONFIG.privateKey, 'base64');
+
+    return {
+      code: 0,
+      data: {
+        orderId, category,
+        payment: {
+          timeStamp, nonceStr, package: pkg, signType: 'RSA', paySign
+        }
+      }
+    };
+  } catch (e) {
+    console.error('[payment] identityReset error:', e);
+    return { code: 500, msg: '支付创建失败', error: e.message };
+  }
+}
+
+// ==================== ¥9.90 关卡提前解锁 ====================
+
+async function unlockAllPhases(openid, event) {
+  if (!WXPAY_CONFIG.mchid || !WXPAY_CONFIG.privateKey) {
+    return { code: 500, msg: '支付服务未配置' };
+  }
+
+  const AMOUNT = 990; // ¥9.90 (分)
+  const productName = '攻略书全部关卡提前解锁';
+  const category = 'guidebook_unlock';
+
+  // 前置检查: 是否已解锁或已是会员
+  const userResult = await db.collection('users').where({ _openid: openid }).get();
+  if (userResult.data.length > 0) {
+    const user = userResult.data[0];
+    if (user.guidebookAllUnlocked) return { code: 409, msg: '已解锁全部关卡，无需重复购买' };
+    if (user.membershipLevel !== 'free') return { code: 409, msg: '已是付费会员，全部关卡已解锁' };
+  }
+
+  const { _id: orderId } = await db.collection('orders').add({
+    data: {
+      _openid: openid, productId: 'guidebook_unlock_all', productName,
+      amount: AMOUNT, amountYuan: '9.90',
+      category, status: 'pending', createdAt: db.serverDate()
+    }
+  });
+
+  try {
+    const urlPath = '/v3/pay/transactions/jsapi';
+    const reqBody = JSON.stringify({
+      appid: WXPAY_CONFIG.appid, mchid: WXPAY_CONFIG.mchid,
+      description: `住港伴 - ${productName}`,
+      out_trade_no: orderId,
+      notify_url: `https://${CLOUD_ENV}.service.tcloudbase.com/payment/callback`,
+      amount: { total: AMOUNT, currency: 'CNY' },
+      payer: { openid }
+    });
+
+    const auth = buildAuthorization('POST', urlPath, reqBody);
+    const resp = await axios.post(`${WXPAY_CONFIG.baseUrl}${urlPath}`, reqBody, {
+      headers: { 'Content-Type': 'application/json', Authorization: auth }
+    });
+
+    if (!resp.data || !resp.data.prepay_id) {
+      return { code: 500, msg: '微信支付下单失败', detail: resp.data };
+    }
+
+    const prepayId = resp.data.prepay_id;
+    const nonceStr = crypto.randomBytes(16).toString('hex');
+    const timeStamp = String(Math.floor(Date.now() / 1000));
+    const pkg = 'prepay_id=' + prepayId;
+    const signStr = [WXPAY_CONFIG.appid, timeStamp, nonceStr, pkg].join('\n') + '\n';
+    const paySign = crypto.createSign('RSA-SHA256').update(signStr).sign(WXPAY_CONFIG.privateKey, 'base64');
+
+    return {
+      code: 0,
+      data: {
+        orderId, category,
+        payment: { timeStamp, nonceStr, package: pkg, signType: 'RSA', paySign }
+      }
+    };
+  } catch (e) {
+    console.error('[payment] unlockAllPhases error:', e);
+    return { code: 500, msg: '支付创建失败', error: e.message };
+  }
+}
+
  *     resource: { algorithm, ciphertext, associated_data, nonce, original_type } }
  */
 async function handleV3Callback(event) {
@@ -462,6 +602,19 @@ async function handleV3Callback(event) {
 
     if (order.category === 'membership' && order.planId) {
       await activateMembership(order._openid, order);
+    }
+    if (order.category === 'identity_reset') {
+      // ¥599身份重置: 支付成功后调用process-manager清除流程
+      await cloud.callFunction({
+        name: 'process-manager',
+        data: { action: 'resetIdentityPhase', transactionId: transactionId }
+      });
+    }
+    if (order.category === 'guidebook_unlock') {
+      // ¥9.90关卡解锁: 支付成功后设置guidebookAllUnlocked
+      await db.collection('users')
+        .where({ _openid: order._openid })
+        .update({ data: { guidebookAllUnlocked: true, updatedAt: db.serverDate() } });
     }
 
     await db.collection('audit_logs').add({

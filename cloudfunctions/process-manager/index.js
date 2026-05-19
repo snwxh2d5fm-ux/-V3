@@ -27,6 +27,7 @@ exports.main = async (event, context) => {
       case 'advanceStage':     return await advanceStage(openid, event);
       case 'completeStep':     return await completeStep(openid, event);
       case 'verifyMilestone':  return await verifyMilestone(openid, event);
+      case 'resetIdentityPhase': return await resetIdentityPhase(openid, event);
       case 'getChecklist':     return await getChecklist(openid, event.templateId, event.userDocIds);
       case 'handleException':  return await handleException(openid, event);
       case 'getDecisionNodes': return await getDecisionNodes(event.templateId);
@@ -106,6 +107,9 @@ async function startProcess(openid, event) {
   const stages = tmpl.stages.map((s, i) => ({
     stageId: s.stageId, stageName: s.stageName, order: s.order,
     status: i === 0 ? 'in_progress' : 'locked',
+    isMilestone: s.isMilestone || false,
+    milestoneDocType: s.milestoneDocType || null,
+    ocrValidationRule: s.ocrValidationRule || null,
     steps: s.steps.map(st => ({
       stepId: st.stepId, stepName: st.stepName,
       status: i === 0 ? 'pending' : 'locked',
@@ -118,7 +122,7 @@ async function startProcess(openid, event) {
     .map(s => ({
       stageId: s.stageId, milestoneDocId: null,
       docType: s.milestoneDocType, ocrRule: s.ocrValidationRule,
-      status: 'pending', attempts: 0, lockedUntil: null
+      status: 'pending', attempts: 0
     }));
 
   const process = {
@@ -233,6 +237,13 @@ async function completeStep(openid, event) {
   if (result.data.length === 0) return { code: 404, msg: '流程不存在' };
 
   const proc = result.data[0];
+
+  // 校验: 当前阶段必须是 in_progress
+  const origStage = proc.stages.find(s => s.stageId === stageId);
+  if (!origStage) return { code: 400, msg: '阶段不存在' };
+  if (origStage.status === 'completed') return { code: 400, msg: '该阶段已完成，不可操作' };
+  if (origStage.status === 'locked') return { code: 400, msg: '该阶段未解锁' };
+
   const stages = proc.stages.map(s => {
     if (s.stageId !== stageId) return s;
     return {
@@ -257,18 +268,35 @@ async function completeStep(openid, event) {
   const stageAllDone = currentStage?.steps.every(s => s.status === 'completed');
 
   let nextStageId = proc.currentStageId;
+  let requiresMilestone = false;
+
   if (stageAllDone) {
-    const sortedStages = stages.sort((a, b) => a.order - b.order);
-    const currentIdx = sortedStages.findIndex(s => s.stageId === stageId);
-    if (currentIdx < sortedStages.length - 1) {
-      nextStageId = sortedStages[currentIdx + 1].stageId;
-      // 解锁下一阶段
-      stages.find(s => s.stageId === nextStageId).status = 'in_progress';
+    // 向后兼容: 若 isMilestone 未定义，回查模板
+    let isMilestone = currentStage?.isMilestone;
+    if (isMilestone === undefined) {
+      isMilestone = await _resolveMilestoneFallback(proc.templateId, stageId);
+    }
+
+    if (isMilestone) {
+      // 通道B: 有里程碑，步骤完成不自动推进
+      requiresMilestone = true;
+    } else {
+      // 通道A: 无里程碑，自动推进
+      const sortedStages = stages.sort((a, b) => a.order - b.order);
+      const currentIdx = sortedStages.findIndex(s => s.stageId === stageId);
+      if (currentIdx < sortedStages.length - 1) {
+        nextStageId = sortedStages[currentIdx + 1].stageId;
+        stages.find(s => s.stageId === nextStageId).status = 'in_progress';
+      }
     }
   }
 
-  await db.collection('user_processes')
-    .where({ _id: processId })
+  // 乐观锁: 仅当阶段仍为 in_progress 时更新
+  const updateResult = await db.collection('user_processes')
+    .where({
+      _id: processId,
+      stages: _.elemMatch({ stageId: stageId, status: 'in_progress' })
+    })
     .update({
       data: {
         stages, overallProgress: progress,
@@ -282,7 +310,28 @@ async function completeStep(openid, event) {
       }
     });
 
-  return { code: 0, data: { overallProgress: progress, stageAllDone, nextStageId } };
+  if (updateResult.stats.updated === 0) {
+    return { code: 409, msg: '阶段状态已变更，请刷新后重试' };
+  }
+
+  return { code: 0, data: { overallProgress: progress, stageAllDone, requiresMilestone, nextStageId } };
+}
+
+/**
+ * 向后兼容: 旧流程实例缺少 isMilestone 字段时，回查模板
+ */
+async function _resolveMilestoneFallback(templateId, stageId) {
+  try {
+    const tmpl = await db.collection('process_templates')
+      .where({ templateId }).get();
+    if (tmpl.data.length > 0) {
+      const stage = (tmpl.data[0].stages || []).find(s => s.stageId === stageId);
+      return stage?.isMilestone || false;
+    }
+  } catch (e) {
+    console.warn('[process-manager] _resolveMilestoneFallback error:', e.message);
+  }
+  return false;
 }
 
 /**
@@ -309,10 +358,9 @@ async function verifyMilestone(openid, event) {
   const milestone = record.milestones?.find(m => m.stageId === stageId);
   if (!milestone) return { code: 404, msg: '该阶段无里程碑' };
 
-  // 检查是否锁定（PC-06.5: 失败3次锁定24h）
-  if (milestone.lockedUntil && new Date(milestone.lockedUntil) > new Date()) {
-    return { code: 423, msg: '验证被锁定', lockedUntil: milestone.lockedUntil };
-  }
+  // 校验: 当前阶段必须是 in_progress
+  const origStage = record.stages.find(s => s.stageId === stageId);
+  if (origStage?.status === 'completed') return { code: 400, msg: '该阶段已完成，无需重复验证' };
 
   // 获取模板中的OCR验证规则
   const template = await db.collection('process_templates')
@@ -320,29 +368,21 @@ async function verifyMilestone(openid, event) {
   const tmplStage = template.data[0]?.stages?.find(s => s.stageId === stageId);
   const expectedDocType = tmplStage?.milestoneDocType || '';
 
-  // OCR类型验证（RG-02: 严重不符拒绝）
+  // OCR类型验证
   const actualDocType = ocrResult?.docTypeDetected || '';
   const isMatch = _validateDocType(actualDocType, expectedDocType);
 
   const attempts = (milestone.attempts || 0) + 1;
 
   if (!isMatch) {
-    // 失败处理
-    const lockedUntil = attempts >= 3
-      ? new Date(Date.now() + 24 * 3600000).toISOString()
-      : null;
-
+    // 失败: 仅记录，不锁定
     await _updateMilestone(processId, stageId, docId, {
       attempts, isMatch: false, status: 'failed',
-      lockedUntil,
       ocrResult: { dateField: ocrResult?.dateField, numberField: ocrResult?.numberField },
       verifiedAt: db.serverDate()
     });
 
-    if (lockedUntil) {
-      return { code: 423, msg: '验证失败超过3次，已锁定24小时', lockedUntil };
-    }
-    return { code: 400, msg: `材料类型不符：期望${expectedDocType}，识别为${actualDocType}` };
+    return { code: 400, msg: `材料类型不符：期望${expectedDocType}，识别为${actualDocType}`, attempts };
   }
 
   // 验证通过
@@ -379,7 +419,7 @@ async function verifyMilestone(openid, event) {
 
   const isForwardJump = unlockedStageIds.length > 0;
 
-  // 更新流程和控制标志
+  // 更新流程
   await db.collection('user_processes').where({ _id: processId }).update({
     data: {
       stages: updatedStages,
@@ -393,7 +433,7 @@ async function verifyMilestone(openid, event) {
     }
   });
 
-  // 记录里程碑
+  // 记录里程碑（不含 lockedUntil 和 isAnomaly）
   await db.collection('milestone_records').add({
     data: {
       _openid: openid, processId, stageId, docId,
@@ -482,6 +522,40 @@ async function getChecklist(openid, templateId, userDocIds) {
  * 处理异常（补件/被拒）
  * PC-05: 异常处理
  */
+/**
+ * ¥599身份重置 (由 payment 云函数 V3 回调触发)
+ * 清除当前活跃流程、提醒规则、用户阶段标记
+ */
+async function resetIdentityPhase(openid, event) {
+  const { transactionId } = event;
+  if (!transactionId) return { code: 400, msg: '缺少 transactionId' };
+
+  // 1. 校验支付凭证
+  const payLog = await db.collection('payment_records')
+    .where({ _openid: openid, transactionId, status: 'success', type: 'identity_reset' }).get();
+  if (payLog.data.length === 0) return { code: 402, msg: '未找到支付记录或支付未完成' };
+
+  // 2. 取消当前活跃流程
+  await db.collection('user_processes')
+    .where({ _openid: openid, status: 'active' })
+    .update({ data: { status: 'cancelled', updatedAt: db.serverDate() } });
+
+  // 3. 清除关联提醒
+  await db.collection('reminders')
+    .where({ _openid: openid, status: 'active' })
+    .update({ data: { status: 'inactive', updatedAt: db.serverDate() } });
+
+  // 4. 清除 users 中的阶段标记
+  await db.collection('users')
+    .where({ _openid: openid })
+    .update({ data: { currentPhase: '', currentStageId: '', guidebookAllUnlocked: false, updatedAt: db.serverDate() } });
+
+  // 5. 写入审计日志
+  await _logAudit(openid, 'identity_reset', { transactionId });
+
+  return { code: 0, msg: '身份状态已重置，请重新选择' };
+}
+
 async function handleException(openid, event) {
   const { processId, type, description } = event;
   if (!['supplement', 'rejection'].includes(type)) {

@@ -145,6 +145,52 @@ Page({
     wx.switchTab({ url: '/pages/documents/index/index' });
   },
 
+  // ★ 通道A: 完成当前阶段所有步骤 → 自动推进
+  completeAllSteps: async function(e) {
+    var index = e.currentTarget.dataset.stageIndex;
+    var phase = this.data.phases[index];
+    if (!phase || phase.status !== 'current') return;
+
+    var processId = this.data.activeProcessId || getActiveProcessId();
+    if (!processId) return;
+
+    var self = this;
+    wx.showLoading({ title: '处理中...' });
+    try {
+      var res = await wx.cloud.callFunction({
+        name: 'process-manager',
+        data: { action: 'completeStep', processId: processId, stageId: phase.id, stepId: '' }
+      });
+      wx.hideLoading();
+      if (res.result.code === 0) {
+        // 写入 __process_stage__ 供攻略书联动
+        var BRIDGE = require('../../data/constants').STAGE_BRIDGE_MAP;
+        var uiStage = BRIDGE.stageToUiStage(phase.phase, index);
+        wx.setStorageSync('__process_stage__', uiStage);
+
+        if (res.result.data.requiresMilestone) {
+          wx.showToast({ title: '请上传里程碑材料验证后解锁', icon: 'none' });
+        } else {
+          wx.showToast({ title: '阶段已推进', icon: 'success' });
+        }
+        self.loadActiveProcess();
+      } else {
+        wx.showToast({ title: res.result.msg || '操作失败', icon: 'none' });
+      }
+    } catch(err) {
+      wx.hideLoading();
+      wx.showToast({ title: '操作失败', icon: 'none' });
+    }
+  },
+
+  // ★ 通道B: 上传里程碑材料验证
+  uploadMilestone: function(e) {
+    var index = e.currentTarget.dataset.stageIndex;
+    var phase = this.data.phases[index];
+    if (!phase || phase.status !== 'current') return;
+    wx.navigateTo({ url: '/subpkg-process/pages/milestone-verify/index?stageId=' + (phase.stageId || phase.id) + '&stageIndex=' + index });
+  },
+
   // v5 快捷入口 (DSG-1 P0-01: 双中枢合并)
   goToGuide() {
     wx.navigateTo({ url: '/subpkg-guide/pages/guide-index/index' });

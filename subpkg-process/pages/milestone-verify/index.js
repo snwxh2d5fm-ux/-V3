@@ -72,39 +72,41 @@ Page({
           ocrVerified: true, isMilestone: true, createdAt: new Date().toISOString()
         });
 
-        // 解锁流程阶段
-        if (this.data.processId) {
-          const process = getProcessLine(this.data.processId);
-          if (process && this.data.stageId) {
-            const stage = process.stages.find(s => s.id === this.data.stageId);
-            if (stage) {
-              stage.unlocked = true;
-              stage.status = 'current';
-              stage.startedAt = new Date().toISOString();
-              process.currentStage = stage.name;
-              saveProcessLine(process);
+        // 调用 process-manager 云函数验证里程碑
+        if (this.data.processId && this.data.stageId) {
+          try {
+            var vmRes = await wx.cloud.callFunction({
+              name: 'process-manager',
+              data: {
+                action: 'verifyMilestone',
+                processId: this.data.processId,
+                stageId: this.data.stageId,
+                docId: docId,
+                ocrResult: {
+                  docTypeDetected: docType,
+                  applicationNumber: result.fields.applicationNumber || '',
+                  dateField: result.fields.dateField || '',
+                  numberField: result.fields.numberField || ''
+                }
+              }
+            });
+            if (vmRes.result.code === 0) {
+              // 写入 __process_stage__ 供攻略书联动
+              var BRIDGE = require('../../data/constants').STAGE_BRIDGE_MAP;
+              var stageIdx = parseInt(this.options.stageIndex) || 0;
+              var uiStage = BRIDGE.stageToUiStage(this.data.stageId, stageIdx + 1);
+              wx.setStorageSync('__process_stage__', uiStage);
             }
+          } catch(e) {
+            console.warn('[里程碑验证] process-manager调用异常:', e);
           }
         }
 
-        // 调用状态选择页回调
-        const pages = getCurrentPages();
-        const prevPage = pages[pages.length - 2];
-        if (prevPage && prevPage.saveStatus) {
-          prevPage.saveStatus(this.data.status, result.fields);
-        }
-        wx.setStorageSync('__milestone_retry__', 0);
         wx.showToast({ title: '验证通过！', icon: 'success' });
         setTimeout(() => wx.navigateBack(), 1000);
       } else {
-        const retryCount = (this.data.retryCount || 0) + 1;
-        wx.setStorageSync('__milestone_retry__', retryCount);
-        if (retryCount >= 3) {
-          wx.showModal({
-            title: '验证失败次数过多', content: '请24小时后再试，或联系客服',
-            showCancel: false, confirmText: '知道了'
-          });
-        }
+        // 失败: 仅提示，不锁定
+        wx.showToast({ title: '验证失败: ' + (validation.reason || '材料不符'), icon: 'none', duration: 2500 });
       }
     } catch (e) {
       console.error('[验证] 失败:', e);

@@ -17,25 +17,43 @@ let ruleSets = {
 let loaded = false;
 
 async function loadRules() {
+  let allLoaded = true;
+
+  // 逐文件隔离加载 — 单个文件加载失败不影响其他
   try {
-    const reminderRules = require('../data/rules/reminders.js');
-    const checkRules = require('../data/rules/material-checks.js');
-    const processRules = require('../data/rules/process-validations.js');
-    ruleSets.reminders = reminderRules;
-    ruleSets.materialChecks = checkRules;
-    ruleSets.processValidations = processRules;
-    loaded = true;
-    console.log(`[规则引擎v4.1] 已加载 ${reminderRules.length} 提醒规则, ${checkRules.length} 检查规则`);
-    return true;
+    ruleSets.reminders = require('../data/rules/reminders.js');
   } catch (e) {
-    console.warn('[规则引擎] 规则文件加载失败，使用V5内置规则:', e.message);
+    console.warn('[规则引擎] reminders.js 加载失败，使用内置规则:', e.message);
     ruleSets.reminders = getBuiltinReminderRules();
-    ruleSets.materialChecks = getBuiltinCheckRules();
-    ruleSets.processValidations = getBuiltinValidationRules();
-    ruleSets.legalCitationRules = getBuiltinLegalRules();
-    loaded = true;
-    return true;
+    allLoaded = false;
   }
+
+  try {
+    ruleSets.materialChecks = require('../data/rules/material-checks.js');
+  } catch (e) {
+    console.warn('[规则引擎] material-checks.js 加载失败，使用内置规则:', e.message);
+    ruleSets.materialChecks = getBuiltinCheckRules();
+    allLoaded = false;
+  }
+
+  try {
+    ruleSets.processValidations = require('../data/rules/process-validations.js');
+    // 校验规则格式: 确保无不支持的字段
+    if (!Array.isArray(ruleSets.processValidations)) throw new Error('process-validations 应为数组');
+  } catch (e) {
+    console.warn('[规则引擎] process-validations.js 加载失败，使用内置规则:', e.message);
+    ruleSets.processValidations = getBuiltinValidationRules();
+    allLoaded = false;
+  }
+
+  ruleSets.legalCitationRules = getBuiltinLegalRules();
+  loaded = true;
+  console.log('[规则引擎v4.1] 加载完成: ' +
+    ruleSets.reminders.length + ' 提醒规则, ' +
+    ruleSets.materialChecks.length + ' 检查规则, ' +
+    ruleSets.processValidations.length + ' 验证规则' +
+    (allLoaded ? '' : ' (部分使用内置降级)'));
+  return true;
 }
 
 /**

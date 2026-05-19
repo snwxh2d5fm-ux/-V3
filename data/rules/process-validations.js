@@ -37,15 +37,5 @@ module.exports = [
     "id": "VAL_MILESTONE_08", "stage": "permanent",
     "field": "hkIdNumber", "required": true,
     "pattern": "[A-Z]\\d{6}\\([0-9A]\\)"
-  },
-  {
-    "id": "VAL_ANOMALY_01", "stage": "approved",
-    "field": "rawText", "forbiddenPattern": "购物|发票|收据|消费",
-    "reason": "上传图片内容与获批通知书不符"
-  },
-  {
-    "id": "VAL_ANOMALY_02", "stage": "permanent",
-    "field": "rawText", "forbiddenPattern": "非永久|Non-permanent",
-    "reason": "上传的身份证非永久居民身份证"
   }
 ];

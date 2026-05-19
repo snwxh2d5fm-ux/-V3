@@ -241,6 +241,121 @@ module.exports = {
     PR_SPRINT: { order: 9, name: '永居冲刺', icon: '🏁', phase: 'phase4' }
   },
 
+  // ============ 阶段ID桥接映射表（2026-05-20 V3里程碑解锁） ============
+  //
+  // 连接三套独立编号体系：
+  //   数据层4阶段 stageId:   phase1_evaluation, phase2_onboarding, phase3_maintenance, phase4_pr_sprint
+  //   流程控UI层7阶段索引:   0(资格评估)~6(永居)
+  //   攻略书8关卡:           0(抵港前准备)~7(续签准备)
+  //
+  // 核心原则：
+  //   1. __process_stage__ 存储 UI层7阶段索引 (0~6)
+  //   2. 攻略书 rebuildPhases 读取 __process_stage__ 并通过 guide_unlock_thresholds 计算关卡解锁
+  //   3. process-manager 使用 data层 stageId
+  //   4. 所有模块统一引用此映射表，杜绝各自硬编码
+  //
+  STAGE_BRIDGE_MAP: {
+    // ── 正向映射: 数据层 stageId → UI层信息 ──
+    phase_to_ui: {
+      phase1_evaluation: {
+        label: '资格评估',
+        uiStageIndices: [0, 1],
+        milestoneStageIndex: 1,
+        milestoneDocType: '路径确认凭证（评估结果截图）'
+      },
+      phase2_onboarding: {
+        label: '获批与激活',
+        uiStageIndices: [2, 3, 4],
+        milestoneStageIndex: 2,
+        milestoneDocType: '递交回执/确认邮件'
+      },
+      phase3_maintenance: {
+        label: '中期维持',
+        uiStageIndices: [5],
+        milestoneStageIndex: null,
+        milestoneDocType: null
+      },
+      phase4_pr_sprint: {
+        label: '永居冲刺',
+        uiStageIndices: [6],
+        milestoneStageIndex: 6,
+        milestoneDocType: '永居身份证'
+      }
+    },
+
+    // ── 反向映射: UI层7阶段索引 → 数据层 stageId ──
+    ui_to_phase: {
+      0: 'phase1_evaluation',
+      1: 'phase1_evaluation',
+      2: 'phase2_onboarding',
+      3: 'phase2_onboarding',
+      4: 'phase2_onboarding',
+      5: 'phase3_maintenance',
+      6: 'phase4_pr_sprint'
+    },
+
+    // ── 攻略书关卡解锁阈值 ──
+    // guidebook phase N 需 processStage >= threshold 才能解锁
+    guide_unlock_thresholds: {
+      0: 0,
+      1: 0,
+      2: 0,
+      3: 1,
+      4: 1,
+      5: 4,
+      6: 4,
+      7: 5
+    },
+
+    // ── UI层7阶段完整元数据 ──
+    ui_stages: [
+      { uiStage: 0, name: '资格评估',  isMilestone: false, milestoneDocType: null },
+      { uiStage: 1, name: '材料准备',  isMilestone: true,  milestoneDocType: '路径确认凭证' },
+      { uiStage: 2, name: '线上申请',  isMilestone: true,  milestoneDocType: '递交回执/确认邮件' },
+      { uiStage: 3, name: '等待获批',  isMilestone: false, milestoneDocType: null },
+      { uiStage: 4, name: '获批激活',  isMilestone: true,  milestoneDocType: '签证/进入许可' },
+      { uiStage: 5, name: '抵港生活',  isMilestone: false, milestoneDocType: null },
+      { uiStage: 6, name: '永居',      isMilestone: true,  milestoneDocType: '永居身份证' }
+    ],
+
+    // ── 工具函数 ──
+    stageToUiStage: function(phaseId, uiStageIndex) {
+      if (arguments.length >= 2 && typeof uiStageIndex === 'number') return uiStageIndex;
+      var info = this.phase_to_ui[phaseId];
+      if (info && info.uiStageIndices.length > 0) return info.uiStageIndices[0];
+      return 0;
+    },
+
+    uiStageToPhase: function(uiStageIndex) {
+      return this.ui_to_phase[uiStageIndex] || 'phase1_evaluation';
+    },
+
+    getGuideUnlockState: function(processStage) {
+      processStage = Math.max(0, Math.min(6, Number(processStage) || 0));
+      var result = {};
+      for (var p = 0; p <= 7; p++) {
+        result[p] = processStage >= (this.guide_unlock_thresholds[p] || 0);
+      }
+      return result;
+    },
+
+    _validateBridgeMap: function() {
+      var issues = [];
+      if (Object.keys(this.phase_to_ui).length !== 4) issues.push('phase_to_ui应有4个phase');
+      if (Object.keys(this.ui_to_phase).length < 7) issues.push('ui_to_phase应覆盖0~6');
+      if (Object.keys(this.guide_unlock_thresholds).length !== 8) issues.push('guide_unlock_thresholds应覆盖0~7');
+      if (this.ui_stages.length !== 7) issues.push('ui_stages应有7个阶段');
+      for (var i = 0; i < this.ui_stages.length; i++) {
+        if (this.ui_stages[i].uiStage !== i) issues.push('ui_stages[' + i + '].uiStage应为' + i);
+      }
+      if (issues.length > 0) {
+        console.error('[STAGE_BRIDGE_MAP] 自校验失败:', issues.join('; '));
+        return false;
+      }
+      return true;
+    }
+  },
+
   // ============ 文档类型 ============
   DOC_TYPES: {
     ID_CARD: 'id_card',

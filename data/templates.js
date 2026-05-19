@@ -2,6 +2,19 @@
  * 住港伴 v4.1 — 12条流程模板 (PRD v3.1)
  * 基于全生命周期时间轴重构 v1.0 + V5校验
  * 每条含: 四阶段框架 + 6标准决策节点 + 置信度标注
+ *
+ * Phase 1 新增字段 (2026-05-20 — 双通道里程碑解锁):
+ *   phases[].isMilestone:       bool    — 该阶段是否设有里程碑闸门 (通道B)
+ *   phases[].milestoneDocType:  string  — 里程碑材料名称 (如"递交回执/确认邮件")
+ *   phases[].ocrValidationRule: object  — OCR校验规则 { field, pattern }
+ *
+ * 里程碑赋值表 (与 constants.js STAGE_BRIDGE_MAP 对齐):
+ *   phase1_evaluation:  isMilestone=false (资格评估+材料准备, 材料准备处为里程碑)
+ *   phase2_onboarding:  isMilestone=true,  milestoneDocType='递交回执/确认邮件'
+ *   phase3_maintenance: isMilestone=false (抵港生活, 无里程碑)
+ *   phase4_pr_sprint:   isMilestone=true,  milestoneDocType='永居身份证'
+ *
+ * ⚠️ 同步要求: CloudBase process_templates 集合需同步补充上述三个字段 (db-seed更新)
  */
 
 const { APPLICATION_PATHS } = require('./constants');

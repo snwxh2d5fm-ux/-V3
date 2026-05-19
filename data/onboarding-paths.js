@@ -37,12 +37,8 @@ const PHASE_TIME_ESTIMATES = {
   7: 'Month 6-12'
 };
 
-/** 按 arrivalScenario 解锁的 phase 列表 */
-const PHASE_UNLOCK_MAP = {
-  'pre-arrival': [0],
-  'fresh':       [0, 1, 2, 3, 4, 5, 6, 7],
-  'delayed':     [2, 3, 4, 5, 6, 7]
-};
+/** 全部8关始终可见；解锁由 guidebooks/index rebuildPhases 通过 STAGE_BRIDGE_MAP 动态判定 */
+const FULL_PHASES = [0, 1, 2, 3, 4, 5, 6, 7];
 
 /** 已拥有资产的显示名称映射 */
 const ASSET_DISPLAY_NAMES = {
@@ -193,8 +189,8 @@ function assemblePath(params) {
   var arrivalScenario = params.arrivalScenario || 'fresh';
   var existingAssets = params.existingAssets || [];
 
-  // ── 确定解锁关卡 ──
-  var unlockedPhases = PHASE_UNLOCK_MAP[arrivalScenario] || PHASE_UNLOCK_MAP['fresh'];
+  // ── 全部关卡始终返回；解锁由 guidebooks/index 动态判定 ──
+  var unlockedPhases = FULL_PHASES;
 
   // ── 筛选与排序任务 ──
   var matchedTasks = [];

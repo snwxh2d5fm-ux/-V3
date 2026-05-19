@@ -112,20 +112,69 @@ Component({
       this.setData({ showPaywall: false });
     },
 
-    confirmPaywall() {
-      this.setData({ showPaywall: false });
-      wx.showModal({
-        title: '确认切换身份',
-        content: '切换后之前的评估结果、流程进度和材料关联将被清除。确定继续？',
-        confirmText: '确认切换',
-        cancelText: '取消',
-        success: res => {
-          if (res.confirm) {
-            // 跳转会员页完成身份切换
-            wx.navigateTo({ url: '/subpkg-chat/pages/membership/index' });
-          }
-        }
+    async confirmPaywall() {
+      var self = this;
+      self.setData({ showPaywall: false });
+
+      // 第一步: 二次确认
+      var modalRes = await new Promise(function(resolve) {
+        wx.showModal({
+          title: '确认重置身份状态',
+          content: '支付 ¥599 后，你的当前流程进度、材料关联、提醒规则和本地进度将被清除。\n\n重置后可重新选择身份状态。确定继续？',
+          confirmText: '支付 ¥599',
+          cancelText: '取消',
+          success: resolve
+        });
       });
+
+      if (!modalRes.confirm) return;
+
+      // 第二步: 调用 payment 云函数拉起支付
+      try {
+        var payResult = await wx.cloud.callFunction({
+          name: 'payment',
+          data: { action: 'identityReset' }
+        });
+
+        if (payResult.result.code !== 0) {
+          wx.showToast({ title: payResult.result.msg || '支付创建失败', icon: 'none' });
+          return;
+        }
+
+        var paymentData = payResult.result.data;
+        var payParams = paymentData.payment;
+
+        // 第三步: 微信支付V3拉起
+        var payRes = await new Promise(function(resolve, reject) {
+          wx.requestPayment({
+            timeStamp: payParams.timeStamp,
+            nonceStr: payParams.nonceStr,
+            package: payParams.package,
+            signType: payParams.signType || 'RSA',
+            paySign: payParams.paySign,
+            success: function(res) { resolve(res); },
+            fail: function(err) { reject(err); }
+          });
+        });
+
+        // 第四步: 支付成功 → 清除本地storage → 跳转status-select重选
+        try { wx.removeStorageSync('__onboarding__'); } catch(e) {}
+        try { wx.removeStorageSync('__process_stage__'); } catch(e) {}
+        try { wx.removeStorageSync('__active_process_id__'); } catch(e) {}
+        try { wx.removeStorageSync('__user_status__'); } catch(e) {}
+        try { wx.removeStorageSync('__user_sub_status__'); } catch(e) {}
+
+        wx.showToast({ title: '身份已重置，请重新选择', icon: 'success', duration: 1500 });
+        setTimeout(function() {
+          wx.redirectTo({ url: '/pages/status-select/status-select?mode=reset' });
+        }, 1500);
+
+      } catch (err) {
+        // 支付取消或失败: 不做任何清理
+        if (err && err.errMsg && err.errMsg.indexOf('cancel') === -1) {
+          wx.showToast({ title: '支付失败，请重试', icon: 'none' });
+        }
+      }
     },
 
     /**
