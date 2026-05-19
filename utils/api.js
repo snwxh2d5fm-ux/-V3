@@ -8,6 +8,17 @@ const { desensitizeFields, MODES } = require('./desensitize');
 
 const BASE = 'https://api.zhugangban.com/v1';
 
+/** 构建查询字符串——替代微信不支持的 URLSearchParams */
+function buildQuery(params) {
+  var parts = [];
+  for (var key in params) {
+    if (params.hasOwnProperty(key) && params[key] !== undefined && params[key] !== null) {
+      parts.push(encodeURIComponent(key) + '=' + encodeURIComponent(params[key]));
+    }
+  }
+  return parts.length > 0 ? '?' + parts.join('&') : '';
+}
+
 function request(url, options = {}) {
   return new Promise((resolve, reject) => {
     wx.request({
@@ -54,18 +65,14 @@ async function reportUserStatus(userStatus, subStatus, milestoneData) {
 
 // 获取指引数据 (V5: 含置信度标注)
 async function fetchGuides(nodeId, options = {}) {
-  const params = new URLSearchParams();
-  if (options.confidenceLevel) params.set('confidence', options.confidenceLevel);
-  if (options.pathType) params.set('path', options.pathType);
-  return await request(`/guides/${nodeId}?${params.toString()}`);
+  var qs = buildQuery({ confidence: options.confidenceLevel, path: options.pathType });
+  return await request('/guides/' + nodeId + qs);
 }
 
 // 获取政策更新 (V5: 含影响范围分析)
 async function fetchPolicyUpdates(options = {}) {
-  const params = new URLSearchParams();
-  if (options.pathType) params.set('path', options.pathType);
-  if (options.personaId) params.set('persona', options.personaId);
-  return await request(`/policies/updates?${params.toString()}`);
+  var qs = buildQuery({ path: options.pathType, persona: options.personaId });
+  return await request('/policies/updates' + qs);
 }
 
 // 获取分类攻略内容 (V5: 含置信度标注)

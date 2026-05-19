@@ -229,9 +229,13 @@ Component({
       if (app.globalData.cloudReady && app.globalData.isLoggedIn) {
         try {
           var db = wx.cloud.database();
-          db.collection('user_profiles').where({ _openid: '{openid}' }).update({
-            data: { selectedPath: pathType, pathLabel: label, pathUpdatedAt: Date.now() }
-          });
+          var cloudUser = wx.getStorageSync('__cloud_user__') || {};
+          var openid = cloudUser._openid || app.globalData.userInfo?._openid;
+          if (openid) {
+            db.collection('user_profiles').where({ _openid: openid }).update({
+              data: { selectedPath: pathType, pathLabel: label, pathUpdatedAt: Date.now() }
+            });
+          }
         } catch(dbErr) { console.warn('[AI] DB更新失败:', dbErr); }
       }
 

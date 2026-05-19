@@ -147,50 +147,16 @@ Page({
     const activeProcess = lines[0] || null;
 
     if (!activeProcess) {
-      // 无流程但用户已选路径+状态→自动创建流程并定位阶段
-      var session = wx.getStorageSync('__session__') || {};
-      var userStatus = app.globalData.userStatus || session.userStatus || 'unapplied';
-      var selectedPath = app.globalData.selectedPath || session.selectedPath || '';
-      if (selectedPath) {
-        var stageMap = { submitted: 3, approved: 4, permanent: 6 };
-        var startStep = stageMap[userStatus] || 0;
-        var pathNames = { qmas:'优才计划', ttps_a:'高才通A类', ttps_b:'高才通B类', ttps_c:'高才通C类', asmpt:'专才计划', student_iang:'学生→IANG', dependent:'受养人', cies:'CIES投资类身份规划' };
-        // 从模板数据获取 totalCycle 和 riskLevel
-        var tplList = require('../../../data/templates').processTemplates || [];
-        var matchedTpl = tplList.find(function(t) { return t.id === selectedPath; }) || {};
-        var mockProcess = {
-          name: pathNames[selectedPath] || selectedPath,
-          pathway: selectedPath,
-          totalCycle: matchedTpl.totalCycle || '—',
-          riskLevel: matchedTpl.riskLevel || 'medium',
-          stages: [
-            { id:'stg_eval', name:'资格评估', phaseId:'phase0_evaluation', order:0, status:'completed' },
-            { id:'stg_prep', name:'材料准备', phaseId:'phase1_preparation', order:1, status:'completed' },
-            { id:'stg_submit', name:'线上申请', phaseId:'phase2_onboarding', order:0, status:'completed' },
-            { id:'stg_wait', name:'等待获批', phaseId:'phase2_onboarding', order:1, status:startStep > 3 ? 'completed' : 'in_progress' },
-            { id:'stg_activate', name:'获批激活', phaseId:'phase2_onboarding', order:2, status:startStep > 4 ? 'completed' : (startStep === 4 ? 'in_progress' : 'pending') },
-            { id:'stg_settle', name:'抵港生活', phaseId:'phase3_maintenance', order:0, status:startStep > 5 ? 'completed' : (startStep === 5 ? 'in_progress' : 'pending') },
-            { id:'stg_pr', name:'永居', phaseId:'phase4_pr', order:0, status:startStep === 6 ? 'in_progress' : 'pending' }
-          ]
-        };
-        var mockPhases = [
-          { id:'evaluation', name:'资格评估', icon:'🎯', stepIndex:0, status:startStep>0?'done':'current', materials:[], materialCount:0, doneCount:0, hasAssessBtn:true, linkDocs:false },
-          { id:'preparation', name:'材料准备', icon:'📋', stepIndex:1, status:startStep>1?'done':(startStep===1?'current':'pending'), materials:[{id:'m1',name:'身份证明文件',status:startStep>1?'completed':'locked'},{id:'m2',name:'学历证明',status:startStep>1?'completed':'locked'},{id:'m3',name:'工作证明',status:startStep>1?'completed':'locked'},{id:'m4',name:'资产证明',status:startStep>1?'completed':'locked'}], materialCount:4, doneCount:startStep>1?4:0, hasAssessBtn:false, linkDocs:true },
-          { id:'submission', name:'线上申请', icon:'📤', stepIndex:2, status:startStep>2?'done':(startStep===2?'current':'pending'), materials:[], materialCount:0, doneCount:0, hasAssessBtn:false, linkDocs:false },
-          { id:'waiting', name:'等待获批', icon:'⏳', stepIndex:3, status:startStep>3?'done':(startStep===3?'current':'pending'), materials:[], materialCount:0, doneCount:0, hasAssessBtn:false, linkDocs:false },
-          { id:'activation', name:'获批激活', icon:'✅', stepIndex:4, status:startStep>4?'done':(startStep===4?'current':'pending'), materials:[], materialCount:0, doneCount:0, hasAssessBtn:false, linkDocs:false },
-          { id:'settlement', name:'抵港生活', icon:'🏠', stepIndex:5, status:startStep>5?'done':(startStep===5?'current':'pending'), materials:[], materialCount:0, doneCount:0, hasAssessBtn:false, linkDocs:false },
-          { id:'pr', name:'永居', icon:'🏁', stepIndex:6, status:startStep===6?'current':'pending', materials:[], materialCount:0, doneCount:0, hasAssessBtn:false, linkDocs:false }
-        ];
-        var doneCount = mockProcess.stages.filter(function(s){return s.status==='completed';}).length;
-        var prog = Math.round((doneCount / mockProcess.stages.length) * 100);
-        this.setData({ activeProcess: mockProcess, phases: mockPhases, progress: prog, materialDoneCount: doneCount, materialTotalCount: mockProcess.stages.length, expandedPhaseIdx: startStep });
-        return;
-      }
-      this.setData({ activeProcess: null, phases: [], progress: 0, expandedPhaseIdx: -1 });
+      // 无活跃流程 → 引导用户选择身份路径
+      this.setData({
+        activeProcess: null,
+        phases: [],
+        progress: 0,
+        expandedPhaseIdx: -1,
+        showDirectPathPicker: true
+      });
       return;
     }
-
     // 7步框架（用户视角）
     const SEVEN_STEPS = [
       { id: 'evaluation',  name: '资格评估',   icon: '🎯', desc: 'AI评估最佳身份路径',       minTime: '1-2周',   hasAssessBtn: true },

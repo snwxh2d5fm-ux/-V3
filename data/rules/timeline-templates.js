@@ -497,8 +497,8 @@ const PATH_TEMPLATES = {
     sharedPhases: ['phase3', 'phase5', 'phase7']
   },
 
-  iang: {
-    pathType: 'iang',
+  student_iang: {
+    pathType: 'student_iang',
     pathName: 'IANG（非本地毕业生留港）',
     visaInfo: {
       initialValidityMonths: 12,
@@ -650,7 +650,7 @@ const PATH_SPECIFIC_RENEWAL_NODES = {
 // ttps_b, ttps_c, iang 与 ttps_a 共享 TT-RV 系列节点
 PATH_SPECIFIC_RENEWAL_NODES.ttps_b = PATH_SPECIFIC_RENEWAL_NODES.ttps_a;
 PATH_SPECIFIC_RENEWAL_NODES.ttps_c = PATH_SPECIFIC_RENEWAL_NODES.ttps_a;
-PATH_SPECIFIC_RENEWAL_NODES.iang = PATH_SPECIFIC_RENEWAL_NODES.ttps_a;
+PATH_SPECIFIC_RENEWAL_NODES.student_iang = PATH_SPECIFIC_RENEWAL_NODES.ttps_a;
 
 // ═══════════════════════════════════════════════════════════════
 // 通用Phase 3 线上申请节点
@@ -669,7 +669,7 @@ const PHASE3_GENERIC_APPLY_NODES = [
 
 /**
  * 获取指定路径的完整时间线模板
- * @param {string} pathType - 'qmas'|'ttps_a'|'ttps_b'|'ttp_c'|'asmtp'|'iang'|'dependent'
+ * @param {string} pathType - 'qmas'|'ttps_a'|'ttps_b'|'ttp_c'|'asmtp'|'student_iang'|'dependent'
  * @returns {object} 路径时间线模板（含phase3/4/6通用节点填充）
  */
 function getTemplate(pathType) {

@@ -47,17 +47,34 @@ Page({
       }
 
       if (!result || result.code !== 0) {
-        await this.localLogin();
-      } else {
-        await this.cloudLogin(result);
+        // 云函数登录失败——阻断流程，不降级到本地模式
+        wx.showModal({
+          title: '登录失败',
+          content: '身份验证服务暂时不可用（' + (result ? result.msg || '未知错误' : '网络异常') + '）。\n\n请检查网络连接后重试。如问题持续，请联系客服。',
+          showCancel: true,
+          cancelText: '返回',
+          confirmText: '重试',
+          success: (modalRes) => {
+            if (modalRes.confirm) this.handleLogin();
+          }
+        });
+        this.setData({ isLoading: false });
+        return;
       }
-
+      await this.cloudLogin(result);
       this.navigateAfterLogin();
     } catch (e) {
       console.error('[登录] 微信登录失败:', e);
-      await this.localLogin();
-      wx.showToast({ title: '已进入本地模式', icon: 'success' });
-      setTimeout(() => { wx.switchTab({ url: '/pages/guidebooks/index/index' }); }, 800);
+      wx.showModal({
+        title: '网络异常',
+        content: '无法连接身份验证服务。请检查网络连接后重试。',
+        showCancel: true,
+        cancelText: '返回',
+        confirmText: '重试',
+        success: (modalRes) => {
+          if (modalRes.confirm) this.handleLogin();
+        }
+      });
     } finally {
       this.setData({ isLoading: false });
     }
@@ -177,20 +194,6 @@ Page({
       userStatus: app.globalData.userStatus,
       membershipLevel: app.globalData.membershipLevel,
       phoneBound: app.globalData.phoneBound
-    });
-  },
-
-  async localLogin() {
-    app.globalData.isLoggedIn = true;
-    app.globalData.token = 'local_' + await this.generateRandomToken();
-    app.globalData.userInfo = { nickName: '住港伴用户' };
-    app.globalData.userStatus = 'unapplied';
-    app.globalData.membershipLevel = 'free';
-    app.saveSession({
-      token: app.globalData.token,
-      userInfo: app.globalData.userInfo,
-      userStatus: app.globalData.userStatus,
-      membershipLevel: app.globalData.membershipLevel
     });
   },
 
