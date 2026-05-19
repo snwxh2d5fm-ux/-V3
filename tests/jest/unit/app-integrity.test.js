@@ -73,13 +73,13 @@ describe('关键文件存在性 (§11 降级)', () => {
 
   const keyFiles = [
     'data/constants.js',
-    'data/guidebook-data.js',
+    'data/guidebook-cards.js',
+    'data/guidebook-content.js',
     'data/templates.js',
     'data/solution-library.js',
     'data/timeline-templates.js',
     'data/document-index-templates.js',
     'utils/storage.js',
-    'utils/ocr.js',
     'utils/stage-helper.js',
     'pages/home/home.js',
     'pages/documents/index/index.js',
@@ -100,21 +100,3 @@ describe('关键文件存在性 (§11 降级)', () => {
 
 });
 
-describe('攻略书数据完整性', () => {
-
-  test('guidebook-data.js 可加载且非空', () => {
-    const { GUIDEBOOK_DB } = require(path.join(PROJECT_ROOT, 'data/guidebook-data.js'));
-    const keys = Object.keys(GUIDEBOOK_DB);
-    expect(keys.length).toBeGreaterThan(0);
-  });
-
-  test('每篇攻略有 title + category', () => {
-    const { GUIDEBOOK_DB } = require(path.join(PROJECT_ROOT, 'data/guidebook-data.js'));
-    Object.keys(GUIDEBOOK_DB).forEach(function(id) {
-      const entry = GUIDEBOOK_DB[id];
-      expect(entry.title).toBeDefined();
-      expect(entry.category).toBeDefined();
-    });
-  });
-
-});

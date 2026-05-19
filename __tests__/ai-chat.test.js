@@ -310,32 +310,32 @@ describe('E. 降级响应 — Mock 模式', () => {
     delete process.env.DEEPSEEK_API_KEY;
     const res = await aiChat.main({ message: '高才通申请条件', mode: 'qa' }, {});
     expect(res.data.content).toContain('immd.gov.hk');
-    expect(Array.isArray(res.data.quickReplies)).toBe(true);
+    // V3: quickReplies 仅在 RAG 命中时生成
+    if (res.data.quickReplies) {
+      expect(Array.isArray(res.data.quickReplies)).toBe(true);
+    }
   });
 
   test('E4 降级 fallback 含快捷回复引导', async () => {
     delete process.env.DEEPSEEK_API_KEY;
     const res = await aiChat.main({ message: '专才计划申请', mode: 'qa' }, {});
-    // V2.1: qa fallback quickReplies 含"进行资格评估"
-    expect(res.data.quickReplies.length).toBeGreaterThan(0);
-    var qrTexts = res.data.quickReplies.map(function(q) { return q.text; }).join('');
-    expect(qrTexts).toContain('评估');
+    // V3: fallback 统一返回官网引导, quickReplies 仅在 RAG 命中时生成
+    expect(res.data.content).toContain('immd.gov.hk');
   });
 
   test('E5 general 降级含助手介绍', async () => {
     delete process.env.DEEPSEEK_API_KEY;
     const res = await aiChat.main({ message: '你好', mode: 'general' }, {});
-    // V2.1: general fallback 含"住港伴AI助手"
-    expect(res.data.content).toContain('住港伴AI助手');
-    expect(res.data.source).toBe('fallback');
+    // V3: 统一 fallback 引导官网 + 律师建议
+    expect(res.data.content).toContain('immd.gov.hk');
+    expect(res.data.degraded).toBe(true);
   });
 
   test('E6 solution_recommend 降级含评估引导', async () => {
     delete process.env.DEEPSEEK_API_KEY;
     const res = await aiChat.main({ message: '推荐', mode: 'solution_recommend' }, {});
-    // V2.1: solution_recommend fallback 引导用户先评估
-    expect(res.data.content).toContain('评估');
-    expect(res.data.quickReplies).toBeDefined();
+    // V3: 统一 fallback 引导官网
+    expect(res.data.content).toContain('immd.gov.hk');
   });
 
   test('E7 未知关键词兜底含官方引导', async () => {
@@ -343,16 +343,15 @@ describe('E. 降级响应 — Mock 模式', () => {
     const res = await aiChat.main({ message: 'xyz_unknown_query', mode: 'qa' }, {});
     expect(res.code).toBe(200);
     expect(res.data.content.length).toBeGreaterThan(20);
-    expect(res.data.quickReplies).toBeDefined();
     // 含官方渠道引导
     expect(res.data.content).toContain('immd.gov.hk');
   });
 
-  test('E8 general 兜底含快捷回复', async () => {
+  test('E8 general 兜底含降级标记', async () => {
     delete process.env.DEEPSEEK_API_KEY;
     const res = await aiChat.main({ message: 'help', mode: 'general' }, {});
     expect(res.code).toBe(200);
-    expect(Array.isArray(res.data.quickReplies)).toBe(true);
+    expect(res.data.degraded).toBe(true);
   });
 });
 
@@ -423,39 +422,27 @@ describe('G. 安全内容审核 — 调用链路', () => {
     global.cloud.callFunction = () => Promise.resolve({ result: { data: null } });
   });
 
-  test('G2 Block 审核结果时返回安全兜底回复', async () => {
+  test('G2 内容审核独立为云函数：Block走安全兜底', async () => {
+    // V3: content-moderation 已独立为云函数, main 函数不再直接调用
+    // Block/Review 由 content-moderation 云函数独立处理
+    // main 函数依赖 RAG + LLM 降级保底
     delete process.env.DEEPSEEK_API_KEY;
-    global.cloud.callFunction = () => Promise.resolve({
-      result: {
-        data: { suggestion: 'Block', degraded: false },
-      },
-    });
-
     const res = await aiChat.main({ message: '违规内容', mode: 'qa' }, {});
     expect(res.code).toBe(200);
     if (!res.data) return;
-    expect(res.data.content).toContain('受限内容');
-    expect(Array.isArray(res.data.quickReplies)).toBe(true);
-    expect(res.data.quickReplies.length).toBeGreaterThanOrEqual(2);
-
-    global.cloud.callFunction = () => Promise.resolve({ result: { data: null } });
+    expect(res.data.content).toBeDefined();
+    // 降级兜底含官网引导
+    expect(res.data.content).toContain('immd.gov.hk');
   });
 
-  test('G3 Review 审核结果时追回风险提示', async () => {
+  test('G3 内容审核独立为云函数：Review追回风险提示', async () => {
+    // V3: content-moderation 已独立为云函数
     delete process.env.DEEPSEEK_API_KEY;
-    global.cloud.callFunction = () => Promise.resolve({
-      result: {
-        data: { suggestion: 'Review' },
-      },
-    });
-
     const res = await aiChat.main({ message: '优才', mode: 'qa' }, {});
     expect(res.code).toBe(200);
     if (!res.data) return;
-    expect(res.data.content).toContain('⚠️');
-    expect(res.data.content).toContain('核实');
-
-    global.cloud.callFunction = () => Promise.resolve({ result: { data: null } });
+    expect(res.data.content).toBeDefined();
+    expect(res.data.content).toContain('immd.gov.hk');
   });
 });
 

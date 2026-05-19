@@ -17,6 +17,31 @@
 global.cloud = { callFunction: () => Promise.resolve({ result: { data: null } }) };
 process.env.DEEPSEEK_API_KEY = 'sk-mock';
 
+// Mock @cloudbase/node-sdk — CI 环境无腾讯云凭证
+jest.mock('@cloudbase/node-sdk', () => {
+  const mockDb = () => ({
+    collection: () => ({
+      where: () => ({ get: () => Promise.resolve({ data: [] }) }),
+      orderBy: () => ({ get: () => Promise.resolve({ data: [] }) }),
+      get: () => Promise.resolve({ data: [] }),
+      add: () => Promise.resolve({ _id: 'mock-id' }),
+    }),
+    command: { in: () => ({}), and: () => ({}), or: () => ({}) },
+    RegExp: () => ({}),
+  });
+  return {
+    init: () => ({
+      ai: {
+        generateText: () => Promise.resolve({ text: '[mock] AI 响应' }),
+        streamText: () => Promise.resolve({ text: '[mock] AI 流式响应' }),
+      },
+      database: mockDb,
+    }),
+    database: mockDb,
+    callFunction: () => Promise.resolve({ result: {} }),
+  };
+}, { virtual: true });
+
 const aiChat = require('../cloudfunctions/ai-chat/index.js');
 
 // ============================================================
@@ -81,37 +106,18 @@ describe('U1. 领域覆盖度 — 12条路径 × 8类问题', () => {
     ],
   };
 
-  test('U1.1 Mock 逐类覆盖 — 每个分类至少有1个关键词命中', async () => {
+  test('U1.1 Mock 降级覆盖 — 代表性查询均返回官网引导兜底', async () => {
     const savedKey = process.env.DEEPSEEK_API_KEY;
     delete process.env.DEEPSEEK_API_KEY;
 
-    const results = {};
-    for (const [category, queries] of Object.entries(USER_QUERIES)) {
-      results[category] = { total: queries.length, matched: 0, fallback: 0 };
-      for (const q of queries) {
-        const res = await aiChat.main({ message: q, mode: 'qa' }, {});
-        if (res.code === 200 && res.data) {
-          // 判断是否命中了特异性回答(非兜底)
-          const isFallback = res.data.content.includes('建议您查阅香港入境事务处官方网站');
-          if (isFallback) {
-            results[category].fallback++;
-          } else {
-            results[category].matched++;
-          }
-        }
-      }
+    // V3: 无 API key 时统一走 fallback，抽样验证
+    const sampleQueries = ['优才计划最新条件是什么', '高才通A类收入证明怎么准备', '专才计划需要雇主配合吗'];
+    for (const q of sampleQueries) {
+      const res = await aiChat.main({ message: q, mode: 'qa' }, {});
+      expect(res.code).toBe(200);
+      // V3: 统一 fallback 引导官网
+      expect(res.data.content).toContain('immd.gov.hk');
     }
-
-    console.log('\n📊 Mock 回答覆盖度:');
-    for (const [cat, r] of Object.entries(results)) {
-      const rate = ((r.matched / r.total) * 100).toFixed(0);
-      console.log(`  ${cat}: ${r.matched}/${r.total} (${rate}%) — 兜底 ${r.fallback}`);
-    }
-
-    // qmas/ttps/asmpt/dependent 有硬编码回答，应 >0
-    expect(results.qmas.matched).toBeGreaterThan(0);
-    expect(results.ttps.matched).toBeGreaterThan(0);
-    expect(results.asmtp.matched).toBeGreaterThan(0);
 
     process.env.DEEPSEEK_API_KEY = savedKey;
   });
@@ -120,9 +126,9 @@ describe('U1. 领域覆盖度 — 12条路径 × 8类问题', () => {
     const savedKey = process.env.DEEPSEEK_API_KEY;
     delete process.env.DEEPSEEK_API_KEY;
 
-    // IANG 关键词不在 mock 匹配列表中 → 全部兜底
+    // V3: 统一 fallback 引导官网
     const res = await aiChat.main({ message: 'IANG签证怎么申请', mode: 'qa' }, {});
-    expect(res.data.content).toContain('入境事务处');
+    expect(res.data.content).toContain('immd.gov.hk');
 
     process.env.DEEPSEEK_API_KEY = savedKey;
   });
@@ -136,11 +142,9 @@ describe('U1. 领域覆盖度 — 12条路径 × 8类问题', () => {
 
     // 兜底回答应包含:
     // ① 承认无法回答 ② 指引官方渠道 ③ 免责声明
-    expect(content).toMatch(/入境事务处|官方网站|immd\.gov\.hk/);
-    expect(content).toMatch(/持牌律师|法律意见/);
-    // 含快捷回复引导用户继续
-    expect(Array.isArray(res.data.quickReplies)).toBe(true);
-    expect(res.data.quickReplies.length).toBeGreaterThanOrEqual(2);
+    expect(content).toContain('immd.gov.hk');
+    expect(content).toContain('持牌律师');
+    // V3: quickReplies 仅在 RAG 命中时生成
 
     process.env.DEEPSEEK_API_KEY = savedKey;
   });
@@ -155,15 +159,14 @@ describe('U2. Mock 降级质量', () => {
     const savedKey = process.env.DEEPSEEK_API_KEY;
     delete process.env.DEEPSEEK_API_KEY;
 
-    // v2.0: 无 API 时走 RAG→fallback, 无硬编码 mock 回答
-    // 验证所有 qa 意图均触发 fallback 兜底 (非报错)
+    // V3: 无 API 时走统一 fallback, 无硬编码关键词回答
     const qaQueries = ['优才计划', '高才通', '专才'];
     for (const q of qaQueries) {
       const res = await aiChat.main({ message: q, mode: 'qa' }, {});
       expect(res.code).toBe(200);
       expect(res.data.content.length).toBeGreaterThan(50);
       // fallback 引导用户去官网
-      expect(res.data.content).toContain('入境事务处');
+      expect(res.data.content).toContain('immd.gov.hk');
       // 不含旧计分制概念
       expect(res.data.content).not.toContain('80分');
       expect(res.data.content).not.toContain('计分');
@@ -177,9 +180,9 @@ describe('U2. Mock 降级质量', () => {
     delete process.env.DEEPSEEK_API_KEY;
 
     const tests = [
-      { msg: '优才', key: '入境事务处' },
-      { msg: '高才通', key: '入境事务处' },
-      { msg: '专才', key: '入境事务处' },
+      { msg: '优才', key: 'immd.gov.hk' },
+      { msg: '高才通', key: 'immd.gov.hk' },
+      { msg: '专才', key: 'immd.gov.hk' },
     ];
 
     for (const t of tests) {
@@ -265,8 +268,8 @@ describe('U3. 模式分配合理性', () => {
 
     const res = await aiChat.main({ message: '你好', mode: 'nonexistent' }, {});
     expect(res.code).toBe(200);  // 不报错
-    // 降级为 general mock
-    expect(res.data.content).toContain('住港伴AI助手');
+    // V3: 降级为统一 fallback
+    expect(res.data.content).toContain('immd.gov.hk');
 
     process.env.DEEPSEEK_API_KEY = savedKey;
   });
@@ -277,7 +280,8 @@ describe('U3. 模式分配合理性', () => {
 
     const res = await aiChat.main({ message: '你好' }, {});
     expect(res.code).toBe(200);
-    expect(res.data.content).toContain('住港伴AI助手');
+    // V3: 无 API key 时统一 fallback
+    expect(res.data.content).toContain('immd.gov.hk');
 
     process.env.DEEPSEEK_API_KEY = savedKey;
   });
@@ -325,19 +329,15 @@ describe('U4. 响应质量标准', () => {
     expect(p).toContain('IANG');
   });
 
-  test('U4.3 敏感问题回答有免责声明路径', async () => {
+  test('U4.3 敏感问题回答有安全兜底', async () => {
     const savedKey = process.env.DEEPSEEK_API_KEY;
     delete process.env.DEEPSEEK_API_KEY;
 
-    // Block 审核时返回安全兜底
-    global.cloud.callFunction = () => Promise.resolve({
-      result: { data: { suggestion: 'Block', degraded: false } }
-    });
-
+    // V3: 内容审核独立为云函数, main 走统一 fallback
     const res = await aiChat.main({ message: '怎么造假材料', mode: 'qa' }, {});
-    expect(res.data.content).toContain('受限内容');
+    expect(res.code).toBe(200);
+    expect(res.data.content).toContain('immd.gov.hk');
 
-    global.cloud.callFunction = () => Promise.resolve({ result: { data: null } });
     process.env.DEEPSEEK_API_KEY = savedKey;
   });
 
@@ -346,9 +346,8 @@ describe('U4. 响应质量标准', () => {
     delete process.env.DEEPSEEK_API_KEY;
 
     const res = await aiChat.main({ message: '你好', mode: 'general' }, {});
-    // 应列出能做什么
-    expect(res.data.content).toContain('评估');
-    expect(res.data.content).toContain('检索');
+    // V3: 无 API key 时统一 fallback 引导官网
+    expect(res.data.content).toContain('immd.gov.hk');
 
     process.env.DEEPSEEK_API_KEY = savedKey;
   });
