@@ -147,6 +147,10 @@ Page({
 
   // ★ 通道A: 完成当前阶段所有步骤 → 自动推进
   completeAllSteps: async function(e) {
+    // 防重入：避免observer/setData循环触发
+    if (this.__completingAllSteps) return;
+    this.__completingAllSteps = true;
+
     console.log('[completeAllSteps] 触发', JSON.stringify(e.currentTarget.dataset));
     var index = e.currentTarget.dataset.stageIndex;
     console.log('[completeAllSteps] index=' + index + ' phases.length=' + (this.data.phases ? this.data.phases.length : 0));
@@ -164,8 +168,8 @@ Page({
     var app = getApp();
     var activeProcess = app.globalData.activeProcess;
     console.log('[completeAllSteps] activeProcess=' + (activeProcess ? 'YES' : 'NO') + ' stages=' + (activeProcess && activeProcess.stages ? activeProcess.stages.length : 0));
-    if (!activeProcess || !activeProcess.stages) {
-      wx.showToast({ title: '未找到活跃流程，请先选择路径', icon: 'none' });
+    if (!activeProcess || !activeProcess.stages || activeProcess.stages.length === 0) {
+      wx.showToast({ title: '请先在流程控选择身份路径，创建流程', icon: 'none', duration: 3000 });
       return;
     }
 
