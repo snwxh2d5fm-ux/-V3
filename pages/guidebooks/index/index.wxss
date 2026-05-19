@@ -132,6 +132,14 @@
   font-size: var(--font-lg);
   margin-left: 8rpx;
 }
+.phase-lock-hint {
+  padding: 16rpx 28rpx;
+  background: var(--gray-50);
+  border-top: 1rpx solid var(--gray-200);
+  font-size: var(--font-xs);
+  color: var(--gray-500);
+  text-align: center;
+}
 
 /* ===== ¥9.90 Unlock Banner ===== */
 .unlock-banner {

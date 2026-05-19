@@ -63,16 +63,21 @@
             class="phase-card {{item.unlocked===false?'locked':''}} {{item.expanded?'expanded':''}}">
         <view class="phase-header" data-phase="{{item.phase}}" bindtap="onPhaseTap">
           <view class="phase-left">
-            <text class="phase-icon">{{item.unlocked===false?'🔒':(item.requiredCompleted>=item.totalRequired?'✅':'●')}}</text>
+            <text class="phase-icon">{{item.unlocked===false?'🔒':(item.totalRequired>0&&item.requiredCompleted>=item.totalRequired?'✅':'●')}}</text>
             <view class="phase-info">
               <text class="phase-name">关卡{{item.phase}}: {{item.name}}</text>
               <text class="phase-progress">{{item.requiredCompleted}}/{{item.totalRequired}} 必修</text>
             </view>
           </view>
-          <text wx:if="{{item.unlocked!==false}}" class="phase-toggle">{{item.expanded?'▲':'▼'}}</text>
+          <text class="phase-toggle">{{item.expanded?'▲':'▼'}}</text>
         </view>
 
-        <view wx:if="{{item.unlocked!==false && item.expanded}}" class="task-list">
+        <!-- 锁定关卡解锁提示 -->
+        <view wx:if="{{item.unlocked===false}}" class="phase-lock-hint">
+          <text>🔒 随流程控推进解锁，或 ¥9.90 即刻提前解锁全部关卡</text>
+        </view>
+
+        <view wx:if="{{item.expanded}}" class="task-list">
           <!-- 找房向导入口 — 关卡3内部，始终可进入 -->
           <view wx:if="{{item.phase===3}}" class="housing-banner" bindtap="onHousingBannerTap">
             <text>🏠 不确定住哪个区？先做找房向导（30秒）</text>
