@@ -12,6 +12,22 @@ var STORAGE_KEY = '__onboarding__';
 function getProgress() {
   try {
     var raw = wx.getStorageSync(STORAGE_KEY);
+    // P0-E fix: 从云端拉取最新进度 (跨设备同步)
+    if (wx.cloud && wx.cloud.callFunction) {
+      wx.cloud.callFunction({
+        name: 'guidebook-sync',
+        data: { action: 'getProgress' }
+      }).then(function(res) {
+        if (res.result && res.result.code === 0 && res.result.data && res.result.data.progress) {
+          var cloudProgress = res.result.data.progress;
+          if (!raw || (cloudProgress.updatedAt && (!raw.updatedAt || new Date(cloudProgress.updatedAt) > new Date(raw.updatedAt)))) {
+            wx.setStorageSync(STORAGE_KEY, cloudProgress);
+          }
+        }
+      }).catch(function(e) {
+        console.warn('[OnboardingStorage] Cloud pull failed:', e.errMsg);
+      });
+    }
     if (!raw) return null;
     return raw;
   } catch (e) {

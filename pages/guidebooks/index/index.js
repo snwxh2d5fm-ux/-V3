@@ -80,6 +80,8 @@ Page({
       this.refreshProgress();
       // Refresh housingWizardDone from storage (persists across sessions)
       this.setData({ housingWizardDone: storage.isHousingWizardDone() });
+      // P0-E fix: 从云端拉取进度副本，与本地合并，解决跨设备同步
+      this._syncCloudProgress();
     }
   },
   onPullDownRefresh: function() {
@@ -359,6 +361,72 @@ Page({
     });
   },
 
+  /**
+   * P0-E fix: 从云端拉取进度，与本地合并
+   *
+   * 跨设备场景: 设备A完成的任务在设备B上通过本方法同步可见。
+   * 策略: 云端时间戳更新 → 云端覆盖本地对应字段; 本地未同步的任务保留。
+   */
+  _syncCloudProgress: function() {
+    var self = this;
+    if (!wx.cloud || !wx.cloud.callFunction) return;
+    wx.cloud.callFunction({
+      name: 'guidebook-sync',
+      data: { action: 'getProgress' }
+    }).then(function(res) {
+      if (!res || !res.result || res.result.code !== 0) return;
+      var cloudData = res.result.data;
+      if (!cloudData || !cloudData.progress) return;
+      var cloudProgress = cloudData.progress;
+      var localProgress = storage.getProgress();
+      if (!localProgress) return;
+
+      // Timestamp 比对: 云端更新则合并
+      var cloudTime = cloudProgress.updatedAt ? new Date(cloudProgress.updatedAt).getTime() : 0;
+      var localTime = localProgress.updatedAt ? new Date(localProgress.updatedAt).getTime() : 0;
+      if (cloudTime <= localTime) return; // 本地已是最新
+
+      // 云端更新 → 合并任务 (云端覆盖, 保留本地独有)
+      if (cloudProgress.tasks) {
+        if (!localProgress.tasks) localProgress.tasks = {};
+        var cloudTasks = cloudProgress.tasks;
+        for (var taskId in cloudTasks) {
+          if (cloudTasks.hasOwnProperty(taskId)) {
+            localProgress.tasks[taskId] = cloudTasks[taskId];
+          }
+        }
+      }
+
+      // 合并关卡状态
+      if (cloudProgress.phases) {
+        if (!localProgress.phases) localProgress.phases = {};
+        var cloudPhases = cloudProgress.phases;
+        for (var phaseKey in cloudPhases) {
+          if (cloudPhases.hasOwnProperty(phaseKey)) {
+            if (!localProgress.phases[phaseKey]) {
+              localProgress.phases[phaseKey] = cloudPhases[phaseKey];
+            } else if (cloudPhases[phaseKey].completed) {
+              localProgress.phases[phaseKey].completed = true;
+              localProgress.phases[phaseKey].completedAt = cloudPhases[phaseKey].completedAt;
+            }
+          }
+        }
+      }
+
+      // 同步 currentPhase (取较大值)
+      if (typeof cloudProgress.currentPhase === 'number') {
+        localProgress.currentPhase = Math.max(localProgress.currentPhase || 0, cloudProgress.currentPhase);
+      }
+
+      // 持久化合并结果
+      storage.saveProgress(localProgress);
+      // 刷新 UI
+      self.refreshProgress();
+    }).catch(function(e) {
+      console.warn('[Guidebooks] Cloud progress sync failed (non-blocking):', e && e.errMsg);
+    });
+  },
+
   // ── Path setup dialog ──
   onPathConfirm: function(e) {
     var params = e.detail;
@@ -379,15 +447,38 @@ Page({
       wx.hideLoading();
       if (res.result.code === 0) {
         var payData = res.result.data;
+        // P0-A fix: 空值防御 — payData.payment 可能因网络异常缺失
+        if (!payData || !payData.payment || !payData.payment.timeStamp) {
+          wx.showToast({ title: '支付参数异常，请重试', icon: 'none' });
+          return;
+        }
+        var payParams = payData.payment;
         wx.requestPayment({
-          timeStamp: payData.payment.timeStamp,
-          nonceStr: payData.payment.nonceStr,
-          package: payData.payment.package,
-          signType: payData.payment.signType || 'RSA',
-          paySign: payData.payment.paySign,
-          success: function() {
-            wx.showToast({ title: '全部关卡已解锁！', icon: 'success' });
-            self.init();
+          timeStamp: payParams.timeStamp,
+          nonceStr: payParams.nonceStr,
+          package: payParams.package,
+          signType: payParams.signType || 'RSA',
+          paySign: payParams.paySign,
+          success: async function() {
+            // P0-C fix: 支付成功后调用 confirmPayment 触发服务端验单
+            try {
+              var confirmRes = await wx.cloud.callFunction({
+                name: 'payment',
+                data: { action: 'confirmPayment', orderId: payData.orderId }
+              });
+              if (confirmRes.result && confirmRes.result.code === 0) {
+                // 已确认支付完成，服务端已写 guidebookAllUnlocked，刷新
+                wx.showToast({ title: '全部关卡已解锁！', icon: 'success' });
+                self.init();
+              } else {
+                // V3回调可能已处理，仍刷新重试
+                setTimeout(function() { self.init(); }, 1500);
+                wx.showToast({ title: '订单确认中，稍后刷新查看', icon: 'none' });
+              }
+            } catch(e) {
+              // confirmPayment 网络异常时仍尝试刷新
+              setTimeout(function() { self.init(); }, 1500);
+            }
           },
           fail: function(err) {
             if (err.errMsg.indexOf('cancel') === -1) {

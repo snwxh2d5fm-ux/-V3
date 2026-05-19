@@ -100,10 +100,11 @@ async function getProgress(openid) {
  * renewalDossier.items 采用字段级合并 (按 taskId 去重)
  */
 function resolveConflict(cloudProgress, localProgress) {
-  // 场景A: 云端无数据
+  // 场景A: 云端无数据 — deepClone 防止后续 sanitizeProgress 突变入参
   if (!cloudProgress) {
-    localProgress._conflictStrategy = 'push';
-    return sanitizeProgress(localProgress);
+    const cloned = deepClone(localProgress);
+    cloned._conflictStrategy = 'push';
+    return sanitizeProgress(cloned);
   }
 
   // 场景B: 本地无数据 (由调用方处理，此处不会进入)
@@ -183,27 +184,29 @@ function resolveConflict(cloudProgress, localProgress) {
   return sanitizeProgress(winner);
 }
 
-/** 脱敏: 移除本地路径，仅保留任务状态和材料类型 */
+/** 脱敏: 移除本地路径，仅保留任务状态和材料类型。在副本上操作，不污染入参。 */
 function sanitizeProgress(progress) {
   if (!progress) return progress;
-  if (progress.tasks) {
-    for (const key of Object.keys(progress.tasks)) {
-      const task = progress.tasks[key];
+  // P0-B fix: deep clone 再操作，不修改原始入参
+  const cloned = JSON.parse(JSON.stringify(progress));
+  if (cloned.tasks) {
+    for (const key of Object.keys(cloned.tasks)) {
+      const task = cloned.tasks[key];
       if (task && task.imagePath) {
         delete task.imagePath;
       }
     }
   }
-  if (progress.renewalDossier) {
+  if (cloned.renewalDossier) {
     for (const cat of ['address', 'employment', 'family', 'visa']) {
-      if (progress.renewalDossier[cat] && progress.renewalDossier[cat].items) {
-        for (const item of progress.renewalDossier[cat].items) {
+      if (cloned.renewalDossier[cat] && cloned.renewalDossier[cat].items) {
+        for (const item of cloned.renewalDossier[cat].items) {
           if (item.imagePath) delete item.imagePath;
         }
       }
     }
   }
-  return progress;
+  return cloned;
 }
 
 function deepClone(obj) {

@@ -110,7 +110,69 @@
   box-shadow: var(--shadow-sm);
   transition: opacity var(--duration-fast);
 }
-.phase-card.locked { opacity: 0.5; }
+.phase-card.locked {
+  opacity: 0.55;
+  background: var(--gray-100);
+  box-shadow: none;
+  border: 1rpx dashed var(--gray-300);
+}
+.phase-card.locked .phase-header {
+  color: var(--gray-400);
+}
+.phase-card.locked .phase-name {
+  color: var(--gray-500);
+}
+.phase-card.locked .task-item {
+  pointer-events: none;
+}
+.phase-card.locked .task-item text {
+  color: var(--gray-400);
+}
+.lock-icon {
+  font-size: var(--font-lg);
+  margin-left: 8rpx;
+}
+
+/* ===== ¥9.90 Unlock Banner ===== */
+.unlock-banner {
+  margin: 0 28rpx 16rpx;
+  padding: 24rpx 28rpx;
+  background: linear-gradient(135deg, #EFF6FF 0%, #F5F3FF 100%);
+  border-radius: var(--radius);
+  border: 1rpx solid var(--blue-light);
+}
+.unlock-banner__options {
+  display: flex;
+  gap: 16rpx;
+}
+.unlock-option {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 8rpx;
+  padding: 20rpx 16rpx;
+  background: var(--white);
+  border-radius: var(--radius-sm);
+  text-align: center;
+}
+.unlock-option--quick {
+  border: 2rpx solid var(--color-primary);
+}
+.unlock-option__title {
+  font-size: var(--font-md);
+  font-weight: 600;
+  color: var(--gray-800);
+}
+.unlock-option__desc {
+  font-size: var(--font-xs);
+  color: var(--gray-500);
+  line-height: 1.4;
+}
+.unlock-option .btn {
+  margin-top: 8rpx;
+  width: 100%;
+}
 .phase-header {
   display: flex;
   align-items: center;
