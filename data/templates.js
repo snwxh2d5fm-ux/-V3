@@ -265,7 +265,7 @@ module.exports = {
     {
       "id": "asmpt",
       "name": "专才计划·雇主担保",
-      "pathType": APPLICATION_PATHS.ASMPT,
+      "pathType": APPLICATION_PATHS.ASMTP,
       "totalCycle": "7年",
       "firstVisa": "~2年",
       "riskLevel": "medium",

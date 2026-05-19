@@ -53,6 +53,7 @@ Page({
     ocrImagePath: '',
     ocrResult: null,
     ocrParsing: false,
+    showRawText: false,
 
     // 延期弹窗
     showDeferModal: false,
@@ -635,6 +636,10 @@ Page({
         ocrParsing: false
       });
     }
+  },
+
+  toggleRawText() {
+    this.setData({ showRawText: !this.data.showRawText });
   },
 
   useOCRDate(e) {

@@ -189,6 +189,14 @@
         </view>
         <text class="ocr-no-result" wx:else>{{ocrResult.message || '未识别到日期'}}</text>
 
+        <!-- OCR 原始识别文本（可展开） -->
+        <view wx:if="{{ocrResult.rawText}}" class="ocr-raw-section">
+          <view class="ocr-raw-toggle" bindtap="toggleRawText">
+            <text>{{showRawText ? '▾' : '▸'}} 查看识别原文</text>
+          </view>
+          <scroll-view wx:if="{{showRawText}}" scroll-y class="ocr-raw-text">{{ocrResult.rawText}}</scroll-view>
+        </view>
+
         <button class="btn btn-outline btn-block" bindtap="chooseImageForOCR" wx:if="{{ocrImagePath}}">
           📷 重新拍照
         </button>
