@@ -148,6 +148,7 @@ Page({
     app.globalData.activeProcessId = processLine.id;
     app.globalData.activeProcess = processLine;
     wx.setStorageSync('__active_process_id__', processLine.id);
+    wx.setStorageSync('__process_stage__', 0);
 
     this.setData({ showDirectPathPicker: false, directSelectedPath: '', directSelectedPathLabel: '' });
     wx.showToast({ title: '已选择：' + label, icon: 'success', duration: 1500 });
