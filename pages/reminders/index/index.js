@@ -16,6 +16,9 @@ Page({
     stageSteps: [],
     stageProgress: 0,
     hasPath: false,
+    currentStage: 0,
+    currentStageLabel: '',
+    stageEvents: [],
 
     // 提醒数据
     allReminders: [],        // 全部提醒
@@ -56,8 +59,73 @@ Page({
     try { this.setData({ stageSteps: getGlobalStages(), stageProgress: Math.min(((getActiveStageIndex() + 1) / 7) * 100, 100) }); } catch(e) { this.setData({ stageProgress: 14 }); }
     this.loadReminders().then((function() {
       this.checkAutoGenerate();
+      this.checkMilestoneReminders();
     }).bind(this));
     this.refreshMembership();
+  },
+
+  // ★ 里程碑事件触发对应提醒链
+  checkMilestoneReminders: function() {
+    var events = wx.getStorageSync('__milestone_events__') || [];
+    var lastHandled = wx.getStorageSync('__milestone_handled__') || 0;
+    var app = getApp();
+    var selectedPath = (app && app.globalData && app.globalData.selectedPath) || wx.getStorageSync('__selected_path__') || '';
+
+    var newEvents = events.filter(function(e) { return e.ts > lastHandled; });
+    if (!newEvents.length || !selectedPath) return;
+
+    var STAGE_CHAINS = {
+      preparation_done: [
+        { title: '路径确认凭证妥善保存', desc: '将资格评估结果截图/确认邮件存档至证件夹', deadlineOffset: 1, type: 'rule_engine' },
+        { title: '开始收集申请材料', desc: '按材料清单逐项准备：身份证明、学历证明、工作证明、资产证明、推荐信', deadlineOffset: 7, type: 'rule_engine' },
+        { title: '办理港澳通行证签注', desc: '确保护照有效期>2年，办理逗留D签注', deadlineOffset: 14, type: 'rule_engine' }
+      ],
+      application_submitted: [
+        { title: '确认递交回执已存档', desc: '将入境处确认邮件/递交回执保存至证件夹', deadlineOffset: 1, type: 'rule_engine' },
+        { title: '定期查看申请状态', desc: '登录入境处官网查询申请进度，关注补件通知', deadlineOffset: 7, type: 'rule_engine' },
+        { title: '准备入境处可能要求的补件', desc: '整理补充材料：最新银行流水、在职证明更新、无犯罪记录', deadlineOffset: 30, type: 'rule_engine' }
+      ],
+      awaiting_approval: [
+        { title: '保存受理回执', desc: '将入境处受理回执存档至证件夹', deadlineOffset: 1, type: 'rule_engine' },
+        { title: '关注甄选/审批结果', desc: '优才每季度公布甄选结果，高才通1-4周出结果', deadlineOffset: 14, type: 'rule_engine' },
+        { title: '准备赴港安排', desc: '开始了解香港租房市场、学校和银行开户流程', deadlineOffset: 30, type: 'rule_engine' }
+      ],
+      approval_activated: [
+        { title: '签证/进入许可已存档', desc: '将批准信/签证/进入许可保存至证件夹', deadlineOffset: 1, type: 'rule_engine' },
+        { title: '预约办理香港身份证', desc: '入境后30天内预约人事登记处办理香港身份证', deadlineOffset: 3, type: 'rule_engine' },
+        { title: '激活e-Visa', desc: '在批准信规定期限内入境激活电子签证', deadlineOffset: 7, type: 'rule_engine' },
+        { title: '办理银行户口及MPF', desc: '开立香港银行户口，雇主登记强积金', deadlineOffset: 14, type: 'rule_engine' }
+      ]
+    };
+
+    var today = new Date(); today.setHours(0,0,0,0);
+    var that = this;
+
+    newEvents.forEach(function(evt) {
+      var chain = STAGE_CHAINS[evt.event];
+      if (!chain) return;
+      chain.forEach(function(r, idx) {
+        var dd = new Date(today); dd.setDate(dd.getDate() + r.deadlineOffset);
+        var ds = dd.getFullYear() + '-' + String(dd.getMonth()+1).padStart(2,'0') + '-' + String(dd.getDate()).padStart(2,'0');
+        var id = 'MS_' + evt.event + '_' + idx + '_' + Date.now();
+        // 防重复
+        var existing = getAllReminders();
+        if (existing.some(function(x) { return x.id === id; })) return;
+        saveReminder({
+          id: id, title: r.title, deadline: ds, description: selectedPath + ' · ' + r.desc,
+          type: r.type, confidence: 'A', status: 'active', offsetDays: r.deadlineOffset,
+          pathway: selectedPath, chainId: evt.event, chainOrder: idx,
+          chainLabel: evt.event === 'preparation_done' ? '材料准备链' :
+                     evt.event === 'application_submitted' ? '申请递交链' :
+                     evt.event === 'awaiting_approval' ? '审批等待链' : '获批激活链',
+          createdAt: new Date().toISOString()
+        });
+      });
+    });
+
+    // 记录已处理
+    wx.setStorageSync('__milestone_handled__', newEvents[newEvents.length-1].ts);
+    that.loadReminders();
   },
 
   // Bug #9: 选择路径后自动检测是否需要生成提醒
@@ -214,6 +282,12 @@ Page({
   // ========== 数据加载 ==========
   async loadReminders() {
     this.setData({ loading: true });
+
+    // ★ 读取当前流程阶段，过滤提醒链
+    var processStage = parseInt(wx.getStorageSync('__process_stage__')) || 0;
+    var stageEvents = wx.getStorageSync('__milestone_events__') || [];
+    var stageLabels = ['资格评估', '材料准备', '线上申请', '等待获批', '获批激活', '抵港生活', '永居'];
+    this.setData({ currentStage: processStage, currentStageLabel: stageLabels[processStage] || '', stageEvents: stageEvents });
 
     var session = wx.getStorageSync('__session__') || {};
     let reminders = getAllReminders();

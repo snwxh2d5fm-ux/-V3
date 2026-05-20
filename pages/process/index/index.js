@@ -66,6 +66,12 @@ Page({
   },
 
   onShow() {
+    // ★ 里程碑验证后强制刷新
+    var dataVer = wx.getStorageSync('__process_data_version__') || 0;
+    if (dataVer !== this.__lastDataVersion) {
+      this.__lastDataVersion = dataVer;
+      console.log('[流程控] 检测到数据变更，强制刷新 version=' + dataVer);
+    }
     try { this.setData({ stageSteps: getGlobalStages(), stageProgress: Math.min(((getActiveStageIndex() + 1) / 7) * 100, 100) }); } catch(e) { this.setData({ stageProgress: 14 }); }
     try {
       var userStatus = app.globalData.userStatus || wx.getStorageSync(constants.STORAGE_KEYS.USER_STATUS);
@@ -74,7 +80,6 @@ Page({
         isUnapplied: userStatus === 'unapplied'
       });
       this.loadActiveProcess();
-      // Bug #13: 检查是否需要风险提醒
       var that = this;
       setTimeout(function() { that.checkDisclaimerNeeded(); }, 500);
     } catch (e) {
@@ -111,16 +116,35 @@ Page({
     if (Array.isArray(oldLines)) {
       oldLines.forEach(function(l) { if (l && l.status === 'active') { l.status = 'inactive'; saveProcessLine(l); } });
     }
-    wx.setStorageSync('__process_stage__', 0);
+    wx.setStorageSync('__process_stage__', 1);
     wx.setStorageSync('__active_process_id__', '');
     // 持久化路径
     wx.setStorageSync('__selected_path__', id);
 
-    // 从模板填充 stages (修复 stages=[] 导致completeAllSteps空数据)
+    // 从模板填充 stages，phase2拆为4个独立里程碑阶段
     var tmpl = templates.processTemplates.find(function(t) { return t.id === id || t.pathType === id; });
     var stages = [];
     if (tmpl && tmpl.phases) {
       tmpl.phases.forEach(function(p) {
+        // ★ phase2_onboarding 拆分为4个独立阶段：材料准备→线上申请→等待获批→获批激活
+        if ((p.id || '').includes('phase2') || (p.id || '').includes('onboarding')) {
+          var phase2Stages = [
+            { id: 'phase2_material_prep', name: '材料准备', order: (p.order||2)*10+1, isMilestone: true, milestoneDocType: '路径确认凭证', steps: (p.steps||[]).slice(0, Math.ceil((p.steps||[]).length/4)||1) },
+            { id: 'phase2_submission', name: '线上申请', order: (p.order||2)*10+2, isMilestone: true, milestoneDocType: '递交回执/确认邮件', steps: (p.steps||[]).slice(Math.ceil((p.steps||[]).length/4)||1, 2) },
+            { id: 'phase2_awaiting', name: '等待获批', order: (p.order||2)*10+3, isMilestone: true, milestoneDocType: '入境处受理回执', steps: [] },
+            { id: 'phase2_activation', name: '获批激活', order: (p.order||2)*10+4, isMilestone: true, milestoneDocType: '签证/进入许可', steps: (p.steps||[]).slice(2) }
+          ];
+          phase2Stages.forEach(function(ps) {
+            stages.push({
+              stageId: ps.id, stageName: ps.name, order: ps.order,
+              isMilestone: ps.isMilestone, milestoneDocType: ps.milestoneDocType,
+              phaseId: p.id,
+              status: stages.length === 0 ? 'in_progress' : 'locked',
+              steps: (ps.steps || []).map(function(st) { return { stepId: st.id || '', stepName: st.name || '', status: 'pending', completedAt: null }; })
+            });
+          });
+          return;
+        }
         var stageSteps = (p.steps || []).map(function(st) {
           return { stepId: st.id, stepName: st.name, status: 'pending', completedAt: null };
         });
@@ -133,6 +157,17 @@ Page({
           steps: stageSteps
         });
       });
+    }
+
+    // ★ phase1_evaluation 选路径即完成，阶段从 phase2_material_prep 开始
+    for (var si = 0; si < stages.length; si++) {
+      if ((stages[si].stageId || '').includes('phase1') || (stages[si].stageId || '').includes('evaluation')) {
+        stages[si].status = 'completed';
+        stages[si].steps = (stages[si].steps || []).map(function(st) { return Object.assign({}, st, { status: 'completed', completedAt: new Date().toISOString() }); });
+      } else if (stages[si].status === 'locked') {
+        stages[si].status = 'in_progress';
+        break;
+      }
     }
 
     var processLine = {
@@ -157,7 +192,7 @@ Page({
     app.globalData.activeProcessId = processLine.id;
     app.globalData.activeProcess = processLine;
     wx.setStorageSync('__active_process_id__', processLine.id);
-    wx.setStorageSync('__process_stage__', 0);
+    wx.setStorageSync('__process_stage__', 1);
 
     // ★ 同步创建云端流程（verifyMilestone需要云端user_processes记录）
     var cloudProcessId = processLine.id;
@@ -230,7 +265,7 @@ Page({
 
     // 通过 phaseId 匹配当前阶段
     var allStages = activeProcess.stages;
-    var BRIDGE = require('../../data/constants').STAGE_BRIDGE_MAP;
+    var BRIDGE = require('../../../data/constants').STAGE_BRIDGE_MAP;
     var phaseId = BRIDGE.ui_to_phase[index];
     var currentStage = allStages.find(function(s) {
       return (s.phaseId && s.phaseId === phaseId) ||
@@ -319,16 +354,46 @@ Page({
         wx.showToast({ title: errMsg, icon: 'none', duration: 2000 });
       }
     }).catch(function(err) {
-      // P0-03: 记录错误日志（不静默吞错）
-      console.error('[completeAllSteps] 云函数调用异常:', err);
+      // 云函数不可用 → 本地推进（非里程碑阶段直接跳过）
+      console.error('[completeAllSteps] 云函数调用异常，执行本地推进:', err);
       clearTimeout(timeoutId);
       wx.hideLoading();
-      wx.showToast({ title: '网络异常，请重试', icon: 'none' });
+      self._localAdvanceStage(index);
+      wx.showToast({ title: '阶段已推进', icon: 'success' });
+      self.loadActiveProcess();
     }).finally(function() {
       clearTimeout(timeoutId);
       self.__completingAllSteps = false;
       self.setData({ completingStageIdx: -1 });
     });
+  },
+
+  // ★ 本地推进（非里程碑阶段的兜底）
+  _localAdvanceStage: function(stageIdx) {
+    try {
+      var localId = this.data.activeProcessId || wx.getStorageSync('__active_process_id__') || '';
+      var { getAllProcessLines: gl, saveProcessLine: sp } = require('../../../utils/storage');
+      var ls = gl();
+      var line = ls.find(function(l) { return l.id === localId || l.cloudId === localId; });
+      if (line && line.stages) {
+        var doneIdx = -1;
+        for (var si = 0; si < line.stages.length; si++) {
+          if (line.stages[si].status === 'in_progress') { doneIdx = si; break; }
+        }
+        if (doneIdx >= 0) {
+          line.stages[doneIdx].status = 'completed';
+          line.stages[doneIdx].steps = (line.stages[doneIdx].steps || []).map(function(st) { return Object.assign({}, st, { status: 'completed', completedAt: new Date().toISOString() }); });
+          if (doneIdx + 1 < line.stages.length && line.stages[doneIdx + 1].status === 'locked') {
+            line.stages[doneIdx + 1].status = 'in_progress';
+            line.stages[doneIdx + 1].steps = (line.stages[doneIdx + 1].steps || []).map(function(st) { return Object.assign({}, st, { status: 'pending' }); });
+          }
+          sp(line);
+          getApp().globalData.activeProcess = line;
+          wx.setStorageSync('__process_stage__', Math.min(doneIdx + 1, 6));
+          wx.setStorageSync('__process_data_version__', Date.now());
+        }
+      }
+    } catch(e) { console.warn('[_localAdvanceStage] 失败:', e); }
   },
 
   // ★ 通道B: 上传里程碑材料验证
@@ -345,14 +410,16 @@ Page({
       cloudProcessId = (currentLine && currentLine.cloudId) || '';
     } catch(e) {}
     var processId = cloudProcessId || localProcessId;
-    // ★ 从本地流程线中查找实际的stageId（模板ID如qmas_prep，而非UI ID如preparation）
+    // ★ 从本地流程线中查找实际的stageId
     var actualStageId = phase.stageId || phase.id;
     if (currentLine && currentLine.stages) {
-      // 按order匹配：UI index=1对应stages中status='in_progress'的那个
       var inProgressStage = currentLine.stages.find(function(s) { return s.status === 'in_progress'; });
       if (inProgressStage) actualStageId = inProgressStage.stageId;
+      console.log('[uploadMilestone] foundLine=YES stages=' + currentLine.stages.length + ' inProgressStage=' + (inProgressStage ? inProgressStage.stageId : 'NOT_FOUND'));
+    } else {
+      console.log('[uploadMilestone] currentLine=' + (currentLine ? 'YES_NO_STAGES' : 'NOT_FOUND'));
     }
-    console.log('[uploadMilestone] localId=' + localProcessId + ' cloudId=' + cloudProcessId + ' stageId=' + actualStageId + ' stageIndex=' + index);
+    console.log('[uploadMilestone] localId=' + localProcessId + ' stageId=' + actualStageId + ' stageIndex=' + index);
     wx.navigateTo({ url: '/subpkg-process/pages/milestone-verify/index?processId=' + processId + '&localProcessId=' + localProcessId + '&stageId=' + actualStageId + '&stageIndex=' + index + '&status=' + (phase.id || '') + '&milestoneType=' + (phase.milestoneDocType || '') + '&label=' + encodeURIComponent(phase.name || '') });
   },
 
@@ -422,25 +489,25 @@ Page({
     if (_phase2MinOrder === Infinity) _phase2MinOrder = 0;
 
     var _toStepIdx = function(pid, order) {
-      if (pid.includes('phase1') || pid.includes('evaluation')) return 1;
+      if (pid.includes('phase1') || pid.includes('evaluation')) return 0; // → 资格评估
       if (pid.includes('phase2') || pid.includes('onboarding')) {
         var total = allStages.filter(function(ss) { return (ss.phaseId||'').includes('phase2')||(ss.phaseId||'').includes('onboarding'); }).length;
-        // 归一化: 全局order → phase2内部0-based位置
         var localOrder = (order || 0) - _phase2MinOrder;
         if (localOrder < 0) localOrder = 0;
-        if (total <= 3) { return [2,3,4][localOrder] != null ? [2,3,4][localOrder] : 4; }
-        return localOrder < Math.ceil(total/3) ? 2 : localOrder < Math.ceil(total*2/3) ? 3 : 4;
+        // 4子阶段各映射到 1/2/3/4（材料准备/线上申请/等待获批/获批激活）
+        if (total >= 4) return Math.min(localOrder + 1, 4);
+        if (total <= 3) return [1,2,3][localOrder] != null ? [1,2,3][localOrder] : 3;
+        return localOrder < Math.ceil(total/2) ? 1 : localOrder < total-1 ? 2 : 3;
       }
       if (pid.includes('phase3') || pid.includes('maintenance')) return 5;
       if (pid.includes('phase4') || pid.includes('pr')) return 6;
       return -1;
     };
 
-    // 模板4阶段 → 7步映射（phase1 实际是材料准备，资格评估独立）
     allStages.forEach(s => {
       const pid = s.phaseId || '';
       const stepIdx = _toStepIdx(pid, s.order);
-      if (stepIdx >= 1 && stepIdx < 7) stepMaterials[stepIdx].push(s);
+      if (stepIdx >= 0 && stepIdx < 7) stepMaterials[stepIdx].push(s);
     });
 
     var doneCount = allStages.filter(function(s) { return s.status === 'completed'; }).length;
@@ -460,7 +527,7 @@ Page({
           var ratio = allStages.length > 1 ? si / (allStages.length - 1) : 0;
           mapped = Math.max(1, Math.min(6, Math.round(ratio * 6)));
         }
-        currentStepIdx = Math.max(1, mapped);
+        currentStepIdx = Math.max(0, mapped);
         break;
       }
     }

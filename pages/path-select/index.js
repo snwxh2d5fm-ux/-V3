@@ -34,15 +34,33 @@ Page({
     if (Array.isArray(oldLines)) {
       oldLines.forEach(function(l) { if (l && l.status === 'active') { l.status = 'inactive'; saveProcessLine(l); } });
     }
-    wx.setStorageSync('__process_stage__', 0);
+    wx.setStorageSync('__process_stage__', 1);
     wx.setStorageSync('__active_process_id__', '');
     wx.setStorageSync('__selected_path__', id);
 
-    // 2. 构建本地流程线
+    // 2. 构建本地流程线，phase2拆为4个独立里程碑阶段
     var tmpl = templates.processTemplates.find(function(t) { return t.id === id || t.pathType === id; });
     var stages = [];
     if (tmpl && tmpl.phases) {
       tmpl.phases.forEach(function(p) {
+        if ((p.id || '').includes('phase2') || (p.id || '').includes('onboarding')) {
+          var phase2Stages = [
+            { id: 'phase2_material_prep', name: '材料准备', order: (p.order||2)*10+1, isMilestone: true, milestoneDocType: '路径确认凭证', steps: (p.steps||[]).slice(0, Math.ceil((p.steps||[]).length/4)||1) },
+            { id: 'phase2_submission', name: '线上申请', order: (p.order||2)*10+2, isMilestone: true, milestoneDocType: '递交回执/确认邮件', steps: (p.steps||[]).slice(Math.ceil((p.steps||[]).length/4)||1, 2) },
+            { id: 'phase2_awaiting', name: '等待获批', order: (p.order||2)*10+3, isMilestone: true, milestoneDocType: '入境处受理回执', steps: [] },
+            { id: 'phase2_activation', name: '获批激活', order: (p.order||2)*10+4, isMilestone: true, milestoneDocType: '签证/进入许可', steps: (p.steps||[]).slice(2) }
+          ];
+          phase2Stages.forEach(function(ps) {
+            stages.push({
+              stageId: ps.id, stageName: ps.name, order: ps.order,
+              isMilestone: ps.isMilestone, milestoneDocType: ps.milestoneDocType,
+              phaseId: p.id,
+              status: stages.length === 0 ? 'in_progress' : 'locked',
+              steps: (ps.steps || []).map(function(st) { return { stepId: st.id || '', stepName: st.name || '', status: 'pending', completedAt: null }; })
+            });
+          });
+          return;
+        }
         var stageSteps = (p.steps || []).map(function(st) {
           return { stepId: st.id, stepName: st.name, status: 'pending', completedAt: null };
         });
@@ -55,6 +73,17 @@ Page({
           steps: stageSteps
         });
       });
+    }
+
+    // ★ phase1_evaluation 选路径即完成，阶段从 phase2_material_prep 开始
+    for (var si = 0; si < stages.length; si++) {
+      if ((stages[si].stageId || '').includes('phase1') || (stages[si].stageId || '').includes('evaluation')) {
+        stages[si].status = 'completed';
+        stages[si].steps = (stages[si].steps || []).map(function(st) { return Object.assign({}, st, { status: 'completed', completedAt: new Date().toISOString() }); });
+      } else if (stages[si].status === 'locked') {
+        stages[si].status = 'in_progress';
+        break;
+      }
     }
 
     var processLine = {
@@ -81,7 +110,7 @@ Page({
     app.globalData.selectedPath = id;
     app.globalData.userStatus = 'unapplied';
     wx.setStorageSync('__active_process_id__', processLine.id);
-    wx.setStorageSync('__process_stage__', 0);
+    wx.setStorageSync('__process_stage__', 1);
 
     // 3. 同步创建云端流程
     wx.cloud.callFunction({

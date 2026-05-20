@@ -40,7 +40,7 @@ describe('流程控双通道逻辑 (TC-2.3.1~2.3.5)', function() {
     expect(stages[0].isMilestone).toBe(false);  // 资格评估
     expect(stages[1].isMilestone).toBe(true);   // 材料准备
     expect(stages[2].isMilestone).toBe(true);   // 线上申请
-    expect(stages[3].isMilestone).toBe(false);  // 等待获批 ← L-1 fix
+    expect(stages[3].isMilestone).toBe(true);   // 等待获批（2026-05-20 改为里程碑：入境处受理回执）
     expect(stages[4].isMilestone).toBe(true);   // 获批激活
     expect(stages[5].isMilestone).toBe(false);  // 抵港生活
     expect(stages[6].isMilestone).toBe(true);   // 永居
@@ -52,10 +52,11 @@ describe('流程控双通道逻辑 (TC-2.3.1~2.3.5)', function() {
     expect(info.uiStageIndices).toContain(1);
   });
 
-  test('TC-2.3.2 通道B: phase2_onboarding → milestoneStageIndex=2(isMilestone=true)', function() {
+  test('TC-2.3.2 通道B: phase2_onboarding → milestoneStageIndex=1(isMilestone=true，4子阶段)', function() {
     var info = constants.STAGE_BRIDGE_MAP.phase_to_ui.phase2_onboarding;
-    expect(info.milestoneStageIndex).toBe(2);
-    expect(constants.STAGE_BRIDGE_MAP.ui_stages[2].isMilestone).toBe(true);
+    expect(info.milestoneStageIndex).toBe(1);
+    expect(info.uiStageIndices).toEqual([1, 2, 3, 4]);
+    expect(constants.STAGE_BRIDGE_MAP.ui_stages[1].isMilestone).toBe(true);
   });
 
   test('TC-2.3.5 双通道互斥: 每个 ui_stage 有且仅一个里程碑状态', function() {

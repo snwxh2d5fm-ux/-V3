@@ -244,9 +244,13 @@ module.exports = {
   // ============ 阶段ID桥接映射表（2026-05-20 V3里程碑解锁） ============
   //
   // 连接三套独立编号体系：
-  //   数据层4阶段 stageId:   phase1_evaluation, phase2_onboarding, phase3_maintenance, phase4_pr_sprint
+  //   数据层4阶段 stageId:   phase1_evaluation, phase2_onboarding(拆4子阶段), phase3_maintenance, phase4_pr_sprint
   //   流程控UI层7阶段索引:   0(资格评估)~6(永居)
   //   攻略书8关卡:           0(抵港前准备)~7(续签准备)
+  //
+  // phase2_onboarding 2026-05-20 拆分为4个独立里程碑子阶段:
+  //   UI 1 材料准备(路径确认凭证) → UI 2 线上申请(递交回执) → UI 3 等待获批(受理回执) → UI 4 获批激活(签证)
+  //   代码层 stageId: phase2_material_prep / phase2_submission / phase2_awaiting / phase2_activation
   //
   // 核心原则：
   //   1. __process_stage__ 存储 UI层7阶段索引 (0~6)
@@ -264,10 +268,10 @@ module.exports = {
         milestoneDocType: '路径确认凭证（评估结果截图）'
       },
       phase2_onboarding: {
-        label: '获批与激活',
-        uiStageIndices: [2, 3, 4],
-        milestoneStageIndex: 2,
-        milestoneDocType: '递交回执/确认邮件'
+        label: '获批与激活(4子阶段)',
+        uiStageIndices: [1, 2, 3, 4],
+        milestoneStageIndex: 1,
+        milestoneDocType: '路径确认凭证'
       },
       phase3_maintenance: {
         label: '中期维持',
@@ -312,7 +316,7 @@ module.exports = {
       { uiStage: 0, name: '资格评估',  isMilestone: false, milestoneDocType: null },
       { uiStage: 1, name: '材料准备',  isMilestone: true,  milestoneDocType: '路径确认凭证' },
       { uiStage: 2, name: '线上申请',  isMilestone: true,  milestoneDocType: '递交回执/确认邮件' },
-      { uiStage: 3, name: '等待获批',  isMilestone: false, milestoneDocType: null },
+      { uiStage: 3, name: '等待获批',  isMilestone: true,  milestoneDocType: '入境处受理回执' },
       { uiStage: 4, name: '获批激活',  isMilestone: true,  milestoneDocType: '签证/进入许可' },
       { uiStage: 5, name: '抵港生活',  isMilestone: false, milestoneDocType: null },
       { uiStage: 6, name: '永居',      isMilestone: true,  milestoneDocType: '永居身份证' }

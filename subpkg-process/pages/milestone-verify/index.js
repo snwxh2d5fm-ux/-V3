@@ -82,89 +82,55 @@ Page({
           ocrVerified: true, isMilestone: true, createdAt: new Date().toISOString()
         });
 
-        // ★ 自包含验证流程：创建云端流程 + 验证里程碑 + 同步本地
-        console.log('[里程碑验证] 开始验证 processId=' + this.data.processId + ' stageId=' + this.data.stageId);
-        if (this.data.processId && this.data.stageId) {
-          var verifyOk = false;
-          var verifyRes = null;
-          try {
-            // 第一步：尝试直接验证
-            verifyRes = await wx.cloud.callFunction({
-              name: 'process-manager',
-              data: { action: 'verifyMilestone', processId: this.data.processId, stageId: this.data.stageId, docId: docId,
-                ocrResult: { docTypeDetected: detectedDocType, applicationNumber: result.fields.applicationNumber || '', dateField: result.fields.dateField || '', numberField: result.fields.numberField || '' } }
-            });
-          } catch(e1) { console.warn('[里程碑验证] 首次调用失败:', e1); }
-
-          // 第二步：404 → 流程不存在 → 自动创建云端流程
-          if (verifyRes && verifyRes.result && verifyRes.result.code === 404) {
-            console.log('[里程碑验证] 流程不存在，自动创建...');
-            try {
-              var createRes = await wx.cloud.callFunction({
-                name: 'process-manager',
-                data: { action: 'start', templateId: this.data.stageId === 'preparation' ? 'qmas' : 'qmas' }
-              });
-              if (createRes.result && createRes.result.code === 0 && createRes.result.data && createRes.result.data.processId) {
-                var cloudId = createRes.result.data.processId;
-                this.setData({ processId: cloudId });
-                // 关联到本地流程线
-                try {
-                  var { getAllProcessLines: gl, saveProcessLine: sp } = require('../../../utils/storage');
-                  var ls = gl();
-                  var lc = this.data.localProcessId || this.data.processId;
-                  var ln = ls.find(function(l) { return l.id === lc || l._id === lc; });
-                  if (ln) { ln.cloudId = cloudId; sp(ln); getApp().globalData.activeProcess = ln; }
-                } catch(e2) { console.warn('[里程碑验证] 关联cloudId失败:', e2); }
-                // 重试验证
-                try {
-                  verifyRes = await wx.cloud.callFunction({
-                    name: 'process-manager',
-                    data: { action: 'verifyMilestone', processId: cloudId, stageId: this.data.stageId, docId: docId,
-                      ocrResult: { docTypeDetected: detectedDocType, applicationNumber: result.fields.applicationNumber || '', dateField: result.fields.dateField || '', numberField: result.fields.numberField || '' } }
-                  });
-                } catch(e3) { console.warn('[里程碑验证] 重试调用失败:', e3); }
-              }
-            } catch(e4) { console.warn('[里程碑验证] 创建流程失败:', e4); }
-          }
-
-          if (verifyRes && verifyRes.result && verifyRes.result.code === 0) {
-            verifyOk = true;
-            console.log('[里程碑验证] 云函数验证通过');
-          } else {
-            console.log('[里程碑验证] 云函数验证结果: code=' + (verifyRes && verifyRes.result ? verifyRes.result.code : 'NONE') + ' msg=' + (verifyRes && verifyRes.result ? verifyRes.result.msg : ''));
-          }
-
-          // 第三步：失败 → 本地强制执行
-          if (!verifyOk) {
-            console.log('[里程碑验证] 云端验证未通过，执行本地推进');
-          }
-
-          // 第四步：更新本地流程线（无论云端结果，本地总是同步）
-          var app = getApp();
-          var localId = this.data.localProcessId || this.data.processId;
-          var stageId = this.data.stageId;
-          try {
-            var { getAllProcessLines: g2, saveProcessLine: s2 } = require('../../../utils/storage');
-            var lines2 = g2();
-            console.log('[里程碑验证] 本地同步 localId=' + localId + ' lines=' + lines2.length);
-            var line2 = lines2.find(function(l) { return l.id === localId || l._id === localId || l.cloudId === localId; });
-            if (line2 && line2.stages) {
-              line2.stages = line2.stages.map(function(s, i) {
-                if (s.stageId === stageId) return Object.assign({}, s, { status: 'completed' });
-                var ci = line2.stages.findIndex(function(ss) { return ss.stageId === stageId; });
-                if (i === ci + 1 && s.status === 'locked') return Object.assign({}, s, { status: 'in_progress', steps: (s.steps || []).map(function(st) { return Object.assign({}, st, { status: 'pending' }); }) });
-                return s;
-              });
-              s2(line2);
-              app.globalData.activeProcess = line2;
-              wx.setStorageSync('__process_stage__', (parseInt(this.options.stageIndex) || 0) + 1);
-              console.log('[里程碑验证] 本地已同步');
-            } else {
-              console.warn('[里程碑验证] 未找到本地流程线!');
+        // ★ 本地推进：找第一个 in_progress → completed，下一个 locked → in_progress
+        var stageIndex = parseInt(this.options.stageIndex) || 0;
+        console.log('[里程碑验证] 推进 stageIndex=' + stageIndex);
+        var app = getApp();
+        var localId = this.data.localProcessId || this.data.processId;
+        try {
+          var { getAllProcessLines: gl, saveProcessLine: sp } = require('../../../utils/storage');
+          var ls = gl();
+          var line = ls.find(function(l) { return l.id === localId || l._id === localId || l.cloudId === localId; });
+          if (line && line.stages) {
+            console.log('[里程碑验证] lines=' + ls.length + ' found=true stages=' + line.stages.length);
+            // 找第一个 in_progress → completed
+            var doneIdx = -1;
+            for (var si = 0; si < line.stages.length; si++) {
+              if (line.stages[si].status === 'in_progress') { doneIdx = si; break; }
             }
-          } catch(se) { console.warn('[里程碑验证] 本地同步失败:', se); }
-        }
+            if (doneIdx >= 0) {
+              line.stages[doneIdx].status = 'completed';
+              line.stages[doneIdx].steps = (line.stages[doneIdx].steps || []).map(function(st) { return Object.assign({}, st, { status: 'completed', completedAt: new Date().toISOString() }); });
+              // 下一个 locked → in_progress
+              if (doneIdx + 1 < line.stages.length && line.stages[doneIdx + 1].status === 'locked') {
+                line.stages[doneIdx + 1].status = 'in_progress';
+                line.stages[doneIdx + 1].steps = (line.stages[doneIdx + 1].steps || []).map(function(st) { return Object.assign({}, st, { status: 'pending' }); });
+              }
+              sp(line);
+              app.globalData.activeProcess = line;
+              var newStage = Math.min(doneIdx + 1, 6);
+              wx.setStorageSync('__process_stage__', newStage);
+              console.log('[里程碑验证] 已推进 doneIdx=' + doneIdx + ' nextStage=' + newStage);
+            } else {
+              console.warn('[里程碑验证] 无 in_progress 阶段');
+            }
 
+            // ★ 里程碑事件
+            var MILESTONE_EVENTS = { 1: 'preparation_done', 2: 'application_submitted', 3: 'awaiting_approval', 4: 'approval_activated' };
+            var evt = MILESTONE_EVENTS[stageIndex] || '';
+            if (evt) {
+              var events = wx.getStorageSync('__milestone_events__') || [];
+              events.push({ event: evt, stageIdx: stageIndex, ts: Date.now() });
+              wx.setStorageSync('__milestone_events__', events);
+              app.globalData._lastMilestoneEvent = evt;
+            }
+          } else {
+            console.warn('[里程碑验证] 未找到流程线');
+          }
+        } catch(se) { console.warn('[里程碑验证] 同步失败:', se); }
+
+        // ★ 标记数据已更新，流程控 onShow 据此刷新
+        wx.setStorageSync('__process_data_version__', Date.now());
         wx.showToast({ title: '验证通过！', icon: 'success' });
         setTimeout(() => wx.navigateBack(), 1000);
       } else {
