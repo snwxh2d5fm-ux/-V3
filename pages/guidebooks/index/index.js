@@ -919,7 +919,7 @@ Page({
     var phase = parseInt(e.currentTarget.dataset.phase);
     var phases = this.data.phases;
     phases = phases.map(function(p) {
-      if (p.phase === phase && p.unlocked !== false) { p.expanded = !p.expanded; }
+      if (p.phase === phase) { p.expanded = !p.expanded; }
       return p;
     });
     this.setData({ phases: phases });
