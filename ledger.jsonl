@@ -39,3 +39,4 @@
 {"ts":"2026-05-20T18:12:00+08:00","from":"hermes","action":"9gate_final","detail":"b2b1322全闸闭环. 敏感词4/4+365/369单元测试+11页注册. 麒麟3P0已修复. 4P0全部闭环. 攻略书66/66(100%). guidebook-enrich+wecom-bot已部署.","state":"all_clear"}
 {"ts":"2026-05-20T18:20:00+08:00","from":"hermes","action":"9gate_pass","detail":"6412320两处真机崩溃修复(completeAllSteps stages:[]+content裸变量→that.data.content). Gate3 DevTools0错误. 工作树干净.","state":"passed"}
 {"ts":"2026-05-20T20:10:00+08:00","from":"claude","action":"deploy_request","detail":"3项真机修复: currentStepIdx直接查in_progress stage(根除阶段跳转) + onPhaseTap移除unlocked门控 + process WXML v2.1标记. 3文件待commit. DEPLOY_NOW已写.","state":"pending_hermes_9gate"}
+{"ts":"2026-05-21T06:30:00+08:00","from":"claude","action":"deploy_request","commit":"43992d3","detail":"phase2拆4子阶段+里程碑提醒链+BRIDGE_MAP对齐+测试修复，6文件+250-109，麒麟3/7/3，玄武0/3/4","state":"琅琊待决策"}
