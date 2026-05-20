@@ -44,3 +44,5 @@
 {"ts":"2026-05-21T23:00:00+08:00","from":"claude","action":"gate_report_update","commit":"38b2aa3","detail":"V4 feature/dual-gate 9-Gate报告更新：范围限定为双闸门特性，运营后台标记为独立工作流。麒麟0/0/0 APPROVED，玄武0/0/0 APPROVED。Jest 15/15 380/384。","state":"feature_branch_ready"}
 {"ts":"2026-05-21T06:32:45Z","gate":"0-9","commit":"5e11e2f","branch":"feature/dual-gate→main","files":27,"insertions":3318,"deletions":73,"tests":"15/15 380/384","kirin":"APPROVED","xuanwu":"APPROVED","verify":"19/19/1","jest":"380/384","devtools":"OK","cloudbase":"N/A","push":"OK"}
 {"ts":"2026-05-21T23:59:00+08:00","from":"claude","action":"deploy_request","commit":"6551bf7","detail":"V4 Dual-Gate 发版 9-Gate 最终审查。feature/dual-gate(7commits)→main。KR-01/KR-02已修复。Jest 15/15 380/384。麒麟0/0/0 APPROVED。玄武0/0/0 APPROVED。","state":"release_ready"}
+{"ts":"2026-05-22T01:00:00+08:00","from":"claude","action":"release_ready","commit":"df08b47","detail":"V4 Dual-Gate 发版。真机测试20/20通过。支付漏洞已修复。麒麟0/0/0 APPROVED。玄武0/0/0 APPROVED。Jest 15/15 380/384。","state":"released"}
+{"ts":"2026-05-22T01:00:00+08:00","from":"claude","action":"release_ready","commit":"df08b47","detail":"V4 Dual-Gate 发版。真机20/20。支付已修复。","state":"released"}
