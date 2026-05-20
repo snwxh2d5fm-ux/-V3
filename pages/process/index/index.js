@@ -5,6 +5,7 @@ const constants = require('../../../data/constants');
 const templates = require('../../../data/templates.js');
 const { getAllProcessLines, getProcessLine, saveProcessLine } = require('../../../utils/storage');
 const tracker = require('../../../utils/tracker');
+const { buildPhase2Stages, isPhase2Onboarding, toStageObject, autoCompletePhase1 } = require('../../../utils/phase-builder');
 
 Page({
   data: {
@@ -126,22 +127,9 @@ Page({
     var stages = [];
     if (tmpl && tmpl.phases) {
       tmpl.phases.forEach(function(p) {
-        // ★ phase2_onboarding 拆分为4个独立阶段：材料准备→线上申请→等待获批→获批激活
-        if ((p.id || '').includes('phase2') || (p.id || '').includes('onboarding')) {
-          var phase2Stages = [
-            { id: 'phase2_material_prep', name: '材料准备', order: (p.order||2)*10+1, isMilestone: true, milestoneDocType: '路径确认凭证', steps: (p.steps||[]).slice(0, Math.ceil((p.steps||[]).length/4)||1) },
-            { id: 'phase2_submission', name: '线上申请', order: (p.order||2)*10+2, isMilestone: true, milestoneDocType: '递交回执/确认邮件', steps: (p.steps||[]).slice(Math.ceil((p.steps||[]).length/4)||1, 2) },
-            { id: 'phase2_awaiting', name: '等待获批', order: (p.order||2)*10+3, isMilestone: true, milestoneDocType: '入境处受理回执', steps: [] },
-            { id: 'phase2_activation', name: '获批激活', order: (p.order||2)*10+4, isMilestone: true, milestoneDocType: '签证/进入许可', steps: (p.steps||[]).slice(2) }
-          ];
-          phase2Stages.forEach(function(ps) {
-            stages.push({
-              stageId: ps.id, stageName: ps.name, order: ps.order,
-              isMilestone: ps.isMilestone, milestoneDocType: ps.milestoneDocType,
-              phaseId: p.id,
-              status: stages.length === 0 ? 'in_progress' : 'locked',
-              steps: (ps.steps || []).map(function(st) { return { stepId: st.id || '', stepName: st.name || '', status: 'pending', completedAt: null }; })
-            });
+        if (isPhase2Onboarding(p)) {
+          buildPhase2Stages(p).forEach(function(ps) {
+            stages.push(toStageObject(ps, p.id, stages.length === 0));
           });
           return;
         }
@@ -159,16 +147,7 @@ Page({
       });
     }
 
-    // ★ phase1_evaluation 选路径即完成，阶段从 phase2_material_prep 开始
-    for (var si = 0; si < stages.length; si++) {
-      if ((stages[si].stageId || '').includes('phase1') || (stages[si].stageId || '').includes('evaluation')) {
-        stages[si].status = 'completed';
-        stages[si].steps = (stages[si].steps || []).map(function(st) { return Object.assign({}, st, { status: 'completed', completedAt: new Date().toISOString() }); });
-      } else if (stages[si].status === 'locked') {
-        stages[si].status = 'in_progress';
-        break;
-      }
-    }
+    autoCompletePhase1(stages);
 
     var processLine = {
       id: 'direct_' + Date.now(),
@@ -176,7 +155,7 @@ Page({
       templateId: id,
       pathType: id,
       riskLevel: (constants.PATH_RISK_LEVELS && constants.PATH_RISK_LEVELS[id]) ? constants.PATH_RISK_LEVELS[id].level : 'medium',
-      totalCycle: (constants.PATH_RISK_LEVELS && constants.PATH_RISK_LEVELS[id]) ? (constants.PATH_RISK_LEVELS[id].cycle || '7年') : '7年',
+      totalCycle: (constants.PATH_CYCLES && constants.PATH_CYCLES[id]) ? constants.PATH_CYCLES[id].label : '7年',
       phases: [],
       stages: stages,
       status: 'active',
