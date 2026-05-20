@@ -1,4 +1,4 @@
-// 住港伴 关卡4: 出行融入 (7项)
+// 住港伴 关卡4: 出行融入 (8项)
 module.exports = [
   {
     "id": "onboard-401",
@@ -313,7 +313,20 @@ module.exports = [
       }
     ],
     "requiredItems": [],
-    "officialLinks": [],
+    "officialLinks": [
+      {
+        "label": "康文署·社区活动",
+        "url": "https://www.lcsd.gov.hk"
+      },
+      {
+        "label": "民政事务总署·兴趣班",
+        "url": "https://www.had.gov.hk"
+      },
+      {
+        "label": "工联会·进修课程",
+        "url": "https://www.hkftustsc.org"
+      }
+    ],
     "tips": [
       "康文署社区康乐活动每月更新",
       "兴趣班是认识本地朋友的最快方式",
@@ -367,7 +380,16 @@ module.exports = [
       }
     ],
     "requiredItems": [],
-    "officialLinks": [],
+    "officialLinks": [
+      {
+        "label": "Meetup 香港·社交活动",
+        "url": "https://www.meetup.com/hong-kong/"
+      },
+      {
+        "label": "小红书·港漂社群",
+        "url": "https://www.xiaohongshu.com"
+      }
+    ],
     "tips": [
       "香港行山文化极发达，行山群是最容易融入的社交圈",
       "Meetup上有很多Expats和Local混合的群组",
@@ -494,7 +516,20 @@ module.exports = [
     "requiredItems": [
       "已开通香港上网的智能手机"
     ],
-    "officialLinks": [],
+    "officialLinks": [
+      {
+        "label": "香港警务处·紧急求助",
+        "url": "https://www.police.gov.hk"
+      },
+      {
+        "label": "1823 政府热线",
+        "url": "https://www.1823.gov.hk"
+      },
+      {
+        "label": "消防处·救护服务",
+        "url": "https://www.hkfsd.gov.hk"
+      }
+    ],
     "tips": [
       "把紧急联系人设为手机快捷拨号",
       "记录最近医院/警署/消防局的地址",

@@ -51,7 +51,17 @@ module.exports = [
     },
     "reminderTrigger": null,
     "documentLink": null,
-    "aiChatContext": null
+    "aiChatContext": null,
+    "officialLinks": [
+      {
+        "label": "教育局·幼稚园教育",
+        "url": "https://www.edb.gov.hk/tc/edu-system/preprimary-kindergarten/index.html"
+      },
+      {
+        "label": "幼稚园概览",
+        "url": "https://www.chsc.hk/kindergarten/"
+      }
+    ]
   },
   {
     "id": "onboard-502a",
@@ -104,7 +114,17 @@ module.exports = [
     },
     "reminderTrigger": null,
     "documentLink": null,
-    "aiChatContext": null
+    "aiChatContext": null,
+    "officialLinks": [
+      {
+        "label": "教育局·幼稚园入学",
+        "url": "https://www.edb.gov.hk/tc/edu-system/preprimary-kindergarten/kindergarten-k1-admission-arrangements/index.html"
+      },
+      {
+        "label": "学券/幼稚园教育计划",
+        "url": "https://www.edb.gov.hk/tc/edu-system/preprimary-kindergarten/pevs/index.html"
+      }
+    ]
   },
   {
     "id": "onboard-503a",
@@ -159,7 +179,17 @@ module.exports = [
     },
     "reminderTrigger": null,
     "documentLink": null,
-    "aiChatContext": null
+    "aiChatContext": null,
+    "officialLinks": [
+      {
+        "label": "教育局·幼稚园入学安排",
+        "url": "https://www.edb.gov.hk/tc/edu-system/preprimary-kindergarten/kindergarten-k1-admission-arrangements/index.html"
+      },
+      {
+        "label": "幼稚园概览·学校查询",
+        "url": "https://www.chsc.hk/kindergarten/"
+      }
+    ]
   },
   {
     "id": "onboard-504a",
@@ -208,7 +238,21 @@ module.exports = [
     },
     "reminderTrigger": null,
     "documentLink": null,
-    "aiChatContext": null
+    "aiChatContext": null,
+    "officialLinks": [
+      {
+        "label": "学生资助处·幼稚园学费减免",
+        "url": "https://www.wfsfaa.gov.hk/sfo/tc/primarysecondary/kinder/index.htm"
+      },
+      {
+        "label": "在职家庭津贴",
+        "url": "https://www.wfsfaa.gov.hk/wfao/"
+      },
+      {
+        "label": "幼稚园教育计划·学费资助",
+        "url": "https://www.edb.gov.hk/tc/edu-system/preprimary-kindergarten/pevs/index.html"
+      }
+    ]
   },
   {
     "id": "onboard-505a",
@@ -251,7 +295,21 @@ module.exports = [
     },
     "reminderTrigger": null,
     "documentLink": null,
-    "aiChatContext": null
+    "aiChatContext": null,
+    "officialLinks": [
+      {
+        "label": "幼稚园概览·分区搜索",
+        "url": "https://www.chsc.hk/kindergarten/"
+      },
+      {
+        "label": "Baby Kingdom·家长口碑",
+        "url": "https://www.baby-kingdom.com"
+      },
+      {
+        "label": "教育局·幼稚园名单",
+        "url": "https://www.edb.gov.hk/tc/student-parents/sch-info/sch-search/schlist.aspx"
+      }
+    ]
   },
   {
     "id": "onboard-501b",
@@ -304,7 +362,21 @@ module.exports = [
     },
     "reminderTrigger": null,
     "documentLink": null,
-    "aiChatContext": null
+    "aiChatContext": null,
+    "officialLinks": [
+      {
+        "label": "教育局·学校概览",
+        "url": "https://www.chsc.hk/primary/"
+      },
+      {
+        "label": "香港小学概览",
+        "url": "https://www.schooland.hk"
+      },
+      {
+        "label": "直资学校议会",
+        "url": "https://www.dsssc.org.hk"
+      }
+    ]
   },
   {
     "id": "onboard-502b",
@@ -354,7 +426,17 @@ module.exports = [
     },
     "reminderTrigger": null,
     "documentLink": null,
-    "aiChatContext": null
+    "aiChatContext": null,
+    "officialLinks": [
+      {
+        "label": "教育局·校网划分",
+        "url": "https://www.edb.gov.hk/tc/edu-system/primary-secondary/spa-systems/primary-1-admission/school-net-lists.html"
+      },
+      {
+        "label": "中原·校网置业",
+        "url": "https://hk.centanet.com"
+      }
+    ]
   },
   {
     "id": "onboard-503b",
@@ -412,7 +494,17 @@ module.exports = [
     },
     "reminderTrigger": null,
     "documentLink": null,
-    "aiChatContext": null
+    "aiChatContext": null,
+    "officialLinks": [
+      {
+        "label": "教育局·学位分配系统",
+        "url": "https://www.edb.gov.hk/tc/edu-system/primary-secondary/spa-systems/index.html"
+      },
+      {
+        "label": "学校概览·插班指引",
+        "url": "https://www.chsc.hk/primary/"
+      }
+    ]
   },
   {
     "id": "onboard-504b",
@@ -466,7 +558,17 @@ module.exports = [
     },
     "reminderTrigger": null,
     "documentLink": null,
-    "aiChatContext": null
+    "aiChatContext": null,
+    "officialLinks": [
+      {
+        "label": "香港考试及评核局",
+        "url": "https://www.hkeaa.edu.hk"
+      },
+      {
+        "label": "教育局·中英数课程指引",
+        "url": "https://www.edb.gov.hk/tc/curriculum-development/index.html"
+      }
+    ]
   },
   {
     "id": "onboard-505b",
@@ -520,7 +622,17 @@ module.exports = [
     },
     "reminderTrigger": null,
     "documentLink": null,
-    "aiChatContext": null
+    "aiChatContext": null,
+    "officialLinks": [
+      {
+        "label": "教育局·学校概览",
+        "url": "https://www.chsc.hk/primary/"
+      },
+      {
+        "label": "香港小升中面试资料网",
+        "url": "https://www.edu-kingdom.com"
+      }
+    ]
   },
   {
     "id": "onboard-506b",
@@ -574,7 +686,17 @@ module.exports = [
     },
     "reminderTrigger": null,
     "documentLink": null,
-    "aiChatContext": null
+    "aiChatContext": null,
+    "officialLinks": [
+      {
+        "label": "教育局·学位分配",
+        "url": "https://www.edb.gov.hk/tc/edu-system/primary-secondary/spa-systems/secondary-sch/index.html"
+      },
+      {
+        "label": "教育王国·叩门攻略",
+        "url": "https://www.edu-kingdom.com"
+      }
+    ]
   },
   {
     "id": "onboard-507b",
@@ -628,6 +750,20 @@ module.exports = [
     },
     "reminderTrigger": null,
     "documentLink": null,
-    "aiChatContext": null
+    "aiChatContext": null,
+    "officialLinks": [
+      {
+        "label": "考评局·DSE",
+        "url": "https://www.hkeaa.edu.hk/tc/hkdse/"
+      },
+      {
+        "label": "IBO·国际文凭",
+        "url": "https://www.ibo.org"
+      },
+      {
+        "label": "港澳台华侨生联考",
+        "url": "https://www.eeagd.edu.cn"
+      }
+    ]
   }
 ];

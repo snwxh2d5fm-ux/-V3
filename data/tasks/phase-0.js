@@ -113,7 +113,16 @@ module.exports = [
       "透明文件袋",
       "HK$5,000-10,000现金"
     ],
-    "officialLinks": [],
+    "officialLinks": [
+      {
+        "label": "入境事务处·签证",
+        "url": "https://www.immd.gov.hk/hks/services/index.html"
+      },
+      {
+        "label": "香港海关·旅客须知",
+        "url": "https://www.customs.gov.hk/tc/passenger_clearance/index.html"
+      }
+    ],
     "tips": [
       "过关时获发的小白条是一张小纸片，极容易丢失——拿到后立刻拍照并放入文件袋",
       "如携带超过HK$12万等值现金/不记名票据，须向海关申报"

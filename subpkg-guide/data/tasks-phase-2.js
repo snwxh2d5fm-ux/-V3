@@ -132,7 +132,20 @@ module.exports = [
     "requiredItems": [
       "银行月结单或租约或水电煤账单"
     ],
-    "officialLinks": [],
+    "officialLinks": [
+      {
+        "label": "差饷物业估价署",
+        "url": "https://www.rvd.gov.hk"
+      },
+      {
+        "label": "水务署·账单作地址证明",
+        "url": "https://www.wsd.gov.hk"
+      },
+      {
+        "label": "中电/港灯·电费账单",
+        "url": "https://www.clp.com.hk"
+      }
+    ],
     "tips": [
       "银行月结单是最容易获取的地址证明",
       "水务署转名免费",

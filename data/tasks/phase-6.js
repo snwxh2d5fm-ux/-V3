@@ -54,7 +54,17 @@ module.exports = [
     },
     "reminderTrigger": null,
     "documentLink": null,
-    "aiChatContext": null
+    "aiChatContext": null,
+    "officialLinks": [
+      {
+        "label": "税务局·薪俸税",
+        "url": "https://www.ird.gov.hk/chi/tax/salaries_tax.htm"
+      },
+      {
+        "label": "eTax 电子报税",
+        "url": "https://www.gov.hk/tc/residents/taxes/etax/index.htm"
+      }
+    ]
   },
   {
     "id": "onboard-602",
@@ -106,7 +116,21 @@ module.exports = [
     },
     "reminderTrigger": null,
     "documentLink": null,
-    "aiChatContext": null
+    "aiChatContext": null,
+    "officialLinks": [
+      {
+        "label": "积金局",
+        "url": "https://www.mpfa.org.hk"
+      },
+      {
+        "label": "积金局·基金表现",
+        "url": "https://mfp.mpfa.org.hk/tch/mpp_list.jsp"
+      },
+      {
+        "label": "积金局·投资教育",
+        "url": "https://www.mpfa.org.hk/tch/mpf_education/"
+      }
+    ]
   },
   {
     "id": "onboard-603",
@@ -151,7 +175,21 @@ module.exports = [
     },
     "reminderTrigger": null,
     "documentLink": null,
-    "aiChatContext": null
+    "aiChatContext": null,
+    "officialLinks": [
+      {
+        "label": "金管局·跨境理财通",
+        "url": "https://www.hkma.gov.hk/chi/key-functions/international-financial-centre/wealth-management-connect/"
+      },
+      {
+        "label": "Wise 国际汇款",
+        "url": "https://wise.com/hk"
+      },
+      {
+        "label": "支付宝HK·跨境汇款",
+        "url": "https://www.alipayhk.com"
+      }
+    ]
   },
   {
     "id": "onboard-604",
@@ -192,7 +230,21 @@ module.exports = [
     },
     "reminderTrigger": null,
     "documentLink": null,
-    "aiChatContext": null
+    "aiChatContext": null,
+    "officialLinks": [
+      {
+        "label": "中电·网上服务",
+        "url": "https://www.clp.com.hk"
+      },
+      {
+        "label": "港灯·网上服务",
+        "url": "https://www.hkelectric.com"
+      },
+      {
+        "label": "水务署·电子服务",
+        "url": "https://www.wsd.gov.hk/tc/customer-services/online-services/index.html"
+      }
+    ]
   },
   {
     "id": "onboard-605",
@@ -233,7 +285,17 @@ module.exports = [
     },
     "reminderTrigger": null,
     "documentLink": null,
-    "aiChatContext": null
+    "aiChatContext": null,
+    "officialLinks": [
+      {
+        "label": "投资者及理财教育委员会",
+        "url": "https://www.ifec.org.hk"
+      },
+      {
+        "label": "积金局·理财工具",
+        "url": "https://www.mpfa.org.hk/tch/mpf_education/tools/"
+      }
+    ]
   },
   {
     "id": "onboard-606",
@@ -277,7 +339,21 @@ module.exports = [
     },
     "reminderTrigger": null,
     "documentLink": null,
-    "aiChatContext": null
+    "aiChatContext": null,
+    "officialLinks": [
+      {
+        "label": "税务局·免税额/扣税",
+        "url": "https://www.ird.gov.hk/chi/paf/pam.htm"
+      },
+      {
+        "label": "税务局·薪俸税计算",
+        "url": "https://www.ird.gov.hk/chi/ese/st_comp_2025_26_budget/cstc.htm"
+      },
+      {
+        "label": "自愿医保扣税",
+        "url": "https://www.vhis.gov.hk"
+      }
+    ]
   },
   {
     "id": "onboard-610",

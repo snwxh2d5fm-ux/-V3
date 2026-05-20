@@ -49,7 +49,17 @@ module.exports = [
     },
     "reminderTrigger": null,
     "documentLink": null,
-    "aiChatContext": null
+    "aiChatContext": null,
+    "officialLinks": [
+      {
+        "label": "入境处·延长逗留期限",
+        "url": "https://www.gov.hk/tc/residents/immigration/nonpermanent/applyextensionstay/othernpr.htm"
+      },
+      {
+        "label": "GovHK·签证续期",
+        "url": "https://www.gov.hk/tc/residents/immigration/nonpermanent/applyextensionstay/othernpr.htm"
+      }
+    ]
   },
   {
     "id": "onboard-702",
@@ -90,7 +100,17 @@ module.exports = [
     },
     "reminderTrigger": null,
     "documentLink": null,
-    "aiChatContext": null
+    "aiChatContext": null,
+    "officialLinks": [
+      {
+        "label": "入境处·续签所需文件",
+        "url": "https://www.gov.hk/tc/residents/immigration/nonpermanent/applyextensionstay/othernpr.htm"
+      },
+      {
+        "label": "入境处·表格下载",
+        "url": "https://www.immd.gov.hk/hks/forms/forms.html"
+      }
+    ]
   },
   {
     "id": "onboard-703",
@@ -131,7 +151,17 @@ module.exports = [
     },
     "reminderTrigger": null,
     "documentLink": null,
-    "aiChatContext": null
+    "aiChatContext": null,
+    "officialLinks": [
+      {
+        "label": "入境处·出入境记录申请",
+        "url": "https://www.gov.hk/tc/residents/immigration/nonpermanent/applyextensionstay/othernpr.htm"
+      },
+      {
+        "label": "GovHK·住满7年指南",
+        "url": "https://www.gov.hk/tc/residents/immigration/idcard/rop145.html"
+      }
+    ]
   },
   {
     "id": "onboard-704",
@@ -178,7 +208,21 @@ module.exports = [
     },
     "reminderTrigger": null,
     "documentLink": null,
-    "aiChatContext": null
+    "aiChatContext": null,
+    "officialLinks": [
+      {
+        "label": "中电·电子账单",
+        "url": "https://www.clp.com.hk"
+      },
+      {
+        "label": "港灯·电子账单",
+        "url": "https://www.hkelectric.com"
+      },
+      {
+        "label": "水务署·电子账单",
+        "url": "https://www.wsd.gov.hk/tc/customer-services/online-services/index.html"
+      }
+    ]
   },
   {
     "id": "onboard-705",
@@ -219,6 +263,20 @@ module.exports = [
     },
     "reminderTrigger": null,
     "documentLink": null,
-    "aiChatContext": null
+    "aiChatContext": null,
+    "officialLinks": [
+      {
+        "label": "入境处·企业家来港投资",
+        "url": "https://www.gov.hk/tc/residents/immigration/nonpermanent/applyextensionstay/entrepreneur.htm"
+      },
+      {
+        "label": "公司注册处",
+        "url": "https://www.cr.gov.hk"
+      },
+      {
+        "label": "投资推广署",
+        "url": "https://www.investhk.gov.hk"
+      }
+    ]
   }
 ];

@@ -129,7 +129,16 @@ module.exports = [
       "手机（拍照/录影）",
       "纸笔（记录表读数）"
     ],
-    "officialLinks": [],
+    "officialLinks": [
+      {
+        "label": "香港房屋协会·收楼指引",
+        "url": "https://www.hkhs.com"
+      },
+      {
+        "label": "一手住宅物业销售监管局",
+        "url": "https://www.srpa.gov.hk"
+      }
+    ],
     "tips": [
       "建议白天和晚上分别视察了解不同时段噪音",
       "拍照时在照片上标注日期",
@@ -194,7 +203,16 @@ module.exports = [
       "HK身份证",
       "地址证明"
     ],
-    "officialLinks": [],
+    "officialLinks": [
+      {
+        "label": "保监局·家居保险比较",
+        "url": "https://www.ia.org.hk"
+      },
+      {
+        "label": "消费者委员会·保险格价",
+        "url": "https://www.consumer.org.hk"
+      }
+    ],
     "tips": [
       "贵重物品（珠宝/名表）通常有单件赔偿上限",
       "索偿：事发后30天内通知+保留损毁物品+保留单据"
@@ -329,7 +347,16 @@ module.exports = [
     "requiredItems": [
       "现金/信用卡"
     ],
-    "officialLinks": [],
+    "officialLinks": [
+      {
+        "label": "消费者委员会·家电评测",
+        "url": "https://www.consumer.org.hk"
+      },
+      {
+        "label": "丰泽电器",
+        "url": "https://www.fortress.com.hk"
+      }
+    ],
     "tips": [
       "Carousell可淘到低至1折的二手名牌家私",
       "宜家送货+安装约$300-800",
@@ -391,7 +418,16 @@ module.exports = [
     "requiredItems": [
       "智能手机（已开通香港上网）"
     ],
-    "officialLinks": [],
+    "officialLinks": [
+      {
+        "label": "香港旅游发展局·社区探索",
+        "url": "https://www.discoverhongkong.com"
+      },
+      {
+        "label": "民政事务总署·区议会",
+        "url": "https://www.had.gov.hk"
+      }
+    ],
     "tips": [
       "香港街市通常比超市便宜20-30%",
       "万宁/屈臣氏有药剂师",
@@ -521,7 +557,21 @@ module.exports = [
     },
     "reminderTrigger": null,
     "documentLink": null,
-    "aiChatContext": null
+    "aiChatContext": null,
+    "officialLinks": [
+      {
+        "label": "28Hse 租屋平台",
+        "url": "https://www.28hse.com"
+      },
+      {
+        "label": "House730",
+        "url": "https://www.house730.com"
+      },
+      {
+        "label": "差饷物业估价署·租务管制",
+        "url": "https://www.rvd.gov.hk"
+      }
+    ]
   },
   {
     "id": "onboard-308",
@@ -579,7 +629,21 @@ module.exports = [
     },
     "reminderTrigger": null,
     "documentLink": null,
-    "aiChatContext": null
+    "aiChatContext": null,
+    "officialLinks": [
+      {
+        "label": "一手住宅物业销售监管局",
+        "url": "https://www.srpa.gov.hk"
+      },
+      {
+        "label": "中原地产·置业指南",
+        "url": "https://hk.centanet.com"
+      },
+      {
+        "label": "差饷物业估价署·物业资讯网",
+        "url": "https://www.rvdpi.gov.hk"
+      }
+    ]
   },
   {
     "id": "onboard-309",
@@ -630,7 +694,21 @@ module.exports = [
     },
     "reminderTrigger": null,
     "documentLink": null,
-    "aiChatContext": null
+    "aiChatContext": null,
+    "officialLinks": [
+      {
+        "label": "税务局·印花税",
+        "url": "https://www.ird.gov.hk/chi/tax/stamp_duty.htm"
+      },
+      {
+        "label": "金管局·按揭指引",
+        "url": "https://www.hkma.gov.hk/chi/key-functions/banking-stability/mortgage-lending/"
+      },
+      {
+        "label": "银行公会·按揭资讯",
+        "url": "https://www.hkab.org.hk"
+      }
+    ]
   },
   {
     "id": "onboard-310",
@@ -681,7 +759,17 @@ module.exports = [
     },
     "reminderTrigger": null,
     "documentLink": null,
-    "aiChatContext": null
+    "aiChatContext": null,
+    "officialLinks": [
+      {
+        "label": "香港律师会·物业买卖指引",
+        "url": "https://www.hklawsoc.org.hk"
+      },
+      {
+        "label": "一手住宅销售监管局",
+        "url": "https://www.srpa.gov.hk"
+      }
+    ]
   },
   {
     "id": "onboard-311",
@@ -732,7 +820,17 @@ module.exports = [
     },
     "reminderTrigger": null,
     "documentLink": null,
-    "aiChatContext": null
+    "aiChatContext": null,
+    "officialLinks": [
+      {
+        "label": "金管局·按揭贷款",
+        "url": "https://www.hkma.gov.hk/chi/key-functions/banking-stability/mortgage-lending/"
+      },
+      {
+        "label": "多间银行按揭比较",
+        "url": "https://www.hkma.gov.hk"
+      }
+    ]
   },
   {
     "id": "onboard-312",
@@ -784,7 +882,21 @@ module.exports = [
     },
     "reminderTrigger": null,
     "documentLink": null,
-    "aiChatContext": null
+    "aiChatContext": null,
+    "officialLinks": [
+      {
+        "label": "差饷物业估价署·物业成交",
+        "url": "https://www.rvd.gov.hk"
+      },
+      {
+        "label": "土地注册处·查册",
+        "url": "https://www.landreg.gov.hk"
+      },
+      {
+        "label": "水务署·转名",
+        "url": "https://www.wsd.gov.hk"
+      }
+    ]
   },
   {
     "id": "onboard-313",
