@@ -159,6 +159,23 @@ Page({
     wx.setStorageSync('__active_process_id__', processLine.id);
     wx.setStorageSync('__process_stage__', 0);
 
+    // ★ 同步创建云端流程（verifyMilestone需要云端user_processes记录）
+    var cloudProcessId = processLine.id;
+    wx.cloud.callFunction({
+      name: 'process-manager',
+      data: { action: 'start', templateId: id }
+    }).then(function(startRes) {
+      if (startRes.result && startRes.result.code === 0 && startRes.result.data && startRes.result.data.processId) {
+        cloudProcessId = startRes.result.data.processId;
+        // 关联云端processId到本地流程线
+        var lines = getAllProcessLines();
+        var line = lines.find(function(l) { return l.id === processLine.id; });
+        if (line) { line.cloudId = cloudProcessId; saveProcessLine(line); }
+      }
+    }).catch(function(e) {
+      console.warn('[流程控] 云端流程创建失败（本地降级）:', e);
+    });
+
     this.setData({ showDirectPathPicker: false, directSelectedPath: '', directSelectedPathLabel: '' });
     wx.showToast({ title: '已选择：' + label, icon: 'success', duration: 1500 });
     this.loadActiveProcess();
@@ -174,24 +191,31 @@ Page({
   },
 
   // ★ 通道A: 完成当前阶段所有步骤 → 自动推进
-  // P2-04: 移除async/await → 使用Promise链兼容低版本微信
   completeAllSteps: function(e) {
-    // 防重入：避免observer/setData循环触发
     var index = parseInt((e.currentTarget && e.currentTarget.dataset && e.currentTarget.dataset.stageIndex)) || -1;
-    // P1-02: setData在guard之前 → 快速双击时按钮立即变灰有视觉反馈
+    // 立即设置视觉反馈 (按钮变灰"推进中...")
     this.setData({ completingStageIdx: index });
-    if (this.__completingAllSteps) return;
-    this.__completingAllSteps = true;
+
+    // 防重入: 异步操作进行中则拒绝新点击 + 恢复按钮(麒麟P1: 防粘滞)
+    if (this.__completingAllSteps) {
+      this.setData({ completingStageIdx: -1 });
+      return;
+    }
+
     console.log('[completeAllSteps] 触发 index=' + index);
     console.log('[completeAllSteps] index=' + index + ' phases.length=' + (this.data.phases ? this.data.phases.length : 0));
+
+    // ── 校验阶段 (锁未设置，允许失败后重试) ──
     var phase = this.data.phases[index];
     if (!phase) {
       wx.showToast({ title: '阶段不存在 index=' + index, icon: 'none', duration: 2000 });
+      this.setData({ completingStageIdx: -1 });
       return;
     }
     console.log('[completeAllSteps] phase.status=' + phase.status + ' phase.name=' + phase.name);
     if (phase.status !== 'current') {
       wx.showToast({ title: '当前阶段是"' + (phase.name||'?') + '"(' + phase.status + ')，非进行中', icon: 'none', duration: 2000 });
+      this.setData({ completingStageIdx: -1 });
       return;
     }
 
@@ -200,10 +224,11 @@ Page({
     console.log('[completeAllSteps] activeProcess=' + (activeProcess ? 'YES' : 'NO') + ' stages=' + (activeProcess && activeProcess.stages ? activeProcess.stages.length : 0));
     if (!activeProcess || !activeProcess.stages || activeProcess.stages.length === 0) {
       wx.showToast({ title: '请先在流程控选择身份路径，创建流程', icon: 'none', duration: 3000 });
+      this.setData({ completingStageIdx: -1 });
       return;
     }
 
-    // 通过 phaseId 匹配当前阶段（本地流程 stages 使用模板特定的 stageId）
+    // 通过 phaseId 匹配当前阶段
     var allStages = activeProcess.stages;
     var BRIDGE = require('../../data/constants').STAGE_BRIDGE_MAP;
     var phaseId = BRIDGE.ui_to_phase[index];
@@ -211,35 +236,47 @@ Page({
       return (s.phaseId && s.phaseId === phaseId) ||
              (s.stageId && s.stageId === phaseId);
     });
-    // 兜底: 按 order 匹配（index+1 = 第N个阶段）
     if (!currentStage && index < allStages.length) {
       var sortedStages = allStages.slice().sort(function(a, b) { return (a.order || 0) - (b.order || 0); });
       currentStage = sortedStages[index];
     }
     if (!currentStage) {
       wx.showToast({ title: '未找到对应阶段数据 index=' + index, icon: 'none', duration: 2000 });
+      this.setData({ completingStageIdx: -1 });
       return;
     }
 
     var stageId = currentStage.stageId || currentStage.id;
-    // 收集未完成步骤
     var pendingSteps = (currentStage.steps || []).filter(function(st) {
       return st.status !== 'completed';
     });
     if (pendingSteps.length === 0) {
       wx.showToast({ title: '所有步骤已完成', icon: 'none' });
+      this.setData({ completingStageIdx: -1 });
       return;
     }
 
     var processId = this.data.activeProcessId || wx.getStorageSync('__active_process_id__');
     if (!processId) {
       wx.showToast({ title: '未找到流程ID', icon: 'none' });
+      this.setData({ completingStageIdx: -1 });
       return;
     }
 
+    // ── 所有校验通过，加锁进入异步操作 ──
+    this.__completingAllSteps = true;
     var self = this;
     wx.showLoading({ title: '推进中...' });
-    // P2-04: 递归Promise链替代async/await (低版本微信兼容)
+
+    // P0-02: 30秒超时保护 — 防止云函数挂起导致永久loading
+    var TIMEOUT_MS = 30000;
+    var timeoutId = setTimeout(function() {
+      wx.hideLoading();
+      self.__completingAllSteps = false;
+      self.setData({ completingStageIdx: -1 });
+      wx.showToast({ title: '操作超时，请检查网络后重试', icon: 'none', duration: 2500 });
+    }, TIMEOUT_MS);
+
     var lastResult = null;
     function processStep(si) {
       if (si >= pendingSteps.length) {
@@ -259,7 +296,9 @@ Page({
         return processStep(si + 1);
       });
     }
+
     processStep(0).then(function() {
+      clearTimeout(timeoutId);
       wx.hideLoading();
       if (lastResult && lastResult.result && lastResult.result.code === 0) {
         wx.setStorageSync('__process_stage__', index);
@@ -279,11 +318,14 @@ Page({
         var errMsg = (lastResult && lastResult.result && lastResult.result.msg) || '操作失败';
         wx.showToast({ title: errMsg, icon: 'none', duration: 2000 });
       }
-    }).catch(function() {
+    }).catch(function(err) {
+      // P0-03: 记录错误日志（不静默吞错）
+      console.error('[completeAllSteps] 云函数调用异常:', err);
+      clearTimeout(timeoutId);
       wx.hideLoading();
       wx.showToast({ title: '网络异常，请重试', icon: 'none' });
     }).finally(function() {
-      // P2-04: 清理防重入标记 (原async finally语义)
+      clearTimeout(timeoutId);
       self.__completingAllSteps = false;
       self.setData({ completingStageIdx: -1 });
     });
@@ -294,8 +336,17 @@ Page({
     var index = e.currentTarget.dataset.stageIndex;
     var phase = this.data.phases[index];
     if (!phase || phase.status !== 'current') return;
-    var processId = this.data.activeProcessId || wx.getStorageSync('__active_process_id__') || '';
-    wx.navigateTo({ url: '/subpkg-process/pages/milestone-verify/index?processId=' + processId + '&stageId=' + (phase.stageId || phase.id) + '&stageIndex=' + index + '&status=' + (phase.id || '') + '&milestoneType=' + (phase.milestoneDocType || '') + '&label=' + (phase.name || '') });
+    var localProcessId = this.data.activeProcessId || wx.getStorageSync('__active_process_id__') || '';
+    // 优先使用云端processId（verifyMilestone查询云端user_processes集合）
+    var cloudProcessId = '';
+    try {
+      var lines = getAllProcessLines();
+      var currentLine = lines.find(function(l) { return l.id === localProcessId || l.cloudId === localProcessId; });
+      cloudProcessId = (currentLine && currentLine.cloudId) || '';
+    } catch(e) {}
+    var processId = cloudProcessId || localProcessId;
+    console.log('[uploadMilestone] localId=' + localProcessId + ' cloudId=' + cloudProcessId + ' finalProcessId=' + processId + ' stageIndex=' + index);
+    wx.navigateTo({ url: '/subpkg-process/pages/milestone-verify/index?processId=' + processId + '&localProcessId=' + localProcessId + '&stageId=' + (phase.stageId || phase.id) + '&stageIndex=' + index + '&status=' + (phase.id || '') + '&milestoneType=' + (phase.milestoneDocType || '') + '&label=' + encodeURIComponent(phase.name || '') });
   },
 
   // v5 快捷入口 (DSG-1 P0-01: 双中枢合并)

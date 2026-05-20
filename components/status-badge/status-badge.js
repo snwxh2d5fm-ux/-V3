@@ -18,7 +18,8 @@ Component({
     identityLabel: '',
     identityIcon: '',
     pathLabel: '',
-    showPaywall: false
+    showPaywall: false,
+    showConfirmStep: false
   },
 
   lifetimes: {
@@ -110,75 +111,68 @@ Component({
     },
 
     closePaywall() {
-      this.setData({ showPaywall: false });
+      this.setData({ showPaywall: false, showConfirmStep: false });
     },
 
     confirmPaywall: function() {
       var self = this;
       console.log('[status-badge] confirmPaywall 触发');
-      // 不要先关闭弹窗——先展示二次确认Modal
-      wx.showModal({
-        title: '确认重置身份状态',
-        content: '支付 ¥599 后，你的当前流程进度、材料关联、提醒规则和本地进度将被清除。\n\n重置后可重新选择身份状态。确定继续？',
-        confirmText: '支付 ¥599',
-        cancelText: '取消',
-        success: function(modalRes) {
-          console.log('[status-badge] wx.showModal result confirm=' + modalRes.confirm);
-          if (!modalRes.confirm) {
-            return; // 取消: 弹窗保持, 用户可以再点
-          }
-          // 用户确认后关闭弹窗
-          self.setData({ showPaywall: false });
-          // 调用 payment 云函数
-          console.log('[status-badge] calling payment/identityReset...');
-          wx.cloud.callFunction({
-            name: 'payment',
-            data: { action: 'identityReset' }
-          }).then(function(res) {
-            console.log('[status-badge] payment/identityReset result code=' + (res.result ? res.result.code : 'NO_RESULT'));
-            if (res.result.code !== 0) {
-              wx.showToast({ title: res.result.msg || '支付创建失败', icon: 'none' });
-              return;
-            }
-            var paymentData = res.result.data;
-            if (!paymentData || !paymentData.payment || !paymentData.payment.timeStamp) {
-              wx.showToast({ title: '支付参数异常，请重试', icon: 'none' });
-              return;
-            }
-            var payParams = paymentData.payment;
-            wx.requestPayment({
-              timeStamp: payParams.timeStamp,
-              nonceStr: payParams.nonceStr,
-              package: payParams.package,
-              signType: payParams.signType || 'RSA',
-              paySign: payParams.paySign,
-              success: function() {
-                // 确认支付
-                wx.cloud.callFunction({
-                  name: 'payment',
-                  data: { action: 'confirmPayment', orderId: paymentData.orderId }
-                }).catch(function() {});
-                // 清除本地storage
-                try { wx.removeStorageSync('__onboarding__'); } catch(e) {}
-                try { wx.removeStorageSync('__process_stage__'); } catch(e) {}
-                try { wx.removeStorageSync('__active_process_id__'); } catch(e) {}
-                try { wx.removeStorageSync('__user_status__'); } catch(e) {}
-                try { wx.removeStorageSync('__user_sub_status__'); } catch(e) {}
-                wx.showToast({ title: '身份已重置，请重新选择', icon: 'success', duration: 1500 });
-                setTimeout(function() {
-                  wx.redirectTo({ url: '/pages/status-select/status-select?mode=reset' });
-                }, 1500);
-              },
-              fail: function(err) {
-                if (err && err.errMsg && err.errMsg.indexOf('cancel') === -1) {
-                  wx.showToast({ title: '支付失败，请重试', icon: 'none' });
-                }
-              }
-            });
-          }).catch(function() {
-            wx.showToast({ title: '网络异常，请重试', icon: 'none' });
-          });
+      // 切换到二次确认步骤（组件内完成，不依赖原生modal）
+      self.setData({ showPaywall: true, showConfirmStep: true });
+    },
+
+    confirmPaywallFinal: function() {
+      var self = this;
+      console.log('[status-badge] confirmPaywallFinal 触发 — 开始支付');
+      self.setData({ showPaywall: false, showConfirmStep: false });
+      // 调用 payment 云函数
+      console.log('[status-badge] calling payment/identityReset...');
+      wx.cloud.callFunction({
+        name: 'payment',
+        data: { action: 'identityReset' }
+      }).then(function(res) {
+        console.log('[status-badge] payment/identityReset result code=' + (res.result ? res.result.code : 'NO_RESULT'));
+        if (res.result.code !== 0) {
+          wx.showToast({ title: res.result.msg || '支付创建失败', icon: 'none' });
+          return;
         }
+        var paymentData = res.result.data;
+        if (!paymentData || !paymentData.payment || !paymentData.payment.timeStamp) {
+          wx.showToast({ title: '支付参数异常，请重试', icon: 'none' });
+          return;
+        }
+        var payParams = paymentData.payment;
+        wx.requestPayment({
+          timeStamp: payParams.timeStamp,
+          nonceStr: payParams.nonceStr,
+          package: payParams.package,
+          signType: payParams.signType || 'RSA',
+          paySign: payParams.paySign,
+          success: function() {
+            // 确认支付
+            wx.cloud.callFunction({
+              name: 'payment',
+              data: { action: 'confirmPayment', orderId: paymentData.orderId }
+            }).catch(function() {});
+            // 清除本地storage
+            try { wx.removeStorageSync('__onboarding__'); } catch(e) {}
+            try { wx.removeStorageSync('__process_stage__'); } catch(e) {}
+            try { wx.removeStorageSync('__active_process_id__'); } catch(e) {}
+            try { wx.removeStorageSync('__user_status__'); } catch(e) {}
+            try { wx.removeStorageSync('__user_sub_status__'); } catch(e) {}
+            wx.showToast({ title: '身份已重置，请重新选择', icon: 'success', duration: 1500 });
+            setTimeout(function() {
+              wx.redirectTo({ url: '/pages/status-select/status-select?mode=reset' });
+            }, 1500);
+          },
+          fail: function(err) {
+            if (err && err.errMsg && err.errMsg.indexOf('cancel') === -1) {
+              wx.showToast({ title: '支付失败，请重试', icon: 'none' });
+            }
+          }
+        });
+      }).catch(function() {
+        wx.showToast({ title: '网络异常，请重试', icon: 'none' });
       });
     },
 
@@ -187,7 +181,7 @@ Component({
      */
     onTapPath() {
       if (!this.data.pathLabel) return;
-      wx.switchTab({ url: '/pages/process/index/index' });
+      wx.navigateTo({ url: '/pages/path-select/index' });
     }
   }
 });
