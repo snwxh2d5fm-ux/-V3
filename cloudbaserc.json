@@ -21,7 +21,9 @@
     { "name": "db-seed", "timeout": 60 },
     { "name": "knowledge-import", "timeout": 60 },
     { "name": "guidebook-sync", "timeout": 15 },
-    { "name": "guidebook-enrich", "timeout": 60 }
+    { "name": "guidebook-enrich", "timeout": 60 },
+    { "name": "invite-code", "timeout": 30 },
+    { "name": "admin-stats", "timeout": 30 }
   ],
   "ai": {
     "defaultAgent": "codebuddy",
