@@ -22,8 +22,6 @@
     </view>
   </view>
 
-  <!-- gate-sheet: Phase 2 准入闸 -->
-
   <!-- ===== 活跃流程·7步内联详情 ===== -->
   <view wx:if="{{activeProcess}}">
     <view class="process-hero">
@@ -216,27 +214,20 @@
     <view class="direct-path-picker" wx:if="{{showDirectPathPicker}}">
       <text class="picker-title">选择你的身份规划路径</text>
       <view class="picker-list">
-        <view wx:for="{{directPathOptions}}" wx:key="id"
-              class="picker-item {{directSelectedPath===item.id?'picker-item--active':''}} {{expandedPathId===item.id?'picker-item--expanded':''}}"
-              bindtap="togglePathExpand" data-id="{{item.id}}">
-          <text class="picker-item-icon">{{item.icon}}</text>
-          <view class="picker-item-info">
-            <text class="picker-item-name">{{item.name}}</text>
-            <text class="picker-item-desc">{{item.desc}}</text>
+        <block wx:for="{{directPathOptions}}" wx:key="id">
+          <view class="picker-item {{directSelectedPath===item.id?'picker-item--active':''}}"
+                bindtap="togglePathExpand" data-id="{{item.id}}">
+            <text class="picker-item-icon">{{item.icon}}</text>
+            <view class="picker-item-info">
+              <text class="picker-item-name">{{item.name}}</text>
+              <text class="picker-item-desc">{{item.desc}}</text>
+            </view>
+            <text wx:if="{{directSelectedPath===item.id}}" class="picker-check">✓</text>
           </view>
-          <text wx:if="{{directSelectedPath===item.id}}" class="picker-check">✓</text>
-          <text class="picker-item-arrow">{{expandedPathId===item.id ? '▾' : '▸'}}</text>
-
-          <!-- 展开区：路径详情 + 选择按钮 -->
-          <view class="picker-expand" wx:if="{{expandedPathId===item.id}}" catchtap="catchStop">
-            <view class="picker-expand__divider"></view>
-            <text class="picker-expand__desc">{{item.desc}}</text>
-            <button class="btn btn--primary btn--sm picker-expand__btn"
-                    catchtap="onSelectDirectPath" data-id="{{item.id}}">
-              选择此路径
-            </button>
+          <view wx:if="{{expandedPathId===item.id}}" class="picker-expand" catchtap="onSelectDirectPath" data-id="{{item.id}}">
+            <button class="btn btn--primary btn--block">确认选择「{{item.name}}」</button>
           </view>
-        </view>
+        </block>
       </view>
     </view>
   </view>
@@ -262,6 +253,6 @@
 
   <view class="safe-area-bottom"></view>
 
-  <floating-ai visible="{{true}}" context="{{ {page: 'process', pageContext: '用户在流程控页面管理身份申请流程和材料进度'} }}" />
   <gate-sheet show="{{showGateSheet}}" mode="{{gateMode}}" pathLabel="{{pendingPathLabel}}" bind:gate-passed="onGatePassed" bind:dismiss="onGateDismiss"/>
+  <floating-ai visible="{{true}}" context="{{ {page: 'process', pageContext: '用户在流程控页面管理身份申请流程和材料进度'} }}" />
 </view>

@@ -643,7 +643,7 @@ Page({
 
   onCategoryTap(e) {
     const key = e.currentTarget.dataset.key;
-    this.setData({
+    this.setData({ 
       activeCategory: key,
       identityOwner: 'self'   // 切换分类时重置所属人为本人
     });
@@ -758,10 +758,6 @@ Page({
 
   goSelectPath() {
     wx.reLaunch({ url: '/pages/process/index/index' });
-  },
-
-  goToLogin: function() {
-    wx.navigateTo({ url: '/pages/login/login' });
   },
 
   /** 智能上传 — 拍照后自动分类 */

@@ -3,8 +3,8 @@ const app = getApp();
 const templates = require('../../data/templates.js');
 const { getAllProcessLines, saveProcessLine } = require('../../utils/storage');
 const constants = require('../../data/constants');
-const { buildPhase2Stages, isPhase2Onboarding, toStageObject, autoCompletePhase1 } = require('../../utils/phase-builder');
 const { canMakeDecision } = require('../../utils/decision-gate');
+const { buildPhase2Stages, isPhase2Onboarding, toStageObject, autoCompletePhase1 } = require('../../utils/phase-builder');
 
 Page({
   data: {
@@ -22,7 +22,7 @@ Page({
     showGateSheet: false,
     gateMode: '',
     pendingPathId: '',
-    pendingPathLabel: ''
+    pendingPathLabel: '',
   },
 
   onSelect(e) {
@@ -33,7 +33,6 @@ Page({
     for (var i = 0; i < opts.length; i++) {
       if (opts[i].id === id) { label = opts[i].name; break; }
     }
-
     var gate = canMakeDecision();
     if (!gate.ok) {
       this.setData({ showGateSheet: true, gateMode: gate.reason, pendingPathId: id, pendingPathLabel: label });
@@ -138,17 +137,13 @@ Page({
       wx.switchTab({ url: '/pages/process/index/index' });
     }, 1200);
   },
-
   onGatePassed: function() {
     var id = this.data.pendingPathId;
     var label = this.data.pendingPathLabel;
     this.setData({ showGateSheet: false, gateMode: '', pendingPathId: '', pendingPathLabel: '' });
-    if (id) {
-      this.onSelect({ currentTarget: { dataset: { id: id } } });
-    }
+    if (id) { this.onSelect({ currentTarget: { dataset: { id: id } } }); }
   },
-
   onGateDismiss: function() {
     this.setData({ showGateSheet: false, gateMode: '', pendingPathId: '', pendingPathLabel: '' });
-  }
+  },
 });

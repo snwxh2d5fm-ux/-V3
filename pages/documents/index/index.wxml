@@ -15,8 +15,6 @@
     <privacy-toggle mode="{{privacyMode}}" bind:change="onPrivacyModeChange" />
   </view>
 
-  <!-- gate-sheet: Phase 2 准入闸 -->
-
   <!-- 无路径引导 -->
   <view class="empty-path" wx:if="{{pageState === 'no_path' && !isSkipped}}">
     <text class="empty-path__icon">📁</text>
@@ -153,12 +151,6 @@
       <text>{{previewIndex + 1}} / {{filteredDocsWithImage.length}}</text>
     </view>
     <view class="image-viewer__close" bindtap="closeImageViewer">✕</view>
-  </view>
-
-  <view class="guest-guide" wx:if="{{!isLoggedIn && !isSkipped}}">
-    <view class="guest-guide__divider"></view>
-    <text class="guest-guide__text">登录后开始管理证件、卡槽分类和AI增强</text>
-    <button class="btn btn--primary btn--sm" bindtap="goToLogin">立即登录</button>
   </view>
 
   <view class="safe-bottom"></view>

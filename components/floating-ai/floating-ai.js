@@ -5,7 +5,7 @@
  */
 const app = getApp();
 const api = require('../../utils/api');
-var decisionGate = require('../../utils/decision-gate');
+const decisionGate = require('../../utils/decision-gate');
 
 Component({
   properties: {
@@ -217,23 +217,44 @@ Component({
       wx.navigateTo({ url: '/subpkg-low/pages/assessment-index/index?persona=' + persona + '&from=ai_chat' });
     },
 
-    // v4.1: 从AI对话选择路径 → 更新状态 + 写入账号
+    // v4.1+H01: 从AI对话选择路径 → 门控检查 → 更新状态 + 写入账号
     selectPathFromChat(pathType, label) {
       if (!pathType) return;
 
+      // H-01: 决策门控 — 未登录或未选身份时弹出引导弹窗
       var gate = decisionGate.canMakeDecision();
       if (!gate.ok) {
-        wx.showToast({
-          title: gate.reason === 'login' ? '登录后可保存路径选择' : '请先在「我的」补选身份状态后选择路径',
-          icon: 'none',
-          duration: 2500
-        });
+        if (gate.reason === 'login') {
+          wx.showModal({
+            title: '需要登录',
+            content: '登录后可保存路径选择，享受个性化推荐。',
+            confirmText: '去登录',
+            cancelText: '稍后',
+            success: function(res) {
+              if (res.confirm) {
+                wx.navigateTo({ url: '/pages/login/login' });
+              }
+            }
+          });
+        } else {
+          wx.showModal({
+            title: '请先确认身份状态',
+            content: '选择身份后即可采纳推荐的路径方案。',
+            confirmText: '去确认',
+            cancelText: '稍后',
+            success: function(res) {
+              if (res.confirm) {
+                wx.navigateTo({ url: '/pages/status-select/status-select' });
+              }
+            }
+          });
+        }
         return;
       }
 
       // 更新全局状态
       app.globalData.selectedPath = pathType;
-      wx.setStorageSync('__active_process_id__', pathType);
+      wx.setStorageSync('__active_process_id__', 'ai_select_' + Date.now());
       wx.setStorageSync('__ai_selected_path__', { path: pathType, label: label, timestamp: Date.now() });
 
       // 同步到云端用户账号（如有登录）

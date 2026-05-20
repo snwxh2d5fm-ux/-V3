@@ -65,12 +65,13 @@ Page({
     disclaimerTitle: '',
     disclaimerBody: '',
     disclaimerConfirmed: false,
-    expandedPathId: '',
+
     showGateSheet: false,
     gateMode: '',
     pendingPathId: '',
     pendingPathLabel: '',
     pendingTemplateId: '',
+    expandedPathId: '',
   },
 
   onShow() {
@@ -107,14 +108,6 @@ Page({
     this.setData({ showDirectPathPicker: !this.data.showDirectPathPicker });
   },
 
-  togglePathExpand: function(e) {
-    var id = e.currentTarget.dataset.id;
-    this.setData({
-      expandedPathId: this.data.expandedPathId === id ? '' : id,
-      showDirectPathPicker: true  // ensure picker stays open
-    });
-  },
-
   onSelectDirectPath(e) {
     var id = e.currentTarget.dataset.id;
     var opts = this.data.directPathOptions;
@@ -128,6 +121,10 @@ Page({
       this.setData({ showGateSheet: true, gateMode: gate.reason, pendingPathId: id, pendingPathLabel: label });
       return;
     }
+    if (this.__selectingPath) return;
+    this.__selectingPath = true;
+    var that = this;
+    setTimeout(function() { that.__selectingPath = false; }, 2000);
     // 一触即选：点击即确认，创建最小流程线
     app.globalData.selectedPath = id;
     app.globalData.userStatus = 'unapplied';  // P1-02: 双写 globalData
@@ -193,23 +190,19 @@ Page({
     wx.setStorageSync('__active_process_id__', processLine.id);
     wx.setStorageSync('__process_stage__', 1);
 
-    // ★ 同步创建云端流程（H-01: 8秒超时保护，对齐 path-select 模式）
+    // ★ 同步创建云端流程（verifyMilestone需要云端user_processes记录）
     var cloudProcessId = processLine.id;
     var cloudTimeout = new Promise(function(_, reject) {
       setTimeout(function() { reject(new Error('CLOUD_TIMEOUT')); }, 8000);
     });
     Promise.race([
-      wx.cloud.callFunction({
-        name: 'process-manager',
-        data: { action: 'start', templateId: id }
-      }),
+      wx.cloud.callFunction({ name: 'process-manager', data: { action: 'start', templateId: id } }),
       cloudTimeout
     ]).then(function(startRes) {
       if (startRes && startRes.result && startRes.result.code === 0 && startRes.result.data && startRes.result.data.processId) {
-        cloudProcessId = startRes.result.data.processId;
         var lines = getAllProcessLines();
         var line = lines.find(function(l) { return l.id === processLine.id; });
-        if (line) { line.cloudId = cloudProcessId; saveProcessLine(line); }
+        if (line) { line.cloudId = startRes.result.data.processId; saveProcessLine(line); }
       }
     }).catch(function(e) {
       if (e && e.message === 'CLOUD_TIMEOUT') {
@@ -762,24 +755,24 @@ Page({
     wx.showToast({ title: '流程已创建', icon: 'success' });
     this.loadActiveProcess();
   },
-
   onGatePassed: function() {
     var id = this.data.pendingPathId;
-    var label = this.data.pendingPathLabel;
     var templateId = this.data.pendingTemplateId;
     this.setData({ showGateSheet: false, gateMode: '', pendingPathId: '', pendingPathLabel: '', pendingTemplateId: '' });
     if (id) {
-      // Re-trigger onSelectDirectPath with saved path data
       this.onSelectDirectPath({ currentTarget: { dataset: { id: id } } });
     } else if (templateId) {
-      // Re-trigger selectTemplate with saved template data
       this.selectTemplate({ currentTarget: { dataset: { id: templateId } } });
     }
   },
-
   onGateDismiss: function() {
     this.setData({ showGateSheet: false, gateMode: '', pendingPathId: '', pendingPathLabel: '', pendingTemplateId: '' });
   },
+  togglePathExpand: function(e) {
+    var id = e.currentTarget.dataset.id;
+    this.setData({ expandedPathId: this.data.expandedPathId === id ? '' : id, showDirectPathPicker: true });
+  },
+  catchStop: function() {},
 
   onShareAppMessage() {
     return { title: '我正在使用住港伴，你也来看看', path: '/pages/process/index/index' };
