@@ -29,7 +29,7 @@ Page({
       .toUpperCase();
 
     // 限制长度
-    if (raw.length > 12) raw = raw.slice(0, 12);
+    if (raw.length > 13) raw = raw.slice(0, 13);
 
     const valid = /^ZGB-[A-Z0-9]{4}-[A-Z0-9]{4}$/.test(raw);
 

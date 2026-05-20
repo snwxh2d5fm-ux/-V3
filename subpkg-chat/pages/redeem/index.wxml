@@ -16,7 +16,7 @@
         placeholder="ZGB-XXXX-XXXX"
         placeholder-class="input-placeholder"
         bindinput="onCodeInput"
-        maxlength="12"
+        maxlength="13"
         auto-focus="{{true}}"
       />
       <text class="format-hint" wx:if="{{code && !codeValid}}">格式：ZGB-XXXX-XXXX</text>
