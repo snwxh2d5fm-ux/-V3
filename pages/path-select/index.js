@@ -98,6 +98,11 @@ Page({
     saveProcessLine(processLine);
     app.globalData.activeProcessId = processLine.id;
     app.globalData.activeProcess = processLine;
+    // ★ 封存旧路径提醒
+    var oldPath = app.globalData.selectedPath || wx.getStorageSync('__selected_path__') || '';
+    if (oldPath && oldPath !== id) {
+      require('../../utils/storage').archiveRemindersByPath(oldPath);
+    }
     app.globalData.selectedPath = id;
     app.globalData.userStatus = 'unapplied';
     wx.setStorageSync('__active_process_id__', processLine.id);
@@ -136,6 +141,7 @@ Page({
     setTimeout(function() {
       wx.switchTab({ url: '/pages/process/index/index' });
     }, 1200);
+    require('../../utils/storage').unarchiveRemindersByPath(id);
   },
   onGatePassed: function() {
     var id = this.data.pendingPathId;

@@ -114,14 +114,24 @@
     </block>
   </view>
 
-  <!-- 空状态 -->
-  <view class="empty-block" wx:if="{{stats.total === 0 && !loading}}">
+  <!-- 空状态：当前路径无提醒（可引导生成） -->
+  <view class="empty-block" wx:if="{{stats.total === 0 && !loading && !showArchivedEmptyGuide}}">
     <view class="empty-icon">
       <view class="empty-icon-ring"></view>
       <view class="empty-icon-dot"></view>
     </view>
     <text class="empty-title">暂无提醒</text>
     <text class="empty-desc">点击下方按钮添加第一个提醒</text>
+  </view>
+
+  <!-- 空状态：全部提醒已被封存 -->
+  <view class="empty-block" wx:if="{{showArchivedEmptyGuide}}">
+    <view class="empty-icon">
+      <view class="empty-icon-ring"></view>
+      <view class="empty-icon-dot"></view>
+    </view>
+    <text class="empty-title">暂无当前路径的提醒</text>
+    <text class="empty-desc">检测到其他路径的已封存提醒 {{archivedCount + softArchivedCount}} 条，切换身份路径后恢复</text>
   </view>
 
   <!-- 免费用户提示 -->
@@ -184,6 +194,28 @@
         <text class="sheet-item-desc">自行输入标题、截止日期和备注</text>
       </view>
       <view class="sheet-item-arrow"></view>
+    </view>
+  </view>
+
+  <!-- 已封存提醒折叠区 -->
+  <view class="archived-section" wx:if="{{archivedCount > 0}}">
+    <view class="archived-header" bindtap="toggleArchived">
+      <text class="archived-header__icon">{{showArchived ? '▾' : '▸'}}</text>
+      <text class="archived-header__text">已封存 {{archivedCount}} 条（切换回原路径后恢复）</text>
+    </view>
+    <view class="archived-list" wx:if="{{showArchived}}">
+      <view class="reminder-card reminder-card--archived" wx:for="{{archivedReminders}}" wx:key="id">
+        <text class="reminder-title">{{item.title}}</text>
+        <text class="reminder-desc">{{item.description || ''}}</text>
+        <text class="reminder-pathway">{{item.pathway}}</text>
+      </view>
+    </view>
+  </view>
+
+  <!-- 已过期封存提醒 -->
+  <view class="archived-section archived-section--soft" wx:if="{{softArchivedCount > 0}}">
+    <view class="archived-header" bindtap="toggleArchived">
+      <text class="archived-header__text">已过期封存 {{softArchivedCount}} 条</text>
     </view>
   </view>
 
