@@ -1,4 +1,6 @@
 {
   "navigationBarTitleText": "选择身份路径",
-  "usingComponents": {}
+  "usingComponents": {
+    "gate-sheet": "/components/gate-sheet/gate-sheet"
+  }
 }

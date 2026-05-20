@@ -22,15 +22,7 @@
     </view>
   </view>
 
-  <!-- skipped 引导横幅 -->
-  <view class="skip-banner" wx:if="{{isSkipped}}">
-    <text class="skip-banner__icon">🔒</text>
-    <view class="skip-banner__body">
-      <text class="skip-banner__title">请先选择身份状态</text>
-      <text class="skip-banner__desc">选择身份后解锁流程控全部功能</text>
-    </view>
-    <button class="btn btn--sm btn--primary" bindtap="goSelectIdentity">去选择</button>
-  </view>
+  <!-- gate-sheet: Phase 2 准入闸 -->
 
   <!-- ===== 活跃流程·7步内联详情 ===== -->
   <view wx:if="{{activeProcess}}">
@@ -260,4 +252,5 @@
   <view class="safe-area-bottom"></view>
 
   <floating-ai visible="{{true}}" context="{{ {page: 'process', pageContext: '用户在流程控页面管理身份申请流程和材料进度'} }}" />
+  <gate-sheet show="{{showGateSheet}}" mode="{{gateMode}}" pathLabel="{{pendingPathLabel}}" bind:gate-passed="onGatePassed" bind:dismiss="onGateDismiss"/>
 </view>

@@ -1,0 +1,46 @@
+<view class="gate-sheet" wx:if="{{_visible}}" catchtouchmove="catchStop">
+  <view class="gate-sheet__mask" bindtap="handleDismiss"></view>
+  <view class="gate-sheet__body" catchtap="catchStop">
+    <!-- 关闭按钮 -->
+    <view class="gate-sheet__close" bindtap="handleDismiss">✕</view>
+
+    <!-- login 模式 -->
+    <block wx:if="{{mode === 'login'}}">
+      <view class="gate-sheet__icon">🔐</view>
+      <view class="gate-sheet__title">登录后开启专属流程</view>
+      <view class="gate-sheet__desc" wx:if="{{pathLabel}}">
+        已选路径「{{pathLabel}}」将在登录后自动创建
+      </view>
+      <view class="gate-sheet__desc" wx:else>
+        登录后可选择身份路径，解锁流程控全部功能
+      </view>
+
+      <button class="gate-sheet__btn gate-sheet__btn--primary"
+              bindtap="handleLogin"
+              loading="{{_loading}}"
+              disabled="{{_loading}}">
+        微信一键登录
+      </button>
+      <view class="gate-sheet__error" wx:if="{{_error}}">{{_error}}</view>
+      <view class="gate-sheet__btn gate-sheet__btn--text" bindtap="handleDismiss">
+        暂不登录
+      </view>
+    </block>
+
+    <!-- identity 模式 -->
+    <block wx:if="{{mode === 'identity'}}">
+      <view class="gate-sheet__icon">📝</view>
+      <view class="gate-sheet__title">请先确认你的身份状态</view>
+      <view class="gate-sheet__desc">
+        选择身份后即可创建专属流程线。当前可继续浏览攻略书和证件夹。
+      </view>
+
+      <button class="gate-sheet__btn gate-sheet__btn--primary" bindtap="handleGoIdentity">
+        去确认身份
+      </button>
+      <view class="gate-sheet__btn gate-sheet__btn--text" bindtap="handleDismiss">
+        稍后再说
+      </view>
+    </block>
+  </view>
+</view>

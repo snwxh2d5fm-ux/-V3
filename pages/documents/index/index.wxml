@@ -15,15 +15,7 @@
     <privacy-toggle mode="{{privacyMode}}" bind:change="onPrivacyModeChange" />
   </view>
 
-  <!-- Skipped 用户引导 -->
-  <view class="skip-banner" wx:if="{{isSkipped}}">
-    <text class="skip-banner__icon">🔒</text>
-    <view class="skip-banner__body">
-      <text class="skip-banner__title">请先选择身份后解锁完整功能</text>
-      <text class="skip-banner__desc">当前仅可上传证件图片，卡槽功能需完成身份选择后使用</text>
-    </view>
-    <button class="btn-sm btn--gold" bindtap="goSelectIdentity">去选择</button>
-  </view>
+  <!-- gate-sheet: Phase 2 准入闸 -->
 
   <!-- 无路径引导 -->
   <view class="empty-path" wx:if="{{pageState === 'no_path' && !isSkipped}}">
