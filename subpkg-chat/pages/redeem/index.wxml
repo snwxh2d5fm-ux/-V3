@@ -1,0 +1,91 @@
+<!-- subpkg-chat/pages/redeem/index — 兑换内测码 -->
+<view class="page">
+
+  <!-- 状态A: 未输入 -->
+  <view class="redeem-card" wx:if="{{!redeemed}}">
+    <view class="card-header">
+      <text class="card-title">输入内测码</text>
+      <text class="card-desc">兑换后获得365天基础年卡会员</text>
+    </view>
+
+    <!-- 输入区 -->
+    <view class="input-group">
+      <input
+        class="code-input"
+        value="{{code}}"
+        placeholder="ZGB-XXXX-XXXX"
+        placeholder-class="input-placeholder"
+        bindinput="onCodeInput"
+        maxlength="12"
+        auto-focus="{{true}}"
+      />
+      <text class="format-hint" wx:if="{{code && !codeValid}}">格式：ZGB-XXXX-XXXX</text>
+    </view>
+
+    <!-- 查询结果预览 -->
+    <view class="preview-box" wx:if="{{previewed && preview.valid}}">
+      <view class="preview-icon">✅</view>
+      <text class="preview-text">{{preview.hint}}</text>
+    </view>
+
+    <!-- 查询结果（无效码） -->
+    <view class="preview-box warning" wx:if="{{previewed && !preview.valid}}">
+      <view class="preview-icon">⚠️</view>
+      <text class="preview-text">{{preview.msg || '内测码无效'}}</text>
+    </view>
+
+    <!-- 按钮区 -->
+    <view class="btn-group">
+      <button class="btn btn-outline" bindtap="queryCode" disabled="{{!codeValid || querying}}">
+        {{querying ? '查询中...' : '查询码状态'}}
+      </button>
+      <button
+        class="btn btn-primary"
+        bindtap="redeemCode"
+        disabled="{{!previewed || !preview.valid || redeeming}}"
+      >
+        {{redeeming ? '兑换中...' : '立即兑换'}}
+      </button>
+    </view>
+
+    <!-- 挽留文案（失败后） -->
+    <view class="retain-box" wx:if="{{redeemFailed}}">
+      <text class="retain-text">免费版也能使用全部核心功能</text>
+      <button class="btn btn-ghost btn-sm" bindtap="goHome">开始体验住港伴</button>
+    </view>
+  </view>
+
+  <!-- 状态B: 兑换成功 -->
+  <view class="success-card" wx:if="{{redeemed}}">
+    <view class="success-icon">🎉</view>
+    <text class="success-title">年卡已激活</text>
+    <view class="success-info">
+      <view class="info-row">
+        <text class="info-label">会员等级</text>
+        <text class="info-value">{{membershipLabel}}</text>
+      </view>
+      <view class="info-row">
+        <text class="info-label">到期日</text>
+        <text class="info-value">{{membershipExpiresAt}}</text>
+      </view>
+    </view>
+
+    <!-- T+0 反馈 -->
+    <view class="feedback-box">
+      <text class="feedback-label">有什么想说的？（选填）</text>
+      <textarea
+        class="feedback-input"
+        value="{{feedback}}"
+        placeholder="你的建议帮助我们做得更好..."
+        bindinput="onFeedbackInput"
+        maxlength="200"
+      />
+      <button class="btn btn-outline btn-sm" bindtap="submitFeedback" wx:if="{{feedback}}">
+        提交
+      </button>
+    </view>
+
+    <button class="btn btn-primary" bindtap="goMine">查看会员状态</button>
+  </view>
+
+</view>

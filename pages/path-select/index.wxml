@@ -15,4 +15,5 @@
       <text class="path-card__arrow">›</text>
     </view>
   </view>
+  <gate-sheet show="{{showGateSheet}}" mode="{{gateMode}}" pathLabel="{{pendingPathLabel}}" bind:gate-passed="onGatePassed" bind:dismiss="onGateDismiss"/>
 </view>

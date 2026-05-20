@@ -128,9 +128,13 @@ Page({
     const path = e.currentTarget.dataset.path;
     const match = this.data.matches.find(m => m.path === path);
 
+    var gate = require('../../../utils/decision-gate').canMakeDecision();
+    if (!gate.ok) {
+      wx.showToast({ title: gate.reason === 'login' ? '请先登录后再选择路径' : '请先确认身份状态后再选择路径', icon: 'none', duration: 2000 });
+      return;
+    }
     app.globalData.selectedPath = path;
     app.globalData.solutionRecommendation = this.data.matches;
-    wx.setStorageSync(constants.STORAGE_KEYS.ACTIVE_PROCESS_ID, path);
     wx.setStorageSync('__solution_recommendation__', this.data.matches);
 
     // 追踪：评估结果路径选择
@@ -201,6 +205,7 @@ Page({
     };
 
     saveProcessLine(processLine);
+    wx.setStorageSync(constants.STORAGE_KEYS.ACTIVE_PROCESS_ID, processLine.id);
     app.globalData.activeProcessId = processLine.id;
     app.globalData.activeProcess = processLine;
 

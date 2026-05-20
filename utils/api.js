@@ -218,36 +218,46 @@ function sendChatMessageStream(sessionId, message, mode, context, history, callb
 
     var fullContent = '';
     var meta = null;
+    var lineBuffer = '';  // S-02 fix: 跨chunk行缓冲，防止JSON被截断
 
     requestTask.onChunkReceived(function(res) {
       try {
-        var text = (res.data || '').toString().trim();
+        var text = (res.data || '').toString();
         if (!text) return;
-        var lines = text.split('\n');
+        // 拼接上一次未完整的行
+        var raw = lineBuffer + text;
+        var lines = raw.split('\n');
+        // 最后一行可能不完整，保留到下次
+        lineBuffer = lines.pop();
         for (var i = 0; i < lines.length; i++) {
-          if (lines[i].startsWith('data: ')) {
-            var data = JSON.parse(lines[i].substring(6));
-            if (data.type === 'meta') {
-              meta = data;
-              if (callbacks && callbacks.onMeta) callbacks.onMeta(data);
-            } else if (data.type === 'token') {
-              fullContent += data.content;
-              if (callbacks && callbacks.onToken) callbacks.onToken(data.content, fullContent);
-            } else if (data.type === 'done') {
-              if (callbacks && callbacks.onDone) {
-                callbacks.onDone(fullContent, data);
-              }
-              resolve({
-                code: 200,
-                data: {
-                  messageId: data.trace_id || ('msg_' + Date.now()),
-                  content: fullContent,
-                  sources: meta ? (meta.sources || []) : [],
-                  quickReplies: []
+          var line = lines[i].trim();
+          if (line.startsWith('data: ')) {
+            try {
+              var data = JSON.parse(line.substring(6));
+              if (data.type === 'meta') {
+                meta = data;
+                if (callbacks && callbacks.onMeta) callbacks.onMeta(data);
+              } else if (data.type === 'token') {
+                fullContent += data.content;
+                if (callbacks && callbacks.onToken) callbacks.onToken(data.content, fullContent);
+              } else if (data.type === 'done') {
+                if (callbacks && callbacks.onDone) {
+                  callbacks.onDone(fullContent, data);
                 }
-              });
-            } else if (data.type === 'error') {
-              reject(new Error(data.message || 'Stream error'));
+                resolve({
+                  code: 200,
+                  data: {
+                    messageId: data.trace_id || ('msg_' + Date.now()),
+                    content: fullContent,
+                    sources: meta ? (meta.sources || []) : [],
+                    quickReplies: []
+                  }
+                });
+              } else if (data.type === 'error') {
+                reject(new Error(data.message || 'Stream error'));
+              }
+            } catch(parseErr) {
+              console.warn('[API] SSE line parse error:', parseErr.message, 'line:', line.substring(0, 80));
             }
           }
         }

@@ -1,0 +1,114 @@
+<!-- subpkg-low/pages/admin-invite/index — 内测码管理后台 -->
+<view class="page">
+
+  <!-- 概览数字 -->
+  <view class="stats-grid" wx:if="{{stats}}">
+    <view class="stat-card">
+      <text class="stat-num">{{stats.totalGenerated || 0}}</text>
+      <text class="stat-label">已生成</text>
+    </view>
+    <view class="stat-card">
+      <text class="stat-num green">{{stats.totalRedeemed || 0}}</text>
+      <text class="stat-label">已兑换</text>
+    </view>
+    <view class="stat-card">
+      <text class="stat-num">{{stats.totalUnused || 0}}</text>
+      <text class="stat-label">未使用</text>
+    </view>
+    <view class="stat-card">
+      <text class="stat-num gray">{{stats.totalExpired || 0}}</text>
+      <text class="stat-label">已过期</text>
+    </view>
+  </view>
+
+  <view class="rate-bar" wx:if="{{stats}}">
+    <text class="rate-text">兑换率 {{stats.redemptionRate || 0}}%</text>
+    <view class="rate-track">
+      <view class="rate-fill" style="width:{{stats.redemptionRate || 0}}%"></view>
+    </view>
+  </view>
+
+  <!-- Tabs -->
+  <view class="tabs">
+    <view class="tab {{activeTab === 'generate' ? 'active' : ''}}" bindtap="switchTab" data-tab="generate">生成码</view>
+    <view class="tab {{activeTab === 'query' ? 'active' : ''}}" bindtap="switchTab" data-tab="query">查询</view>
+  </view>
+
+  <!-- Tab 1: 生成种子码 -->
+  <view class="tab-content" wx:if="{{activeTab === 'generate'}}">
+    <view class="form-group">
+      <text class="form-label">生成数量</text>
+      <input class="form-input" type="number" value="{{genCount}}" bindinput="onGenCount" placeholder="50" />
+    </view>
+    <view class="form-group">
+      <text class="form-label">发放渠道</text>
+      <picker mode="selector" range="{{channels}}" bindchange="onChannelChange">
+        <view class="form-picker">{{channels[selectedChannel]}}</view>
+      </picker>
+    </view>
+    <view class="form-group">
+      <text class="form-label">有效期（天）</text>
+      <input class="form-input" type="number" value="{{expireDays}}" bindinput="onExpireDays" placeholder="60" />
+    </view>
+
+    <button class="btn btn-primary" bindtap="generateCodes" disabled="{{generating}}">
+      {{generating ? '生成中...' : '生成内测码'}}
+    </button>
+
+    <!-- 生成结果 -->
+    <view class="result-box" wx:if="{{generatedCodes.length > 0}}">
+      <view class="result-header">
+        <text class="result-title">已生成 {{generatedCodes.length}} 个码（批次：{{lastBatch}}）</text>
+        <text class="result-warn">⚠️ 关闭后不可再次查看</text>
+      </view>
+      <scroll-view class="code-list" scroll-y>
+        <view class="code-item" wx:for="{{generatedCodes}}" wx:key="*this">{{item}}</view>
+      </scroll-view>
+      <button class="btn btn-outline btn-sm" bindtap="copyAllCodes">一键复制全部</button>
+    </view>
+  </view>
+
+  <!-- Tab 2: 查询码状态 -->
+  <view class="tab-content" wx:if="{{activeTab === 'query'}}">
+    <view class="form-group">
+      <text class="form-label">码或批次号</text>
+      <input class="form-input" value="{{searchKey}}" bindinput="onSearchKey" placeholder="ZGB-XXXX-XXXX 或 BATCH-XXX" />
+    </view>
+    <button class="btn btn-outline" bindtap="searchCode" disabled="{{searching}}">
+      {{searching ? '查询中...' : '查询'}}
+    </button>
+
+    <!-- 查询结果 -->
+    <view class="search-result" wx:if="{{searchResult}}">
+      <view class="result-row"><text class="r-label">状态</text><text class="r-value">{{searchResult.status}}</text></view>
+      <view class="result-row"><text class="r-label">类型</text><text class="r-value">{{searchResult.type || 'seed'}}</text></view>
+      <view class="result-row"><text class="r-label">生成时间</text><text class="r-value">{{searchResult.generatedAt}}</text></view>
+      <view class="result-row"><text class="r-label">有效期至</text><text class="r-value">{{searchResult.expiresAt}}</text></view>
+      <view class="result-row" wx:if="{{searchResult.redeemedBy}}"><text class="r-label">兑换者</text><text class="r-value">{{searchResult.redeemedBy}}</text></view>
+      <view class="result-row" wx:if="{{searchResult.redeemedAt}}"><text class="r-label">兑换时间</text><text class="r-value">{{searchResult.redeemedAt}}</text></view>
+
+      <button class="btn btn-danger btn-sm" wx:if="{{searchResult.status === 'unused'}}" bindtap="revokeCode">
+        撤销此码
+      </button>
+    </view>
+
+    <!-- 批次统计 -->
+    <view class="search-result" wx:if="{{batchStats}}">
+      <view class="result-row"><text class="r-label">批次</text><text class="r-value">{{batchStats.batch}}</text></view>
+      <view class="result-row"><text class="r-label">总数</text><text class="r-value">{{batchStats.total}}</text></view>
+      <view class="result-row"><text class="r-label">已兑换</text><text class="r-value green">{{batchStats.redeemed}}</text></view>
+      <view class="result-row"><text class="r-label">未使用</text><text class="r-value">{{batchStats.unused}}</text></view>
+
+      <button class="btn btn-danger btn-sm" wx:if="{{batchStats.unused > 0}}" bindtap="revokeBatch">
+        撤销批次全部未使用码
+      </button>
+    </view>
+  </view>
+
+  <!-- 熔断开关 -->
+  <view class="kill-switch">
+    <text class="switch-label">兑换功能</text>
+    <switch checked="{{!killed}}" bindchange="toggleKillSwitch" color="#1a73e8" />
+  </view>
+
+</view>

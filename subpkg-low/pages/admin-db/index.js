@@ -17,7 +17,8 @@ Page({
       { id: 'backup', icon: '💾', title: '创建备份', desc: '创建当前数据快照' },
       { id: 'clean', icon: '🧹', title: '清理缓存', desc: '清理本地过期缓存数据' },
       { id: 'export', icon: '📤', title: '导出数据', desc: '导出脱敏后的数据报告' },
-      { id: 'reset', icon: '⚠️', title: '重置数据库', desc: '清空云端数据重新开始' }
+      { id: 'reset', icon: '⚠️', title: '重置数据库', desc: '清空云端数据重新开始' },
+      { id: 'invite', icon: '🎫', title: '内测码管理', desc: '生成/查询/撤销内测码', url: '/subpkg-low/pages/admin-invite/index' }
     ],
     aiOps: [
       { id: 'aiDashboard', icon: '📊', title: 'AI对话看板', desc: '准确率/成本/安全事件' },
@@ -103,6 +104,9 @@ Page({
       case 'reset':
         wx.showModal({ title: '⚠️ 危险操作', content: '将清空云端数据库。确认继续？', confirmText: '确认重置', confirmColor: '#DC2626',
           success(r) { if (r.confirm) wx.showToast({ title: '需管理权限', icon: 'none' }); } });
+        break;
+      case 'invite':
+        wx.navigateTo({ url: '/subpkg-low/pages/admin-invite/index' });
         break;
     }
   },

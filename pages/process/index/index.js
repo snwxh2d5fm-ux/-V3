@@ -5,6 +5,7 @@ const constants = require('../../../data/constants');
 const templates = require('../../../data/templates.js');
 const { getAllProcessLines, getProcessLine, saveProcessLine } = require('../../../utils/storage');
 const tracker = require('../../../utils/tracker');
+const { canMakeDecision } = require('../../../utils/decision-gate');
 const { buildPhase2Stages, isPhase2Onboarding, toStageObject, autoCompletePhase1 } = require('../../../utils/phase-builder');
 
 Page({
@@ -63,7 +64,14 @@ Page({
     disclaimerType: '',
     disclaimerTitle: '',
     disclaimerBody: '',
-    disclaimerConfirmed: false
+    disclaimerConfirmed: false,
+
+    showGateSheet: false,
+    gateMode: '',
+    pendingPathId: '',
+    pendingPathLabel: '',
+    pendingTemplateId: '',
+    expandedPathId: '',
   },
 
   onShow() {
@@ -108,6 +116,15 @@ Page({
     for (var i = 0; i < opts.length; i++) {
       if (opts[i].id === id) { label = opts[i].name; desc = opts[i].desc || ''; break; }
     }
+    var gate = canMakeDecision();
+    if (!gate.ok) {
+      this.setData({ showGateSheet: true, gateMode: gate.reason, pendingPathId: id, pendingPathLabel: label });
+      return;
+    }
+    if (this.__selectingPath) return;
+    this.__selectingPath = true;
+    var that = this;
+    setTimeout(function() { that.__selectingPath = false; }, 2000);
     // 一触即选：点击即确认，创建最小流程线
     app.globalData.selectedPath = id;
     app.globalData.userStatus = 'unapplied';  // P1-02: 双写 globalData
@@ -175,19 +192,24 @@ Page({
 
     // ★ 同步创建云端流程（verifyMilestone需要云端user_processes记录）
     var cloudProcessId = processLine.id;
-    wx.cloud.callFunction({
-      name: 'process-manager',
-      data: { action: 'start', templateId: id }
-    }).then(function(startRes) {
-      if (startRes.result && startRes.result.code === 0 && startRes.result.data && startRes.result.data.processId) {
-        cloudProcessId = startRes.result.data.processId;
-        // 关联云端processId到本地流程线
+    var cloudTimeout = new Promise(function(_, reject) {
+      setTimeout(function() { reject(new Error('CLOUD_TIMEOUT')); }, 8000);
+    });
+    Promise.race([
+      wx.cloud.callFunction({ name: 'process-manager', data: { action: 'start', templateId: id } }),
+      cloudTimeout
+    ]).then(function(startRes) {
+      if (startRes && startRes.result && startRes.result.code === 0 && startRes.result.data && startRes.result.data.processId) {
         var lines = getAllProcessLines();
         var line = lines.find(function(l) { return l.id === processLine.id; });
-        if (line) { line.cloudId = cloudProcessId; saveProcessLine(line); }
+        if (line) { line.cloudId = startRes.result.data.processId; saveProcessLine(line); }
       }
     }).catch(function(e) {
-      console.warn('[流程控] 云端流程创建失败（本地降级）:', e);
+      if (e && e.message === 'CLOUD_TIMEOUT') {
+        console.warn('[流程控] 云端流程创建超时(8s)，本地流程已保存');
+      } else {
+        console.warn('[流程控] 云端流程创建失败（本地降级）:', e);
+      }
     });
 
     this.setData({ showDirectPathPicker: false, directSelectedPath: '', directSelectedPathLabel: '' });
@@ -660,6 +682,11 @@ Page({
   },
 
   selectTemplate(e) {
+    var gate = canMakeDecision();
+    if (!gate.ok) {
+      this.setData({ showGateSheet: true, gateMode: gate.reason, pendingTemplateId: e.currentTarget.dataset.id });
+      return;
+    }
     const templateId = e.currentTarget.dataset.id;
     const template = this.data.templates.find(t => t.id === templateId);
     if (!template) return;
@@ -728,6 +755,24 @@ Page({
     wx.showToast({ title: '流程已创建', icon: 'success' });
     this.loadActiveProcess();
   },
+  onGatePassed: function() {
+    var id = this.data.pendingPathId;
+    var templateId = this.data.pendingTemplateId;
+    this.setData({ showGateSheet: false, gateMode: '', pendingPathId: '', pendingPathLabel: '', pendingTemplateId: '' });
+    if (id) {
+      this.onSelectDirectPath({ currentTarget: { dataset: { id: id } } });
+    } else if (templateId) {
+      this.selectTemplate({ currentTarget: { dataset: { id: templateId } } });
+    }
+  },
+  onGateDismiss: function() {
+    this.setData({ showGateSheet: false, gateMode: '', pendingPathId: '', pendingPathLabel: '', pendingTemplateId: '' });
+  },
+  togglePathExpand: function(e) {
+    var id = e.currentTarget.dataset.id;
+    this.setData({ expandedPathId: this.data.expandedPathId === id ? '' : id, showDirectPathPicker: true });
+  },
+  catchStop: function() {},
 
   onShareAppMessage() {
     return { title: '我正在使用住港伴，你也来看看', path: '/pages/process/index/index' };

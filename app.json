@@ -57,7 +57,8 @@
         "pages/invoice-apply/index",
         "pages/invoice-list/index",
         "pages/invoice-detail/index",
-        "pages/about/index"
+        "pages/about/index",
+        "pages/redeem/index"
       ]
     },
     {
@@ -66,7 +67,8 @@
       "pages": [
         "pages/assessment-index/index",
         "pages/assessment-result/index",
-        "pages/admin-db/index"
+        "pages/admin-db/index",
+        "pages/admin-invite/index"
       ]
     },
     {
