@@ -10,6 +10,7 @@
  */
 var app = getApp();
 var constants = require('../../../data/constants.js');
+var { canMakeDecision } = require('../../../utils/decision-gate');
 
 Page({
   data: {
@@ -26,6 +27,24 @@ Page({
   },
 
   onLoad: function() {
+    var gate = canMakeDecision();
+    if (!gate.ok) {
+      wx.showModal({
+        title: gate.reason === 'login' ? '请先登录' : '请先确认身份状态',
+        content: '登录后即可查看会员方案与订阅。',
+        showCancel: true,
+        cancelText: '返回',
+        confirmText: gate.reason === 'login' ? '去登录' : '去确认',
+        success: function(res) {
+          if (res.confirm) {
+            wx.redirectTo({ url: gate.reason === 'login' ? '/pages/login/login' : '/pages/status-select/status-select' });
+          } else {
+            wx.navigateBack();
+          }
+        }
+      });
+      return;
+    }
     this.loadMembershipStatus();
     this.loadPlans();
   },

@@ -10,6 +10,7 @@ var storage = require('../../../utils/onboarding-storage');
 var norm = require('../../../utils/normalizeTask');
 var wizards = require('../wizards');
 var { getGlobalStages, getActiveStageIndex } = require('../../../utils/stage-helper');
+var { canMakeDecision } = require('../../../utils/decision-gate');
 
 Page({
   data: {
@@ -460,6 +461,21 @@ Page({
 
   // ★ ¥9.90 即刻提前解锁全部关卡
   unlockAllPhasesPay: function() {
+    var gate = canMakeDecision();
+    if (!gate.ok) {
+      wx.showModal({
+        title: gate.reason === 'login' ? '需要登录' : '请先确认身份状态',
+        content: '登录后即可购买解锁全部关卡。',
+        confirmText: gate.reason === 'login' ? '去登录' : '去确认',
+        cancelText: '稍后',
+        success: function(res) {
+          if (res.confirm) {
+            wx.navigateTo({ url: gate.reason === 'login' ? '/pages/login/login' : '/pages/status-select/status-select' });
+          }
+        }
+      });
+      return;
+    }
     var self = this;
     wx.showLoading({ title: '处理中...' });
     wx.cloud.callFunction({
@@ -519,6 +535,21 @@ Page({
 
   // ★ 跳转会员中心
   goMembership: function() {
+    var gate = canMakeDecision();
+    if (!gate.ok) {
+      wx.showModal({
+        title: gate.reason === 'login' ? '需要登录' : '请先确认身份状态',
+        content: '登录后可查看会员方案。',
+        confirmText: gate.reason === 'login' ? '去登录' : '去确认',
+        cancelText: '稍后',
+        success: function(res) {
+          if (res.confirm) {
+            wx.navigateTo({ url: gate.reason === 'login' ? '/pages/login/login' : '/pages/status-select/status-select' });
+          }
+        }
+      });
+      return;
+    }
     wx.navigateTo({ url: '/subpkg-chat/pages/membership/index' });
   },
 
