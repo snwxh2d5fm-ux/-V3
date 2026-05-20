@@ -75,7 +75,6 @@
 .format-hint.error {
   color: #ff4d4f;
 }
-}
 
 /* ===== 预览框 ===== */
 .preview-box {
