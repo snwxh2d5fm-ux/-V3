@@ -747,6 +747,17 @@ Page({
     var slotKey = e.currentTarget.dataset.slotKey;
     var name = e.currentTarget.dataset.name || slotKey;
     var docs = this.findSlotDocs(slotKey);
+    console.log('[PDF] slotKey=' + slotKey + ' docs.length=' + (docs ? docs.length : 0));
+    if (!docs || docs.length === 0) {
+      wx.showToast({ title: '无证件图片可合成，请先添加证件照片', icon: 'none', duration: 2500 });
+      return;
+    }
+    // 检查是否有可用的文件路径
+    var validDocs = docs.filter(function(d) { return !!d.filePath; });
+    if (validDocs.length === 0) {
+      wx.showToast({ title: '证件图片路径异常，请重新添加', icon: 'none', duration: 2500 });
+      return;
+    }
     generateSlotPDF(slotKey, name, docs);
   },
 

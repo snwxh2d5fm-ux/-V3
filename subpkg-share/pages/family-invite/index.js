@@ -24,7 +24,11 @@ Page({
     accepting: false,
     acceptResult: null,
     acceptError: null,
-    showSuccess: false
+    showSuccess: false,
+    // 手动输入邀请码
+    acceptInputCode: '',
+    // 创建邀请 — 接收方信息
+    newRecipientName: ''
   },
 
   onLoad: function(options) {
@@ -112,7 +116,8 @@ Page({
     this.setData({
       showRiskDialog: true,
       newInviteCode: null,
-      newInviteExpiresAt: null
+      newInviteExpiresAt: null,
+      newRecipientName: ''
     });
   },
 
@@ -125,7 +130,8 @@ Page({
       data: {
         action: 'create',
         role: this.data.selectedRole,
-        permissions: this.data.selectedPermissions
+        permissions: this.data.selectedPermissions,
+        recipientName: (this.data.newRecipientName || '').trim()
       }
     }).then(function(res) {
       var result = res.result || {};
@@ -285,5 +291,43 @@ Page({
   /** 返回首页 */
   onGoHome: function() {
     wx.switchTab({ url: '/pages/mine/index/index' });
+  },
+
+  /** 输入接收方姓名 */
+  onRecipientNameInput: function(e) {
+    this.setData({ newRecipientName: e.detail.value });
+  },
+
+  /** 手动输入邀请码 */
+  onAcceptInputCode: function(e) {
+    this.setData({ acceptInputCode: e.detail.value });
+  },
+
+  /** 跳转到接受邀请页 */
+  onGoAccept: function() {
+    var code = (this.data.acceptInputCode || '').trim();
+    if (!code) {
+      wx.showToast({ title: '请输入邀请码', icon: 'none' });
+      return;
+    }
+    wx.navigateTo({
+      url: '/subpkg-share/pages/family-invite/index?inviteCode=' + encodeURIComponent(code)
+    });
+  },
+
+  /** 微信分享（一键分享邀请码到聊天） */
+  onShareAppMessage: function() {
+    var code = this.data.newInviteCode;
+    if (!code) {
+      return {
+        title: '邀请你加入我的家庭空间',
+        path: '/pages/mine/index/index'
+      };
+    }
+    return {
+      title: '邀请你加入我的家庭空间',
+      path: '/subpkg-share/pages/family-invite/index?inviteCode=' + encodeURIComponent(code),
+      imageUrl: ''
+    };
   }
 });

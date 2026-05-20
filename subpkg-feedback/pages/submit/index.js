@@ -150,7 +150,7 @@ Page({
   // ===== 检查提交条件 =====
   checkCanSubmit() {
     var hasType = !!this.data.selectedType;
-    var hasContent = this.data.content.trim().length >= 2;
+    var hasContent = this.data.content.trim().length >= 10;
     var notSubmitting = !this.data.isSubmitting;
     var can = hasType && hasContent && notSubmitting;
     this.setData({ canSubmit: can, hasType: hasType, hasContent: hasContent });

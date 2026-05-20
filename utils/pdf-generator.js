@@ -43,10 +43,10 @@ function clearSlotPDF(slotKey) {
  * @param {string} slotName
  * @param {Array}  uploadedDocs
  */
-function generateSlotPDF(slotKey, slotName, uploadedDocs) {
+function generateSlotPDF(slotKey, slotName, uploadedDocs, _retryCount) {
+  var retryCount = _retryCount || 0;
   var docCount = (uploadedDocs || []).length;
   // 检查缓存（文档数不变时直接打开）
-  var retryCount = slotKey._pdfRetry || 0;
   var cached = getSavedPDF(slotKey, docCount);
   if (cached) {
     wx.openDocument({
@@ -59,20 +59,17 @@ function generateSlotPDF(slotKey, slotName, uploadedDocs) {
           clearSlotPDF(slotKey);
           return;
         }
-        slotKey._pdfRetry = retryCount + 1;
         clearSlotPDF(slotKey);
-        generateSlotPDF(slotKey, slotName, uploadedDocs);
+        generateSlotPDF(slotKey, slotName, uploadedDocs, retryCount + 1);
       }
     });
     return;
   }
-  slotKey._pdfRetry = 0;
 
   if (!uploadedDocs || !uploadedDocs.length) {
     wx.showToast({ title: '无图片可合成', icon: 'none' });
     return;
   }
-  slotKey._pdfRetry = 0;
 
   var paths = [];
   uploadedDocs.forEach(function(d) {
@@ -82,7 +79,6 @@ function generateSlotPDF(slotKey, slotName, uploadedDocs) {
     wx.showToast({ title: '无有效图片', icon: 'none' });
     return;
   }
-  slotKey._pdfRetry = 0;
 
   wx.showLoading({ title: '合成PDF中...' });
 

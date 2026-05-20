@@ -138,6 +138,12 @@
     <view class="card create-panel" wx:if="{{hasSpace}}">
       <text class="create-panel-title">创建新邀请</text>
 
+      <!-- 接收方姓名 -->
+      <view class="recipient-name-section">
+        <text class="picker-label">接收方姓名</text>
+        <input class="recipient-input" placeholder="请输入家属姓名" value="{{newRecipientName}}" bindinput="onRecipientNameInput" maxlength="20" />
+      </view>
+
       <!-- 角色选择 -->
       <view class="role-picker">
         <text class="picker-label">角色</text>
@@ -204,7 +210,17 @@
       </text>
       <view class="invite-code-actions">
         <button class="btn btn-outline action" bindtap="onCopyInviteCode">📋 复制邀请码</button>
-        <button class="btn btn-outline action" bindtap="onSaveInviteImage">💾 保存到相册</button>
+        <button class="btn btn-primary action share-btn" open-type="share">💬 分享到微信</button>
+      </view>
+    </view>
+
+    <!-- ===== 接收邀请入口（手动输入邀请码） ===== -->
+    <view class="card accept-entry" wx:if="{{hasSpace || !hasSpace}}">
+      <text class="accept-entry-title">🔑 接收家庭邀请</text>
+      <text class="accept-entry-desc">如果你收到了家人的邀请码，在此输入即可加入</text>
+      <view class="accept-entry-row">
+        <input class="accept-input" placeholder="粘贴邀请码" value="{{acceptInputCode}}" bindinput="onAcceptInputCode" maxlength="32" />
+        <button class="btn btn-primary accept-btn" bindtap="onGoAccept" disabled="{{!acceptInputCode}}">进入 ›</button>
       </view>
     </view>
   </block>

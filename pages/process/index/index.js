@@ -154,35 +154,53 @@ Page({
       return;
     }
 
-    var processId = this.data.activeProcessId || getActiveProcessId();
-    if (!processId) {
+    var app = getApp();
+    var activeProcess = app.globalData.activeProcess;
+    if (!activeProcess || !activeProcess.stages) {
       wx.showToast({ title: '未找到活跃流程', icon: 'none' });
       return;
     }
 
-    // 收集当前阶段所有未完成步骤的 stepId
-    var pendingSteps = (phase.steps || []).filter(function(s) {
-      return s.status !== 'completed';
+    // 从 activeProcess.stages 找到当前阶段（UI index → 数据层 stage）
+    var allStages = activeProcess.stages;
+    var BRIDGE = require('../../data/constants').STAGE_BRIDGE_MAP;
+    var stageId = BRIDGE.ui_to_phase[index];
+    var currentStage = allStages.find(function(s) {
+      return s.stageId === stageId || s.phaseId === stageId;
+    });
+    if (!currentStage) {
+      wx.showToast({ title: '未找到对应阶段数据', icon: 'none' });
+      return;
+    }
+
+    // 收集未完成步骤
+    var pendingSteps = (currentStage.steps || []).filter(function(st) {
+      return st.status !== 'completed';
     });
     if (pendingSteps.length === 0) {
       wx.showToast({ title: '所有步骤已完成', icon: 'none' });
       return;
     }
 
+    var processId = this.data.activeProcessId || wx.getStorageSync('__active_process_id__');
+    if (!processId) {
+      wx.showToast({ title: '未找到流程ID', icon: 'none' });
+      return;
+    }
+
     var self = this;
     wx.showLoading({ title: '推进中...' });
     try {
-      // 逐个完成未完成步骤
       var lastResult = null;
       for (var si = 0; si < pendingSteps.length; si++) {
-        var step = pendingSteps[si];
+        var st = pendingSteps[si];
         var res = await wx.cloud.callFunction({
           name: 'process-manager',
           data: {
             action: 'completeStep',
             processId: processId,
-            stageId: phase.stageId || phase.id,
-            stepId: step.stepId || step.id
+            stageId: stageId,
+            stepId: st.stepId
           }
         });
         lastResult = res;
@@ -190,9 +208,7 @@ Page({
       wx.hideLoading();
 
       if (lastResult && lastResult.result && lastResult.result.code === 0) {
-        var BRIDGE = require('../../data/constants').STAGE_BRIDGE_MAP;
-        var uiStage = BRIDGE.stageToUiStage(phase.stageId || phase.id, index);
-        wx.setStorageSync('__process_stage__', uiStage);
+        wx.setStorageSync('__process_stage__', index);
 
         var data = lastResult.result.data || {};
         if (data.requiresMilestone) {
@@ -202,7 +218,8 @@ Page({
         }
         self.loadActiveProcess();
       } else {
-        wx.showToast({ title: (lastResult && lastResult.result && lastResult.result.msg) || '操作失败', icon: 'none' });
+        var errMsg = (lastResult && lastResult.result && lastResult.result.msg) || '操作失败';
+        wx.showToast({ title: errMsg, icon: 'none', duration: 2000 });
       }
     } catch(err) {
       wx.hideLoading();

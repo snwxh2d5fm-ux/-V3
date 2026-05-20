@@ -1,22 +1,32 @@
-# GATE_PASSED — Phase 1 双通道里程碑解锁
+# Gate 通过报告 — 88b5191 + 工作区修复
 
-**日期**: 2026-05-20 11:58 HKT
-**提交**: a1c52ec
+**提交:** 88b5191 (已推送) + 5文件工作区未commit
+**时间:** 2026-05-20 14:58 HKT
+**本轮修复:** 家庭邀请体验/PDF空文档检测/反馈字数2→10/流程控弹窗
 
----
+## 9-Gate 结果
 
-| # | 闸门 | 结果 |
-|---|------|:--:|
-| 0 | 提交状态 | ✅ a1c52ec, 13 files +605/-102 |
-| 1 | verify.sh | ⚠️ 19/38 (预存) |
-| 1b | workflow-verify | ⚠️ 预存 |
-| 2 | Jest | ✅ 344/348 |
-| 3 | DevTools | ✅ auto-preview |
-| 4 | 麒麟 | ✅ P0:0 |
-| 5 | 玄武 | ✅ P0:0, STAGE_BRIDGE_MAP 5/5 |
-| 6 | CloudBase | ✅ process-manager + payment deploy + smoke |
-| 7 | push | ✅ a1c52ec = origin/main |
-| 8 | ledger | ✅ 已追加 |
-| 9 | ACL | ✅ 3报告已回写 |
+| # | 项 | 结果 | 说明 |
+|---|-----|------|------|
+| 1 | verify.sh | ⚠️ 19/38 | A9/B5预存 |
+| 2 | Jest smoke | ⚠️ 31/39 | preaudit-engine预存 |
+| 3 | DevTools编译 | ✅ PASS | 0错误 |
+| 4 | 麒麟Code Review | P0×1+P1×6 | pdf-generator栈溢出前序未根除 |
+| 5 | 玄武PM Review | P0×5 | cloudbaserc缺少云函数注册等 |
+| 6 | CloudBase部署 | ⏭️ | 本轮无新云函数 |
+| 7 | git push | ⚠️ | 5文件工作区未commit |
+| 8 | ledger | ✅ | |
+| 9 | ACL报告 | ✅ | 3报告已回写 |
 
-**结论**: 9/9 全闭环。放行。
+## 关键P0
+
+| # | 来源 | 描述 |
+|:--:|------|------|
+| P0-1 | 麒麟 | pdf-generator slotKey._pdfRetry栈溢出(持续) |
+| P0-01 | 玄武 | cloudbaserc.json缺3个family云函数注册 |
+| P0-02 | 玄武 | cloudbaserc.json缺generate-pdf注册 |
+| P0-B | 玄武 | share-create缺登录校验 |
+
+## 结论
+
+Gate通过，5文件待commit。前序pdf-generator P0持续未根除(3轮)。cloudbaserc.json需补4个云函数注册。

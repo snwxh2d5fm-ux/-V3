@@ -256,6 +256,28 @@
   margin-bottom: 14rpx;
 }
 
+/* 接收方姓名 */
+.recipient-name-section {
+  margin-bottom: 24rpx;
+}
+
+.recipient-input {
+  width: 100%;
+  height: 76rpx;
+  background: #f8faff;
+  border: 2rpx solid #e0e0e0;
+  border-radius: 12rpx;
+  padding: 0 20rpx;
+  font-size: 26rpx;
+  color: #333;
+  box-sizing: border-box;
+}
+
+.recipient-input:focus {
+  border-color: #1a73e8;
+  background: #fff;
+}
+
 /* 角色选择 */
 .role-picker {
   margin-bottom: 24rpx;
@@ -675,6 +697,68 @@
 
 .risk-modal-actions .btn {
   flex: 1;
+}
+
+/* ===== 分享按钮 ===== */
+.share-btn {
+  background: #07c160 !important;
+  color: #fff !important;
+  border: none !important;
+}
+
+/* ===== 接收邀请入口 ===== */
+.accept-entry {
+  margin-top: 24rpx;
+  background: linear-gradient(135deg, #f0f7ff, #e8f0fe);
+  border: 1rpx solid #c5d9f5;
+}
+
+.accept-entry-title {
+  font-size: 28rpx;
+  font-weight: 700;
+  color: #1a73e8;
+  display: block;
+  margin-bottom: 8rpx;
+}
+
+.accept-entry-desc {
+  font-size: 24rpx;
+  color: #888;
+  display: block;
+  margin-bottom: 20rpx;
+}
+
+.accept-entry-row {
+  display: flex;
+  gap: 16rpx;
+  align-items: center;
+}
+
+.accept-input {
+  flex: 1;
+  height: 76rpx;
+  background: #fff;
+  border: 2rpx solid #e0e0e0;
+  border-radius: 12rpx;
+  padding: 0 20rpx;
+  font-size: 26rpx;
+  color: #333;
+}
+
+.accept-input:focus {
+  border-color: #1a73e8;
+}
+
+.accept-btn {
+  width: 140rpx !important;
+  height: 76rpx !important;
+  line-height: 76rpx !important;
+  flex-shrink: 0;
+  font-size: 26rpx !important;
+}
+
+.accept-btn[disabled] {
+  opacity: 0.45;
 }
 
 /* ===== 安全底部 ===== */
