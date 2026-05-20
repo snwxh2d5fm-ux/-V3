@@ -733,6 +733,10 @@ Page({
     wx.navigateTo({ url: '/subpkg-chat/pages/membership/index' });
   },
 
+  goToLogin: function() {
+    wx.navigateTo({ url: '/pages/login/login' });
+  },
+
   onShareAppMessage() {
     return { title: '我正在使用住港伴，你也来看看', path: '/pages/reminders/index/index' };
   }

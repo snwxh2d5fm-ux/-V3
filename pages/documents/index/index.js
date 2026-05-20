@@ -760,6 +760,10 @@ Page({
     wx.reLaunch({ url: '/pages/process/index/index' });
   },
 
+  goToLogin: function() {
+    wx.navigateTo({ url: '/pages/login/login' });
+  },
+
   /** 智能上传 — 拍照后自动分类 */
   smartUpload() {
     var docLimit = this.data.effectiveLimit ? this.data.effectiveLimit.maxDocuments : constants.FREE_LIMITS.MAX_DOCUMENTS;

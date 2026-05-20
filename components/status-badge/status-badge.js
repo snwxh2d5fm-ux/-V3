@@ -180,6 +180,13 @@ Component({
      * 点击路径标签 → 切换路径
      */
     onTapPath() {
+      var app = getApp();
+      var userStatus = app.globalData.userStatus || wx.getStorageSync('__user_status__') || '';
+      if (userStatus === 'skipped') {
+        wx.showToast({ title: '请先确认身份状态', icon: 'none' });
+        wx.navigateTo({ url: '/pages/status-select/status-select' });
+        return;
+      }
       if (!this.data.pathLabel) return;
       wx.navigateTo({ url: '/pages/path-select/index' });
     }

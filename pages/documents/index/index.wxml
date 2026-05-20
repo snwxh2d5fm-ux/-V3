@@ -155,6 +155,12 @@
     <view class="image-viewer__close" bindtap="closeImageViewer">✕</view>
   </view>
 
+  <view class="guest-guide" wx:if="{{!isLoggedIn && !isSkipped}}">
+    <view class="guest-guide__divider"></view>
+    <text class="guest-guide__text">登录后开始管理证件、卡槽分类和AI增强</text>
+    <button class="btn btn--primary btn--sm" bindtap="goToLogin">立即登录</button>
+  </view>
+
   <view class="safe-bottom"></view>
   <floating-ai visible="{{true}}" context="{{ {page: 'documents', pageContext: '用户在证件夹页面管理申请材料'} }}" />
 </view>

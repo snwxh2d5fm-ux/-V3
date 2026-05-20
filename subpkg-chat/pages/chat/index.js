@@ -184,6 +184,14 @@ Page({
         }
       }
 
+      // T018: Guide text for unauthenticated users after 3rd message
+      if (!app.globalData.isLoggedIn) {
+        var userMsgCount = this.data.messages.filter(function(m) { return m.role === 'user'; }).length;
+        if (userMsgCount >= 3) {
+          replyContent += '\n\n💡 登录后可保存对话记录，享受个性化路径推荐';
+        }
+      }
+
       var assistantMsg = {
         role: 'assistant',
         content: replyContent,
