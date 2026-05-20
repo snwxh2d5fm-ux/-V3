@@ -66,6 +66,10 @@ exports.main = async (event) => {
         if (!isAdmin(OPENID)) return denyAdmin();
         return await getCodeStats(event);
 
+      // ---- 测试辅助 ----
+      case 'reset-test-user':
+        return await resetTestUser(OPENID);
+
       // ---- 初始化 ----
       case 'init-collections':
         if (!isAdmin(OPENID)) return denyAdmin();
@@ -579,6 +583,32 @@ async function getCodeStats({ batchId, channel }) {
 }
 
 // ==================== 初始化：创建集合与索引 ====================
+
+// ==================== 测试辅助：重置用户年卡状态 ====================
+async function resetTestUser(openid) {
+  if (!openid) return { code: 401, msg: '未登录' };
+
+  // 重置 users 表会员字段
+  await db.collection('users').where({ _openid: openid }).update({
+    data: {
+      membershipLevel: 'free',
+      membershipExpireAt: null,
+      isLocked: false,
+      updatedAt: db.serverDate()
+    }
+  });
+
+  // 终止活跃的 subscription_records
+  const { data: subs } = await db.collection('subscription_records')
+    .where({ _openid: openid, status: 'active' }).get();
+  for (const s of subs) {
+    await db.collection('subscription_records').doc(s._id).update({
+      data: { status: 'terminated_by_test', updatedAt: db.serverDate() }
+    });
+  }
+
+  return { code: 0, msg: '年卡状态已重置为免费用户' };
+}
 
 async function initCollections() {
   const results = {};
