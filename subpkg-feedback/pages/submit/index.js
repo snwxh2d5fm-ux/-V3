@@ -142,10 +142,11 @@ Page({
     this.setData({ isSubmitting: true });
 
     // 轻量关键词过滤（替代阻塞式TMS审核，合规底线）
+    var contentText = that.data.content.trim();
     var BLOCK_WORDS = /赌博|博彩|色情|毒品|枪支|诈骗|贷款|套现|办证|刻章|假币|迷药|嫖|赌|毒/;
-    if (BLOCK_WORDS.test(content)) {
+    if (BLOCK_WORDS.test(contentText)) {
       wx.showToast({ title: '内容包含违规信息，请修改后提交', icon: 'none' });
-      this.setData({ isSubmitting: false, canSubmit: true });
+      that.setData({ isSubmitting: false, canSubmit: true });
       return;
     }
 
@@ -156,7 +157,7 @@ Page({
       data: {
         action: 'submit',
         type: that.data.selectedType,
-        content: that.data.content.trim(),
+        content: contentText,
         screenshot: that.data.screenshotFileID,
         isAnonymous: that.data.isAnonymous,
         contact: { nickname: that.data.isAnonymous ? '' : that.data.nickname }

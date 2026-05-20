@@ -107,7 +107,25 @@ Page({
     // 持久化路径到 storage（证件夹/其他页面依赖此 key）
     wx.setStorageSync('__selected_path__', id);
 
-    // 创建最小 processLine — 路径已选但材料未开始
+    // 从模板填充 stages (修复 stages=[] 导致completeAllSteps空数据)
+    var tmpl = templates.processTemplates.find(function(t) { return t.id === id || t.pathType === id; });
+    var stages = [];
+    if (tmpl && tmpl.phases) {
+      tmpl.phases.forEach(function(p) {
+        var stageSteps = (p.steps || []).map(function(st) {
+          return { stepId: st.id, stepName: st.name, status: 'pending', completedAt: null };
+        });
+        stages.push({
+          stageId: p.id, stageName: p.name, order: p.order,
+          isMilestone: p.isMilestone || false,
+          milestoneDocType: p.milestoneDocType || null,
+          phaseId: p.id,
+          status: stages.length === 0 ? 'in_progress' : 'locked',
+          steps: stageSteps
+        });
+      });
+    }
+
     var processLine = {
       id: 'direct_' + Date.now(),
       name: label,
@@ -116,7 +134,7 @@ Page({
       riskLevel: (constants.PATH_RISK_LEVELS && constants.PATH_RISK_LEVELS[id]) ? constants.PATH_RISK_LEVELS[id].level : 'medium',
       totalCycle: (constants.PATH_RISK_LEVELS && constants.PATH_RISK_LEVELS[id]) ? (constants.PATH_RISK_LEVELS[id].cycle || '7年') : '7年',
       phases: [],
-      stages: [],
+      stages: stages,
       status: 'active',
       progress: 0,
       currentStage: '资格评估',
@@ -150,6 +168,7 @@ Page({
     // 防重入：避免observer/setData循环触发
     if (this.__completingAllSteps) return;
     this.__completingAllSteps = true;
+    try {
 
     console.log('[completeAllSteps] 触发', JSON.stringify(e.currentTarget.dataset));
     var index = e.currentTarget.dataset.stageIndex;
@@ -243,6 +262,9 @@ Page({
     } catch(err) {
       wx.hideLoading();
       wx.showToast({ title: '网络异常，请重试', icon: 'none' });
+    }
+    } finally {
+      this.__completingAllSteps = false;
     }
   },
 
