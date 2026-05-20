@@ -10,8 +10,6 @@
     "preview": "vite preview"
   },
   "dependencies": {
-    "@rolldown/binding-linux-arm64-gnu": "^1.0.2",
-    "@rollup/rollup-linux-arm64-gnu": "^4.60.4",
     "lucide-react": "^1.16.0",
     "react": "^19.2.6",
     "react-dom": "^19.2.6",
