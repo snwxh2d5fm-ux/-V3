@@ -1,6 +1,8 @@
-@import "tailwindcss";
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
 
-/* 住港伴运营后台 - Dark-first theme, aligned with web version design tokens */
+/* 住港伴运营后台 - Dark-first theme */
 :root {
   --background: #0a0a0a;
   --foreground: #fafafa;

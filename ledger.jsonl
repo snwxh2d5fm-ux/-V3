@@ -46,3 +46,5 @@
 {"ts":"2026-05-21T23:59:00+08:00","from":"claude","action":"deploy_request","commit":"6551bf7","detail":"V4 Dual-Gate 发版 9-Gate 最终审查。feature/dual-gate(7commits)→main。KR-01/KR-02已修复。Jest 15/15 380/384。麒麟0/0/0 APPROVED。玄武0/0/0 APPROVED。","state":"release_ready"}
 {"ts":"2026-05-22T01:00:00+08:00","from":"claude","action":"release_ready","commit":"df08b47","detail":"V4 Dual-Gate 发版。真机测试20/20通过。支付漏洞已修复。麒麟0/0/0 APPROVED。玄武0/0/0 APPROVED。Jest 15/15 380/384。","state":"released"}
 {"ts":"2026-05-22T01:00:00+08:00","from":"claude","action":"release_ready","commit":"df08b47","detail":"V4 Dual-Gate 发版。真机20/20。支付已修复。","state":"released"}
+{"ts":"2026-05-22T01:45:00+08:00","from":"claude","action":"merge_main","commit":"253f995","detail":"feature/invite-code → main 合并。邀请内测码V1全链路：云函数770行+redeem页面+运营后台+DB 3集合8索引。真机C1-C7/E1-E5/L1-L2全绿。P0:0","state":"released"}
+{"ts":"2026-05-21T19:20:00+08:00","from":"hermes","action":"9gate_full","detail":"7da6157全9道闸门. Gate1:19/38预存 Gate2:无新增 Gate3:0错误(粘滞项目修复). 麒麟P0×0 P1×3 P2×4. 62/62全绿. 3bug修复确认. admin-ai-quality已部署.","state":"passed"}
