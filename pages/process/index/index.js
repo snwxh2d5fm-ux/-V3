@@ -193,21 +193,30 @@ Page({
     wx.setStorageSync('__active_process_id__', processLine.id);
     wx.setStorageSync('__process_stage__', 1);
 
-    // ★ 同步创建云端流程（verifyMilestone需要云端user_processes记录）
+    // ★ 同步创建云端流程（H-01: 8秒超时保护，对齐 path-select 模式）
     var cloudProcessId = processLine.id;
-    wx.cloud.callFunction({
-      name: 'process-manager',
-      data: { action: 'start', templateId: id }
-    }).then(function(startRes) {
-      if (startRes.result && startRes.result.code === 0 && startRes.result.data && startRes.result.data.processId) {
+    var cloudTimeout = new Promise(function(_, reject) {
+      setTimeout(function() { reject(new Error('CLOUD_TIMEOUT')); }, 8000);
+    });
+    Promise.race([
+      wx.cloud.callFunction({
+        name: 'process-manager',
+        data: { action: 'start', templateId: id }
+      }),
+      cloudTimeout
+    ]).then(function(startRes) {
+      if (startRes && startRes.result && startRes.result.code === 0 && startRes.result.data && startRes.result.data.processId) {
         cloudProcessId = startRes.result.data.processId;
-        // 关联云端processId到本地流程线
         var lines = getAllProcessLines();
         var line = lines.find(function(l) { return l.id === processLine.id; });
         if (line) { line.cloudId = cloudProcessId; saveProcessLine(line); }
       }
     }).catch(function(e) {
-      console.warn('[流程控] 云端流程创建失败（本地降级）:', e);
+      if (e && e.message === 'CLOUD_TIMEOUT') {
+        console.warn('[流程控] 云端流程创建超时(8s)，本地流程已保存');
+      } else {
+        console.warn('[流程控] 云端流程创建失败（本地降级）:', e);
+      }
     });
 
     this.setData({ showDirectPathPicker: false, directSelectedPath: '', directSelectedPathLabel: '' });
