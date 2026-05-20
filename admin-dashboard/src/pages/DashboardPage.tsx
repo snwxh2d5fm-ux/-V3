@@ -19,7 +19,7 @@ export function DashboardPage() {
       .then((res) => {
         if (cancelled) return;
         if (res.code === 0 && res.data) {
-          const d = res.data as DashboardData;
+          const d = res.data as unknown as DashboardData;
           setData(d);
           setLoadState('loaded');
 
