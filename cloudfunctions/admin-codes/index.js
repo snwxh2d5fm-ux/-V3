@@ -5,7 +5,7 @@
  */
 const cloudbase = require('@cloudbase/node-sdk');
 const crypto = require('crypto');
-const app = cloudbase.init({ env: cloudbase.SYMBOL_CURRENT_ENV });
+const app = cloudbase.init({ env: 'cloudbase-d1g17tgt7cc199a60' });
 const db = app.database();
 
 function sha256(s) {
