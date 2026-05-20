@@ -106,9 +106,16 @@ Page({
       const result = res.result || {};
 
       if (result.alreadyRedeemed) {
-        // 幂等返回：同用户已兑换过该码
-        this.setData({ redeeming: false, redeemFailed: false });
-        wx.showToast({ title: result.msg || '你已兑换过该码', icon: 'none' });
+        // 幂等返回：同用户已兑换过该码，展示结果并跳转
+        this.setData({
+          redeeming: false,
+          redeemed: true,
+          membershipLabel: '基础年卡会员',
+          membershipExpiresAt: result.membershipExpireAt
+            ? formatDate(result.membershipExpireAt)
+            : this.data.membershipExpiresAt
+        });
+        wx.showToast({ title: '你已兑换过该码', icon: 'none' });
         return;
       }
 
