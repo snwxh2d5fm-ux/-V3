@@ -4,6 +4,7 @@ const templates = require('../../data/templates.js');
 const { getAllProcessLines, saveProcessLine } = require('../../utils/storage');
 const constants = require('../../data/constants');
 const { buildPhase2Stages, isPhase2Onboarding, toStageObject, autoCompletePhase1 } = require('../../utils/phase-builder');
+const { canMakeDecision } = require('../../utils/decision-gate');
 
 Page({
   data: {
@@ -17,7 +18,11 @@ Page({
       { id: 'dependent', name: '受养人签证', icon: '', desc: '配偶/子女随行来港' },
       { id: 'cies', name: 'CIES投资类身份规划', icon: '', desc: '投资≥3000万港币' }
     ],
-    submitting: false
+    submitting: false,
+    showGateSheet: false,
+    gateMode: '',
+    pendingPathId: '',
+    pendingPathLabel: ''
   },
 
   onSelect(e) {
@@ -27,6 +32,12 @@ Page({
     var label = '';
     for (var i = 0; i < opts.length; i++) {
       if (opts[i].id === id) { label = opts[i].name; break; }
+    }
+
+    var gate = canMakeDecision();
+    if (!gate.ok) {
+      this.setData({ showGateSheet: true, gateMode: gate.reason, pendingPathId: id, pendingPathLabel: label });
+      return;
     }
 
     this.setData({ submitting: true });
@@ -126,5 +137,18 @@ Page({
     setTimeout(function() {
       wx.switchTab({ url: '/pages/process/index/index' });
     }, 1200);
+  },
+
+  onGatePassed: function() {
+    var id = this.data.pendingPathId;
+    var label = this.data.pendingPathLabel;
+    this.setData({ showGateSheet: false, gateMode: '', pendingPathId: '', pendingPathLabel: '' });
+    if (id) {
+      this.onSelect({ currentTarget: { dataset: { id: id } } });
+    }
+  },
+
+  onGateDismiss: function() {
+    this.setData({ showGateSheet: false, gateMode: '', pendingPathId: '', pendingPathLabel: '' });
   }
 });

@@ -5,6 +5,7 @@ const constants = require('../../../data/constants');
 const templates = require('../../../data/templates.js');
 const { getAllProcessLines, getProcessLine, saveProcessLine } = require('../../../utils/storage');
 const tracker = require('../../../utils/tracker');
+const { canMakeDecision } = require('../../../utils/decision-gate');
 const { buildPhase2Stages, isPhase2Onboarding, toStageObject, autoCompletePhase1 } = require('../../../utils/phase-builder');
 
 Page({
@@ -63,7 +64,12 @@ Page({
     disclaimerType: '',
     disclaimerTitle: '',
     disclaimerBody: '',
-    disclaimerConfirmed: false
+    disclaimerConfirmed: false,
+    showGateSheet: false,
+    gateMode: '',
+    pendingPathId: '',
+    pendingPathLabel: '',
+    pendingTemplateId: '',
   },
 
   onShow() {
@@ -107,6 +113,11 @@ Page({
     var desc = '';
     for (var i = 0; i < opts.length; i++) {
       if (opts[i].id === id) { label = opts[i].name; desc = opts[i].desc || ''; break; }
+    }
+    var gate = canMakeDecision();
+    if (!gate.ok) {
+      this.setData({ showGateSheet: true, gateMode: gate.reason, pendingPathId: id, pendingPathLabel: label });
+      return;
     }
     // 一触即选：点击即确认，创建最小流程线
     app.globalData.selectedPath = id;
@@ -660,6 +671,11 @@ Page({
   },
 
   selectTemplate(e) {
+    var gate = canMakeDecision();
+    if (!gate.ok) {
+      this.setData({ showGateSheet: true, gateMode: gate.reason, pendingTemplateId: e.currentTarget.dataset.id });
+      return;
+    }
     const templateId = e.currentTarget.dataset.id;
     const template = this.data.templates.find(t => t.id === templateId);
     if (!template) return;
@@ -727,6 +743,24 @@ Page({
     this.setData({ showTemplateSelect: false });
     wx.showToast({ title: '流程已创建', icon: 'success' });
     this.loadActiveProcess();
+  },
+
+  onGatePassed: function() {
+    var id = this.data.pendingPathId;
+    var label = this.data.pendingPathLabel;
+    var templateId = this.data.pendingTemplateId;
+    this.setData({ showGateSheet: false, gateMode: '', pendingPathId: '', pendingPathLabel: '', pendingTemplateId: '' });
+    if (id) {
+      // Re-trigger onSelectDirectPath with saved path data
+      this.onSelectDirectPath({ currentTarget: { dataset: { id: id } } });
+    } else if (templateId) {
+      // Re-trigger selectTemplate with saved template data
+      this.selectTemplate({ currentTarget: { dataset: { id: templateId } } });
+    }
+  },
+
+  onGateDismiss: function() {
+    this.setData({ showGateSheet: false, gateMode: '', pendingPathId: '', pendingPathLabel: '', pendingTemplateId: '' });
   },
 
   onShareAppMessage() {

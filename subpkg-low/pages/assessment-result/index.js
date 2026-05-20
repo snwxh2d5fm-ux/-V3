@@ -9,6 +9,7 @@ const templates = require('../../../data/templates');
 const { saveProcessLine } = require('../../../utils/storage');
 const { getCompatibility, validateBestMatch, getPersonaName } = require('../../data/persona-path-compat');
 const tracker = require('../../../utils/tracker');
+var decisionGate = require('../../../utils/decision-gate');
 
 Page({
   data: {
@@ -128,6 +129,15 @@ Page({
     const path = e.currentTarget.dataset.path;
     const match = this.data.matches.find(m => m.path === path);
 
+    var gate = decisionGate.canMakeDecision();
+    if (!gate.ok) {
+      wx.showToast({
+        title: gate.reason === 'login' ? '请先登录后再选择路径' : '请先确认身份状态后再选择路径',
+        icon: 'none',
+        duration: 2000
+      });
+      return;
+    }
     app.globalData.selectedPath = path;
     app.globalData.solutionRecommendation = this.data.matches;
     wx.setStorageSync(constants.STORAGE_KEYS.ACTIVE_PROCESS_ID, path);

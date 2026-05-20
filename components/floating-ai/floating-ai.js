@@ -5,6 +5,7 @@
  */
 const app = getApp();
 const api = require('../../utils/api');
+var decisionGate = require('../../utils/decision-gate');
 
 Component({
   properties: {
@@ -219,6 +220,16 @@ Component({
     // v4.1: 从AI对话选择路径 → 更新状态 + 写入账号
     selectPathFromChat(pathType, label) {
       if (!pathType) return;
+
+      var gate = decisionGate.canMakeDecision();
+      if (!gate.ok) {
+        wx.showToast({
+          title: gate.reason === 'login' ? '登录后可保存路径选择' : '请先在「我的」补选身份状态后选择路径',
+          icon: 'none',
+          duration: 2500
+        });
+        return;
+      }
 
       // 更新全局状态
       app.globalData.selectedPath = pathType;
