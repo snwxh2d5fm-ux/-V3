@@ -46,6 +46,14 @@ Page({
     isPro: false,             // 付费会员标识
     freeLimitReached: false,
 
+    // 封存提醒
+    showArchived: false,
+    archivedCount: 0,
+    softArchivedCount: 0,
+    archivedReminders: [],
+    softArchivedReminders: [],
+    showArchivedEmptyGuide: false,
+
     loading: true,
     showAddMenu: false,       // 底部添加菜单
     generatingPrep: false     // 逆向时间轴生成中
@@ -360,8 +368,20 @@ Page({
     var currentPath = app.globalData.selectedPath || session.selectedPath || '';
     if (currentPath) {
       formatted = formatted.filter(function(r) {
-        return !r.pathway || r.pathway === currentPath;
+        return !r.pathway || r.pathway === currentPath || r.status === 'archived' || r.status === 'soft_archived';
       });
+    }
+
+    // 提取封存提醒到独立列表
+    var archivedReminders = formatted.filter(function(r) { return r.status === 'archived'; });
+    var softArchivedReminders = formatted.filter(function(r) { return r.status === 'soft_archived'; });
+    formatted = formatted.filter(function(r) { return r.status !== 'archived' && r.status !== 'soft_archived'; });
+    this.setData({ archivedCount: archivedReminders.length, softArchivedCount: softArchivedReminders.length });
+
+    // 空状态引导：当所有提醒都被封存时
+    var showArchivedEmptyGuide = false;
+    if (formatted.length === 0 && (archivedReminders.length > 0 || softArchivedReminders.length > 0)) {
+      showArchivedEmptyGuide = true;
     }
 
     // 分类
@@ -392,6 +412,9 @@ Page({
       allReminders: formatted,
       activeReminders,
       completedReminders,
+      archivedReminders: archivedReminders,
+      softArchivedReminders: softArchivedReminders,
+      showArchivedEmptyGuide: showArchivedEmptyGuide,
       chainGroups,
       allChainGroups,
       displayChainGroups: this.data.filterStatus === 'all' ? allChainGroups : chainGroups,
@@ -541,6 +564,11 @@ Page({
       (this.data.filterStatus === 'all' ? this.data.activeReminders.concat(this.data.completedReminders) : this.data.activeReminders);
     if (type !== 'all') baseReminders = baseReminders.filter(function(r) { return r.type === type; });
     this.setData({ displayChainGroups: this.buildChainGroups(baseReminders) });
+  },
+
+  // ========== 封存提醒显示切换 ==========
+  toggleArchived: function() {
+    this.setData({ showArchived: !this.data.showArchived });
   },
 
   // ========== 导航 ==========

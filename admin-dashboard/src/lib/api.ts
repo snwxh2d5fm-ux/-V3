@@ -39,3 +39,6 @@ export const getTopQueries = () => call<unknown[]>('/admin-ai-quality', { action
 // Compliance
 export const getComplianceStatus = () => call<Record<string, unknown>>('/admin-compliance', { action: 'getComplianceStatus' });
 export const getModerationLogs = (p: Record<string, unknown>) => call<Record<string, unknown>>('/admin-compliance', { action: 'getModerationLogs', params: p });
+
+// Generic caller for pages that need direct access
+export const callAdminFunction = call;

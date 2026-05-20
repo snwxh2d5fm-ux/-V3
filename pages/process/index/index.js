@@ -125,6 +125,11 @@ Page({
     this.__selectingPath = true;
     var that = this;
     setTimeout(function() { that.__selectingPath = false; }, 2000);
+    // ★ 封存旧路径提醒
+    var oldPath = app.globalData.selectedPath || wx.getStorageSync('__selected_path__') || '';
+    if (oldPath && oldPath !== id) {
+      require('../../../utils/storage').archiveRemindersByPath(oldPath);
+    }
     // 一触即选：点击即确认，创建最小流程线
     app.globalData.selectedPath = id;
     app.globalData.userStatus = 'unapplied';  // P1-02: 双写 globalData
@@ -138,6 +143,7 @@ Page({
     wx.setStorageSync('__active_process_id__', '');
     // 持久化路径
     wx.setStorageSync('__selected_path__', id);
+    require('../../../utils/storage').unarchiveRemindersByPath(id);
 
     // 从模板填充 stages，phase2拆为4个独立里程碑阶段
     var tmpl = templates.processTemplates.find(function(t) { return t.id === id || t.pathType === id; });
@@ -734,12 +740,19 @@ Page({
     };
 
     saveProcessLine(processLine);
+    // ★ 封存旧路径提醒
+    var oldPath = app.globalData.selectedPath || wx.getStorageSync('__selected_path__') || '';
+    var newPath = template.pathType || templateId;
+    if (oldPath && oldPath !== newPath) {
+      require('../../../utils/storage').archiveRemindersByPath(oldPath);
+    }
     app.globalData.selectedPath = template.pathType || templateId;
     app.globalData.activeProcessId = processLine.id;
     app.globalData.activeProcess = processLine;
     app.globalData.userStatus = 'unapplied';  // P1-01: 重置状态双写
     wx.setStorageSync('__active_process_id__', processLine.id);
     wx.setStorageSync('__selected_path__', template.pathType || templateId);
+    require('../../../utils/storage').unarchiveRemindersByPath(newPath);
     wx.setStorageSync('__process_stage__', 0);  // P1-01: 重置阶段
 
     // 追踪：流程创建

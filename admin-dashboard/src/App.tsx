@@ -9,8 +9,14 @@ import { CodeManagePage } from '@/pages/CodeManagePage';
 import { AIQualityPage } from '@/pages/AIQualityPage';
 import { CompliancePage } from '@/pages/CompliancePage';
 import { RevenuePage } from '@/pages/RevenuePage';
+import { ContentPage } from '@/pages/ContentPage';
+import { FeedbackPage } from '@/pages/FeedbackPage';
+import { SystemPage } from '@/pages/SystemPage';
+import { PathAnalysisPage } from '@/pages/PathAnalysisPage';
+import { LifecycleFunnelPage } from '@/pages/LifecycleFunnelPage';
+import { PageAnalyticsPage } from '@/pages/PageAnalyticsPage';
+import { ShareAnalyticsPage } from '@/pages/ShareAnalyticsPage';
 import { SettingsPage } from '@/pages/SettingsPage';
-import { PlaceholderPage } from '@/pages/PlaceholderPage';
 
 export default function App() {
   return (
@@ -23,12 +29,16 @@ export default function App() {
               <Route path="/admin" element={<DashboardPage />} />
               <Route path="/admin/users" element={<UserListPage />} />
               <Route path="/admin/codes" element={<CodeManagePage />} />
+              <Route path="/admin/revenue" element={<RevenuePage />} />
+              <Route path="/admin/paths" element={<PathAnalysisPage />} />
+              <Route path="/admin/funnel" element={<LifecycleFunnelPage />} />
               <Route path="/admin/ai-quality" element={<AIQualityPage />} />
               <Route path="/admin/compliance" element={<CompliancePage />} />
-              <Route path="/admin/revenue" element={<RevenuePage />} />
-              <Route path="/admin/content" element={<PlaceholderPage title="内容运营" description="攻略书排行 · 任务完成率 · 搜索热词" phase="Phase 3" />} />
-              <Route path="/admin/feedback" element={<PlaceholderPage title="客服工单" description="反馈处理 · 效率统计 · 满意度分析" phase="Phase 3" />} />
-              <Route path="/admin/system" element={<PlaceholderPage title="系统健康" description="云函数 · 数据库 · API延迟" phase="Phase 3" />} />
+              <Route path="/admin/content" element={<ContentPage />} />
+              <Route path="/admin/feedback" element={<FeedbackPage />} />
+              <Route path="/admin/analytics" element={<PageAnalyticsPage />} />
+              <Route path="/admin/share" element={<ShareAnalyticsPage />} />
+              <Route path="/admin/system" element={<SystemPage />} />
               <Route path="/admin/settings" element={<SettingsPage />} />
             </Route>
           </Route>
