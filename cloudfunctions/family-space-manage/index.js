@@ -86,7 +86,7 @@ exports.main = async (event) => {
           return { code: 400, msg: '请提供有效的权限列表' };
         }
 
-        var allowedPermissions = ['personal_info', 'document_upload', 'financial_info'];
+        var allowedPermissions = ['personal_info', 'documents', 'reminders', 'process', 'document_upload', 'financial_info'];
         for (var i = 0; i < permissions.length; i++) {
           if (allowedPermissions.indexOf(permissions[i]) === -1) {
             return { code: 400, msg: '包含无效的权限项：' + permissions[i] };

@@ -16,7 +16,8 @@ function validatePermissions(permissions) {
   if (!Array.isArray(permissions) || permissions.length === 0) {
     return false;
   }
-  var allowed = ['personal_info', 'document_upload', 'financial_info'];
+  // 对齐客户端侧权限值：personal_info/documents/reminders/process
+  var allowed = ['personal_info', 'documents', 'reminders', 'process', 'document_upload', 'financial_info'];
   for (var i = 0; i < permissions.length; i++) {
     if (allowed.indexOf(permissions[i]) === -1) {
       return false;

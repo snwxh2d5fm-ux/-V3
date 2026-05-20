@@ -149,37 +149,64 @@ Page({
   completeAllSteps: async function(e) {
     var index = e.currentTarget.dataset.stageIndex;
     var phase = this.data.phases[index];
-    if (!phase || phase.status !== 'current') return;
+    if (!phase || phase.status !== 'current') {
+      wx.showToast({ title: '阶段状态异常，请刷新重试', icon: 'none' });
+      return;
+    }
 
     var processId = this.data.activeProcessId || getActiveProcessId();
-    if (!processId) return;
+    if (!processId) {
+      wx.showToast({ title: '未找到活跃流程', icon: 'none' });
+      return;
+    }
+
+    // 收集当前阶段所有未完成步骤的 stepId
+    var pendingSteps = (phase.steps || []).filter(function(s) {
+      return s.status !== 'completed';
+    });
+    if (pendingSteps.length === 0) {
+      wx.showToast({ title: '所有步骤已完成', icon: 'none' });
+      return;
+    }
 
     var self = this;
-    wx.showLoading({ title: '处理中...' });
+    wx.showLoading({ title: '推进中...' });
     try {
-      var res = await wx.cloud.callFunction({
-        name: 'process-manager',
-        data: { action: 'completeStep', processId: processId, stageId: phase.id, stepId: '' }
-      });
+      // 逐个完成未完成步骤
+      var lastResult = null;
+      for (var si = 0; si < pendingSteps.length; si++) {
+        var step = pendingSteps[si];
+        var res = await wx.cloud.callFunction({
+          name: 'process-manager',
+          data: {
+            action: 'completeStep',
+            processId: processId,
+            stageId: phase.stageId || phase.id,
+            stepId: step.stepId || step.id
+          }
+        });
+        lastResult = res;
+      }
       wx.hideLoading();
-      if (res.result.code === 0) {
-        // 写入 __process_stage__ 供攻略书联动
+
+      if (lastResult && lastResult.result && lastResult.result.code === 0) {
         var BRIDGE = require('../../data/constants').STAGE_BRIDGE_MAP;
-        var uiStage = BRIDGE.stageToUiStage(phase.phase, index);
+        var uiStage = BRIDGE.stageToUiStage(phase.stageId || phase.id, index);
         wx.setStorageSync('__process_stage__', uiStage);
 
-        if (res.result.data.requiresMilestone) {
+        var data = lastResult.result.data || {};
+        if (data.requiresMilestone) {
           wx.showToast({ title: '请上传里程碑材料验证后解锁', icon: 'none' });
         } else {
           wx.showToast({ title: '阶段已推进', icon: 'success' });
         }
         self.loadActiveProcess();
       } else {
-        wx.showToast({ title: res.result.msg || '操作失败', icon: 'none' });
+        wx.showToast({ title: (lastResult && lastResult.result && lastResult.result.msg) || '操作失败', icon: 'none' });
       }
     } catch(err) {
       wx.hideLoading();
-      wx.showToast({ title: '操作失败', icon: 'none' });
+      wx.showToast({ title: '网络异常，请重试', icon: 'none' });
     }
   },
 
@@ -367,12 +394,10 @@ Page({
   catchStop() {},
   closeDisclaimer() { this.setData({ showDisclaimer: false }); },
   showSelfAssessDisclaimer() {
-    this.setData({
-      showDisclaimerPopup: true,
-      disclaimerType: 'self_assessed',
-      disclaimerTitle: '自评数据说明',
-      disclaimerBody: '此数据由用户自行评估填写，并非香港入境事务处官方认可。\n\n请在提交申请前自行核准所有标准与信息。\n\n官方申请标准请以入境处官网 immd.gov.hk 最新公布为准。'
-    });
+    this.setData({ showSelfAssessPopup: true });
+  },
+  closeSelfAssessPopup() {
+    this.setData({ showSelfAssessPopup: false });
   },
 
   // ===== 指标说明弹窗 =====

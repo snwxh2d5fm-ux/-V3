@@ -1,5 +1,8 @@
 <!-- 攻略书 v6 — 港漂通关手册 三Tab框架 -->
 <view class="container">
+  <stage-indicator stages="{{stageSteps}}" progress="{{stageProgress}}" />
+  <status-badge />
+
   <view class="tab-bar">
     <view wx:for="{{tabs}}" wx:key="id" class="tab-item {{activeTab===item.id?'active':''}}"
           data-tab="{{item.id}}" bindtap="switchTab">

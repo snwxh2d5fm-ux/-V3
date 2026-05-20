@@ -2,5 +2,8 @@
   "navigationBarTitleText": "港漂通关手册",
   "enablePullDownRefresh": true,
   "backgroundColor": "#f8f9fa",
-  "usingComponents": {}
+  "usingComponents": {
+    "stage-indicator": "/components/stage-indicator/stage-indicator",
+    "status-badge": "/components/status-badge/status-badge"
+  }
 }

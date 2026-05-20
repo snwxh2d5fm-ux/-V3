@@ -39,7 +39,12 @@
       <view class="process-hero__meta">
         <text class="process-hero__cycle" bindtap="showCycleHelp">⏱ {{activeProcess.totalCycle || '—'}}</text>
         <text class="process-hero__risk" bindtap="showRiskHelp">{{activeProcess.riskLevel === 'low' ? '🟢低风险' : (activeProcess.riskLevel === 'medium' || activeProcess.riskLevel === 'medium_low') ? '🟡中风险' : '🔴高风险'}}</text>
-        <text class="process-hero__risk" bindtap="showSelfAssessDisclaimer" wx:if="{{materialTotalCount >= 9}}">ⓘ 自评数据</text>
+      </view>
+      <!-- 自评数据标签（独立行，高可见度） -->
+      <view class="self-assess-tag" wx:if="{{materialTotalCount >= 9}}" bindtap="showSelfAssessDisclaimer" hover-class="self-assess-tag--hover">
+        <text class="self-assess-tag__icon">ⓘ</text>
+        <text class="self-assess-tag__label">自评数据说明</text>
+        <text class="self-assess-tag__arrow">›</text>
       </view>
 
       <!-- 材料完成度 — 环形进度+快捷入口 -->
@@ -76,15 +81,47 @@
       </view>
     </view>
 
-    <!-- Bug #13: 风险提醒/免责弹窗 -->
-    <view class="disclaimer2-overlay" wx:if="{{showDisclaimerPopup}}">
-      <view class="disclaimer2-card" catchtap="catchStop">
-        <text class="disclaimer-icon">{{disclaimerType === 'self_assessed' ? '📋' : disclaimerType === 'zero_progress' ? '📭' : 'ℹ️'}}</text>
-        <text class="disclaimer-title">{{disclaimerTitle}}</text>
-        <text class="disclaimer-body">{{disclaimerBody}}</text>
-        <view class="disclaimer-actions">
-          <button class="btn btn--outline btn-flex" wx:if="{{disclaimerType !== 'zero_progress' && disclaimerType !== 'self_assessed'}}" bindtap="closeDisclaimerPopup">稍后再说</button>
-          <button class="btn btn--primary btn-flex" bindtap="confirmDisclaimer">{{disclaimerType === 'zero_progress' ? '我知道了' : '我已了解'}}</button>
+    <!-- 自评数据说明弹窗（信息型，结构化卡片） -->
+    <view class="self-assess-overlay" wx:if="{{showSelfAssessPopup}}" bindtap="closeSelfAssessPopup">
+      <view class="self-assess-card" catchtap="catchStop">
+        <!-- 顶部装饰条 -->
+        <view class="self-assess-card__accent"></view>
+        <!-- 头部 -->
+        <view class="self-assess-card__header">
+          <text class="self-assess-card__icon">📊</text>
+          <text class="self-assess-card__title">自评数据说明</text>
+        </view>
+        <!-- 内容区域 -->
+        <scroll-view class="self-assess-card__body" scroll-y enhanced show-scrollbar="{{false}}">
+          <!-- 区块1: 数据性质 -->
+          <view class="ss-section">
+            <view class="ss-section__head">
+              <text class="ss-section__dot ss-section__dot--info"></text>
+              <text class="ss-section__label">数据性质</text>
+            </view>
+            <text class="ss-section__text">此页面展示的材料完成度数据由用户自行评估填写，并非香港入境事务处官方认可的结果。</text>
+          </view>
+          <!-- 区块2: 使用须知 -->
+          <view class="ss-section">
+            <view class="ss-section__head">
+              <text class="ss-section__dot ss-section__dot--warn"></text>
+              <text class="ss-section__label">使用须知</text>
+            </view>
+            <text class="ss-section__text">请在提交申请前自行核准所有评核标准与个人信息，本工具仅提供辅助参考。</text>
+          </view>
+          <!-- 区块3: 官方参考 -->
+          <view class="ss-section ss-section--last">
+            <view class="ss-section__head">
+              <text class="ss-section__dot ss-section__dot--link"></text>
+              <text class="ss-section__label">官方参考</text>
+            </view>
+            <text class="ss-section__text">申请标准以香港入境事务处官网最新公布为准</text>
+            <text class="ss-section__link">immd.gov.hk</text>
+          </view>
+        </scroll-view>
+        <!-- 底部按钮 -->
+        <view class="self-assess-card__footer">
+          <button class="ss-btn" bindtap="closeSelfAssessPopup">我知道了</button>
         </view>
       </view>
     </view>
@@ -152,14 +189,14 @@
           <view class="step-row step-row--action" wx:if="{{item.status === 'current' && !item.isMilestone}}">
             <text class="step-row__icon">✅</text>
             <text class="step-row__name">所有步骤已完成，解锁下一阶段</text>
-            <button class="btn btn--xs btn--primary" bindtap="completeAllSteps" data-stage-index="{{index}}">完成阶段</button>
+            <button class="btn btn--xs btn--primary" catchtap="completeAllSteps" data-stage-index="{{index}}">完成阶段</button>
           </view>
 
           <!-- 通道B: 有里程碑 → 需上传材料验证 -->
           <view class="step-row step-row--action" wx:if="{{item.status === 'current' && item.isMilestone}}">
             <text class="step-row__icon">📤</text>
             <text class="step-row__name">上传{{item.milestoneDocType || '里程碑材料'}}，验证后解锁</text>
-            <button class="btn btn--xs btn--primary" bindtap="uploadMilestone" data-stage-index="{{index}}">上传验证</button>
+            <button class="btn btn--xs btn--primary" catchtap="uploadMilestone" data-stage-index="{{index}}">上传验证</button>
           </view>
         </view>
       </view>

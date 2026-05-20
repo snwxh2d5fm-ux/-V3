@@ -228,7 +228,7 @@ function assemblePath(params) {
     return a.sequence - b.sequence;
   });
 
-  // ── 统计各关卡数据 ──
+  // ── 全部8关始终返回 (TC-3.1.1 fix: 空关卡也可见) ──
   var phases = [];
   var phaseStats = {};
   var j, phase;
@@ -250,10 +250,12 @@ function assemblePath(params) {
     }
   }
 
-  // 按 phase 升序构建 phases 返回值
-  var sortedPhases = Object.keys(phaseStats).map(Number).sort(function (a, b) { return a - b; });
-  for (i = 0; i < sortedPhases.length; i++) {
-    phase = sortedPhases[i];
+  // 按 phase 升序构建 — 包含全部8关 (即使有关卡无匹配任务)
+  for (j = 0; j < FULL_PHASES.length; j++) {
+    phase = FULL_PHASES[j];
+    if (!phaseStats[phase]) {
+      phaseStats[phase] = { totalTasks: 0, totalRequired: 0 };
+    }
     var stats = phaseStats[phase];
     phases.push({
       phase: phase,

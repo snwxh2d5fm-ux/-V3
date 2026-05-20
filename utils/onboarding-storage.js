@@ -66,18 +66,15 @@ function saveProgress(progress) {
  */
 function initOnboarding(params) {
   var now = new Date().toISOString();
-  // Determine initial unlocked phases based on arrivalScenario
   var arrivalScenario = params.arrivalScenario || 'fresh';
-  var unlockedPhases = { '0': { unlocked: true, completed: false }, '1': { unlocked: true, completed: false } };
-  if (arrivalScenario === 'fresh') {
-    // Fresh arrivals get phases 0-7 unlocked upfront (关卡0-1 already set above)
-    for (var p = 2; p <= 7; p++) { unlockedPhases[String(p)] = { unlocked: true, completed: false }; }
-  } else if (arrivalScenario === 'delayed') {
-    unlockedPhases = {};
-    for (var p2 = 2; p2 <= 7; p2++) { unlockedPhases[String(p2)] = { unlocked: true, completed: false }; }
-  } else if (arrivalScenario === 'pre-arrival') {
-    unlockedPhases = { '0': { unlocked: true, completed: false } };
+
+  // TC-3.1.1 fix: 始终初始化全部8关 (unlocked=true)，
+  // 实际锁定由 guidebooks/index mergeProgress 通过 STAGE_BRIDGE_MAP 动态计算
+  var phases = {};
+  for (var p = 0; p <= 7; p++) {
+    phases[String(p)] = { unlocked: true, completed: false };
   }
+
   var progress = {
     userId: '',
     pathParams: {
@@ -90,7 +87,7 @@ function initOnboarding(params) {
     startedAt: now,
     currentPhase: arrivalScenario === 'pre-arrival' ? 0 : (arrivalScenario === 'delayed' ? 2 : 1),
     tasks: {},
-    phases: unlockedPhases,
+    phases: phases,
     renewalDossier: {
       address: { items: [], completeness: 0 },
       employment: { items: [], completeness: 0 },

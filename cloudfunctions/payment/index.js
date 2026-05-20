@@ -279,6 +279,17 @@ async function confirmPayment(openid, event) {
       if (order.category === 'membership' && order.planId) {
         await activateMembership(openid, order);
       }
+      if (order.category === 'guidebook_unlock') {
+        await db.collection('users')
+          .where({ _openid: openid })
+          .update({ data: { guidebookAllUnlocked: true, updatedAt: db.serverDate() } });
+      }
+      if (order.category === 'identity_reset') {
+        await cloud.callFunction({
+          name: 'process-manager',
+          data: { action: 'resetIdentityPhase', transactionId: resp.data.transaction_id || '' }
+        });
+      }
 
       await db.collection('audit_logs').add({
         data: {

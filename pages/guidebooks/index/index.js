@@ -9,6 +9,7 @@ var cache = require('../../../utils/lifeGuideCache');
 var storage = require('../../../utils/onboarding-storage');
 var norm = require('../../../utils/normalizeTask');
 var wizards = require('../wizards');
+var { getGlobalStages, getActiveStageIndex } = require('../../../utils/stage-helper');
 
 Page({
   data: {
@@ -32,6 +33,8 @@ Page({
     articles: [],
     articleLoading: false,
     loading: true,
+    stageSteps: [],
+    stageProgress: 0,
     loadError: false,
     showPathSetup: false,
     showMilestone: false,
@@ -76,6 +79,12 @@ Page({
 
   onLoad: function() { this.init(); },
   onShow: function() {
+    // Sync global stage indicator (shared across all tabs)
+    try {
+      var stages = getGlobalStages();
+      this.setData({ stageSteps: stages, stageProgress: Math.min(((getActiveStageIndex() + 1) / 7) * 100, 100) });
+    } catch(e) { this.setData({ stageProgress: 14 }); }
+
     if (this.data.progress) {
       this.refreshProgress();
       // Refresh housingWizardDone from storage (persists across sessions)

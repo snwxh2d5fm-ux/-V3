@@ -142,6 +142,11 @@ Component({
         }
 
         var paymentData = payResult.result.data;
+        // P0-C fix: 空值防御
+        if (!paymentData || !paymentData.payment || !paymentData.payment.timeStamp) {
+          wx.showToast({ title: '支付参数异常，请重试', icon: 'none' });
+          return;
+        }
         var payParams = paymentData.payment;
 
         // 第三步: 微信支付V3拉起
@@ -157,7 +162,17 @@ Component({
           });
         });
 
-        // 第四步: 支付成功 → 清除本地storage → 跳转status-select重选
+        // 第四步: 主动确认支付 (P0-C fix)
+        try {
+          await wx.cloud.callFunction({
+            name: 'payment',
+            data: { action: 'confirmPayment', orderId: paymentData.orderId }
+          });
+        } catch(e) {
+          // confirmPayment 失败不阻塞流程，V3回调可能已处理
+        }
+
+        // 第五步: 支付成功 → 清除本地storage → 跳转status-select重选
         try { wx.removeStorageSync('__onboarding__'); } catch(e) {}
         try { wx.removeStorageSync('__process_stage__'); } catch(e) {}
         try { wx.removeStorageSync('__active_process_id__'); } catch(e) {}

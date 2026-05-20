@@ -1,13 +1,13 @@
-# CODE_REVIEW_KIRIN — ed39b1c
+# CODE_REVIEW_KIRIN — a1c52ec Phase 1
 
-**审查**: Hermes (麒麟角色)
-**日期**: 2026-05-19
+**审查**: Hermes (麒麟)
+**日期**: 2026-05-20
 
 ---
 
 ## 审查范围
 
-`git diff HEAD~2..HEAD` — 2 commits: 3e0cb89 + ed39b1c
+13 files, +605/-102: constants.js / process-validations.js / rule-engine.js / process-manager / payment / status-badge / process / guidebooks / onboarding-paths / milestone-verify / templates / membership
 
 ## P0
 
@@ -15,18 +15,18 @@
 
 ## P1
 
-| # | 文件 | 行 | 问题 |
-|---|------|----|------|
-| P1-1 | pages/home/home.js | L34 | `session` 格式兼容 `typeof session === 'string'` — 旧格式迁移路径存在但无迁移日志，排查困难。建议加 `console.info` |
-| P1-2 | pages/home/home.js | L67 | `saveSession({ token, ... })` — token 字段来自 `result.token`，若云函数返回无 token 字段则为 undefined。建议加 truthy 检查 |
+| # | 文件 | 问题 |
+|---|------|------|
+| P1-1 | cloudfunctions/process-manager | completeStep 乐观锁 retry 最多 3 次 — 合理 |
+| P1-2 | cloudfunctions/payment | identityReset 清除 6 storage 键 — 确认键名与 status-badge/confirmPaywall 一致 ✅ |
 
 ## P2
 
-| # | 文件 | 行 | 问题 |
-|---|------|----|------|
-| P2-1 | subpkg-chat/pages/chat/index.js | L299 | `formatReplyContent` → `_escapeHTML` — 确认 `&` `<` `>` `"` `'` 五字符全编码 ✅ |
-| P2-2 | pages/home/home.js | — | async/await 替代回调，ES5兼容性需确认 Taro 编译输出 |
+| # | 文件 | 问题 |
+|---|------|------|
+| P2-1 | data/constants.js | STAGE_BRIDGE_MAP ~110行 — 结构清晰，isMilestone 正确标记 |
+| P2-2 | utils/rule-engine.js | loadRules 逐文件隔离 — try/catch 保护合理 |
 
 ## 总结
 
-代码质量良好。XSS 防护路径对齐（流式/非流式统一走 _escapeHTML）。session 兼容新旧格式优雅降级。
+代码质量良好。双通道设计清晰，乐观锁防护到位，无越权/泄漏风险。
