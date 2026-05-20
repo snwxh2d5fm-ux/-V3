@@ -122,7 +122,7 @@ async function extractFields(imagePath, docType) {
     };
   } catch (e) {
     console.error('[OCR] 字段提取失败:', e);
-    // 返回空字段供用户手动填写
+    return { fields: {}, rawText: '', confidence: 0, docType: '' };
     return { fields: {}, rawText: '', confidence: 0, error: e.message };
   }
 }

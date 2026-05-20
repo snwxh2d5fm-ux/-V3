@@ -127,6 +127,11 @@ function isTaskApplicable(task, params, unlockedPhases) {
 
   var applicable = task.applicableTo || {};
 
+  // 会员全解锁模式下跳过签证/家庭状态过滤
+  if (params.memberUnlockAll) {
+    return true;
+  }
+
   // 2) 签证类型匹配
   if (applicable.visaTypes !== 'all' && applicable.visaTypes.indexOf(params.visaType) === -1) {
     return false;
@@ -200,7 +205,7 @@ function assemblePath(params) {
     task = allTasks[i];
 
     // 检查是否适用
-    if (!isTaskApplicable(task, { visaType: visaType, familyStatus: familyStatus, arrivalScenario: arrivalScenario }, unlockedPhases)) {
+    if (!isTaskApplicable(task, { visaType: visaType, familyStatus: familyStatus, arrivalScenario: arrivalScenario, memberUnlockAll: params.memberUnlockAll }, unlockedPhases)) {
       continue;
     }
 

@@ -14,7 +14,8 @@
 
 <!-- 支付拦截弹窗 -->
 <view class="paywall-overlay" wx:if="{{showPaywall}}" bindtap="closePaywall" role="dialog" aria-modal="true" aria-label="切换身份状态确认">
-  <view class="paywall-card">
+  <!-- 步骤1: 信息展示 -->
+  <view class="paywall-card" wx:if="{{!showConfirmStep}}">
     <text class="paywall__icon">⚠️</text>
     <text class="paywall__title">切换身份状态</text>
     <text class="paywall__desc">个人身份状态确认后不允许更改。切换身份状态将影响之前所有的评估结果、流程进度和材料关联。</text>
@@ -25,6 +26,16 @@
     <view class="paywall__actions">
       <view class="btn btn--outline" catchtap="closePaywall">取消</view>
       <view class="btn btn--primary" catchtap="confirmPaywall">支付 ¥599</view>
+    </view>
+  </view>
+  <!-- 步骤2: 二次确认 -->
+  <view class="paywall-card" wx:else>
+    <text class="paywall__icon">⚠️</text>
+    <text class="paywall__title">确认重置身份状态</text>
+    <text class="paywall__desc">支付 ¥599 后，你的当前流程进度、材料关联、提醒规则和本地进度将被清除。重置后可重新选择身份状态。确定继续？</text>
+    <view class="paywall__actions">
+      <view class="btn btn--outline" catchtap="closePaywall">取消</view>
+      <view class="btn btn--primary" catchtap="confirmPaywallFinal">确认支付 ¥599</view>
     </view>
   </view>
 </view>

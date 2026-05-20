@@ -1,0 +1,18 @@
+<view class="container">
+  <view class="header">
+    <text class="header__title">选择身份路径</text>
+    <text class="header__sub">选择后可在流程控中随时切换</text>
+  </view>
+  <view class="path-list">
+    <view wx:for="{{pathOptions}}" wx:key="id" class="path-card" data-id="{{item.id}}" bindtap="onSelect">
+      <view class="path-card__left">
+        <text class="path-card__icon">{{item.icon}}</text>
+        <view class="path-card__info">
+          <text class="path-card__name">{{item.name}}</text>
+          <text class="path-card__desc">{{item.desc}}</text>
+        </view>
+      </view>
+      <text class="path-card__arrow">›</text>
+    </view>
+  </view>
+</view>

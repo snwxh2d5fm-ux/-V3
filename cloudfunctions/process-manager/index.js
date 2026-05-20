@@ -355,8 +355,12 @@ async function verifyMilestone(openid, event) {
   if (proc.data.length === 0) return { code: 404, msg: '流程不存在' };
 
   const record = proc.data[0];
-  const milestone = record.milestones?.find(m => m.stageId === stageId);
-  if (!milestone) return { code: 404, msg: '该阶段无里程碑' };
+  let milestone = record.milestones?.find(m => m.stageId === stageId);
+  if (!milestone) {
+    // 模板可能未标记isMilestone但前端已展示上传按钮 → 动态创建
+    milestone = { stageId, milestoneDocId: null, docType: expectedDocType || 'unknown', ocrRule: null, status: 'pending', attempts: 0 };
+    record.milestones = [...(record.milestones || []), milestone];
+  }
 
   // 校验: 当前阶段必须是 in_progress
   const origStage = record.stages.find(s => s.stageId === stageId);
@@ -618,7 +622,8 @@ async function getDecisionNodes(templateId) {
 // ========== 内部函数 ==========
 
 function _validateDocType(actual, expected) {
-  if (!actual || !expected) return false;
+  if (!expected) return true; // 无期望类型 → 放行
+  if (!actual) return true;  // OCR未识别出类型 → 放行（信任用户上传）
   const a = actual.toLowerCase().replace(/[^a-z0-9]/g, '');
   const e = expected.toLowerCase().replace(/[^a-z0-9]/g, '');
   return a.includes(e) || e.includes(a);

@@ -9,6 +9,7 @@
     "pages/reminders/index/index",
     "pages/reminders/detail/detail",
     "pages/process/index/index",
+    "pages/path-select/index",
     "pages/mine/index/index",
     "pages/mine/notify-settings/notify-settings"
   ],

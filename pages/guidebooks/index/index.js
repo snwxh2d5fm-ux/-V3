@@ -150,11 +150,12 @@ Page({
     // ── Step 1: Load from local assemblePath (primary, always works offline) ──
     var params = progress.pathParams;
     var app = getApp();
-    var isMember = (app.globalData && app.globalData.membershipLevel !== 'free') || false;
+    // 始终加载全部任务（从所有签证类型），关卡可见性由 mergeProgress 的解锁逻辑控制
+    var unlockAll = true;
     var localResult = null;
     try {
       localResult = cache.fetchByPathLocal(
-        params.visaType, params.familyStatus, params.arrivalScenario, params.existingAssets, isMember
+        params.visaType, params.familyStatus, params.arrivalScenario, params.existingAssets, unlockAll
       );
     } catch (e) {
       console.error('[Guidebooks] local assemblePath failed:', e);
@@ -480,6 +481,9 @@ Page({
           signType: payParams.signType || 'RSA',
           paySign: payParams.paySign,
           success: function() {
+            // ★ 先同步本地 globalData，再调 confirmPayment
+            var app = getApp();
+            app.globalData.guidebookAllUnlocked = true;
             wx.cloud.callFunction({
               name: 'payment',
               data: { action: 'confirmPayment', orderId: payData.orderId }
@@ -492,7 +496,6 @@ Page({
                 wx.showToast({ title: '订单确认中，稍后刷新查看', icon: 'none' });
               }
             }).catch(function(err) {
-              // P2-03: confirmPayment异常兜底 — 记录日志+静默重试刷新
               console.error('[guidebooks] confirmPayment失败:', err);
               setTimeout(function() { self.init(); }, 1500);
             });

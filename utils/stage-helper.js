@@ -19,6 +19,12 @@ function getActiveStageIndex() {
     var app;
     try { app = getApp(); } catch(e) { app = null; }
 
+    // 0. __process_stage__ (由里程碑验证写入，最高优先级)
+    var ps = wx.getStorageSync('__process_stage__');
+    if (ps !== null && ps !== undefined && ps !== '' && !isNaN(Number(ps))) {
+      return Math.max(0, Math.min(6, Number(ps)));
+    }
+
     // 1. globalData.userStatus
     if (app && app.globalData && app.globalData.userStatus) {
       var s = app.globalData.userStatus;

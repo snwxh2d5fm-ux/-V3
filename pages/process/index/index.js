@@ -345,8 +345,15 @@ Page({
       cloudProcessId = (currentLine && currentLine.cloudId) || '';
     } catch(e) {}
     var processId = cloudProcessId || localProcessId;
-    console.log('[uploadMilestone] localId=' + localProcessId + ' cloudId=' + cloudProcessId + ' finalProcessId=' + processId + ' stageIndex=' + index);
-    wx.navigateTo({ url: '/subpkg-process/pages/milestone-verify/index?processId=' + processId + '&localProcessId=' + localProcessId + '&stageId=' + (phase.stageId || phase.id) + '&stageIndex=' + index + '&status=' + (phase.id || '') + '&milestoneType=' + (phase.milestoneDocType || '') + '&label=' + encodeURIComponent(phase.name || '') });
+    // ★ 从本地流程线中查找实际的stageId（模板ID如qmas_prep，而非UI ID如preparation）
+    var actualStageId = phase.stageId || phase.id;
+    if (currentLine && currentLine.stages) {
+      // 按order匹配：UI index=1对应stages中status='in_progress'的那个
+      var inProgressStage = currentLine.stages.find(function(s) { return s.status === 'in_progress'; });
+      if (inProgressStage) actualStageId = inProgressStage.stageId;
+    }
+    console.log('[uploadMilestone] localId=' + localProcessId + ' cloudId=' + cloudProcessId + ' stageId=' + actualStageId + ' stageIndex=' + index);
+    wx.navigateTo({ url: '/subpkg-process/pages/milestone-verify/index?processId=' + processId + '&localProcessId=' + localProcessId + '&stageId=' + actualStageId + '&stageIndex=' + index + '&status=' + (phase.id || '') + '&milestoneType=' + (phase.milestoneDocType || '') + '&label=' + encodeURIComponent(phase.name || '') });
   },
 
   // v5 快捷入口 (DSG-1 P0-01: 双中枢合并)

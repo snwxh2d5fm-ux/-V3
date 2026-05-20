@@ -289,13 +289,14 @@ function invalidateCache() {
  * @param {string[]} [existingAssets]
  * @returns {{data: {tasks: Array, phases: Array, summary: Object}, source: string}}
  */
-function fetchByPathLocal(visaType, familyStatus, arrivalScenario, existingAssets) {
+function fetchByPathLocal(visaType, familyStatus, arrivalScenario, existingAssets, memberUnlockAll) {
   var assemblePath = require('../data/onboarding-paths').assemblePath;
   var result = assemblePath({
     visaType: visaType,
     familyStatus: familyStatus,
     arrivalScenario: arrivalScenario,
-    existingAssets: existingAssets || []
+    existingAssets: existingAssets || [],
+    memberUnlockAll: !!memberUnlockAll
   });
   return {
     data: { tasks: result.tasks, phases: result.phases, summary: result.summary },

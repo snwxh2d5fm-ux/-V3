@@ -4,6 +4,7 @@
  * @param {object} page — Page 实例 (this)，用于调用 setData 等 Page 方法
  * @param {object} storage — onboarding-storage 模块实例
  */
+var districtData = require('../../data/district-data');
 function housingWizard(page, storage) {
   return {
     onHousingBannerTap: function() {
@@ -32,7 +33,6 @@ function housingWizard(page, storage) {
         page.setData({ wizardSubRegion: value, wizardStep: 3 });
       } else if (step === 3) {
         page.setData({ wizardHasKids: value === 'yes', wizardStep: 4 });
-        var districtData = require('../../../data/district-data');
         var budgetId = page.data.wizardBudget;
         var budgetValue = 10000;
         var brackets = districtData.BUDGET_BRACKETS;
