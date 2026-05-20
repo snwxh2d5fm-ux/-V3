@@ -104,7 +104,14 @@ Page({
     // 一触即选：点击即确认，创建最小流程线
     app.globalData.selectedPath = id;
 
-    // 持久化路径到 storage（证件夹/其他页面依赖此 key）
+    // 清除旧流程残留，防止阶段跳转
+    var oldLines = getAllProcessLines();
+    if (Array.isArray(oldLines)) {
+      oldLines.forEach(function(l) { if (l && l.status === 'active') { l.status = 'inactive'; saveProcessLine(l); } });
+    }
+    wx.setStorageSync('__process_stage__', 0);
+    wx.setStorageSync('__active_process_id__', '');
+    // 持久化路径
     wx.setStorageSync('__selected_path__', id);
 
     // 从模板填充 stages (修复 stages=[] 导致completeAllSteps空数据)
