@@ -174,14 +174,14 @@ Page({
   },
 
   // ★ 通道A: 完成当前阶段所有步骤 → 自动推进
-  completeAllSteps: async function(e) {
+  // P2-04: 移除async/await → 使用Promise链兼容低版本微信
+  completeAllSteps: function(e) {
     // 防重入：避免observer/setData循环触发
+    var index = parseInt((e.currentTarget && e.currentTarget.dataset && e.currentTarget.dataset.stageIndex)) || -1;
+    // P1-02: setData在guard之前 → 快速双击时按钮立即变灰有视觉反馈
+    this.setData({ completingStageIdx: index });
     if (this.__completingAllSteps) return;
     this.__completingAllSteps = true;
-    try {
-
-    var index = parseInt((e.currentTarget && e.currentTarget.dataset && e.currentTarget.dataset.stageIndex)) || -1;
-    this.setData({ completingStageIdx: index });
     console.log('[completeAllSteps] 触发 index=' + index);
     console.log('[completeAllSteps] index=' + index + ' phases.length=' + (this.data.phases ? this.data.phases.length : 0));
     var phase = this.data.phases[index];
@@ -239,33 +239,35 @@ Page({
 
     var self = this;
     wx.showLoading({ title: '推进中...' });
-    try {
-      var lastResult = null;
-      for (var si = 0; si < pendingSteps.length; si++) {
-        var st = pendingSteps[si];
-        var res = await wx.cloud.callFunction({
-          name: 'process-manager',
-          data: {
-            action: 'completeStep',
-            processId: processId,
-            stageId: stageId,
-            stepId: st.stepId
-          }
-        });
-        lastResult = res;
+    // P2-04: 递归Promise链替代async/await (低版本微信兼容)
+    var lastResult = null;
+    function processStep(si) {
+      if (si >= pendingSteps.length) {
+        return Promise.resolve(lastResult);
       }
+      var st = pendingSteps[si];
+      return wx.cloud.callFunction({
+        name: 'process-manager',
+        data: {
+          action: 'completeStep',
+          processId: processId,
+          stageId: stageId,
+          stepId: st.stepId
+        }
+      }).then(function(res) {
+        lastResult = res;
+        return processStep(si + 1);
+      });
+    }
+    processStep(0).then(function() {
       wx.hideLoading();
-
       if (lastResult && lastResult.result && lastResult.result.code === 0) {
         wx.setStorageSync('__process_stage__', index);
-
-        // P1-03: 同步更新 globalData.activeProcess（攻略书/流程控联动依赖）
         var updatedProcess = getProcessLine(processId);
         if (updatedProcess) {
           app.globalData.activeProcess = updatedProcess;
           app.globalData.activeProcessId = processId;
         }
-
         var data = lastResult.result.data || {};
         if (data.requiresMilestone) {
           wx.showToast({ title: '请上传里程碑材料验证后解锁', icon: 'none' });
@@ -277,14 +279,14 @@ Page({
         var errMsg = (lastResult && lastResult.result && lastResult.result.msg) || '操作失败';
         wx.showToast({ title: errMsg, icon: 'none', duration: 2000 });
       }
-    } catch(err) {
+    }).catch(function() {
       wx.hideLoading();
       wx.showToast({ title: '网络异常，请重试', icon: 'none' });
-    }
-    } finally {
-      this.__completingAllSteps = false;
-      this.setData({ completingStageIdx: -1 });
-    }
+    }).finally(function() {
+      // P2-04: 清理防重入标记 (原async finally语义)
+      self.__completingAllSteps = false;
+      self.setData({ completingStageIdx: -1 });
+    });
   },
 
   // ★ 通道B: 上传里程碑材料验证
@@ -351,14 +353,25 @@ Page({
     const allStages = activeProcess.stages || [];
     const stepMaterials = SEVEN_STEPS.map(() => []);
 
-    // P1-01: 共享phaseId→步骤索引映射(stepMaterials + currentStepIdx 两处共用)
+    // P0-01 fix: 共享phaseId→步骤索引映射(stepMaterials + currentStepIdx 两处共用)
+    // 归一化order到phase2内部0-based索引，避免全局order直接当数组下标
+    var _phase2MinOrder = Infinity;
+    allStages.forEach(function(ss) {
+      if ((ss.phaseId||'').includes('phase2') || (ss.phaseId||'').includes('onboarding')) {
+        _phase2MinOrder = Math.min(_phase2MinOrder, ss.order || 0);
+      }
+    });
+    if (_phase2MinOrder === Infinity) _phase2MinOrder = 0;
+
     var _toStepIdx = function(pid, order) {
       if (pid.includes('phase1') || pid.includes('evaluation')) return 1;
       if (pid.includes('phase2') || pid.includes('onboarding')) {
         var total = allStages.filter(function(ss) { return (ss.phaseId||'').includes('phase2')||(ss.phaseId||'').includes('onboarding'); }).length;
-        var o = order || 0;
-        if (total <= 3) { return [2,3,4][o] != null ? [2,3,4][o] : 4; }
-        return o < total/3 ? 2 : o < total*2/3 ? 3 : 4;
+        // 归一化: 全局order → phase2内部0-based位置
+        var localOrder = (order || 0) - _phase2MinOrder;
+        if (localOrder < 0) localOrder = 0;
+        if (total <= 3) { return [2,3,4][localOrder] != null ? [2,3,4][localOrder] : 4; }
+        return localOrder < Math.ceil(total/3) ? 2 : localOrder < Math.ceil(total*2/3) ? 3 : 4;
       }
       if (pid.includes('phase3') || pid.includes('maintenance')) return 5;
       if (pid.includes('phase4') || pid.includes('pr')) return 6;
@@ -382,14 +395,39 @@ Page({
     var currentStepIdx = 0;
     for (var si = 0; si < allStages.length; si++) {
       if (allStages[si].status === 'in_progress') {
-        currentStepIdx = Math.max(1, _toStepIdx(allStages[si].phaseId || '', allStages[si].order));
+        var mapped = _toStepIdx(allStages[si].phaseId || '', allStages[si].order);
+        // P0-02: mapped=-1表示未知phaseId，按order兜底计算避免回退到步骤1
+        if (mapped === -1) {
+          // 兜底: 按全局order比例映射到7步
+          var ratio = allStages.length > 1 ? si / (allStages.length - 1) : 0;
+          mapped = Math.max(1, Math.min(6, Math.round(ratio * 6)));
+        }
+        currentStepIdx = Math.max(1, mapped);
         break;
       }
     }
     // P0-02: 全阶段完成 → currentStepIdx=7 (所有步骤标记done), 不再回退到步骤1
+    // 同时修复: 找不到in_progress但未全完成时，按最后一个completed推算
     if (currentStepIdx === 0) {
-      currentStepIdx = (allStages.length > 0 && doneCount === allStages.length) ? 7 : 1;
+      if (allStages.length > 0 && doneCount === allStages.length) {
+        currentStepIdx = 7;
+      } else if (doneCount > 0 && doneCount < allStages.length) {
+        // 有完成但无进行中: 找到最后完成的stage + 1
+        var lastCompletedIdx = 0;
+        for (var sj = allStages.length - 1; sj >= 0; sj--) {
+          if (allStages[sj].status === 'completed') {
+            var cm = _toStepIdx(allStages[sj].phaseId || '', allStages[sj].order);
+            if (cm >= 1) { lastCompletedIdx = cm; break; }
+          }
+        }
+        currentStepIdx = Math.min(lastCompletedIdx + 1, 6);
+      } else {
+        currentStepIdx = 1;
+      }
     }
+    // P2-01: assessmentDone 与 activeProcess 解耦说明
+    // activeProcess存在即表示用户已完成资格评估(选择或评估了路径)
+    // 该变量仅用于标记SEVEN_STEPS[0]的done/current状态，不参与其他逻辑
     var assessmentDone = !!activeProcess;
 
     const phases = SEVEN_STEPS.map((step, i) => {
@@ -417,6 +455,14 @@ Page({
         // 材料准备步骤 → 链接到证件夹
         linkDocs: step.linkDocs && status !== 'pending'
       };
+    });
+
+    // P1-03: 已完成检测 — 材料全部completed的步骤标记为done
+    // 防御currentStepIdx映射错误导致的进度回退假象
+    phases.forEach(function(ph) {
+      if (ph.status !== 'done' && !ph.hasAssessBtn && ph.materialCount > 0 && ph.doneCount === ph.materialCount) {
+        ph.status = 'done';
+      }
     });
 
     this.setData({

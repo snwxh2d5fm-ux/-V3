@@ -149,10 +149,12 @@ Page({
 
     // ── Step 1: Load from local assemblePath (primary, always works offline) ──
     var params = progress.pathParams;
+    var app = getApp();
+    var isMember = (app.globalData && app.globalData.membershipLevel !== 'free') || false;
     var localResult = null;
     try {
       localResult = cache.fetchByPathLocal(
-        params.visaType, params.familyStatus, params.arrivalScenario, params.existingAssets
+        params.visaType, params.familyStatus, params.arrivalScenario, params.existingAssets, isMember
       );
     } catch (e) {
       console.error('[Guidebooks] local assemblePath failed:', e);
@@ -489,7 +491,9 @@ Page({
                 setTimeout(function() { self.init(); }, 1500);
                 wx.showToast({ title: '订单确认中，稍后刷新查看', icon: 'none' });
               }
-            }).catch(function() {
+            }).catch(function(err) {
+              // P2-03: confirmPayment异常兜底 — 记录日志+静默重试刷新
+              console.error('[guidebooks] confirmPayment失败:', err);
               setTimeout(function() { self.init(); }, 1500);
             });
           },
