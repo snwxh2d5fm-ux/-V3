@@ -5,6 +5,8 @@
 const http = require('http');
 const https = require('https');
 
+// 集成测试需 CloudBase HTTP 网关，仅在 CI 环境运行
+const RUN_INTEGRATION = process.env.CI === 'true' || process.env.RUN_INTEGRATION === 'true';
 const BASE = 'https://cloudbase-d1g17tgt7cc199a60.service.tcloudbase.com';
 const API_KEY = 'zgb-22bdb94b-ae4b-4335-aecb-87b6f6afc6c1';
 
@@ -23,7 +25,8 @@ function call(path, body) {
   });
 }
 
-describe('集成测试 — admin-* 云函数 API', () => {
+const describeIf = RUN_INTEGRATION ? describe : describe.skip;
+describeIf('集成测试 — admin-* 云函数 API', () => {
   jest.setTimeout(30000);
 
   // === admin-stats ===
