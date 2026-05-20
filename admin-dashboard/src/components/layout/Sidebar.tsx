@@ -1,14 +1,21 @@
 import { NavLink } from 'react-router-dom';
 import { useAuth } from '@/hooks/use-auth';
-import { LayoutDashboard, Users, Ticket, Cpu, Shield, Settings, LogOut, DollarSign } from 'lucide-react';
+import { NavLink } from 'react-router-dom';
+import { useAuth } from '@/hooks/use-auth';
+import { LayoutDashboard, Users, Ticket, Cpu, Shield, Settings, LogOut, DollarSign, FileText, MessageSquare, Server, GitFork, TrendingDown } from 'lucide-react';
 
 const navItems = [
   { to: '/admin', icon: LayoutDashboard, label: '仪表盘' },
   { to: '/admin/users', icon: Users, label: '用户管理' },
+  { to: '/admin/paths', icon: GitFork, label: '路径分析' },
+  { to: '/admin/funnel', icon: TrendingDown, label: '生命周期漏斗' },
   { to: '/admin/codes', icon: Ticket, label: '邀请码/兑换码' },
   { to: '/admin/revenue', icon: DollarSign, label: '财务看板' },
   { to: '/admin/ai-quality', icon: Cpu, label: 'AI质量' },
   { to: '/admin/compliance', icon: Shield, label: '合规安全' },
+  { to: '/admin/content', icon: FileText, label: '内容运营' },
+  { to: '/admin/feedback', icon: MessageSquare, label: '客服工单' },
+  { to: '/admin/system', icon: Server, label: '系统健康' },
   { to: '/admin/settings', icon: Settings, label: '设置' },
 ];
 
