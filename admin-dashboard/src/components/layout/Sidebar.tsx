@@ -1,4 +1,4 @@
-import { NavLink, useNavigate } from 'react-router-dom';
+import { NavLink } from 'react-router-dom';
 import { useAuth } from '@/hooks/use-auth';
 import { LayoutDashboard, Users, Ticket, Cpu, Shield, Settings, LogOut } from 'lucide-react';
 
@@ -13,11 +13,10 @@ const navItems = [
 
 export function Sidebar() {
   const { logout, adminUser } = useAuth();
-  const navigate = useNavigate();
 
   const handleLogout = () => {
     logout();
-    navigate('/admin/login');
+    // ProtectedRoute will auto-redirect to /admin/login when isAuthenticated becomes false
   };
 
   return (

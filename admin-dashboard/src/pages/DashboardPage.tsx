@@ -13,27 +13,26 @@ export function DashboardPage() {
   const [alerts, setAlerts] = useState<string[]>([]);
 
   useEffect(() => {
+    let cancelled = false;
     setLoadState('loading');
     getDashboard()
       .then((res) => {
+        if (cancelled) return;
         if (res.code === 0 && res.data) {
-          setData(res.data as unknown as DashboardData);
+          const d = res.data as DashboardData;
+          setData(d);
           setLoadState('loaded');
 
-          // Compute alerts from data
           const newAlerts: string[] = [];
-          if ((res.data as Record<string, unknown>).complianceIssues) {
-            newAlerts.push('合规敏感词检测未通过');
-          }
-          if ((res.data as Record<string, unknown>).k2LeakDetected) {
-            newAlerts.push('K2信息泄露告警');
-          }
+          if (d.complianceIssues) newAlerts.push('合规敏感词检测未通过');
+          if (d.k2LeakDetected) newAlerts.push('K2信息泄露告警');
           setAlerts(newAlerts);
         } else {
           setLoadState('error');
         }
       })
-      .catch(() => setLoadState('error'));
+      .catch(() => { if (!cancelled) setLoadState('error'); });
+    return () => { cancelled = true; };
   }, []);
 
   const isLoading = loadState === 'idle' || loadState === 'loading';

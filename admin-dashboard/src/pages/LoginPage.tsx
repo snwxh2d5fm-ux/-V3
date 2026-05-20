@@ -1,23 +1,19 @@
 import { useState, type FormEvent } from 'react';
-import { useNavigate } from 'react-router-dom';
+import { Navigate } from 'react-router-dom';
 import { useAuth } from '@/hooks/use-auth';
 
 export function LoginPage() {
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
-  const { login, isLoading, error } = useAuth();
-  const navigate = useNavigate();
+  const { login, isLoading, error, isAuthenticated } = useAuth();
 
   const handleSubmit = async (e: FormEvent) => {
     e.preventDefault();
     await login(email, password);
   };
 
-  // Auto-redirect if already authenticated
-  const { isAuthenticated } = useAuth();
   if (isAuthenticated) {
-    navigate('/admin', { replace: true });
-    return null;
+    return <Navigate to="/admin" replace />;
   }
 
   return (

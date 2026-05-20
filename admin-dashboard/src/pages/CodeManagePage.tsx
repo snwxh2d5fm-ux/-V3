@@ -12,31 +12,51 @@ export function CodeManagePage() {
   const [confirmPw, setConfirmPw] = useState('');
   const [showConfirm, setShowConfirm] = useState(false);
   const [codeStats, setCodeStats] = useState<Record<string, unknown>>({});
+  const [error, setError] = useState<string | null>(null);
 
   const loadCodes = useCallback(async () => {
     setLoading(true);
-    const res = await listCodes({ codeType: activeTab, page: 1, pageSize: 50 });
-    if (res.code === 0 && res.data) {
-      const p = res.data as unknown as PaginatedResponse<CodeRecord>;
-      setCodes(p.list ?? []);
+    setError(null);
+    try {
+      const res = await listCodes({ codeType: activeTab, page: 1, pageSize: 50 });
+      if (res.code === 0 && res.data) {
+        const p = res.data as unknown as PaginatedResponse<CodeRecord>;
+        setCodes(p.list ?? []);
+      }
+    } catch {
+      setError('加载失败，请重试');
+    } finally {
+      setLoading(false);
     }
-    setLoading(false);
   }, [activeTab]);
 
   const loadStats = useCallback(async () => {
-    const res = await getCodeStats(activeTab);
-    if (res.code === 0 && res.data) {
-      setCodeStats(res.data as Record<string, unknown>);
+    try {
+      const res = await getCodeStats(activeTab);
+      if (res.code === 0 && res.data) {
+        setCodeStats(res.data as Record<string, unknown>);
+      }
+    } catch {
+      // stats failure is non-blocking
     }
   }, [activeTab]);
 
   useEffect(() => {
-    void loadCodes();
-    void loadStats();
-  // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [activeTab]);
+    let cancelled = false;
+    const fetchData = async () => {
+      await loadCodes();
+      if (!cancelled) await loadStats();
+    };
+    fetchData();
+    return () => { cancelled = true; };
+  }, [loadCodes, loadStats]);
 
   const handleGenerate = async () => {
+    const qty = parseInt(count, 10);
+    if (Number.isNaN(qty) || qty < 1 || qty > 500) {
+      setError('数量需为 1-500 之间的整数');
+      return;
+    }
     if (!showConfirm) {
       setShowConfirm(true);
       return;
@@ -65,6 +85,10 @@ export function CodeManagePage() {
           管理种子用户邀请码和付费会员兑换码
         </p>
       </div>
+
+      {error && (
+        <div className="rounded-md bg-red-950/50 px-3 py-2 text-xs text-red-400">{error}</div>
+      )}
 
       <div className="grid grid-cols-3 gap-4">
         <div className="rounded-lg border border-[var(--border)] bg-[var(--card)] p-3 text-center">

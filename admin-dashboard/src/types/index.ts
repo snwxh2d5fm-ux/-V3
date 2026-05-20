@@ -18,6 +18,8 @@ export interface DashboardData {
   safetyEvents7d: number;
   codesGenerated: number;
   codesActivated: number;
+  complianceIssues?: boolean;
+  k2LeakDetected?: boolean;
 }
 
 export interface TrendDataPoint {

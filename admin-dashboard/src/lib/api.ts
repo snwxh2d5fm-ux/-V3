@@ -1,8 +1,20 @@
 // 住港伴运营后台 - CloudBase API client
+//
+// SECURITY NOTE (C-01): API keys are stored in sessionStorage for pragmatic reasons.
+// In the event of XSS, an attacker could extract the key via sessionStorage.getItem().
+// Mitigations: (1) server-side API key TTL via key rotation, (2) CSP headers to block
+// inline scripts, (3) admin panel serves no user-generated content, reducing XSS surface.
+// This is an accepted risk for Phase 1; a future iteration should use HttpOnly cookie
+// or CloudBase custom login tokens for admin auth.
+//
+// SECURITY NOTE (H-02): The _apiKey is passed as part of the callFunction data payload.
+// CloudBase function logs in the console will contain the key in plaintext.
+// Admin cloud functions MUST validate API keys via bcrypt hash comparison,
+// not plaintext matching. Keys should be rotated every 90 days.
 import cloudbase from '@cloudbase/js-sdk';
 import type { ApiResponse } from '@/types';
 
-const ENV_ID = 'cloudbase-d1g17tgt7cc199a60';
+const ENV_ID = import.meta.env.VITE_CLOUDBASE_ENV_ID || 'cloudbase-d1g17tgt7cc199a60';
 
 let app: ReturnType<typeof cloudbase.init> | null = null;
 
@@ -31,7 +43,7 @@ async function callAdminFunction<T>(
     });
     return res.result as ApiResponse<T>;
   } catch (err) {
-    return { code: 500, msg: err instanceof Error ? err.message : '未知错误' };
+    return { code: 500, msg: err instanceof Error ? err.message : '网络错误' };
   }
 }
 
