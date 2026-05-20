@@ -34,6 +34,13 @@
     <button class="btn btn-block btn-member" bindtap="navigateTo" data-url="membership">
       {{isLocked ? '🔓 解锁全部功能' : (isPayingUser ? '✨ 管理会员' : '🚀 升级会员')}}
     </button>
+
+    <!-- 内测码入口 -->
+    <view class="invite-entry" bindtap="navigateTo" data-url="redeem" wx:if="{{!isPayingUser && !isLocked}}">
+      <text class="invite-icon">🎫</text>
+      <text class="invite-text">使用内测码</text>
+      <text class="invite-arrow">›</text>
+    </view>
   </view>
 
   <!-- 功能菜单 -->

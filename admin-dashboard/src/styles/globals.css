@@ -1,0 +1,31 @@
+@import "tailwindcss";
+
+/* 住港伴运营后台 - Dark-first theme, aligned with web version design tokens */
+:root {
+  --background: #0a0a0a;
+  --foreground: #fafafa;
+  --card: #141414;
+  --card-foreground: #fafafa;
+  --border: #262626;
+  --input: #262626;
+  --primary: #3b82f6;
+  --primary-foreground: #ffffff;
+  --secondary: #262626;
+  --secondary-foreground: #a3a3a3;
+  --muted: #171717;
+  --muted-foreground: #737373;
+  --accent: #262626;
+  --accent-foreground: #fafafa;
+  --destructive: #ef4444;
+  --destructive-foreground: #ffffff;
+  --ring: #3b82f6;
+  --radius: 0.5rem;
+}
+
+body {
+  background: var(--background);
+  color: var(--foreground);
+  font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+  margin: 0;
+  -webkit-font-smoothing: antialiased;
+}

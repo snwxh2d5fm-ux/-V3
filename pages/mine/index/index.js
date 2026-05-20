@@ -124,6 +124,8 @@ Page({
       this.showPrivacyCenter();
     } else if (url === 'membership') {
       this.showMembership();
+    } else if (url === 'redeem') {
+      wx.navigateTo({ url: '/subpkg-chat/pages/redeem/index' });
     } else if (url === 'feedback') {
       wx.navigateTo({ url: '/subpkg-feedback/pages/submit/index' });
     } else if (url === 'family-space') {

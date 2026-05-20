@@ -30,9 +30,7 @@ Component({
               app.globalData.token = result.token;
               app.globalData.userInfo = result.userInfo || { nickName: '住港伴用户' };
               app.globalData.userStatus = result.userStatus || '';
-              app.globalData.membershipLevel = result.membershipLevel || 'free';
-              app.globalData.phoneBound = !!(result.phoneBound || (result.data && result.data.phoneBound));
-              app.saveSession({ token: app.globalData.token, userInfo: app.globalData.userInfo, userStatus: app.globalData.userStatus, membershipLevel: app.globalData.membershipLevel, phoneBound: app.globalData.phoneBound });
+              app.saveSession({ token: app.globalData.token, userInfo: app.globalData.userInfo, userStatus: app.globalData.userStatus, membershipLevel: result.membershipLevel || 'free', phoneBound: app.globalData.phoneBound });
               var gate2 = decisionGate.canMakeDecision();
               if (gate2.ok) { that.setData({ _visible: false, _loading: false }); that.triggerEvent('gate-passed', {}); }
               else { that.setData({ _loading: false, mode: 'identity' }); }

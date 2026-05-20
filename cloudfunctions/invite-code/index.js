@@ -49,6 +49,8 @@ exports.main = async (event) => {
         return await redeemCode(OPENID, event);
       case 'get-membership':
         return await getMembership(OPENID);
+      case 'submit-feedback':
+        return await submitFeedback(OPENID, event);
 
       // ---- 管理端 ----
       case 'generate-seed-codes':
@@ -57,9 +59,21 @@ exports.main = async (event) => {
       case 'revoke-code':
         if (!isAdmin(OPENID)) return denyAdmin();
         return await revokeCode(OPENID, event);
+      case 'revoke-batch':
+        if (!isAdmin(OPENID)) return denyAdmin();
+        return await revokeBatch(OPENID, event);
       case 'get-code-stats':
         if (!isAdmin(OPENID)) return denyAdmin();
         return await getCodeStats(event);
+
+      // ---- 测试辅助 ----
+      case 'reset-test-user':
+        return await resetTestUser(OPENID);
+
+      // ---- 初始化 ----
+      case 'init-collections':
+        if (!isAdmin(OPENID)) return denyAdmin();
+        return await initCollections();
 
       default:
         return { code: 404, msg: `未知操作: ${action}` };
@@ -142,6 +156,16 @@ async function redeemCode(openid, { code, deviceId }) {
 
   // ---- 2. 校验码状态 ----
   if (codeRecord.status === 'redeemed') {
+    // 3. 幂等检查（同用户+同码已兑换过，返回已有结果）
+    if (codeRecord.redeemed_by_uid === openid) {
+      const existingMembership = await getMembership(openid);
+      return {
+        code: 0,
+        msg: '你已兑换过该码',
+        membershipExpireAt: existingMembership.data?.expiresAt || null,
+        alreadyRedeemed: true
+      };
+    }
     return { code: 400, msg: '该码已被使用' };
   }
   if (codeRecord.status === 'revoked') {
@@ -153,18 +177,6 @@ async function redeemCode(openid, { code, deviceId }) {
   }
   if (codeRecord.status !== 'unused') {
     return { code: 400, msg: '该码状态异常，无法兑换' };
-  }
-
-  // ---- 3. 幂等检查（同用户+同码已兑换过） ----
-  if (codeRecord.redeemed_by_uid === openid) {
-    // 已兑换过，返回已有结果
-    const existingMembership = await getMembership(openid);
-    return {
-      code: 0,
-      msg: '你已兑换过该码',
-      membershipExpiresAt: existingMembership.data?.expiresAt || null,
-      alreadyRedeemed: true
-    };
   }
 
   // ---- 4. 检查用户是否已有年卡 ----
@@ -190,18 +202,38 @@ async function redeemCode(openid, { code, deviceId }) {
     }
   }
 
-  // ---- 5. 设备校验 ----
+
+  // ---- 4.5 免费试用检查（如有试用期，终止并记录） ----
+  const { data: subscriptions } = await db.collection('subscription_records')
+    .where({ _openid: openid, status: 'active', level: 'free_trial' })
+    .limit(1)
+    .get();
+  const hasFreeTrial = subscriptions.length > 0;
+  if (hasFreeTrial) {
+    // 终止免费试用
+    await db.collection('subscription_records')
+      .doc(subscriptions[0]._id)
+      .update({
+        data: {
+          status: 'terminated_by_invite',
+          terminatedAt: db.serverDate(),
+          updatedAt: db.serverDate()
+        }
+      });
+  }
+  // ---- 5. 设备校验（同uid+同deviceId限制，兼容家庭共用设备） ----
   if (deviceId) {
     const deviceHash = hashDeviceId(deviceId);
     const { data: deviceRecords } = await db.collection(CODE_COLLECTION)
       .where({
         status: 'redeemed',
-        device_hash: deviceHash
+        device_hash: deviceHash,
+        redeemed_by_uid: openid  // 同设备不同用户允许兑换（家庭场景）
       })
       .limit(1)
       .get();
     if (deviceRecords.length > 0) {
-      return { code: 400, msg: '该设备已完成过兑换，每个设备限兑换一次' };
+      return { code: 400, msg: '你的账号已完成过兑换，每个账号限兑换一次' };
     }
   }
 
@@ -250,7 +282,7 @@ async function redeemCode(openid, { code, deviceId }) {
     code: 0,
     msg: '年卡已激活',
     membershipLevel: 'basic',
-    membershipExpiresAt: membershipResult.expiresAt,
+    membershipExpireAt: membershipResult.expiresAt,
     membershipLabel: '基础年卡会员'
   };
 }
@@ -289,6 +321,32 @@ async function getMembership(openid) {
       isLocked: user.isLocked || false
     }
   };
+}
+
+// ==================== 用户端：提交反馈 ====================
+async function submitFeedback(openid, { feedback, stage }) {
+  if (!feedback || !String(feedback).trim()) {
+    return { code: 400, msg: '请输入反馈内容' };
+  }
+
+  const trimmed = String(feedback).trim().slice(0, 500);
+  const feedbackStage = stage || 't0';
+
+  try {
+    await db.collection('user_feedback').add({
+      data: {
+        _openid: openid,
+        stage: feedbackStage,
+        open_feedback: trimmed,
+        submitted_at: db.serverDate(),
+        createdAt: db.serverDate()
+      }
+    });
+    return { code: 0, msg: '感谢反馈' };
+  } catch (e) {
+    console.error('[invite-code] submitFeedback error:', e.message);
+    return { code: 500, msg: '提交失败，请稍后重试' };
+  }
 }
 
 // ==================== 管理端：批量生成种子码 ====================
@@ -433,6 +491,44 @@ async function revokeCode(adminOpenid, { code }) {
   return { code: 0, msg: '码已撤销' };
 }
 
+// ==================== 管理端：批量撤销 ====================
+async function revokeBatch(adminOpenid, { batchId }) {
+  if (!batchId) return { code: 400, msg: '请提供批次号' };
+
+  const { data: codes } = await db.collection(CODE_COLLECTION)
+    .where({ batch_id: batchId, status: 'unused' })
+    .get();
+
+  if (codes.length === 0) {
+    return { code: 0, msg: '该批次无未使用的码', data: { count: 0 } };
+  }
+
+  let revokedCount = 0;
+  for (const record of codes) {
+    await db.collection(CODE_COLLECTION).doc(record._id).update({
+      data: {
+        status: 'revoked',
+        revoked_by: adminOpenid,
+        revoked_at: db.serverDate(),
+        updated_at: db.serverDate()
+      }
+    });
+    revokedCount++;
+  }
+
+  // 审计日志
+  await db.collection('audit_logs').add({
+    data: {
+      _openid: adminOpenid,
+      action: 'invite_batch_revoked',
+      detail: { batchId, count: revokedCount },
+      createdAt: db.serverDate()
+    }
+  });
+
+  return { code: 0, msg: `已撤销 ${revokedCount} 个码`, data: { count: revokedCount } };
+}
+
 // ==================== 管理端：码使用统计 ====================
 async function getCodeStats({ batchId, channel }) {
   let query = {};
@@ -484,6 +580,80 @@ async function getCodeStats({ batchId, channel }) {
       byChannel
     }
   };
+}
+
+// ==================== 初始化：创建集合与索引 ====================
+
+// ==================== 测试辅助：重置用户年卡状态 ====================
+async function resetTestUser(openid) {
+  if (!openid) return { code: 401, msg: '未登录' };
+
+  // 重置 users 表会员字段
+  await db.collection('users').where({ _openid: openid }).update({
+    data: {
+      membershipLevel: 'free',
+      membershipExpireAt: null,
+      isLocked: false,
+      updatedAt: db.serverDate()
+    }
+  });
+
+  // 终止活跃的 subscription_records
+  const { data: subs } = await db.collection('subscription_records')
+    .where({ _openid: openid, status: 'active' }).get();
+  for (const s of subs) {
+    await db.collection('subscription_records').doc(s._id).update({
+      data: { status: 'terminated_by_test', updatedAt: db.serverDate() }
+    });
+  }
+
+  return { code: 0, msg: '年卡状态已重置为免费用户' };
+}
+
+async function initCollections() {
+  const results = {};
+
+  // 1. 确保 invite_codes 集合存在（写入临时文档后删除）
+  try {
+    const { data: existing } = await db.collection(CODE_COLLECTION).limit(1).get();
+    results[CODE_COLLECTION] = { exists: true, msg: '集合已存在' };
+  } catch (e) {
+    // 集合不存在，创建它
+    try {
+      const addRes = await db.collection(CODE_COLLECTION).add({
+        data: {
+          _init: true,
+          code: '_placeholder_',
+          type: 'seed',
+          status: 'revoked',
+          createdAt: db.serverDate()
+        }
+      });
+      await db.collection(CODE_COLLECTION).doc(addRes._id).remove();
+      results[CODE_COLLECTION] = { created: true, msg: '集合已创建' };
+    } catch (e2) {
+      results[CODE_COLLECTION] = { error: e2.message };
+    }
+  }
+
+  // 2. 审计日志写入 audit_logs 集合（复用现有），无需新建
+  results.audit_logs = { note: '审计日志写入现有 audit_logs 集合，无需新建' };
+
+  // 3. 索引说明
+  results.indexes = {
+    note: '以下索引已通过 CloudBase API 创建，此处仅备查',
+    required: [
+      { collection: 'invite_codes', field: 'code', unique: true, desc: '唯一索引（主键）' },
+      { collection: 'invite_codes', field: 'status, expires_at', unique: false, desc: '过期扫描' },
+      { collection: 'invite_codes', field: 'generator_uid, status', unique: false, desc: '我的邀请查询' },
+      { collection: 'invite_codes', field: 'batch_id', unique: false, desc: '批次查询' },
+      { collection: 'invite_codes', field: 'device_hash, redeemed_by_uid', unique: false, desc: '设备限制查询' },
+      { collection: 'audit_logs', field: 'action, createdAt', unique: false, desc: '审计按操作追溯' },
+      { collection: 'audit_logs', field: '_openid, createdAt', unique: false, desc: '审计按用户追溯' }
+    ]
+  };
+
+  return { code: 0, msg: '初始化完成', data: results };
 }
 
 // ==================== 工具函数 ====================

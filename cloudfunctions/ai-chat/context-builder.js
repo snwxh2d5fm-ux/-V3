@@ -13,9 +13,9 @@
  *   - 收入 → 区间化(300k以下/300k-1M/1M+)
  *   - 地址 → 仅保留区域
  */
-const cloud = require('wx-server-sdk');
-cloud.init({ env: cloud.DYNAMIC_CURRENT_ENV });
-const db = cloud.database();
+const cloudbase = require('@cloudbase/node-sdk');
+const app = cloudbase.init({ env: process.env.ENV_ID });
+const db = app.database();
 const _ = db.command;
 
 // ═══════════════════════════════════════════════════════════════

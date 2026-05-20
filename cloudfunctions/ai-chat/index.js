@@ -209,12 +209,16 @@ async function retrieveContext(query, mode, topK) {
   let allChunks = [];
 
   try {
-    // 关键词预筛
+    // 关键词预筛: 构建content正则OR查询，最多用前5个关键词
     if (keywords.length > 0) {
       try {
-        const escaped = keywords[0].replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+        const keywordConditions = keywords.slice(0, 5).map(function(kw) {
+          const escaped = kw.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+          return { content: ddb.RegExp({ regexp: escaped, options: 'i' }) };
+        });
+        const combinedWhere = _.and(where, _.or(keywordConditions));
         const res = await ddb.collection('knowledge_chunks')
-          .where(Object.assign({}, where))
+          .where(combinedWhere)
           .limit(fetchLimit)
           .field({
             content: true, source_title: true, source_url: true,
@@ -224,7 +228,7 @@ async function retrieveContext(query, mode, topK) {
           .get();
         allChunks = res.data || [];
       } catch(e) {
-        console.warn('[ai-chat] RAG prefilter failed, fetching batch:', e.message);
+        console.warn('[ai-chat] RAG keyword prefilter failed, falling back to batch:', e.message);
         allChunks = await fetchBatch(ddb, where, fetchLimit);
       }
     } else {
@@ -441,16 +445,28 @@ function buildContextMessage(context) {
   // 只提取关键字段，避免JSON dump浪费token
   const parts = [];
   if (context.selectedPath) {
-    parts.push('用户当前路径: ' + context.selectedPath);
+    var pathLabels = { qmas: '优才计划(QMAS)', ttps_a: '高才通A类', ttps_b: '高才通B类', ttps_c: '高才通C类', asmpt: '专才计划(ASMTP)', student_iang: '学生→IANG', dependent: '受养人', permanent: '永居申请' };
+    parts.push('用户当前路径: ' + (pathLabels[context.selectedPath] || context.selectedPath));
   }
   if (context.userStatus) {
-    parts.push('用户状态: ' + context.userStatus);
+    var statusLabels = { unapplied: '未申请', submitted: '已提交申请等待审批', approved: '已获批', permanent: '永居' };
+    parts.push('用户状态: ' + (statusLabels[context.userStatus] || context.userStatus));
+  }
+  if (context.userSubStatus) {
+    parts.push('职业身份: ' + context.userSubStatus);
   }
   if (context.activeProcess) {
     parts.push('当前阶段: ' + (context.activeProcess.currentStageId || ''));
   }
   if (context.membershipLevel) {
     parts.push('会员等级: ' + context.membershipLevel);
+  }
+  if (context.assessmentStep !== undefined) {
+    parts.push('评估进度: 第' + (context.assessmentStep + 1) + '步');
+  }
+  if (context.page) {
+    var pageHints = { guidebooks: '浏览攻略库', process: '管理申请流程', documents: '整理证件材料', reminders: '管理提醒', assessment: '资格评估中', mine: '个人中心' };
+    parts.push('页面场景: ' + (pageHints[context.page] || context.page));
   }
 
   return parts.length > 0
@@ -483,6 +499,23 @@ async function logConversation(data) {
   }
 }
 
+// ========== 用户反馈处理 ==========
+async function handleFeedback(params) {
+  try {
+    const ddb = getDb();
+    await ddb.collection('conversation_feedback').add({
+      messageId: params.messageId || '',
+      feedback: params.feedback || 'unknown',
+      timestamp: params.timestamp ? new Date(params.timestamp) : new Date(),
+      sessionId: params.sessionId || '',
+    });
+    return { code: 200, message: 'ok', data: { recorded: true } };
+  } catch(e) {
+    console.warn('[ai-chat] Feedback recording failed:', e.message);
+    return { code: 200, message: 'ok', data: { recorded: false } };
+  }
+}
+
 // ========== 云函数入口 ==========
 exports.main = async function (event, context) {
   const startTime = Date.now();
@@ -491,6 +524,11 @@ exports.main = async function (event, context) {
   const params = (event.body && typeof event.body === 'string')
     ? JSON.parse(event.body)
     : event;
+
+  // ====== 反馈动作处理 (非对话路径) ======
+  if (params.action === 'feedback') {
+    return handleFeedback(params);
+  }
 
   const sessionId = params.sessionId || ('sess_' + Date.now());
   const message = params.message;
@@ -506,6 +544,19 @@ exports.main = async function (event, context) {
 
   const validModes = ['assessment', 'qa', 'general', 'solution_recommend'];
   const chatMode = validModes.indexOf(mode) > -1 ? mode : 'general';
+
+  // 内联内容安全预检: 极端敏感词直接拦截
+  const blockedPatterns = [
+    /(自杀|自残|自我伤害).*(方法|方式|怎么|如何)/,
+    /(制造|制作).*(炸弹|爆炸物|武器|毒药)/,
+    /(儿童|未成年).*(色情|性虐待|剥削)/,
+  ];
+  for (let i = 0; i < blockedPatterns.length; i++) {
+    if (blockedPatterns[i].test(message)) {
+      console.warn('[ai-chat] Content blocked by safety pre-check');
+      return respond(400, '您的消息包含不被支持的内容，请重新输入。', null, context);
+    }
+  }
 
   const traceId = 'trace_' + Date.now() + '_' + Math.random().toString(36).substr(2, 6);
   let degraded = false;
