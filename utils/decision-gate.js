@@ -17,10 +17,8 @@ function canMakeDecision() {
     userStatus = (gd && gd.userStatus) || wx.getStorageSync('__user_status__') || '';
   } catch(e) { userStatus = ''; }
 
-  // 防御: 非字符串存储值降级为空
-  if (typeof userStatus !== 'string') userStatus = '';
-
-  if (!userStatus || userStatus === 'skipped') {
+  // KR-01: 白名单校验 — 仅 ['unapplied','submitted','approved','permanent'] 视为有效
+  if (typeof userStatus !== 'string' || !VALID_STATUSES.includes(userStatus)) {
     return { ok: false, reason: 'identity' };
   }
   return { ok: true, reason: null };
