@@ -928,6 +928,15 @@ Page({
     // 保存元数据到Storage
     saveDocumentMeta(doc);
 
+    // 同步家庭空间文档状态（仅布尔，不传文件）
+    var slotKey = this._slotKey;
+    if (slotKey) {
+      wx.cloud.callFunction({
+        name: 'family-space-manage',
+        data: { action: 'set-doc-status', slotKey: slotKey, filled: true }
+      }).catch(function() { /* 静默失败：家庭空间不可用时不影响本地保存 */ });
+    }
+
     this.setData({ saving: false });
 
     // 显示备份留存信息

@@ -47,6 +47,11 @@ Page({
     newChildName: '',
     customChildren: [],         // [{ value: 'child_1', label: '子女1' }]
 
+    // === 家庭空间（证件状态共享，不传文件） ===
+    familySpace: { active: false, spouseUserId: null, spaceId: null },
+    spouseDocStatus: null,       // CloudBase 远端文档填充状态
+    isSpouseView: false,         // 当前是否在查看配偶的证件状态
+
     // === 溢出区（其他文件） ===
     overflowDocs: [],
     overflowCount: 0,
@@ -175,6 +180,7 @@ Page({
     }
 
     this.buildOwnerOptions();
+    this.checkFamilySpace();  // 异步查询家庭空间并扩展身份选项
     this.loadDocuments();
   },
 
@@ -326,14 +332,82 @@ Page({
     });
   },
 
+  /** 检查家庭空间并扩展身份选项 */
+  checkFamilySpace: function() {
+    var that = this;
+    wx.cloud.callFunction({
+      name: 'family-space-manage',
+      data: { action: 'get-space' }
+    }).then(function(res) {
+      var result = res.result || {};
+      if (result.code === 0 && result.data && result.data.hasSpace) {
+        var space = result.data;
+        var spouseUserId = null;
+        (space.members || []).forEach(function(m) {
+          if (m.role === 'spouse' && !spouseUserId) spouseUserId = m.userId;
+        });
+        if (!spouseUserId && !space.isOwner) {
+          spouseUserId = space.ownerUserId;
+        }
+        if (spouseUserId) {
+          that.setData({ familySpace: { active: true, spouseUserId: spouseUserId, spaceId: space.spaceId } });
+          var opts = that.data.ownerOptions.slice();
+          if (!opts.some(function(o) { return o.value === 'family_spouse'; })) {
+            opts.splice(1, 0, { value: 'family_spouse', label: '配偶(家庭)' });
+          }
+          that.setData({ ownerOptions: opts });
+        }
+      } else {
+        that.setData({ familySpace: { active: false, spouseUserId: null, spaceId: null } });
+      }
+    }).catch(function() {
+      that.setData({ familySpace: { active: false, spouseUserId: null, spaceId: null } });
+    });
+  },
+
+  /** 拉取配偶的文档填充状态 */
+  fetchSpouseDocStatus: function() {
+    var that = this;
+    var spouseUserId = this.data.familySpace.spouseUserId;
+    if (!spouseUserId) return;
+    wx.cloud.callFunction({
+      name: 'family-space-manage',
+      data: { action: 'get-doc-status', targetUserId: spouseUserId }
+    }).then(function(res) {
+      var result = res.result || {};
+      if (result.code === 0 && result.data) {
+        that.setData({ spouseDocStatus: result.data.slots || {} });
+        that.mergeSpouseStatus();
+      }
+    }).catch(function() { that.setData({ spouseDocStatus: null }); });
+  },
+
+  /** 将远端配偶状态合并到 slotCategories */
+  mergeSpouseStatus: function() {
+    var status = this.data.spouseDocStatus;
+    if (!status) return;
+    var categories = (this.data.slotCategories || []).slice();
+    categories.forEach(function(cat) {
+      (cat.slots || []).forEach(function(slot) {
+        var remote = status[slot.slotKey];
+        if (remote && remote.filled) {
+          slot._spouseFilled = true;
+          slot._spouseUpdatedAt = remote.updatedAt;
+        }
+      });
+    });
+    this.setData({ slotCategories: categories });
+  },
+
   /** 切换身份卡槽所属人 */
   switchIdentityOwner(e) {
-    const value = e.currentTarget.dataset.value;
-    this.setData({ identityOwner: value });
-    this.refreshIdentitySlots();
-    if (this.data.slotCategories.length > 0) {
-      this.refreshIdentitySlots();
+    var value = e.currentTarget.dataset.value;
+    var isSpouseView = (value === 'family_spouse');
+    this.setData({ identityOwner: value, isSpouseView: isSpouseView });
+    if (isSpouseView) {
+      this.fetchSpouseDocStatus();
     }
+    this.refreshIdentitySlots();
     this.applyFilter();
   },
 
@@ -347,6 +421,11 @@ Page({
 
   /** 上传到指定槽位 */
   uploadToSlot(e) {
+    // 配偶视图只读，禁止上传
+    if (this.data.isSpouseView) {
+      wx.showToast({ title: '配偶证件不支持直接上传，请对方在本人设备添加', icon: 'none', duration: 2000 });
+      return;
+    }
     const slotKey = e.currentTarget.dataset.slotKey;
     const slot = this.findSlot(slotKey);
     if (!slot) return;
@@ -744,6 +823,11 @@ Page({
   },
 
   generateSlotPDF: function(e) {
+    // 配偶视图禁用PDF（无本地文件）
+    if (this.data.isSpouseView) {
+      wx.showToast({ title: '配偶证件PDF需在网页版会员后查看', icon: 'none', duration: 2000 });
+      return;
+    }
     var slotKey = e.currentTarget.dataset.slotKey;
     var name = e.currentTarget.dataset.name || slotKey;
     var docs = this.findSlotDocs(slotKey);

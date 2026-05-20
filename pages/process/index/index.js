@@ -103,6 +103,7 @@ Page({
     }
     // 一触即选：点击即确认，创建最小流程线
     app.globalData.selectedPath = id;
+    app.globalData.userStatus = 'unapplied';  // P1-02: 双写 globalData
 
     // 清除旧流程残留，防止阶段跳转
     var oldLines = getAllProcessLines();
@@ -255,6 +256,13 @@ Page({
 
       if (lastResult && lastResult.result && lastResult.result.code === 0) {
         wx.setStorageSync('__process_stage__', index);
+
+        // P1-03: 同步更新 globalData.activeProcess（攻略书/流程控联动依赖）
+        var updatedProcess = getProcessLine(processId);
+        if (updatedProcess) {
+          app.globalData.activeProcess = updatedProcess;
+          app.globalData.activeProcessId = processId;
+        }
 
         var data = lastResult.result.data || {};
         if (data.requiresMilestone) {
@@ -547,8 +555,10 @@ Page({
     app.globalData.selectedPath = template.pathType || templateId;
     app.globalData.activeProcessId = processLine.id;
     app.globalData.activeProcess = processLine;
+    app.globalData.userStatus = 'unapplied';  // P1-01: 重置状态双写
     wx.setStorageSync('__active_process_id__', processLine.id);
     wx.setStorageSync('__selected_path__', template.pathType || templateId);
+    wx.setStorageSync('__process_stage__', 0);  // P1-01: 重置阶段
 
     // 追踪：流程创建
     tracker.track('process_created', {

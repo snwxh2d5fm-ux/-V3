@@ -242,6 +242,94 @@ exports.main = async (event) => {
         return { code: 0, data: { success: true } };
       }
 
+      // ===== 家庭空间文档状态（纯布尔，不传文件） =====
+      case 'set-doc-status': {
+        var { slotKey, filled } = event;
+        if (!slotKey) return { code: 400, msg: '缺少 slotKey' };
+
+        // 查找用户所属的家庭空间
+        var spaceResult = await db.collection('family_spaces')
+          .where(_.or([{ ownerUserId: openid }, { 'members.userId': openid }]))
+          .get();
+
+        if (spaceResult.data.length === 0) {
+          return { code: 404, msg: '未加入家庭空间' };
+        }
+
+        var space = spaceResult.data[0];
+        var spaceId = space.spaceId;
+
+        // 判断角色（owner 或 member）
+        var isOwner = space.ownerUserId === openid;
+        var role = isOwner ? 'owner' : (space.members.find(function(m) { return m.userId === openid; }) || {}).role || 'member';
+
+        // Upsert 文档状态
+        var existing = await db.collection('family_doc_status')
+          .where({ spaceId: spaceId, userId: openid, slotKey: slotKey })
+          .get();
+
+        if (existing.data.length > 0) {
+          await db.collection('family_doc_status')
+            .where({ spaceId: spaceId, userId: openid, slotKey: slotKey })
+            .update({
+              data: { filled: !!filled, updatedAt: db.serverDate() }
+            });
+        } else {
+          await db.collection('family_doc_status').add({
+            data: {
+              spaceId: spaceId,
+              userId: openid,
+              role: role,
+              slotKey: slotKey,
+              filled: !!filled,
+              updatedAt: db.serverDate()
+            }
+          });
+        }
+
+        return { code: 0, data: { success: true } };
+      }
+
+      case 'get-doc-status': {
+        var { targetUserId } = event;
+        if (!targetUserId) return { code: 400, msg: '缺少 targetUserId' };
+
+        // 验证调用者与目标用户在同一家庭空间
+        var spaceResult = await db.collection('family_spaces')
+          .where(_.or([
+            { ownerUserId: openid, 'members.userId': targetUserId },
+            { ownerUserId: targetUserId, 'members.userId': openid },
+            { ownerUserId: openid, ownerUserId: targetUserId }
+          ]))
+          .get();
+
+        // 修正：检查空间是否包含双方
+        var validSpace = null;
+        for (var i = 0; i < spaceResult.data.length; i++) {
+          var sp = spaceResult.data[i];
+          var hasTarget = sp.ownerUserId === targetUserId ||
+            (sp.members || []).some(function(m) { return m.userId === targetUserId; });
+          var hasSelf = sp.ownerUserId === openid ||
+            (sp.members || []).some(function(m) { return m.userId === openid; });
+          if (hasTarget && hasSelf) { validSpace = sp; break; }
+        }
+
+        if (!validSpace) {
+          return { code: 403, msg: '无权查看对方的文档状态' };
+        }
+
+        var statusResult = await db.collection('family_doc_status')
+          .where({ spaceId: validSpace.spaceId, userId: targetUserId })
+          .get();
+
+        var slots = {};
+        (statusResult.data || []).forEach(function(d) {
+          slots[d.slotKey] = { filled: d.filled, updatedAt: d.updatedAt };
+        });
+
+        return { code: 0, data: { slots: slots } };
+      }
+
       default:
         return { code: 400, msg: '无效的操作类型' };
     }

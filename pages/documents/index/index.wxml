@@ -105,24 +105,38 @@
             <text class="slot__pcount" wx:if="{{slot.uploadedDocs.length > 3}}">+{{slot.uploadedDocs.length - 3}}</text>
           </view>
           <!-- 中间名称区 → 点击查看/添加 -->
-          <view class="slot__info"
+          <!-- 配偶视图：名称区不可交互 -->
+          <view class="slot__info" wx:if="{{isSpouseView}}">
+            <text class="slot__name">{{slot.docName}}</text>
+            <text class="slot__count slot__count--remote" wx:if="{{slot._spouseFilled}}">✅ 对方已上传</text>
+            <text class="slot__count slot__count--empty" wx:else>⬜ 对方未上传</text>
+          </view>
+          <!-- 本人视图：原有交互 -->
+          <view class="slot__info" wx:else
                 bindtap="{{slot.fillStatus === 'empty' ? 'uploadToSlot' : (slot.uploadedDocs.length > 1 ? 'previewSlotDocs' : 'navigateToDetail')}}"
                 data-slot-key="{{slot.slotKey}}" data-id="{{slot.uploadedDocs[0] ? slot.uploadedDocs[0].id : ''}}">
             <text class="slot__name">{{slot.docName}}{{slot.uploadedCount === 1 && slot.uploadedDocs[0].sideLabel ? '·'+slot.uploadedDocs[0].sideLabel : ''}}</text>
             <text class="slot__count" wx:if="{{slot.uploadedCount > 0}}">{{slot.uploadedCount}}份</text>
           </view>
-          <!-- Bug #18 修复: 右侧按钮 → 未满显示"继续添加"，满则打✓ -->
-          <text class="slot__btn add"
-                bindtap="uploadToSlot" data-slot-key="{{slot.slotKey}}"
-                wx:if="{{slot.fillStatus === 'empty'}}">+</text>
-          <text class="slot__btn continue"
-                bindtap="uploadToSlot" data-slot-key="{{slot.slotKey}}"
-                wx:elif="{{slot.uploadedCount < slot.maxCount || slot.maxCount === -1}}">+</text>
-          <text class="slot__btn slot__btn--full"
-                wx:else>✓</text>
-          <text class="slot__btn pdf"
-                wx:if="{{slot.uploadedCount > 0}}"
-                bindtap="generateSlotPDF" data-slot-key="{{slot.slotKey}}" data-name="{{slot.docName}}">📄</text>
+          <!-- Bug #18 修复: 右侧按钮 → 配偶视图隐藏所有操作按钮 -->
+          <block wx:if="{{!isSpouseView}}">
+            <text class="slot__btn add"
+                  bindtap="uploadToSlot" data-slot-key="{{slot.slotKey}}"
+                  wx:if="{{slot.fillStatus === 'empty'}}">+</text>
+            <text class="slot__btn continue"
+                  bindtap="uploadToSlot" data-slot-key="{{slot.slotKey}}"
+                  wx:elif="{{slot.uploadedCount < slot.maxCount || slot.maxCount === -1}}">+</text>
+            <text class="slot__btn slot__btn--full"
+                  wx:else>✓</text>
+            <text class="slot__btn pdf"
+                  wx:if="{{slot.uploadedCount > 0}}"
+                  bindtap="generateSlotPDF" data-slot-key="{{slot.slotKey}}" data-name="{{slot.docName}}">📄</text>
+          </block>
+          <!-- 配偶视图：仅显示状态 -->
+          <block wx:else>
+            <text class="slot__btn slot__btn--remote-done" wx:if="{{slot._spouseFilled}}">✅</text>
+            <text class="slot__btn slot__btn--remote-empty" wx:else>⬜</text>
+          </block>
         </view>
       </view>
     </view>

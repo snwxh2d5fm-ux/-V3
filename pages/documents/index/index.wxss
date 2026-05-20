@@ -70,6 +70,10 @@
 .slot__btn--add { background: var(--color-info-bg); color: var(--color-info); border: 2rpx dashed var(--blue-light); }
 .slot__btn--done { background: var(--color-success-bg); color: var(--color-success); }
 .slot__btn.pdf { background: #fef3c7; color: #d97706; border: 1rpx solid #fcd34d; margin-left: 8rpx; font-size: 24rpx; }
+.slot__btn--remote-done { background: var(--color-success-bg); color: var(--color-success); font-size: 22rpx; width: auto; padding: 0 12rpx; }
+.slot__btn--remote-empty { background: var(--gray-100); color: var(--gray-400); font-size: 22rpx; width: auto; padding: 0 12rpx; }
+.slot__count--remote { font-size: 22rpx; color: var(--color-success); font-weight: 600; }
+.slot__count--empty { font-size: 22rpx; color: var(--gray-400); }
 
 /* ═══ 画廊 ═══ */
 .gallery-grid { display: flex; flex-wrap: wrap; padding: 12rpx 20rpx; gap: 12rpx; }
