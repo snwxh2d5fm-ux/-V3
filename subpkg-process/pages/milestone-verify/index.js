@@ -1,7 +1,7 @@
 // 住港伴 — 里程碑验证页
-const { validateMilestone } = require('../../utils/rule-engine');
-const { extractFields } = require('../../utils/ocr');
-const { getProcessLine, saveProcessLine, saveDocumentMeta, saveFile } = require('../../utils/storage');
+const { validateMilestone } = require('../../../utils/rule-engine');
+const { extractFields } = require('../../../utils/ocr');
+const { getProcessLine, saveProcessLine, saveDocumentMeta, saveFile } = require('../../../utils/storage');
 
 Page({
   data: {
@@ -92,7 +92,7 @@ Page({
             });
             if (vmRes.result.code === 0) {
               // 写入 __process_stage__ 供攻略书联动
-              var BRIDGE = require('../../data/constants').STAGE_BRIDGE_MAP;
+              var BRIDGE = require('../../../data/constants').STAGE_BRIDGE_MAP;
               var stageIdx = parseInt(this.options.stageIndex) || 0;
               var uiStage = BRIDGE.stageToUiStage(this.data.stageId, stageIdx + 1);
               wx.setStorageSync('__process_stage__', uiStage);

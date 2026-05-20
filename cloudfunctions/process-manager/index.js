@@ -530,9 +530,9 @@ async function resetIdentityPhase(openid, event) {
   const { transactionId } = event;
   if (!transactionId) return { code: 400, msg: '缺少 transactionId' };
 
-  // 1. 校验支付凭证
-  const payLog = await db.collection('payment_records')
-    .where({ _openid: openid, transactionId, status: 'success', type: 'identity_reset' }).get();
+  // 1. 校验支付凭证 (订单集合 orders，由 payment 云函数 confirmPayment 写入)
+  const payLog = await db.collection('orders')
+    .where({ _openid: openid, transactionId, status: 'completed', category: 'identity_reset' }).get();
   if (payLog.data.length === 0) return { code: 402, msg: '未找到支付记录或支付未完成' };
 
   // 2. 取消当前活跃流程

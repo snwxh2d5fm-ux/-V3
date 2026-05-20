@@ -172,6 +172,8 @@ Page({
         currentPhase: progress.currentPhase || 0,
         phase3Unlocked: merged.phase3Unlocked || false,
         housingWizardDone: storage.isHousingWizardDone(),
+        isMember: (getApp().globalData && getApp().globalData.membershipLevel !== 'free') || false,
+        hasLockedPhases: merged.phases.some(function(p) { return p.unlocked === false; }),
         dataSource: 'local',
         loading: false,
         loadError: false
@@ -204,6 +206,8 @@ Page({
           currentPhase: progress.currentPhase || 0,
           phase3Unlocked: merged.phase3Unlocked || false,
           housingWizardDone: storage.isHousingWizardDone(),
+          isMember: (getApp().globalData && getApp().globalData.membershipLevel !== 'free') || false,
+          hasLockedPhases: merged.phases.some(function(p) { return p.unlocked === false; }),
           dataSource: cloudResult.fromCache ? 'cloud-cache' : (cloudResult.stale ? 'cloud-stale' : 'cloud'),
           loading: false,
           loadError: false
@@ -320,6 +324,7 @@ Page({
         processStage = Math.max(0, Math.min(6, Number(psVal)));
       }
     } catch(e) {}
+    console.log('[mergeProgress] processStage=' + processStage + ' guidebookAllUnlocked=' + guidebookAllUnlocked + ' membershipLevel=' + membershipLevel);
 
     var unlockState = BRIDGE.getGuideUnlockState(processStage);
 
@@ -451,18 +456,16 @@ Page({
   },
 
   // ★ ¥9.90 即刻提前解锁全部关卡
-  unlockAllPhasesPay: async function() {
+  unlockAllPhasesPay: function() {
     var self = this;
     wx.showLoading({ title: '处理中...' });
-    try {
-      var res = await wx.cloud.callFunction({
-        name: 'payment',
-        data: { action: 'unlockAllPhases' }
-      });
+    wx.cloud.callFunction({
+      name: 'payment',
+      data: { action: 'unlockAllPhases' }
+    }).then(function(res) {
       wx.hideLoading();
       if (res.result.code === 0) {
         var payData = res.result.data;
-        // P0-A fix: 空值防御 — payData.payment 可能因网络异常缺失
         if (!payData || !payData.payment || !payData.payment.timeStamp) {
           wx.showToast({ title: '支付参数异常，请重试', icon: 'none' });
           return;
@@ -474,26 +477,21 @@ Page({
           package: payParams.package,
           signType: payParams.signType || 'RSA',
           paySign: payParams.paySign,
-          success: async function() {
-            // P0-C fix: 支付成功后调用 confirmPayment 触发服务端验单
-            try {
-              var confirmRes = await wx.cloud.callFunction({
-                name: 'payment',
-                data: { action: 'confirmPayment', orderId: payData.orderId }
-              });
+          success: function() {
+            wx.cloud.callFunction({
+              name: 'payment',
+              data: { action: 'confirmPayment', orderId: payData.orderId }
+            }).then(function(confirmRes) {
               if (confirmRes.result && confirmRes.result.code === 0) {
-                // 已确认支付完成，服务端已写 guidebookAllUnlocked，刷新
                 wx.showToast({ title: '全部关卡已解锁！', icon: 'success' });
                 self.init();
               } else {
-                // V3回调可能已处理，仍刷新重试
                 setTimeout(function() { self.init(); }, 1500);
                 wx.showToast({ title: '订单确认中，稍后刷新查看', icon: 'none' });
               }
-            } catch(e) {
-              // confirmPayment 网络异常时仍尝试刷新
+            }).catch(function() {
               setTimeout(function() { self.init(); }, 1500);
-            }
+            });
           },
           fail: function(err) {
             if (err.errMsg.indexOf('cancel') === -1) {
@@ -506,10 +504,10 @@ Page({
       } else {
         wx.showToast({ title: res.result.msg || '支付创建失败', icon: 'none' });
       }
-    } catch(e) {
+    }).catch(function() {
       wx.hideLoading();
       wx.showToast({ title: '网络异常，请重试', icon: 'none' });
-    }
+    });
   },
 
   // ★ 跳转会员中心
@@ -918,6 +916,8 @@ Page({
   onPhaseTap: function(e) {
     var phase = parseInt(e.currentTarget.dataset.phase);
     var phases = this.data.phases;
+    var tp = phases.find(function(p) { return p.phase === phase; });
+    console.log('[onPhaseTap] phase=' + phase + ' exists=' + !!tp + ' unlocked=' + (tp ? tp.unlocked : 'N/A') + ' phasesCount=' + phases.length);
     phases = phases.map(function(p) {
       if (p.phase === phase) { p.expanded = !p.expanded; }
       return p;

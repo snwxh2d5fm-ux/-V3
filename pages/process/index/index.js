@@ -180,9 +180,9 @@ Page({
     this.__completingAllSteps = true;
     try {
 
-    this.setData({ completingStageIdx: e.currentTarget.dataset.stageIndex });
-    console.log('[completeAllSteps] 触发', JSON.stringify(e.currentTarget.dataset));
-    var index = e.currentTarget.dataset.stageIndex;
+    var index = parseInt((e.currentTarget && e.currentTarget.dataset && e.currentTarget.dataset.stageIndex)) || -1;
+    this.setData({ completingStageIdx: index });
+    console.log('[completeAllSteps] 触发 index=' + index);
     console.log('[completeAllSteps] index=' + index + ' phases.length=' + (this.data.phases ? this.data.phases.length : 0));
     var phase = this.data.phases[index];
     if (!phase) {
@@ -292,7 +292,8 @@ Page({
     var index = e.currentTarget.dataset.stageIndex;
     var phase = this.data.phases[index];
     if (!phase || phase.status !== 'current') return;
-    wx.navigateTo({ url: '/subpkg-process/pages/milestone-verify/index?stageId=' + (phase.stageId || phase.id) + '&stageIndex=' + index });
+    var processId = this.data.activeProcessId || wx.getStorageSync('__active_process_id__') || '';
+    wx.navigateTo({ url: '/subpkg-process/pages/milestone-verify/index?processId=' + processId + '&stageId=' + (phase.stageId || phase.id) + '&stageIndex=' + index + '&status=' + (phase.id || '') + '&milestoneType=' + (phase.milestoneDocType || '') + '&label=' + (phase.name || '') });
   },
 
   // v5 快捷入口 (DSG-1 P0-01: 双中枢合并)
@@ -350,22 +351,24 @@ Page({
     const allStages = activeProcess.stages || [];
     const stepMaterials = SEVEN_STEPS.map(() => []);
 
+    // P1-01: 共享phaseId→步骤索引映射(stepMaterials + currentStepIdx 两处共用)
+    var _toStepIdx = function(pid, order) {
+      if (pid.includes('phase1') || pid.includes('evaluation')) return 1;
+      if (pid.includes('phase2') || pid.includes('onboarding')) {
+        var total = allStages.filter(function(ss) { return (ss.phaseId||'').includes('phase2')||(ss.phaseId||'').includes('onboarding'); }).length;
+        var o = order || 0;
+        if (total <= 3) { return [2,3,4][o] != null ? [2,3,4][o] : 4; }
+        return o < total/3 ? 2 : o < total*2/3 ? 3 : 4;
+      }
+      if (pid.includes('phase3') || pid.includes('maintenance')) return 5;
+      if (pid.includes('phase4') || pid.includes('pr')) return 6;
+      return -1;
+    };
+
     // 模板4阶段 → 7步映射（phase1 实际是材料准备，资格评估独立）
     allStages.forEach(s => {
       const pid = s.phaseId || '';
-      let stepIdx = -1;
-
-      if (pid.includes('phase1') || pid.includes('evaluation'))  stepIdx = 1;  // → 材料准备
-      else if (pid.includes('phase2') || pid.includes('onboarding')) {
-        // phase2 拆分为：线上申请(2) / 等待获批(3) / 获批激活(4)
-        const o = s.order || 0;
-        const total = allStages.filter(ss => (ss.phaseId||'').includes('phase2')||(ss.phaseId||'').includes('onboarding')).length;
-        if (total <= 3) { stepIdx = [2,3,4][o] ?? 4; }
-        else { stepIdx = o < total/3 ? 2 : o < total*2/3 ? 3 : 4; }
-      }
-      else if (pid.includes('phase3') || pid.includes('maintenance')) stepIdx = 5;  // → 抵港生活
-      else if (pid.includes('phase4') || pid.includes('pr'))         stepIdx = 6;  // → 永居
-
+      const stepIdx = _toStepIdx(pid, s.order);
       if (stepIdx >= 1 && stepIdx < 7) stepMaterials[stepIdx].push(s);
     });
 
@@ -379,17 +382,14 @@ Page({
     var currentStepIdx = 0;
     for (var si = 0; si < allStages.length; si++) {
       if (allStages[si].status === 'in_progress') {
-        // 映射到 SEVEN_STEPS 的索引
-        var pid = allStages[si].phaseId || '';
-        if (pid.includes('phase1') || pid.includes('evaluation')) currentStepIdx = 1;
-        else if (pid.includes('phase2') || pid.includes('onboarding')) currentStepIdx = 2;
-        else if (pid.includes('phase3') || pid.includes('maintenance')) currentStepIdx = 5;
-        else if (pid.includes('phase4') || pid.includes('pr')) currentStepIdx = 6;
-        else currentStepIdx = 1;
+        currentStepIdx = Math.max(1, _toStepIdx(allStages[si].phaseId || '', allStages[si].order));
         break;
       }
     }
-    if (currentStepIdx === 0) currentStepIdx = 1; // 兜底: 材料准备
+    // P0-02: 全阶段完成 → currentStepIdx=7 (所有步骤标记done), 不再回退到步骤1
+    if (currentStepIdx === 0) {
+      currentStepIdx = (allStages.length > 0 && doneCount === allStages.length) ? 7 : 1;
+    }
     var assessmentDone = !!activeProcess;
 
     const phases = SEVEN_STEPS.map((step, i) => {

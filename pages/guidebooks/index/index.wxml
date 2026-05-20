@@ -48,7 +48,7 @@
         <view class="unlock-option unlock-option--quick" bindtap="unlockAllPhasesPay">
           <text class="unlock-option__title">⚡ ¥9.90 即刻提前解锁全部关卡</text>
           <text class="unlock-option__desc">无需等待流程控推进，全部关卡现在就能开始</text>
-          <button class="btn btn--sm btn--primary">¥9.90 立即解锁</button>
+          <view class="btn btn--sm btn--primary">¥9.90 立即解锁</view>
         </view>
         <view class="unlock-option" bindtap="goMembership">
           <text class="unlock-option__title">⭐ 基础会员 ¥399/年</text>
@@ -61,7 +61,7 @@
     <scroll-view scroll-y class="phase-list">
       <view wx:for="{{phases}}" wx:key="phase"
             class="phase-card {{item.unlocked===false?'locked':''}} {{item.expanded?'expanded':''}}">
-        <view class="phase-header" data-phase="{{item.phase}}" bindtap="onPhaseTap">
+        <view class="phase-header" data-phase="{{item.phase}}" catchtap="onPhaseTap">
           <view class="phase-left">
             <text class="phase-icon">{{item.unlocked===false?'🔒':(item.totalRequired>0&&item.requiredCompleted>=item.totalRequired?'✅':'●')}}</text>
             <view class="phase-info">

@@ -105,6 +105,7 @@ Component({
      * 点击身份标签 → 支付拦截
      */
     onTapIdentity() {
+      console.log('[status-badge] onTapIdentity 触发');
       this.setData({ showPaywall: true });
     },
 
@@ -114,6 +115,7 @@ Component({
 
     confirmPaywall: function() {
       var self = this;
+      console.log('[status-badge] confirmPaywall 触发');
       // 不要先关闭弹窗——先展示二次确认Modal
       wx.showModal({
         title: '确认重置身份状态',
@@ -121,16 +123,19 @@ Component({
         confirmText: '支付 ¥599',
         cancelText: '取消',
         success: function(modalRes) {
+          console.log('[status-badge] wx.showModal result confirm=' + modalRes.confirm);
           if (!modalRes.confirm) {
             return; // 取消: 弹窗保持, 用户可以再点
           }
           // 用户确认后关闭弹窗
           self.setData({ showPaywall: false });
           // 调用 payment 云函数
+          console.log('[status-badge] calling payment/identityReset...');
           wx.cloud.callFunction({
             name: 'payment',
             data: { action: 'identityReset' }
           }).then(function(res) {
+            console.log('[status-badge] payment/identityReset result code=' + (res.result ? res.result.code : 'NO_RESULT'));
             if (res.result.code !== 0) {
               wx.showToast({ title: res.result.msg || '支付创建失败', icon: 'none' });
               return;
