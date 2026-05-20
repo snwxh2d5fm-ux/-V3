@@ -148,7 +148,6 @@ Page({
   // ★ 通道A: 完成当前阶段所有步骤 → 自动推进
   completeAllSteps: async function(e) {
     console.log('[completeAllSteps] 触发', JSON.stringify(e.currentTarget.dataset));
-    try {
     var index = e.currentTarget.dataset.stageIndex;
     console.log('[completeAllSteps] index=' + index + ' phases.length=' + (this.data.phases ? this.data.phases.length : 0));
     var phase = this.data.phases[index];
