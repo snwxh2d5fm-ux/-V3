@@ -217,14 +217,25 @@
       <text class="picker-title">选择你的身份规划路径</text>
       <view class="picker-list">
         <view wx:for="{{directPathOptions}}" wx:key="id"
-              class="picker-item {{directSelectedPath===item.id?'picker-item--active':''}}"
-              bindtap="onSelectDirectPath" data-id="{{item.id}}">
+              class="picker-item {{directSelectedPath===item.id?'picker-item--active':''}} {{expandedPathId===item.id?'picker-item--expanded':''}}"
+              bindtap="togglePathExpand" data-id="{{item.id}}">
           <text class="picker-item-icon">{{item.icon}}</text>
           <view class="picker-item-info">
             <text class="picker-item-name">{{item.name}}</text>
             <text class="picker-item-desc">{{item.desc}}</text>
           </view>
           <text wx:if="{{directSelectedPath===item.id}}" class="picker-check">✓</text>
+          <text class="picker-item-arrow">{{expandedPathId===item.id ? '▾' : '▸'}}</text>
+
+          <!-- 展开区：路径详情 + 选择按钮 -->
+          <view class="picker-expand" wx:if="{{expandedPathId===item.id}}" catchtap="catchStop">
+            <view class="picker-expand__divider"></view>
+            <text class="picker-expand__desc">{{item.desc}}</text>
+            <button class="btn btn--primary btn--sm picker-expand__btn"
+                    catchtap="onSelectDirectPath" data-id="{{item.id}}">
+              选择此路径
+            </button>
+          </view>
         </view>
       </view>
     </view>

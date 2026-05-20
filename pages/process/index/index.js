@@ -65,6 +65,7 @@ Page({
     disclaimerTitle: '',
     disclaimerBody: '',
     disclaimerConfirmed: false,
+    expandedPathId: '',
     showGateSheet: false,
     gateMode: '',
     pendingPathId: '',
@@ -104,6 +105,14 @@ Page({
 
   toggleDirectPathPicker() {
     this.setData({ showDirectPathPicker: !this.data.showDirectPathPicker });
+  },
+
+  togglePathExpand: function(e) {
+    var id = e.currentTarget.dataset.id;
+    this.setData({
+      expandedPathId: this.data.expandedPathId === id ? '' : id,
+      showDirectPathPicker: true  // ensure picker stays open
+    });
   },
 
   onSelectDirectPath(e) {
