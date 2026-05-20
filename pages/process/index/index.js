@@ -35,6 +35,7 @@ Page({
     materialDoneCount: 0,
     materialTotalCount: 0,
     expandedPhaseIdx: 0,
+    completingStageIdx: -1,
     showDisclaimer: false,
 
     // 空状态·模板选择
@@ -179,6 +180,7 @@ Page({
     this.__completingAllSteps = true;
     try {
 
+    this.setData({ completingStageIdx: e.currentTarget.dataset.stageIndex });
     console.log('[completeAllSteps] 触发', JSON.stringify(e.currentTarget.dataset));
     var index = e.currentTarget.dataset.stageIndex;
     console.log('[completeAllSteps] index=' + index + ' phases.length=' + (this.data.phases ? this.data.phases.length : 0));
@@ -281,6 +283,7 @@ Page({
     }
     } finally {
       this.__completingAllSteps = false;
+      this.setData({ completingStageIdx: -1 });
     }
   },
 
@@ -372,22 +375,22 @@ Page({
     // 仅0%完成度时出示免责声明
     // showDisclaimer 已移除 — 自评弹窗统一由 checkDisclaimerNeeded 管理
 
-    // 当前阶段：资格评估完成后 → 材料准备解锁
-    // 资格评估的状态：有 activeProcess 即表示已完成
-    const assessmentDone = !!activeProcess;
-    let currentStepIdx = assessmentDone ? 1 : 0;
-
-    // 在材料准备及之后找第一个未完成的
-    for (let i = 1; i < 7; i++) {
-      const mats = stepMaterials[i];
-      if (mats.length > 0 && mats.every(m => m.status === 'completed')) continue;
-      if (mats.length === 0 && i > currentStepIdx) continue; // 空步骤保持 current 不变
-      // 关键：如果该步骤所有 material 都处于 locked 状态，说明尚未解锁，不应视为当前步骤
-      if (mats.length > 0 && mats.every(m => m.unlocked === false)) continue;
-      if (i <= currentStepIdx) continue; // 已完成不回溯
-      currentStepIdx = i;
-      break;
+    // 找到第一个 in_progress 的 stage 作为当前阶段
+    var currentStepIdx = 0;
+    for (var si = 0; si < allStages.length; si++) {
+      if (allStages[si].status === 'in_progress') {
+        // 映射到 SEVEN_STEPS 的索引
+        var pid = allStages[si].phaseId || '';
+        if (pid.includes('phase1') || pid.includes('evaluation')) currentStepIdx = 1;
+        else if (pid.includes('phase2') || pid.includes('onboarding')) currentStepIdx = 2;
+        else if (pid.includes('phase3') || pid.includes('maintenance')) currentStepIdx = 5;
+        else if (pid.includes('phase4') || pid.includes('pr')) currentStepIdx = 6;
+        else currentStepIdx = 1;
+        break;
+      }
     }
+    if (currentStepIdx === 0) currentStepIdx = 1; // 兜底: 材料准备
+    var assessmentDone = !!activeProcess;
 
     const phases = SEVEN_STEPS.map((step, i) => {
       const isAssessment = step.hasAssessBtn;
@@ -406,6 +409,8 @@ Page({
         ...step,
         stepIndex: i,
         status,
+        isMilestone: constants.STAGE_BRIDGE_MAP.ui_stages[i] ? constants.STAGE_BRIDGE_MAP.ui_stages[i].isMilestone : false,
+        milestoneDocType: constants.STAGE_BRIDGE_MAP.ui_stages[i] ? constants.STAGE_BRIDGE_MAP.ui_stages[i].milestoneDocType : null,
         materials: mats,
         materialCount: mats.length,
         doneCount: mats.filter(m => m.status === 'completed').length,
