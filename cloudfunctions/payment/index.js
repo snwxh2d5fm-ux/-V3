@@ -393,6 +393,128 @@ async function deleteOrder(openid, event) {
  *
  * V3 回调体格式:
  *   { id, create_time, resource_type, event_type, summary,
+ *     resource: { algorithm, ciphertext, associated_data, nonce, original_type } }
+ */
+async function handleV3Callback(event) {
+  try {
+    const body = typeof event.body === 'string' ? JSON.parse(event.body) : event.body;
+
+    // 验证微信支付V3回调签名（生产环境强制开启）
+    var wechatSig = event.headers['wechatpay-signature'] || event.headers['Wechatpay-Signature'] || '';
+    var timestamp = event.headers['wechatpay-timestamp'] || event.headers['Wechatpay-Timestamp'] || '';
+    var nonce = event.headers['wechatpay-nonce'] || event.headers['Wechatpay-Nonce'] || '';
+    var rawBody = typeof event.body === 'string' ? event.body : JSON.stringify(event.body);
+    var signMessage = timestamp + '\n' + nonce + '\n' + rawBody + '\n';
+    var v3Key = WXPAY_CONFIG.apiV3Key;
+    // 签名验证强制开启 —— 密钥未配置时拒绝所有回调
+    if (!v3Key) {
+      console.error('[payment] V3回调: apiV3Key未配置，拒绝回调处理');
+      return { statusCode: 500, body: JSON.stringify({ code: 'FAIL', message: 'server not configured' }) };
+    }
+    var computed = require('crypto').createHmac('sha256', v3Key).update(signMessage).digest('base64');
+    if (computed !== wechatSig) {
+      console.error('[payment] V3回调签名验证失败');
+      return { statusCode: 401, body: JSON.stringify({ code: 'FAIL', message: 'invalid signature' }) };
+    }
+
+    // 解密 resource
+    const resource = body.resource;
+    if (!resource || resource.algorithm !== 'AEAD_AES_256_GCM') {
+      console.error('[payment] 回调resource格式不支持');
+      return { statusCode: 400, body: JSON.stringify({ code: 'FAIL', message: 'bad resource' }) };
+    }
+
+    const plaintext = aesGcmDecrypt(
+      resource.ciphertext,
+      resource.associated_data || '',
+      resource.nonce,
+      WXPAY_CONFIG.apiV3Key
+    );
+
+    const paymentData = JSON.parse(plaintext);
+    console.log('[payment] V3回调解密:', JSON.stringify(paymentData));
+
+    const outTradeNo = paymentData.out_trade_no;
+    const transactionId = paymentData.transaction_id;
+    const tradeState = paymentData.trade_state;
+
+    // 只处理支付成功
+    if (tradeState !== 'SUCCESS') {
+      return { statusCode: 200, body: JSON.stringify({ code: 'SUCCESS' }) };
+    }
+
+    const orderResult = await db.collection('orders').doc(outTradeNo).get();
+    if (!orderResult.data) {
+      console.error('[payment] 回调订单不存在:', outTradeNo);
+      return { statusCode: 404, body: JSON.stringify({ code: 'FAIL', message: 'order not found' }) };
+    }
+
+    const order = orderResult.data;
+    if (order.status === 'completed') {
+      return { statusCode: 200, body: JSON.stringify({ code: 'SUCCESS' }) };
+    }
+
+    await db.collection('orders').doc(outTradeNo).update({
+      data: {
+        status: 'completed',
+        completedAt: db.serverDate(),
+        transactionId: transactionId || ''
+      }
+    });
+
+    if (order.category === 'membership' && order.planId) {
+      await activateMembership(order._openid, order);
+    }
+    if (order.category === 'identity_reset') {
+      // ¥599身份重置: 支付成功后调用process-manager清除流程
+      await cloud.callFunction({
+        name: 'process-manager',
+        data: { action: 'resetIdentityPhase', transactionId: transactionId }
+      });
+    }
+    if (order.category === 'guidebook_unlock') {
+      // ¥9.90关卡解锁: 支付成功后设置guidebookAllUnlocked
+      await db.collection('users')
+        .where({ _openid: order._openid })
+        .update({ data: { guidebookAllUnlocked: true, updatedAt: db.serverDate() } });
+    }
+
+    await db.collection('audit_logs').add({
+      data: {
+        _openid: order._openid,
+        action: 'payment_success',
+        detail: { orderId: outTradeNo, amount: order.amount,
+          productId: order.productId, planId: order.planId },
+        createdAt: db.serverDate()
+      }
+    });
+
+    // 必须返回 200 + { code: 'SUCCESS' } 否则微信会重试
+    return { statusCode: 200, body: JSON.stringify({ code: 'SUCCESS' }) };
+  } catch (e) {
+    console.error('[payment] V3回调异常:', e);
+    return { statusCode: 500, body: JSON.stringify({ code: 'FAIL', message: 'internal error' }) };
+  }
+}
+
+/**
+ * AES-256-GCM 解密（V3回调resource解密）
+ */
+function aesGcmDecrypt(ciphertextB64, aad, nonceB64, key) {
+  const ciphertext = Buffer.from(ciphertextB64, 'base64');
+  const authTag = ciphertext.subarray(ciphertext.length - 16);
+  const data = ciphertext.subarray(0, ciphertext.length - 16);
+  const decipher = crypto.createDecipheriv('aes-256-gcm', Buffer.from(key),
+    Buffer.from(nonceB64, 'base64'));
+  decipher.setAAD(Buffer.from(aad));
+  decipher.setAuthTag(authTag);
+  const decrypted = Buffer.concat([
+    decipher.update(data),
+    decipher.final()
+  ]);
+  return decrypted.toString('utf8');
+}
+
 // ==================== ¥599 身份重置 ====================
 
 async function identityReset(openid, event) {
@@ -529,128 +651,6 @@ async function unlockAllPhases(openid, event) {
     console.error('[payment] unlockAllPhases error:', e);
     return { code: 500, msg: '支付创建失败', error: e.message };
   }
-}
-
- *     resource: { algorithm, ciphertext, associated_data, nonce, original_type } }
- */
-async function handleV3Callback(event) {
-  try {
-    const body = typeof event.body === 'string' ? JSON.parse(event.body) : event.body;
-
-    // 验证微信支付V3回调签名（生产环境强制开启）
-    var wechatSig = event.headers['wechatpay-signature'] || event.headers['Wechatpay-Signature'] || '';
-    var timestamp = event.headers['wechatpay-timestamp'] || event.headers['Wechatpay-Timestamp'] || '';
-    var nonce = event.headers['wechatpay-nonce'] || event.headers['Wechatpay-Nonce'] || '';
-    var rawBody = typeof event.body === 'string' ? event.body : JSON.stringify(event.body);
-    var signMessage = timestamp + '\n' + nonce + '\n' + rawBody + '\n';
-    var v3Key = WXPAY_CONFIG.apiV3Key;
-    // 签名验证强制开启 —— 密钥未配置时拒绝所有回调
-    if (!v3Key) {
-      console.error('[payment] V3回调: apiV3Key未配置，拒绝回调处理');
-      return { statusCode: 500, body: JSON.stringify({ code: 'FAIL', message: 'server not configured' }) };
-    }
-    var computed = require('crypto').createHmac('sha256', v3Key).update(signMessage).digest('base64');
-    if (computed !== wechatSig) {
-      console.error('[payment] V3回调签名验证失败');
-      return { statusCode: 401, body: JSON.stringify({ code: 'FAIL', message: 'invalid signature' }) };
-    }
-
-    // 解密 resource
-    const resource = body.resource;
-    if (!resource || resource.algorithm !== 'AEAD_AES_256_GCM') {
-      console.error('[payment] 回调resource格式不支持');
-      return { statusCode: 400, body: JSON.stringify({ code: 'FAIL', message: 'bad resource' }) };
-    }
-
-    const plaintext = aesGcmDecrypt(
-      resource.ciphertext,
-      resource.associated_data || '',
-      resource.nonce,
-      WXPAY_CONFIG.apiV3Key
-    );
-
-    const paymentData = JSON.parse(plaintext);
-    console.log('[payment] V3回调解密:', JSON.stringify(paymentData));
-
-    const outTradeNo = paymentData.out_trade_no;
-    const transactionId = paymentData.transaction_id;
-    const tradeState = paymentData.trade_state;
-
-    // 只处理支付成功
-    if (tradeState !== 'SUCCESS') {
-      return { statusCode: 200, body: JSON.stringify({ code: 'SUCCESS' }) };
-    }
-
-    const orderResult = await db.collection('orders').doc(outTradeNo).get();
-    if (!orderResult.data) {
-      console.error('[payment] 回调订单不存在:', outTradeNo);
-      return { statusCode: 404, body: JSON.stringify({ code: 'FAIL', message: 'order not found' }) };
-    }
-
-    const order = orderResult.data;
-    if (order.status === 'completed') {
-      return { statusCode: 200, body: JSON.stringify({ code: 'SUCCESS' }) };
-    }
-
-    await db.collection('orders').doc(outTradeNo).update({
-      data: {
-        status: 'completed',
-        completedAt: db.serverDate(),
-        transactionId: transactionId || ''
-      }
-    });
-
-    if (order.category === 'membership' && order.planId) {
-      await activateMembership(order._openid, order);
-    }
-    if (order.category === 'identity_reset') {
-      // ¥599身份重置: 支付成功后调用process-manager清除流程
-      await cloud.callFunction({
-        name: 'process-manager',
-        data: { action: 'resetIdentityPhase', transactionId: transactionId }
-      });
-    }
-    if (order.category === 'guidebook_unlock') {
-      // ¥9.90关卡解锁: 支付成功后设置guidebookAllUnlocked
-      await db.collection('users')
-        .where({ _openid: order._openid })
-        .update({ data: { guidebookAllUnlocked: true, updatedAt: db.serverDate() } });
-    }
-
-    await db.collection('audit_logs').add({
-      data: {
-        _openid: order._openid,
-        action: 'payment_success',
-        detail: { orderId: outTradeNo, amount: order.amount,
-          productId: order.productId, planId: order.planId },
-        createdAt: db.serverDate()
-      }
-    });
-
-    // 必须返回 200 + { code: 'SUCCESS' } 否则微信会重试
-    return { statusCode: 200, body: JSON.stringify({ code: 'SUCCESS' }) };
-  } catch (e) {
-    console.error('[payment] V3回调异常:', e);
-    return { statusCode: 500, body: JSON.stringify({ code: 'FAIL', message: 'internal error' }) };
-  }
-}
-
-/**
- * AES-256-GCM 解密（V3回调resource解密）
- */
-function aesGcmDecrypt(ciphertextB64, aad, nonceB64, key) {
-  const ciphertext = Buffer.from(ciphertextB64, 'base64');
-  const authTag = ciphertext.subarray(ciphertext.length - 16);
-  const data = ciphertext.subarray(0, ciphertext.length - 16);
-  const decipher = crypto.createDecipheriv('aes-256-gcm', Buffer.from(key),
-    Buffer.from(nonceB64, 'base64'));
-  decipher.setAAD(Buffer.from(aad));
-  decipher.setAuthTag(authTag);
-  const decrypted = Buffer.concat([
-    decipher.update(data),
-    decipher.final()
-  ]);
-  return decrypted.toString('utf8');
 }
 
 // ==================== 订阅管理 ====================
