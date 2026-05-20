@@ -17,7 +17,7 @@ const PERSONAS = {
   SELF_EMPLOYED: 6, // 自雇人士
   FRESH_GRAD: 8,    // 应届毕业生
   PARENT: 9,        // 陪读家长
-  INVESTOR: 10,     // 投资移民
+  INVESTOR: 10,     // CIES投资类身份规划
   EXCHANGE: 11,     // 交换生
   RETIREE: 12       // 退休人士
 };
@@ -187,7 +187,7 @@ function validateBestMatch(persona, bestPath) {
 }
 
 function getPersonaName(persona) {
-  const names = { 1: '在校学生', 2: '在职人士', 3: '专业人士', 4: '企业主', 5: '兼读进修者', 6: '自雇人士', 7: '海外华人', 8: '应届毕业生', 9: '陪读家长', 10: '投资移民', 11: '交换生', 12: '退休人士' };
+  const names = { 1: '在校学生', 2: '在职人士', 3: '专业人士', 4: '企业主', 5: '兼读进修者', 6: '自雇人士', 7: '海外华人', 8: '应届毕业生', 9: '陪读家长', 10: 'CIES投资类身份规划', 11: '交换生', 12: '退休人士' };
   return names[persona] || '未知';
 }
 
