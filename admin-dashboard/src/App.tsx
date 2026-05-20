@@ -14,6 +14,8 @@ import { FeedbackPage } from '@/pages/FeedbackPage';
 import { SystemPage } from '@/pages/SystemPage';
 import { PathAnalysisPage } from '@/pages/PathAnalysisPage';
 import { LifecycleFunnelPage } from '@/pages/LifecycleFunnelPage';
+import { PageAnalyticsPage } from '@/pages/PageAnalyticsPage';
+import { ShareAnalyticsPage } from '@/pages/ShareAnalyticsPage';
 import { SettingsPage } from '@/pages/SettingsPage';
 
 export default function App() {
@@ -34,6 +36,8 @@ export default function App() {
               <Route path="/admin/compliance" element={<CompliancePage />} />
               <Route path="/admin/content" element={<ContentPage />} />
               <Route path="/admin/feedback" element={<FeedbackPage />} />
+              <Route path="/admin/analytics" element={<PageAnalyticsPage />} />
+              <Route path="/admin/share" element={<ShareAnalyticsPage />} />
               <Route path="/admin/system" element={<SystemPage />} />
               <Route path="/admin/settings" element={<SettingsPage />} />
             </Route>
