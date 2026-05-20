@@ -29,7 +29,7 @@ async function aiDashboard(p) {
   const days = p.days || 7;
   const [convCnt, safetyCnt, costSum] = await Promise.all([
     db.collection('conversation_logs').count(),
-    db.collection('conversation_logs').where({ 'safety_triggered.0': db.RegExp({ $exists: true }) }).count(),
+    db.collection('conversation_logs').where({ 'safety_triggered.0': db.command.neq(null) }).count(),
     db.collection('conversation_logs').get()
   ]);
   let totalCost = 0; let totalTokens = 0;
@@ -61,6 +61,6 @@ async function topQueries(p) {
 }
 
 async function safetyEvents(p) {
-  const logs = await db.collection('conversation_logs').where({ 'safety_triggered.0': db.RegExp({ $exists: true }) }).orderBy('timestamp','desc').limit(50).get();
+  const logs = await db.collection('conversation_logs').where({ 'safety_triggered.0': db.command.neq(null) }).orderBy('timestamp','desc').limit(50).get();
   return { code: 0, data: (logs.data||[]).map(l => ({ time: l.timestamp, query: sanitize(l.query||'').slice(0,60), triggers: l.safety_triggered })) };
 }

@@ -67,9 +67,14 @@
 .format-hint {
   display: block;
   font-size: 22rpx;
-  color: #ff4d4f;
+  color: #999;
   margin-top: 12rpx;
   text-align: center;
+}
+
+.format-hint.error {
+  color: #ff4d4f;
+}
 }
 
 /* ===== 预览框 ===== */

@@ -25,7 +25,7 @@ exports.main = async (event) => {
 async function complianceStatus() {
   const [modCnt, convCnt] = await Promise.all([
     db.collection('content_moderation_logs').count(),
-    db.collection('conversation_logs').where({ 'safety_triggered.0': db.RegExp({ $exists: true }) }).count()
+    db.collection('conversation_logs').where({ 'safety_triggered.0': db.command.neq(null) }).count()
   ]);
   return { code: 0, data: { moderationLogs: modCnt.total, safetyTriggers: convCnt.total, k2LeakDetected: convCnt.total > 0, complianceIssues: false } };
 }

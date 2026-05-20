@@ -19,7 +19,8 @@
         maxlength="13"
         auto-focus="{{true}}"
       />
-      <text class="format-hint" wx:if="{{code && !codeValid}}">格式：ZGB-XXXX-XXXX</text>
+      <text class="format-hint" wx:if="{{!code}}">输入 13 位内测码，短横线自动补全</text>
+      <text class="format-hint error" wx:elif="{{code && !codeValid}}">格式：ZGB-XXXX-XXXX</text>
     </view>
 
     <!-- 查询结果预览 -->

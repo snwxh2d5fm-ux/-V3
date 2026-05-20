@@ -22,13 +22,19 @@ Page({
     feedback: ''
   },
 
-  /** 码输入处理：自动格式化为 ZGB-XXXX-XXXX */
+  /** 码输入处理：去空格→大写→自动插入短横线→截断 */
   onCodeInput(e) {
     let raw = String(e.detail.value || '')
       .replace(/\s/g, '')
-      .toUpperCase();
+      .toUpperCase()
+      // 移除已存在的短横线（支持重新格式化）
+      .replace(/-/g, '');
 
-    // 限制长度
+    // 自动插入短横线：ZGB + - + XXXX + - + XXXX
+    if (raw.length > 3) raw = raw.slice(0, 3) + '-' + raw.slice(3);
+    if (raw.length > 8) raw = raw.slice(0, 8) + '-' + raw.slice(8);
+
+    // 限制长度（含短横线共13位）
     if (raw.length > 13) raw = raw.slice(0, 13);
 
     const valid = /^ZGB-[A-Z0-9]{4}-[A-Z0-9]{4}$/.test(raw);
@@ -109,8 +115,8 @@ Page({
       if (result.code === 0) {
         // 同步会员状态到 globalData
         app.globalData.membershipLevel = result.membershipLevel || 'basic';
-        if (result.membershipExpiresAt) {
-          app.globalData.membershipExpireAt = result.membershipExpiresAt;
+        if (result.membershipExpireAt) {
+          app.globalData.membershipExpireAt = result.membershipExpireAt;
         }
 
         this.setData({
@@ -118,7 +124,7 @@ Page({
           redeemed: true,
           redeemFailed: false,
           membershipLabel: result.membershipLabel || '基础年卡会员',
-          membershipExpiresAt: formatDate(result.membershipExpiresAt)
+          membershipExpiresAt: formatDate(result.membershipExpireAt)
         });
 
         wx.showToast({ title: '年卡已激活', icon: 'success' });

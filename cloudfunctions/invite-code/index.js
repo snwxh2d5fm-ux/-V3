@@ -158,7 +158,7 @@ async function redeemCode(openid, { code, deviceId }) {
       return {
         code: 0,
         msg: '你已兑换过该码',
-        membershipExpiresAt: existingMembership.data?.expiresAt || null,
+        membershipExpireAt: existingMembership.data?.expiresAt || null,
         alreadyRedeemed: true
       };
     }
@@ -278,7 +278,7 @@ async function redeemCode(openid, { code, deviceId }) {
     code: 0,
     msg: '年卡已激活',
     membershipLevel: 'basic',
-    membershipExpiresAt: membershipResult.expiresAt,
+    membershipExpireAt: membershipResult.expiresAt,
     membershipLabel: '基础年卡会员'
   };
 }
@@ -606,33 +606,20 @@ async function initCollections() {
     }
   }
 
-  // 2. 确保 code_audit_log 集合存在
-  const auditCollection = 'code_audit_log';
-  try {
-    const { data: existing2 } = await db.collection(auditCollection).limit(1).get();
-    results[auditCollection] = { exists: true, msg: '集合已存在' };
-  } catch (e) {
-    try {
-      const addRes = await db.collection(auditCollection).add({
-        data: { _init: true, action: 'init', createdAt: db.serverDate() }
-      });
-      await db.collection(auditCollection).doc(addRes._id).remove();
-      results[auditCollection] = { created: true, msg: '集合已创建' };
-    } catch (e2) {
-      results[auditCollection] = { error: e2.message };
-    }
-  }
+  // 2. 审计日志写入 audit_logs 集合（复用现有），无需新建
+  results.audit_logs = { note: '审计日志写入现有 audit_logs 集合，无需新建' };
 
-  // 3. 索引说明（需在云开发控制台手动创建）
+  // 3. 索引说明
   results.indexes = {
-    note: '以下索引请前往云开发控制台 → 数据库 → invite_codes → 索引管理 手动创建',
+    note: '以下索引已通过 CloudBase API 创建，此处仅备查',
     required: [
       { collection: 'invite_codes', field: 'code', unique: true, desc: '唯一索引（主键）' },
       { collection: 'invite_codes', field: 'status, expires_at', unique: false, desc: '过期扫描' },
       { collection: 'invite_codes', field: 'generator_uid, status', unique: false, desc: '我的邀请查询' },
       { collection: 'invite_codes', field: 'batch_id', unique: false, desc: '批次查询' },
-      { collection: 'code_audit_log', field: 'code, timestamp', unique: false, desc: '审计追溯' },
-      { collection: 'code_audit_log', field: 'uid, timestamp', unique: false, desc: '用户操作追溯' }
+      { collection: 'invite_codes', field: 'device_hash, redeemed_by_uid', unique: false, desc: '设备限制查询' },
+      { collection: 'audit_logs', field: 'action, createdAt', unique: false, desc: '审计按操作追溯' },
+      { collection: 'audit_logs', field: '_openid, createdAt', unique: false, desc: '审计按用户追溯' }
     ]
   };
 
