@@ -51,7 +51,10 @@
     <!-- 挽留文案（失败后） -->
     <view class="retain-box" wx:if="{{redeemFailed}}">
       <text class="retain-text">免费版也能使用全部核心功能</text>
-      <button class="btn btn-ghost btn-sm" bindtap="goHome">开始体验住港伴</button>
+      <view class="retain-actions">
+        <button class="btn btn-ghost btn-sm" bindtap="resetRedeem">重新输入</button>
+        <button class="btn btn-ghost btn-sm" bindtap="goHome">开始体验住港伴</button>
+      </view>
     </view>
   </view>
 

@@ -152,6 +152,16 @@ async function redeemCode(openid, { code, deviceId }) {
 
   // ---- 2. 校验码状态 ----
   if (codeRecord.status === 'redeemed') {
+    // 3. 幂等检查（同用户+同码已兑换过，返回已有结果）
+    if (codeRecord.redeemed_by_uid === openid) {
+      const existingMembership = await getMembership(openid);
+      return {
+        code: 0,
+        msg: '你已兑换过该码',
+        membershipExpiresAt: existingMembership.data?.expiresAt || null,
+        alreadyRedeemed: true
+      };
+    }
     return { code: 400, msg: '该码已被使用' };
   }
   if (codeRecord.status === 'revoked') {
@@ -163,18 +173,6 @@ async function redeemCode(openid, { code, deviceId }) {
   }
   if (codeRecord.status !== 'unused') {
     return { code: 400, msg: '该码状态异常，无法兑换' };
-  }
-
-  // ---- 3. 幂等检查（同用户+同码已兑换过） ----
-  if (codeRecord.redeemed_by_uid === openid) {
-    // 已兑换过，返回已有结果
-    const existingMembership = await getMembership(openid);
-    return {
-      code: 0,
-      msg: '你已兑换过该码',
-      membershipExpiresAt: existingMembership.data?.expiresAt || null,
-      alreadyRedeemed: true
-    };
   }
 
   // ---- 4. 检查用户是否已有年卡 ----

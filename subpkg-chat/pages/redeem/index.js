@@ -99,6 +99,13 @@ Page({
 
       const result = res.result || {};
 
+      if (result.alreadyRedeemed) {
+        // 幂等返回：同用户已兑换过该码
+        this.setData({ redeeming: false, redeemFailed: false });
+        wx.showToast({ title: result.msg || '你已兑换过该码', icon: 'none' });
+        return;
+      }
+
       if (result.code === 0) {
         // 同步会员状态到 globalData
         app.globalData.membershipLevel = result.membershipLevel || 'basic';
@@ -159,6 +166,15 @@ Page({
     } catch (e) {
       console.error('[redeem] submitFeedback error:', e);
     }
+  },
+
+  /** 重置兑换状态（失败后重新输入） */
+  resetRedeem() {
+    this.setData({
+      code: '', codeValid: false, querying: false,
+      previewed: false, preview: { valid: false, hint: '', msg: '' },
+      redeeming: false, redeemFailed: false
+    });
   },
 
   /** 返回个人中心 */
