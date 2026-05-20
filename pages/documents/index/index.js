@@ -643,7 +643,7 @@ Page({
 
   onCategoryTap(e) {
     const key = e.currentTarget.dataset.key;
-    this.setData({ 
+    this.setData({
       activeCategory: key,
       identityOwner: 'self'   // 切换分类时重置所属人为本人
     });
