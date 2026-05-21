@@ -113,6 +113,7 @@ App({
             userSubStatus: this.globalData.userSubStatus,
             membershipLevel: this.globalData.membershipLevel,
             membershipExpiry: this.globalData.membershipExpiry,
+            isNew: false,
             isLocked: this.globalData.isLocked || false,
             phoneBound: this.globalData.phoneBound || false,
             activeProcessId: this.globalData.activeProcessId,
@@ -187,6 +188,7 @@ App({
       userSubStatus: this.globalData.userSubStatus,
       membershipLevel: this.globalData.membershipLevel,
       membershipExpiry: this.globalData.membershipExpiry,
+      isNew: false, // V4.2-fix: 标记回访用户，防止 checkAndRoute 误判
       isLocked: this.globalData.isLocked || false,
       phoneBound: this.globalData.phoneBound || false,
       activeProcessId: this.globalData.activeProcessId,

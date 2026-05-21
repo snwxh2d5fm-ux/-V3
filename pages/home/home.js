@@ -86,7 +86,13 @@ Page({
       }
 
       // 已登录 → 判断新用户还是回访
-      const isNew = profile.isNew !== false;
+      // V4.2-fix: session缺isNew时回退到__cloud_user__/__user_profile__，防止误判
+      let isNew = profile.isNew !== false;
+      if (profile.isNew === undefined) {
+        const cloudUser = wx.getStorageSync('__cloud_user__') || {};
+        const userProfile = wx.getStorageSync('__user_profile__') || {};
+        isNew = cloudUser.isNew !== false && userProfile.isNew !== false;
+      }
       if (isNew) {
         // 新用户 → 状态选择页
         wx.redirectTo({ url: '/pages/status-select/status-select' });
@@ -145,6 +151,7 @@ Page({
         if (result.data) {
           wx.setStorageSync('user_data', result.data);
           wx.setStorageSync('__user_profile__', result.data);
+          wx.setStorageSync('__cloud_user__', result.data); // V4.2-fix: 同步更新 cloud_user
         }
         wx.setStorageSync('__user_status__', result.userStatus || 'unapplied');
 
