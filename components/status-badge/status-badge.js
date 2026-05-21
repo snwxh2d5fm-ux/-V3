@@ -166,7 +166,7 @@ Component({
               if (p.activeProcessId) wx.setStorageSync('__active_process_id__', p.activeProcessId);
             }
           } catch (e) {
-            // profile恢复失败不阻塞
+            console.warn('[status-badge] profile恢复失败（不阻塞）:', e.message);
           }
 
           wx.hideLoading();
@@ -181,6 +181,7 @@ Component({
           wx.showToast({ title: '云端暂无备份数据', icon: 'none' });
         }
       } catch (e) {
+        console.error('[status-badge] 数据恢复失败:', e.message);
         wx.hideLoading();
         wx.showToast({ title: '数据恢复失败，请检查网络', icon: 'none' });
       }
@@ -241,7 +242,7 @@ Component({
             '__user_sub_status__',
           ];
           keysToRemove.forEach(function (key) {
-            try { wx.removeStorageSync(key); } catch (e) {}
+            try { wx.removeStorageSync(key); } catch (e) { /* key可能不存在，忽略 */ }
           });
 
           wx.hideLoading();
