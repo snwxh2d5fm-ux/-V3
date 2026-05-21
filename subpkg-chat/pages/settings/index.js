@@ -109,13 +109,21 @@ Page({
   logout() {
     wx.showModal({
       title: '退出登录',
-      content: '退出后需重新登录。证件数据保留在本地。',
+      content: '退出后本地数据将被清除。数据已在云端保留，重新登录后将自动恢复。',
       confirmColor: '#d93025',
       success: (res) => {
         if (res.confirm) {
           try {
-            wx.removeStorageSync('user_data');
-            wx.removeStorageSync('__session__');
+            // V4.2-fix: 清除全量本地数据，防止跨账号泄露
+            const userKeys = [
+              'user_data', '__session__',
+              '__processes__', '__reminders__', '__vault_meta__',
+              '__user_status__', '__user_sub_status__', '__active_process_id__',
+              '__selected_path__', '__onboarding__', '__process_stage__',
+              '__cloud_user__', '__user_profile__', '__config__',
+              '__assessment_persona__', '__solution_recommendation__',
+            ];
+            userKeys.forEach(k => { try { wx.removeStorageSync(k); } catch (e) {} });
             wx.reLaunch({ url: '/pages/login/login' });
           } catch (e) {
             wx.showToast({ title: '退出失败', icon: 'none' });

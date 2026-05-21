@@ -191,14 +191,24 @@ Page({
     };
   },
 
-  // 退出登录
+  // 退出登录 — V4.2-fix: 清除全量本地数据，防止跨账号泄露
   logout() {
     wx.showModal({
       title: '确认退出',
-      content: '退出后本地数据不会丢失，但需要重新登录才能使用云同步功能',
+      content: '退出后本地数据将被清除。数据已在云端保留，重新登录后将自动恢复。',
       success: (res) => {
         if (res.confirm) {
-          wx.removeStorageSync(constants.STORAGE_KEYS.SESSION);
+          // 清除所有用户本地数据
+          const userKeys = [
+            constants.STORAGE_KEYS.SESSION,
+            '__processes__', '__reminders__', '__vault_meta__',
+            '__user_status__', '__user_sub_status__', '__active_process_id__',
+            '__selected_path__', '__onboarding__', '__process_stage__',
+            '__cloud_user__', '__user_profile__', '__config__',
+            '__assessment_persona__', '__solution_recommendation__',
+            '__user_data__',
+          ];
+          userKeys.forEach(k => { try { wx.removeStorageSync(k); } catch (e) {} });
           app.globalData.isLoggedIn = false;
           app.globalData.userInfo = null;
           wx.reLaunch({ url: '/pages/login/login' });
