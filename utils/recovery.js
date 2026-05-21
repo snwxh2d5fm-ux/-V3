@@ -152,21 +152,42 @@ async function pullUserProfile() {
 
 /**
  * 检测当前是否处于"数据被清空但用户非新用户"状态
- * 判断标准：
- * 1. __cloud_user__ 存在且 isNew !== true（回访用户）
- * 2. __processes__ 和 __reminders__ 均为空数组（刚被wipe）
+ *
+ * 三层检测策略（避免 __cloud_user__ 被 wipe 时的盲区）：
+ * 1. 有本地 __*__corrupted__ 备份键 → 明确的数据迁移痕迹
+ * 2. __cloud_user__ 存在且 isNew !== true → 回访用户标记
+ * 3. 已登录（有有效session）→ 必定是回访用户
+ *
+ * @param {object} app - App实例
  * @returns {boolean}
  */
-function detectDataLoss() {
+function detectDataLoss(app) {
   try {
-    const cloudUser = wx.getStorageSync('__cloud_user__');
-    if (!cloudUser || cloudUser.isNew === true) return false;
-
     const processes = getAllProcessLines();
     const reminders = getAllReminders();
 
-    // 如果流程和提醒均为空 → 极可能是被wipe了
-    return (!processes || processes.length === 0) && (!reminders || reminders.length === 0);
+    // 数据非空 → 无需恢复
+    if ((processes && processes.length > 0) || (reminders && reminders.length > 0)) {
+      return false;
+    }
+
+    // 策略1: 有本地备份键 → 明确发生过数据迁移
+    try {
+      const { keys } = wx.getStorageInfoSync();
+      const hasBackup = keys.some(k => k.includes('__corrupted__'));
+      if (hasBackup) return true;
+    } catch (e) { /* getStorageInfoSync 失败不阻塞 */ }
+
+    // 策略2: __cloud_user__ 标记为回访用户
+    try {
+      const cloudUser = wx.getStorageSync('__cloud_user__');
+      if (cloudUser && cloudUser.isNew !== true) return true;
+    } catch (e) { /* 读 storage 失败不阻塞 */ }
+
+    // 策略3: 当前已登录 → 必定非新用户
+    if (app && app.globalData && app.globalData.isLoggedIn) return true;
+
+    return false;
   } catch (e) {
     return false;
   }
@@ -183,8 +204,8 @@ async function recoverUserData(app) {
   let recovered = false;
   let source = 'none';
 
-  // 第一步：检测是否需要恢复
-  if (!detectDataLoss()) {
+  // 第一步：检测是否需要恢复（传入app用于已登录判断）
+  if (!detectDataLoss(app)) {
     return { recovered: false, source, details };
   }
 
