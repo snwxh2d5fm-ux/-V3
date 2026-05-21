@@ -170,8 +170,18 @@ Page({
           console.warn('[home] saveSession 跳过: token 为空');
         }
 
-        // 4. 跳转
+        // 4. 回访用户：登录后触发数据恢复（onLaunch时未登录，恢复引擎白跑了）
         const isNew = userData.isNew !== false;
+        if (!isNew && app.globalData.cloudReady) {
+          try {
+            const { recoverUserData } = require('../../utils/recovery');
+            await recoverUserData(app);
+          } catch (e) {
+            console.warn('[home] 登录后数据恢复失败:', e.message);
+          }
+        }
+
+        // 5. 跳转
         if (isNew) {
           wx.redirectTo({ url: '/pages/status-select/status-select' });
         } else {
