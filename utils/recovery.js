@@ -43,7 +43,7 @@ function restoreFromLocalBackup() {
           }
         }
       } catch (e) {
-        // 单个备份读取失败则跳过
+        console.warn('[recovery] 备份键读取失败:', key, e.message);
       }
     }
 
@@ -73,6 +73,9 @@ async function pullFromCloud() {
 
     const { documents, reminders, processes } = res.result.data;
 
+    // V4.2-fix: Schema guard — 验证云端数据格式再写入（CRIT-01）
+    const PROCESS_REQUIRED = ['id', 'name', 'templateId', 'status', 'stages'];
+
     // 恢复证件夹
     if (documents && Array.isArray(documents) && documents.length > 0) {
       try {
@@ -93,11 +96,18 @@ async function pullFromCloud() {
       }
     }
 
-    // 恢复流程线
+    // 恢复流程线（含 schema 校验）
     if (processes && Array.isArray(processes) && processes.length > 0) {
-      try {
-        saveProcessLines(processes);
-        recovered.processes = processes.length;
+      const validProcesses = processes.filter(p => {
+        if (!p || typeof p !== 'object') return false;
+        return PROCESS_REQUIRED.every(f => p[f] !== undefined);
+      });
+      if (validProcesses.length === 0) {
+        console.warn('[recovery] 云端流程数据全部未通过schema校验，跳过恢复');
+      } else {
+        try {
+          saveProcessLines(validProcesses);
+          recovered.processes = validProcesses.length;
       } catch (e) {
         console.error('[recovery] 流程线恢复失败:', e.message);
       }
