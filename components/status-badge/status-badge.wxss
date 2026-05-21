@@ -100,6 +100,22 @@
   display: flex;
   gap: 16rpx;
 }
+.paywall__actions--stack {
+  flex-direction: column;
+  gap: 12rpx;
+}
 .paywall__actions .btn {
   flex: 1;
+}
+.paywall__actions--stack .btn {
+  flex: none;
+}
+
+/* 文本按钮（取消等次要操作） */
+.btn--text {
+  background: transparent;
+  color: var(--gray-400);
+  font-size: 24rpx;
+  padding: 12rpx;
+  border: none;
 }

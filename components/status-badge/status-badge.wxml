@@ -1,5 +1,5 @@
 <view class="badge-bar" wx:if="{{identityLabel}}">
-  <!-- 身份标签（点击拦截） -->
+  <!-- 身份标签（点击可重置/恢复） -->
   <view class="badge badge--identity" bindtap="onTapIdentity">
     <text class="badge__lock">🔒</text>
     <text class="badge__text">{{identityIcon}} {{identityLabel}}</text>
@@ -12,30 +12,55 @@
   </view>
 </view>
 
-<!-- 支付拦截弹窗 -->
-<view class="paywall-overlay" wx:if="{{showPaywall}}" bindtap="closePaywall" role="dialog" aria-modal="true" aria-label="切换身份状态确认">
-  <!-- 步骤1: 信息展示 -->
-  <view class="paywall-card" wx:if="{{!showConfirmStep}}">
-    <text class="paywall__icon">⚠️</text>
-    <text class="paywall__title">切换身份状态</text>
-    <text class="paywall__desc">个人身份状态确认后不允许更改。切换身份状态将影响之前所有的评估结果、流程进度和材料关联。</text>
-    <view class="paywall__price">
-      <text class="paywall__amount">¥599</text>
-      <text class="paywall__note">验证费用 · 切换后历史数据将重置</text>
-    </view>
-    <view class="paywall__actions">
-      <view class="btn btn--outline" catchtap="closePaywall">取消</view>
-      <view class="btn btn--primary" catchtap="confirmPaywall">支付 ¥599</view>
+<!-- V4.2: 身份操作弹窗 — 数据恢复 / 身份重置 -->
+<view class="paywall-overlay" wx:if="{{showResetModal}}" bindtap="closeModal" role="dialog" aria-modal="true">
+  <!-- 数据恢复模式（状态丢失时） -->
+  <view class="paywall-card" wx:if="{{isRecovery && !showConfirmStep}}">
+    <text class="paywall__icon">🔄</text>
+    <text class="paywall__title">数据恢复</text>
+    <text class="paywall__desc">
+      检测到你的身份状态和流程数据可能因系统升级而丢失。
+      请尝试以下操作：
+    </text>
+    <view class="paywall__actions paywall__actions--stack">
+      <view class="btn btn--primary" catchtap="recoverFromCloud">从云端恢复数据</view>
+      <view class="btn btn--outline" catchtap="confirmReset">仍然重新选择身份</view>
+      <view class="btn btn--text" catchtap="closeModal">取消</view>
     </view>
   </view>
-  <!-- 步骤2: 二次确认 -->
+
+  <!-- 身份重置模式（状态正常时） -->
+  <view class="paywall-card" wx:elif="{{!showConfirmStep}}">
+    <text class="paywall__icon">⚠️</text>
+    <text class="paywall__title">切换身份状态</text>
+    <text class="paywall__desc">
+      个人身份状态确认后不建议更改。切换身份状态将清除：
+      · 当前流程进度和阶段数据
+      · 证件材料关联
+      · 提醒规则和本地进度
+      重置后可重新选择身份状态。
+    </text>
+    <view class="paywall__actions">
+      <view class="btn btn--outline" catchtap="closeModal">取消</view>
+      <view class="btn btn--primary" catchtap="confirmReset">确认重置</view>
+    </view>
+  </view>
+
+  <!-- 二次确认 -->
   <view class="paywall-card" wx:else>
     <text class="paywall__icon">⚠️</text>
     <text class="paywall__title">确认重置身份状态</text>
-    <text class="paywall__desc">支付 ¥599 后，你的当前流程进度、材料关联、提醒规则和本地进度将被清除。重置后可重新选择身份状态。确定继续？</text>
+    <text class="paywall__desc">
+      重置后以下数据将被清除：
+      · 当前流程进度和阶段数据
+      · 证件材料关联
+      · 提醒规则
+      · 已选路径和子状态
+      重置后可重新选择身份状态。确定继续？
+    </text>
     <view class="paywall__actions">
-      <view class="btn btn--outline" catchtap="closePaywall">取消</view>
-      <view class="btn btn--primary" catchtap="confirmPaywallFinal">确认支付 ¥599</view>
+      <view class="btn btn--outline" catchtap="closeModal">取消</view>
+      <view class="btn btn--primary" catchtap="executeReset">确认重置</view>
     </view>
   </view>
 </view>
