@@ -108,8 +108,9 @@ async function pullFromCloud() {
         try {
           saveProcessLines(validProcesses);
           recovered.processes = validProcesses.length;
-      } catch (e) {
-        console.error('[recovery] 流程线恢复失败:', e.message);
+        } catch (e) {
+          console.error('[recovery] 流程线恢复失败:', e.message);
+        }
       }
     }
 
