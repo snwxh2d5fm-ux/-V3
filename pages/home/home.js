@@ -164,6 +164,7 @@ Page({
             userStatus: app.globalData.userStatus,
             membershipLevel: app.globalData.membershipLevel,
             phoneBound: app.globalData.phoneBound,
+            isNew: userData.isNew !== false,
           });
         } else {
           console.warn('[home] saveSession 跳过: token 为空');

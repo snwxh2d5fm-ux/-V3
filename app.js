@@ -181,6 +181,9 @@ App({
 
   async saveSession(sessionData) {
     Object.assign(this.globalData, sessionData);
+    // V4.2-fix: isNew 从 sessionData/globalData 透传，不硬编码。
+    // 新用户首次登录时 isNew=true，完成 status-select 后翻转为 false。
+    const isNew = sessionData.isNew !== undefined ? sessionData.isNew : this.globalData.isNew;
     wx.setStorageSync(constants.STORAGE_KEYS.SESSION, {
       token: this.globalData.token,
       userInfo: this.globalData.userInfo,
@@ -188,7 +191,7 @@ App({
       userSubStatus: this.globalData.userSubStatus,
       membershipLevel: this.globalData.membershipLevel,
       membershipExpiry: this.globalData.membershipExpiry,
-      isNew: false, // V4.2-fix: 标记回访用户，防止 checkAndRoute 误判
+      isNew: isNew,
       isLocked: this.globalData.isLocked || false,
       phoneBound: this.globalData.phoneBound || false,
       activeProcessId: this.globalData.activeProcessId,
