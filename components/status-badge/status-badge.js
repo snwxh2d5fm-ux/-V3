@@ -120,7 +120,7 @@ Component({
     },
 
     /**
-     * 从云端恢复数据（不清除本地，从CloudBase拉取）
+     * 从云端恢复数据（不清除本地，委托recovery.js统一处理）
      */
     async recoverFromCloud() {
       const self = this;
@@ -128,58 +128,38 @@ Component({
       wx.showLoading({ title: '正在恢复数据...' });
 
       try {
-        // 调用 db-admin pullAll 拉取全量数据
-        const res = await wx.cloud.callFunction({
-          name: 'db-admin',
-          data: { action: 'pullAll' },
-        });
+        const { pullFromCloud, pullUserProfile } = require('../../utils/recovery');
 
-        if (res.result && res.result.code === 200) {
-          const { documents, reminders, processes } = res.result.data;
-          const { saveDocuments, saveReminders, saveProcessLines } = require('../../utils/storage');
+        // 第一步：拉取全量数据
+        const cloudResult = await pullFromCloud();
+        let recoveredCount = 0;
+        if (cloudResult.success) {
+          recoveredCount = cloudResult.recovered.processes +
+            cloudResult.recovered.reminders +
+            cloudResult.recovered.documents;
+        }
 
-          let recoveredCount = 0;
-          if (processes && processes.length > 0) {
-            saveProcessLines(processes);
-            recoveredCount += processes.length;
+        // 第二步：恢复身份状态
+        try {
+          const profileResult = await pullUserProfile();
+          if (profileResult.success && profileResult.data) {
+            const p = profileResult.data;
+            if (p.userStatus) wx.setStorageSync('__user_status__', p.userStatus);
+            if (p.userSubStatus) wx.setStorageSync('__user_sub_status__', p.userSubStatus);
+            if (p.selectedPath) wx.setStorageSync('__selected_path__', p.selectedPath);
+            if (p.activeProcessId) wx.setStorageSync('__active_process_id__', p.activeProcessId);
           }
-          if (reminders && reminders.length > 0) {
-            saveReminders(reminders);
-            recoveredCount += reminders.length;
-          }
-          if (documents && documents.length > 0) {
-            saveDocuments(documents);
-            recoveredCount += documents.length;
-          }
+        } catch (e) {
+          console.warn('[status-badge] profile恢复失败（不阻塞）:', e.message);
+        }
 
-          // 同时恢复身份状态
-          try {
-            const profileRes = await wx.cloud.callFunction({
-              name: 'user-auth',
-              data: { action: 'getProfile' },
-            });
-            if (profileRes.result && profileRes.result.code === 0) {
-              const p = profileRes.result.data || profileRes.result.user || {};
-              if (p.currentPhase) wx.setStorageSync('__user_status__', p.currentPhase);
-              if (p.subStatus) wx.setStorageSync('__user_sub_status__', p.subStatus);
-              if (p.selectedPath) wx.setStorageSync('__selected_path__', p.selectedPath);
-              if (p.activeProcessId) wx.setStorageSync('__active_process_id__', p.activeProcessId);
-            }
-          } catch (e) {
-            console.warn('[status-badge] profile恢复失败（不阻塞）:', e.message);
-          }
-
-          wx.hideLoading();
-          wx.showToast({
-            title: `已恢复 ${recoveredCount} 条数据`,
-            icon: 'success',
-            duration: 2000,
-          });
-          self.refresh();
+        wx.hideLoading();
+        if (recoveredCount > 0) {
+          wx.showToast({ title: `已恢复 ${recoveredCount} 条数据`, icon: 'success', duration: 2000 });
         } else {
-          wx.hideLoading();
           wx.showToast({ title: '云端暂无备份数据', icon: 'none' });
         }
+        self.refresh();
       } catch (e) {
         console.error('[status-badge] 数据恢复失败:', e.message);
         wx.hideLoading();
