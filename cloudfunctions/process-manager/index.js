@@ -587,18 +587,35 @@ async function getChecklist(openid, templateId, userDocIds) {
  */
 /**
  * ¥599身份重置 (由 payment 云函数 V3 回调触发)
+ * V4.2-fix: 支持免费重置（source='free_reset'时跳过支付校验，7天冷却由audit_logs enforce）
  * 清除当前活跃流程、提醒规则、用户阶段标记
  */
 async function resetIdentityPhase(openid, event) {
-  const { transactionId } = event;
-  if (!transactionId) return { code: 400, msg: '缺少 transactionId' };
+  const { transactionId, source } = event;
 
-  // 1. 校验支付凭证 (订单集合 orders，由 payment 云函数 confirmPayment 写入)
-  const payLog = await db
-    .collection('orders')
-    .where({ _openid: openid, transactionId, status: 'completed', category: 'identity_reset' })
-    .get();
-  if (payLog.data.length === 0) return { code: 402, msg: '未找到支付记录或支付未完成' };
+  // 免费重置路径：不要求 transactionId，但检查7天冷却
+  if (source === 'free_reset') {
+    const recentReset = await db
+      .collection('audit_logs')
+      .where({
+        _openid: openid,
+        action: 'identity_reset',
+        createdAt: db.command.gte(new Date(Date.now() - 7 * 86400000)),
+      })
+      .get();
+    if (recentReset.data.length > 0) {
+      return { code: 429, msg: '7天内已进行过身份重置，请稍后再试' };
+    }
+  } else {
+    // 付费路径：必须校验 transactionId
+    if (!transactionId) return { code: 400, msg: '缺少 transactionId' };
+
+    const payLog = await db
+      .collection('orders')
+      .where({ _openid: openid, transactionId, status: 'completed', category: 'identity_reset' })
+      .get();
+    if (payLog.data.length === 0) return { code: 402, msg: '未找到支付记录或支付未完成' };
+  }
 
   // 2. 取消当前活跃流程
   await db
@@ -617,11 +634,11 @@ async function resetIdentityPhase(openid, event) {
     .collection('users')
     .where({ _openid: openid })
     .update({
-      data: { currentPhase: '', currentStageId: '', guidebookAllUnlocked: false, updatedAt: db.serverDate() },
+      data: { currentPhase: '', currentStageId: '', updatedAt: db.serverDate() },
     });
 
   // 5. 写入审计日志
-  await _logAudit(openid, 'identity_reset', { transactionId });
+  await _logAudit(openid, 'identity_reset', { transactionId: transactionId || null, source: source || 'paid' });
 
   return { code: 0, msg: '身份状态已重置，请重新选择' };
 }
