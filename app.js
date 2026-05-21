@@ -7,6 +7,7 @@ const { initStorage, initDBSync, syncAllToCloud, runStorageStartupCheck } = requ
 const { initCrypto } = require('./utils/crypto');
 const { loadRules } = require('./utils/rule-engine');
 const { matchPersonaToPaths } = require('./data/solution-library');
+const { recoverUserData } = require('./utils/recovery');
 const constants = require('./data/constants');
 
 App({
@@ -86,12 +87,44 @@ App({
     await Promise.all([initStorage(), initCrypto(), loadRules()]);
 
     // V4.1: 存储版本管理 + Schema 校验 + 健康上报
-    runStorageStartupCheck();
+    // V4.2-fix: 包裹try/catch防止存储检查异常阻断启动
+    try {
+      runStorageStartupCheck();
+    } catch (e) {
+      console.error('[住港伴] 存储启动检查异常（不阻塞后续流程）:', e);
+    }
 
     this.globalData.rulesLoaded = true;
 
     await this.loadSession();
     this.initAISession();
+
+    // V4.2-fix: 数据抢救 — 本地备份恢复无需网络，优先执行
+    try {
+      const recoveryResult = await recoverUserData(this);
+      if (recoveryResult.recovered) {
+        console.debug('[住港伴] 数据已自动恢复: source=' + recoveryResult.source);
+        // 将恢复后更新到 globalData 的状态写回 SESSION 键，而非从旧 SESSION 键覆盖恢复结果
+        if (this.globalData.token) {
+          wx.setStorageSync(constants.STORAGE_KEYS.SESSION, {
+            token: this.globalData.token,
+            userInfo: this.globalData.userInfo,
+            userStatus: this.globalData.userStatus,
+            userSubStatus: this.globalData.userSubStatus,
+            membershipLevel: this.globalData.membershipLevel,
+            membershipExpiry: this.globalData.membershipExpiry,
+            isLocked: this.globalData.isLocked || false,
+            phoneBound: this.globalData.phoneBound || false,
+            activeProcessId: this.globalData.activeProcessId,
+            activeProcess: this.globalData.activeProcess,
+            selectedPath: this.globalData.selectedPath,
+            solutionRecommendation: this.globalData.solutionRecommendation,
+          });
+        }
+      }
+    } catch (e) {
+      console.error('[住港伴] 数据恢复异常（不阻塞启动）:', e);
+    }
 
     if (this.globalData.isLoggedIn && this.globalData.cloudReady) {
       this.syncDataToCloud();
