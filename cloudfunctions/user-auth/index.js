@@ -158,15 +158,75 @@ async function handlePhoneLogin(openid, { phoneCode, loginType }) {
     return { code: 500, msg: '未能获取手机号' };
   }
 
-  // ---- 哈希手机号 ----
-  const salt = crypto.randomBytes(16).toString('hex');
+  // ---- 稳定哈希手机号（V4.2-fix: 去掉随机盐，支持跨账号反查合并） ----
   const phoneHash = crypto
-    .createHash('sha256')
-    .update(phoneNumber + salt)
+    .createHmac('sha256', 'zgbinternal-phone-salt')
+    .update(phoneNumber)
     .digest('hex');
 
   const users = db.collection(COLLECTION);
   const { data: existing } = await users.where({ _openid: openid }).get();
+
+  // ---- 反查：此手机号是否已被另一个openid绑定 ----
+  if (existing.length === 0) {
+    const { data: linkedUsers } = await users.where({ phoneHash }).get();
+    if (linkedUsers.length > 0) {
+      const linkedUser = linkedUsers[0];
+      console.log(`[user-auth] phoneLogin 检测到账号合并: ${openid} ← ${linkedUser._openid}`);
+
+      await users.where({ _openid: openid }).update({
+        data: {
+          phoneHash,
+          status: linkedUser.status || 'active',
+          currentPhase: linkedUser.currentPhase || '',
+          membershipLevel: linkedUser.membershipLevel || 'free',
+          selectedPath: linkedUser.selectedPath || '',
+          guidebookAllUnlocked: linkedUser.guidebookAllUnlocked || false,
+          lastLoginAt: db.serverDate(),
+          updatedAt: db.serverDate(),
+        },
+      });
+
+      await users.where({ _openid: linkedUser._openid }).update({
+        data: { status: 'merged', mergedTo: openid, updatedAt: db.serverDate() },
+      });
+
+      // 迁移流程/提醒/文档
+      await db.collection('user_processes').where({ _openid: linkedUser._openid }).update({
+        data: { _openid: openid, updatedAt: db.serverDate() },
+      });
+      await db.collection('reminders').where({ _openid: linkedUser._openid }).update({
+        data: { _openid: openid, updatedAt: db.serverDate() },
+      });
+      await db.collection('user_documents').where({ _openid: linkedUser._openid }).update({
+        data: { _openid: openid, updatedAt: db.serverDate() },
+      });
+
+      await db.collection('audit_logs').add({
+        data: {
+          _openid: openid,
+          action: 'account_merged',
+          detail: { fromOpenid: linkedUser._openid, toOpenid: openid, by: 'phoneHash' },
+          createdAt: db.serverDate(),
+        },
+      });
+
+      const { data: merged } = await users.where({ _openid: openid }).get();
+      if (merged.length > 0) {
+        const user = merged[0];
+        return {
+          code: 0,
+          token: makeToken(openid, user._id),
+          userInfo: { nickName: user.nickName || '住港伴用户' },
+          userStatus: user.currentPhase || 'unapplied',
+          membershipLevel: user.membershipLevel || 'free',
+          phoneBound: true,
+          accountMerged: true,
+          data: sanitizeUser(user),
+        };
+      }
+    }
+  }
 
   if (existing.length > 0) {
     // 已有账号 — 补充绑定手机号
@@ -177,7 +237,6 @@ async function handlePhoneLogin(openid, { phoneCode, loginType }) {
     await users.doc(user._id).update({
       data: {
         phoneHash,
-        phoneSalt: salt,
         lastLoginAt: db.serverDate(),
       },
     });
@@ -199,7 +258,6 @@ async function handlePhoneLogin(openid, { phoneCode, loginType }) {
     status: 'active',
     nickName: '住港伴用户',
     phoneHash,
-    phoneSalt: salt,
     freeTrialStartAt: db.serverDate(),
     freeTrialEndAt: freeTrialEnd,
     membershipLevel: 'free',
