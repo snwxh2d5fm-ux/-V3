@@ -40,3 +40,5 @@
 {"ts":"2026-05-20T18:20:00+08:00","from":"hermes","action":"9gate_pass","detail":"6412320两处真机崩溃修复(completeAllSteps stages:[]+content裸变量→that.data.content). Gate3 DevTools0错误. 工作树干净.","state":"passed"}
 {"ts":"2026-05-20T20:10:00+08:00","from":"claude","action":"deploy_request","detail":"3项真机修复: currentStepIdx直接查in_progress stage(根除阶段跳转) + onPhaseTap移除unlocked门控 + process WXML v2.1标记. 3文件待commit. DEPLOY_NOW已写.","state":"pending_hermes_9gate"}
 {"ts":"2026-05-21T06:30:00+08:00","from":"claude","action":"deploy_request","commit":"43992d3","detail":"phase2拆4子阶段+里程碑提醒链+BRIDGE_MAP对齐+测试修复，6文件+250-109，麒麟3/7/3，玄武0/3/4","state":"琅琊待决策"}
+{"ts":"2026-05-21T12:53:00+08:00","from":"hermes","action":"9gate_v4","detail":"V4项目38b2aa3全9道闸门. Gate1-3无新增. 麒麟P0×12(运营后台代码未开工+鉴权方案未定+PII泄露+索引缺失+cloudbaserc未注册+mchid明文). 玄武P0×8(路线图冲突+聚合链路无定义+3表无TTL+审计日志缺失). Gate6: V3基线云函数不变.V4运营后台代码完全未开工.","state":"passed"}
+{"ts":"2026-05-21T23:00:00+08:00","from":"claude","action":"gate_report_update","commit":"38b2aa3","detail":"V4 feature/dual-gate 9-Gate报告更新：范围限定为双闸门特性，运营后台标记为独立工作流。麒麟0/0/0 APPROVED，玄武0/0/0 APPROVED。Jest 15/15 380/384。","state":"feature_branch_ready"}

@@ -2,7 +2,8 @@
   "usingComponents": {
     "progress-bar": "/components/progress-bar/progress-bar",
     "floating-ai": "/components/floating-ai/floating-ai",
-    "ux-error-boundary": "/components/ux-error-boundary/ux-error-boundary"
+    "ux-error-boundary": "/components/ux-error-boundary/ux-error-boundary",
+    "gate-sheet": "/components/gate-sheet/gate-sheet"
   },
   "navigationBarTitleText": "流程控"
 }

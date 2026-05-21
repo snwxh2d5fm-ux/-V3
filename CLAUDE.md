@@ -1,22 +1,49 @@
-# 住港伴 V3 — 香港入境计划助手
+# 住港伴 V4 — 运营后台与BI看板版本
 
-微信小程序，帮助用户管理香港入境计划全流程：证件、提醒、攻略、AI对话。
+V3代码基线（已发正式版，代码冻结），V4基于V3副本扩展运营后台和数据监控BI看板。
 
 ## 技术栈
-- 微信小程序 (原生)
-- CloudBase (云函数/数据库/存储)
-- DeepSeek AI (对话/评估)
+- 微信小程序 (原生) — V3基线，不新增页面
+- React 18 + TypeScript + Vite + shadcn/ui — **运营后台Web App（新增）**
+- CloudBase (云函数/数据库/存储) — 复用V3基础设施
+- DeepSeek AI (对话/评估) — 不变
+- Recharts — BI图表
 - Jest 测试
 
-## 目录结构
-- `pages/` — 主包页面
-- `subpkg-guide/`, `subpkg-docs/`, `subpkg-process/`, `subpkg-chat/`, `subpkg-low/` — 子包
-- `cloudfunctions/` — 云函数
+## 目录结构（V4新增/变更）
+- `pages/`, `subpkg-*/` — V3基线，代码冻结，V4不再修改
+- `cloudfunctions/` — V3云函数保留，新增 `admin-stats/admin-users/admin-revenue/admin-ai-quality/admin-content/admin-compliance`
+- `admin-dashboard/` — **运营后台Web App（新增）**，React前端项目
 - `data/` — 数据文件 (常量、攻略卡片、方案库)
 - `utils/` — 工具函数
 - `components/` — 组件
 - `scripts/verify.sh` — 总验证脚本
 - `tests/` — 测试
+- `10_工程文档/` — 方案设计文档
+
+## V4核心目标
+
+1. 建立住港伴专属运营后台（Web独立应用，不放入小程序代码包）
+2. 建立数据监控BI看板（按身份路径维度分析，不做通用DAU/PV）
+3. 增强数据采集埋点（住港伴生命周期事件体系）
+4. 复用V3 CloudBase基础设施，新增聚合统计云函数
+
+## 设计文件（必读）
+
+开发前必须阅读 `10_工程文档/住港伴V4_运营后台与BI看板_方案设计_v1.0.md`，该文档定义了：
+- 运营后台八大模块（用户总览/路径分析/财务/内容/AI质量/合规/客服/系统健康）
+- BI看板核心指标体系（一级6项 + 二级4维度 + 复合指标）
+- 数据采集增强方案（新增17种住港伴专属事件）
+- 云函数扩展计划（新增6个admin-*函数）
+- 三阶段实施路线图
+
+## 关键设计原则
+
+- **以身份路径为第一分析维度**：所有数据按签证类型分层（优才/高才/专才/IANG/受养人/续签/永居）
+- **生命周期漏斗替代通用漏斗**：评估→选路径→开流程→加证件→设提醒→续签准备→永居冲刺
+- **合规红线内置到看板**：敏感词检测/K2泄露/内容审核必须在首页
+- **运营后台与小程序解耦**：独立Web应用通过CloudBase SDK读写同一数据库
+- **不照搬祖脉通用逻辑**：住港伴是身份规划工具，不是通用App
 
 ## 编码规范（必读）
 
@@ -37,3 +64,4 @@
 - `bash scripts/verify.sh` — 总闸门（A类静态检查 + B类交付门槛 + C类工程一致性）
 - `npx jest tests/smoke/ --verbose` — 冒烟测试
 - `npx jest --forceExit` — 全量 Jest 测试
+- `cd admin-dashboard && npm run dev` — 运营后台本地开发服务器

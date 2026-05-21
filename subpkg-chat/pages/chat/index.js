@@ -363,12 +363,14 @@ Page({
 
   // ========== 流式渲染 ==========
   appendStreamToken: function(token) {
+    // S-02 fix: 每个token独立做HTML实体编码，防止流式过程中XSS注入
+    var safeToken = this._escapeHTML(token);
     var msgs = this.data.messages;
     var last = msgs[msgs.length - 1];
     if (last && last.role === 'assistant' && last.isStreaming) {
-      last.content += token;
+      last.content += safeToken;
     } else {
-      msgs.push({ role: 'assistant', content: token, timestamp: Date.now(), isStreaming: true });
+      msgs.push({ role: 'assistant', content: safeToken, timestamp: Date.now(), isStreaming: true });
     }
     this.setData({ messages: msgs });
     this.scrollToBottom();
@@ -378,7 +380,7 @@ Page({
     var msgs = this.data.messages;
     var last = msgs[msgs.length - 1];
     if (last && last.role === 'assistant') {
-      // S-02 fix: 流式完成后对完整内容做 HTML 实体编码，防止 XSS
+      // S-02 fix: 流式完成后用完整escape+markdown格式化替换累加内容，确保一致性
       last.content = this.formatReplyContent(content);
       last.isStreaming = false;
       last.sources = sources;
