@@ -1,15 +1,23 @@
 /**
- * 住港伴 v4.1 — 100+条提醒规则库 (Reminder Rule Library)
+ * 住港伴 v4.2 — 130+条提醒规则库 (Reminder Rule Library)
  * ============================================================
  * 覆盖12条身份路径 × 全生命周期10阶段
  * 每条规则：触发事件 + 提醒项(文案/偏移天数/提醒时间点)
- * 
+ *
  * 框架: rule_id → trigger(event+date_field) → reminders[]
  * 阶段: eval(评估) / prep(准备) / apply(申请) / wait(等待)
  *       / active(激活) / settle(抵港) / maintain(维持)
  *       / renewal(续签) / pr(永居) / ongoing(持续)
  *
- * 更新: 2026-05-11 — 从8条扩展至110条
+ * v4.2更新 (2026-05-22, 依据入境处官网immd.gov.hk):
+ *   - IANG修正: 1-2-2-3→2+3+3(首次24个月, 入境处官网原文)
+ *   - ASMTP修正: 2-3-3→3+3+2(2022.12.28起首次36个月)
+ *   - 优才续签周期确认: 3+3+2模式(入境处官网原文)
+ *   - 续签窗口统一: 所有路径到期前3个月内(2026年3月起)
+ *   - 新增路径专属续签时间窗口(五)，7条新规则
+ *   - 新增12节点标准续签倒计时链(通用)
+ *   - 新增递交后标准跟进链
+ * v4.1更新 (2026-05-11): 从8条扩展至110条
  */
 module.exports = [
   // ═══════════════════════════════════════════════════════════
@@ -246,16 +254,16 @@ module.exports = [
     rule_id: 'R_STUDENT_IANG_APPLY',
     trigger: { event: 'iang_application', date_field: 'applyDate' },
     reminders: [
-      { label: 'IANG申请启动(毕业后6个月内免雇主)', offset_days: 0, alerts: [180, 90, 60, 30, 14] },
+      { label: 'IANG申请启动(毕业后6个月内免雇主，获批24个月)', offset_days: 0, alerts: [180, 90, 60, 30, 14] },
       { label: '准备IANG材料：ID990A+学位证+成绩单', offset_days: 0, alerts: [30, 14, 7] },
-      { label: '递交IANG申请(审批2-4周)', offset_days: 0, alerts: [14, 7, 3] }
+      { label: '递交IANG申请(应届约2周，非应届约4周)', offset_days: 0, alerts: [14, 7, 3] }
     ]
   },
   {
     rule_id: 'R_STUDENT_IANG_ACTIVATE',
     trigger: { event: 'iang_approved', date_field: 'approvalDate' },
     reminders: [
-      { label: 'IANG获批 — 领取签证标签', offset_days: 0, alerts: [14, 7, 3] },
+      { label: 'IANG获批(24个月) — 下载e-Visa', offset_days: 0, alerts: [14, 7, 3] },
       { label: 'IANG就业/创业启动', offset_days: 0, alerts: [90, 60, 30] },
       { label: '学生签证→IANG身份转换确认', offset_days: 0, alerts: [30, 14, 7] }
     ]
@@ -449,7 +457,7 @@ module.exports = [
     rule_id: 'R_ASMTP_RENEWAL',
     trigger: { event: 'asmpt_renewal_prep', date_field: 'renewalDate' },
     reminders: [
-      { label: '专才续签(需雇主继续sponsor)', offset_days: 0, alerts: [90, 60, 30] },
+      { label: '专才续签(3+3+2模式, 需雇主继续sponsor)', offset_days: 0, alerts: [90, 60, 30] },
       { label: '雇主准备ID990B担保表格', offset_days: 0, alerts: [60, 30, 14] },
       { label: '专才续签递交', offset_days: 0, alerts: [14, 7, 3] }
     ]
@@ -615,7 +623,159 @@ module.exports = [
   },
 
   // ═══════════════════════════════════════════════════════════
-  // 五、永居冲刺通用规则 (PR Sprint)
+  // 五、路径专属续签时间窗口 (Path-Specific Renewal Windows)
+  // ═══════════════════════════════════════════════════════════
+  // 不同路径有不同的提交窗口、审批周期和周期模式
+
+  // --- IANG续签: 2+3+3模式，审批2-3周(入境处官网原文:首次24个月, 续签3-3年) ---
+  {
+    rule_id: 'R_RENEWAL_IANG_TIMING',
+    trigger: { event: 'iang_renewal_timing', date_field: 'visaExpiry' },
+    reminders: [
+      { label: 'IANG续签准备启动(2+3+3模式: 首次2年→续签3年→续签3年)', offset_days: -180, alerts: [180, 120, 90] },
+      { label: 'IANG续签材料整理(就业证明/雇佣合约/粮单)', offset_days: -90, alerts: [90, 60, 30] },
+      { label: 'IANG续签递交窗口(到期前3个月内，入境处建议最少提前6周，审批2-3周)', offset_days: -90, alerts: [90, 60, 42, 28, 14, 7] }
+    ]
+  },
+  {
+    rule_id: 'R_RENEWAL_IANG_POST_SUBMIT',
+    trigger: { event: 'iang_renewal_submitted', date_field: 'submitDate' },
+    reminders: [
+      { label: 'IANG续签审批中(预计2-3周)', offset_days: 0, alerts: [14, 21] },
+      { label: 'IANG续签跟进(如3周未获批，致电入境处)', offset_days: 0, alerts: [21, 28] }
+    ]
+  },
+
+  // --- 专才/GEP续签: 2-3-3模式，审批4-6周，需雇主担保 ---
+  {
+    rule_id: 'R_RENEWAL_ASMTP_TIMING',
+    trigger: { event: 'asmpt_renewal_timing', date_field: 'visaExpiry' },
+    reminders: [
+      { label: '专才续签准备启动(3+3+2模式: 首次3年→3年→2年, 2022.12.28起)', offset_days: -180, alerts: [180, 120, 90] },
+      { label: '专才续签—联系雇主准备ID990B担保表格(需内部审批)', offset_days: -90, alerts: [90, 60, 45] },
+      { label: '专才续签递交窗口(到期前3个月内，入境处建议提前6周，审批2-3周)', offset_days: -90, alerts: [90, 60, 42, 28, 14, 7] },
+      { label: '专才续签—确认雇主担保已获批', offset_days: -30, alerts: [30, 14, 7] }
+    ]
+  },
+  {
+    rule_id: 'R_RENEWAL_ASMTP_POST_SUBMIT',
+    trigger: { event: 'asmpt_renewal_submitted', date_field: 'submitDate' },
+    reminders: [
+      { label: '专才续签审批中(预计4-6周)', offset_days: 0, alerts: [14, 28, 35, 42] },
+      { label: '专才续签跟进(如6周未获批)', offset_days: 0, alerts: [42, 49] }
+    ]
+  },
+
+  // --- 优才续签: 2-3-3模式，审批4-8周 ---
+  {
+    rule_id: 'R_RENEWAL_QMAS_TIMING',
+    trigger: { event: 'qmas_renewal_timing', date_field: 'visaExpiry' },
+    reminders: [
+      { label: '优才续签准备启动(3+3+2模式: 首次3年→3年→2年)', offset_days: -180, alerts: [180, 120, 90] },
+      { label: '优才续签—在港通常居住证明整理(租约/水电煤/银行账单)', offset_days: -150, alerts: [150, 120, 90] },
+      { label: '优才续签—季度在港天数统计(建议≥180天/年)', offset_days: -120, alerts: [120, 90, 60] },
+      { label: '优才续签递交窗口(到期前4周，审批4-8周)', offset_days: -28, alerts: [28, 21, 14, 7, 3] }
+    ]
+  },
+  {
+    rule_id: 'R_RENEWAL_QMAS_POST_SUBMIT',
+    trigger: { event: 'qmas_renewal_submitted', date_field: 'submitDate' },
+    reminders: [
+      { label: '优才续签审批中(预计4-8周)', offset_days: 0, alerts: [14, 28, 42, 56] },
+      { label: '优才续签跟进(如8周未获批)', offset_days: 0, alerts: [56, 63] }
+    ]
+  },
+
+  // --- 高才A续签: 3-3-2模式，审批4-8周 ---
+  {
+    rule_id: 'R_RENEWAL_TTPSA_TIMING',
+    trigger: { event: 'ttpsa_renewal_timing', date_field: 'visaExpiry' },
+    reminders: [
+      { label: '高才A续签准备启动(3-3-2模式: 首次3年→3年→2年)', offset_days: -180, alerts: [180, 120, 90] },
+      { label: '高才A续签—收入水平年度检查(锚定250万港币)', offset_days: -150, alerts: [150, 120, 90] },
+      { label: '高才A续签—就业/经济活动证据整理', offset_days: -120, alerts: [120, 90, 60] },
+      { label: '高才A续签递交窗口(建议到期前3个月启动，审批4-8周)', offset_days: -90, alerts: [90, 60, 30, 14, 7] }
+    ]
+  },
+  {
+    rule_id: 'R_RENEWAL_TTPSA_POST_SUBMIT',
+    trigger: { event: 'ttpsa_renewal_submitted', date_field: 'submitDate' },
+    reminders: [
+      { label: '高才A续签审批中(预计4-8周)', offset_days: 0, alerts: [14, 28, 42, 56] },
+      { label: '高才A续签跟进(如8周未获批)', offset_days: 0, alerts: [56, 63] }
+    ]
+  },
+
+  // --- 高才B续签: 2-3-3模式，审批4-8周 ---
+  {
+    rule_id: 'R_RENEWAL_TTPSB_TIMING',
+    trigger: { event: 'ttpsb_renewal_timing', date_field: 'visaExpiry' },
+    reminders: [
+      { label: '高才B续签准备启动(2-3-3模式: 首次2年→3年→3年)', offset_days: -180, alerts: [180, 120, 90] },
+      { label: '高才B续签—就业状态季度确认+合资格雇主确认', offset_days: -120, alerts: [120, 90, 60] },
+      { label: '高才B续签递交窗口(建议到期前3个月启动，审批4-8周)', offset_days: -90, alerts: [90, 60, 30, 14, 7] }
+    ]
+  },
+
+  // --- 高才C续签: 2-3-3模式，审批4-8周 ---
+  {
+    rule_id: 'R_RENEWAL_TTPSC_TIMING',
+    trigger: { event: 'ttpc_renewal_timing', date_field: 'visaExpiry' },
+    reminders: [
+      { label: '高才C续签准备启动(2-3-3模式: 首次2年→3年→3年)', offset_days: -180, alerts: [180, 120, 90] },
+      { label: '高才C续签—就业状态确认+合资格雇主确认', offset_days: -120, alerts: [120, 90, 60] },
+      { label: '高才C续签递交窗口(建议到期前3个月启动，审批4-8周)', offset_days: -90, alerts: [90, 60, 30, 14, 7] }
+    ]
+  },
+
+  // --- 受养人续签: 跟随主申 ---
+  {
+    rule_id: 'R_RENEWAL_DEPENDENT_TIMING',
+    trigger: { event: 'dependent_renewal_timing', date_field: 'visaExpiry' },
+    reminders: [
+      { label: '受养人续签—跟随主申人同时递交', offset_days: -90, alerts: [90, 60, 30] },
+      { label: '受养人续签材料: 关系证明(结婚证/出生证)+主申身份文件', offset_days: -30, alerts: [30, 14, 7] },
+      { label: '受养人续签递交(与主申同步)', offset_days: -28, alerts: [28, 14, 7, 3] }
+    ]
+  },
+
+  // --- 标准12节点通用续签倒计时链 ---
+  {
+    rule_id: 'R_RENEWAL_12NODE_CHAIN',
+    trigger: { event: 'renewal_countdown', date_field: 'visaExpiry' },
+    reminders: [
+      { label: 'N1-T180: 续签准备启动 — 材料清单整理', offset_days: -180, alerts: [180, 150] },
+      { label: 'N2-T150: 居住证明整理 — 租约/水电煤/银行账单', offset_days: -150, alerts: [150, 120] },
+      { label: 'N3-T120: 工作/收入证明整理 — 雇佣合约/粮单/银行流水', offset_days: -120, alerts: [120, 90] },
+      { label: 'N4-T90: 税务+MPF记录整理 — 报税表/MPF年度权益报表', offset_days: -90, alerts: [90, 60] },
+      { label: 'N5-T60: 雇主证明信(专才)/就业状态确认(高才)', offset_days: -60, alerts: [60, 45] },
+      { label: 'N6-T45: 材料完整性自查 — 逐项核对续签清单', offset_days: -45, alerts: [45, 30] },
+      { label: 'N7-T30: ⚠️ 递交续签申请', offset_days: -30, alerts: [30, 21, 14, 7] },
+      { label: 'N8-T21: 确认申请已受理 — 查收入境处确认通知', offset_days: -21, alerts: [21, 14] },
+      { label: 'N9-T14: 补交材料响应 — 如收到补件通知14天内回复', offset_days: -14, alerts: [14, 7, 3] },
+      { label: 'N10-T7: 🔴 紧急 — 如仍未递交立即行动', offset_days: -7, alerts: [7, 3, 1] },
+      { label: 'N11-T3: 🔴 最后通牒 — 逾期后果严重', offset_days: -3, alerts: [3, 2, 1] },
+      { label: 'N12-T1: 🔴 到期前最后一天 — 可申请紧急延期', offset_days: -1, alerts: [1] }
+    ]
+  },
+
+  // --- 续签递交后标准跟进链 ---
+  {
+    rule_id: 'R_RENEWAL_POST_SUBMIT_CHAIN',
+    trigger: { event: 'renewal_submitted', date_field: 'submitDate' },
+    reminders: [
+      { label: 'P1-D+7: 确认申请已受理', offset_days: 7, alerts: [7] },
+      { label: 'P2-D+14: 审批进度查询(如未收到通知)', offset_days: 14, alerts: [14] },
+      { label: 'P3-D+21: 跟进审批状态', offset_days: 21, alerts: [21] },
+      { label: 'P4-D+28: 如无回复可致电入境处查询', offset_days: 28, alerts: [28] },
+      { label: 'P5-D+35: 续签跟进(优才/高才线)', offset_days: 35, alerts: [35] },
+      { label: 'P6-D+42: 续签跟进(优才/高才线)', offset_days: 42, alerts: [42] },
+      { label: 'P7-D+56: 续签跟进(如仍未获批)', offset_days: 56, alerts: [56] }
+    ]
+  },
+
+  // ═══════════════════════════════════════════════════════════
+  // 六、永居冲刺通用规则 (PR Sprint)
   // ═══════════════════════════════════════════════════════════
 
   {
@@ -649,7 +809,7 @@ module.exports = [
   },
 
   // ═══════════════════════════════════════════════════════════
-  // 六、年度/周期性提醒 (Annual/Cyclical)
+  // 八、年度/周期性提醒 (Annual/Cyclical)
   // ═══════════════════════════════════════════════════════════
 
   {
@@ -679,7 +839,7 @@ module.exports = [
   },
 
   // ═══════════════════════════════════════════════════════════
-  // 七、获批激活流程 (Approval → Activation chain)
+  // 九、获批激活流程 (Approval → Activation chain)
   // ═══════════════════════════════════════════════════════════
 
   {
@@ -697,7 +857,7 @@ module.exports = [
   },
 
   // ═══════════════════════════════════════════════════════════
-  // 八、签证到期紧急规则 (Urgent)
+  // 十、签证到期紧急规则 (Urgent)
   // ═══════════════════════════════════════════════════════════
 
   {
@@ -717,7 +877,7 @@ module.exports = [
   },
 
   // ═══════════════════════════════════════════════════════════
-  // 九、抵港生活与定居 (Settlement & Living)
+  // 十一、抵港生活与定居 (Settlement & Living)
   // ═══════════════════════════════════════════════════════════
 
   {
@@ -767,7 +927,7 @@ module.exports = [
   },
 
   // ═══════════════════════════════════════════════════════════
-  // 十、自雇/创业提醒 (Self-Employed / Business)
+  // 十二、自雇/创业提醒 (Self-Employed / Business)
   // ═══════════════════════════════════════════════════════════
 
   {
@@ -813,7 +973,7 @@ module.exports = [
   },
 
   // ═══════════════════════════════════════════════════════════
-  // 十一、文件公证与翻译 (Document Certification)
+  // 十三、文件公证与翻译 (Document Certification)
   // ═══════════════════════════════════════════════════════════
 
   {
@@ -834,7 +994,7 @@ module.exports = [
   },
 
   // ═══════════════════════════════════════════════════════════
-  // 十二、家庭成员专项 (Family Members)
+  // 十四、家庭成员专项 (Family Members)
   // ═══════════════════════════════════════════════════════════
 
   {
@@ -869,7 +1029,7 @@ module.exports = [
   },
 
   // ═══════════════════════════════════════════════════════════
-  // 十三、在港维持 (Ongoing Maintenance · Year 1-6)
+  // 十五、在港维持 (Ongoing Maintenance · Year 1-6)
   // ═══════════════════════════════════════════════════════════
 
   {
@@ -905,7 +1065,7 @@ module.exports = [
   },
 
   // ═══════════════════════════════════════════════════════════
-  // 十四、申请递交前最后核对 (Pre-Submission Checklist)
+  // 十六、申请递交前最后核对 (Pre-Submission Checklist)
   // ═══════════════════════════════════════════════════════════
 
   {
@@ -927,7 +1087,7 @@ module.exports = [
   },
 
   // ═══════════════════════════════════════════════════════════
-  // 十五、疫情/特殊情况 (Special Circumstances)
+  // 十七、疫情/特殊情况 (Special Circumstances)
   // ═══════════════════════════════════════════════════════════
 
   {
@@ -946,7 +1106,7 @@ module.exports = [
   },
 
   // ═══════════════════════════════════════════════════════════
-  // 十六、学生专项补充 (Student Supplementary)
+  // 十八、学生专项补充 (Student Supplementary)
   // ═══════════════════════════════════════════════════════════
 
   {
