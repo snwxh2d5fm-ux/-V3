@@ -5,6 +5,8 @@
 var app = getApp();
 var api = require('../../../utils/api');
 var constants = require('../../../data/constants');
+// [V4.1-PHASE1] Task 4: 事件埋点工具
+var eventTracker = require('../../../utils/event-tracker');
 
 // K2安全横幅定义（单一真相源）
 var SAFETY_BANNERS = {
@@ -40,23 +42,87 @@ Page({
 
     // RAG增强
     sources: [],
-    showSources: false
+    showSources: false,
+
+    // [V4.1-PHASE1] Task 2: 流式字数统计
+    streamingWordCount: 0,
+    // [V4.1-PHASE1] Task 3+4: 会话追踪
+    aiSessionId: '',
+    sessionStartTime: 0,
+    turnNumber: 0,
+    // [V4.1-PHASE2] Task 1: 动态 Quick Reply
+    // [V4.1-PHASE2] Task 2: 游戏化进度条
+    sessionProgress: 0,
+    milestoneReached: false
   },
 
   onLoad: function() {
+    // [V4.1-PHASE1] Task 4: 生成会话ID并记录开始时间
+    var sessionId = 'ai_' + Date.now() + '_' + Math.random().toString(36).slice(2, 8);
+    this.setData({
+      aiSessionId: sessionId,
+      sessionStartTime: Date.now()
+    });
+
     var saved = wx.getStorageSync(constants.STORAGE_KEYS.AI_CONVERSATION);
     if (saved && saved.length > 0) {
       this.setData({ messages: saved });
+      // [V4.1-PHASE1] Task 3: 页面加载后恢复反馈按钮状态
+      this._restoreFeedbackState();
     } else {
       this.showWelcome();
     }
+
+    // [V4.1-PHASE1] Task 4: 事件埋点 — ai_chat_open
+    eventTracker.track('open', {
+      source: this._getEntrySource(),
+      session_id: sessionId
+    });
   },
 
   onShow: function() {
     this.scrollToBottom();
   },
 
+  // [V4.1-PHASE1] Task 4: 页面卸载时触发关闭埋点
+  onUnload: function() {
+    var startTime = this.data.sessionStartTime;
+    var durationSeconds = startTime ? Math.round((Date.now() - startTime) / 1000) : 0;
+    eventTracker.track('close', {
+      duration_seconds: durationSeconds,
+      last_turn_number: this.data.turnNumber,
+      session_id: this.data.aiSessionId
+    });
+  },
+
+  // [V4.1-PHASE1] Task 4: 获取页面入口来源
+  _getEntrySource: function() {
+    try {
+      var pages = getCurrentPages();
+      if (pages && pages.length > 1) {
+        var prevPage = pages[pages.length - 2];
+        if (prevPage) {
+          var route = prevPage.route || '';
+          if (route.indexOf('tabBar') > -1 || route.indexOf('index/index') > -1) return 'bottomNav';
+          if (route.indexOf('quick') > -1 || route.indexOf('entry') > -1) return 'quickEntry';
+          return route;
+        }
+      }
+    } catch(e) {}
+    return 'unknown';
+  },
+
   showWelcome: function() {
+    // [V4.1-PHASE1] Task 5: 画像感知欢迎语 — 优先使用本地缓存的 userProfile
+    var profileWelcome = this._getProfileWelcome();
+    if (profileWelcome) {
+      this.setData({
+        messages: [{ role: 'assistant', content: profileWelcome, timestamp: Date.now() }]
+      });
+      return;
+    }
+
+    // 无画像 — 使用原有通用欢迎语
     var hasStatus = app.globalData.userStatus && app.globalData.userStatus !== 'unapplied';
     var hasPath = !!app.globalData.selectedPath;
 
@@ -74,6 +140,36 @@ Page({
     this.setData({
       messages: [{ role: 'assistant', content: welcome, timestamp: Date.now() }]
     });
+  },
+
+  // [V4.1-PHASE1] Task 5: 从本地缓存读取用户画像摘要，生成个性化欢迎语
+  _getProfileWelcome: function() {
+    try {
+      var profileStr = wx.getStorageSync(constants.STORAGE_KEYS.USER_PROFILE);
+      if (!profileStr) return null;
+      var profile = typeof profileStr === 'string' ? JSON.parse(profileStr) : profileStr;
+      if (!profile || !profile.selectedPath) return null;
+
+      var pathName = constants.PATH_NAMES[profile.selectedPath] || profile.selectedPath;
+
+      // 尝试获取阶段名称
+      var stageLabel = '';
+      if (profile.persona !== undefined && profile.persona !== null) {
+        var stageMap = {
+          0: '获取身份',
+          1: '维护身份',
+          2: '申请永居'
+        };
+        stageLabel = stageMap[profile.persona] || '';
+      }
+
+      if (stageLabel) {
+        return '你好！你正在走' + pathName + '，当前在「' + stageLabel + '」阶段。有什么可以帮你的？';
+      }
+      return '你好！你正在走' + pathName + '，有什么可以帮你的？';
+    } catch(e) {
+      return null;
+    }
   },
 
   // ========== 输入处理 ==========
@@ -120,11 +216,18 @@ Page({
 
       var history = this.buildHistory(messages);
       var clientBanners = this.runSafetyCheck(text);
-      var useStream = typeof wx.request !== 'undefined';
+      // [V4.1-PHASE1] Task 1: 修复流式检测 Bug — 使用 wx.canIUse 精确检测
+      var useStream = api.isStreamSupported();
+      // [V4.1-PHASE1] Task 1: 检测失败时降级为非流式
+      if (!useStream) {
+        console.warn('[Chat] 当前微信版本不支持流式响应，降级为非流式模式');
+      }
 
       // 流式渲染回调
       var that = this;
       if (useStream) {
+        // [V4.1-PHASE1] Task 2: 重置流式字数统计
+        this.setData({ streamingWordCount: 0 });
         var streamResult = await api.sendChatMessageStream(
           app.globalData.aiSessionId, text, this.data.mode, context, history,
           {
@@ -132,12 +235,16 @@ Page({
               that.appendStreamToken(token);
             },
             onDone: function(content, meta) {
-              // 流式完成时已在stream handler中处理
+              // [V4.1-PHASE1] Task 3: 流式完成时由主流程处理，此处仅为占位
             }
           }
         );
         if (streamResult && streamResult.code === 200) {
-          this.finishStream(streamResult.data.content, streamResult.data.sources || []);
+          // [V4.1-PHASE2 FIX] 传递 quick_replies 到 finishStream，修复流式路径快捷回复丢失
+          this.finishStream(streamResult.data.content, streamResult.data.sources || [], {
+            trace_id: streamResult.data.messageId,
+            quick_replies: streamResult.data.quickReplies || []
+          });
           this.saveHistory(that.data.messages);
           return;
         }
@@ -160,8 +267,13 @@ Page({
       var banners = clientBanners.slice();
 
       if (res && res.code === 200 && res.data) {
-        replyContent = this.formatReplyContent(res.data.content || replyContent);
-        quickReplies = res.data.quickReplies || [];
+        // [V4.1-PHASE2 FIX] 防御性剥离 quick_replies 代码块
+        var cleanContent = this._stripQuickRepliesFromContent(res.data.content);
+        replyContent = this.formatReplyContent(cleanContent || replyContent);
+        // [V4.1-PHASE2] Task 1: 解析动态quick_replies
+        quickReplies = this._extractQuickReplies(res.data.content, res.data.quick_replies || res.data.quickReplies || []);
+        // [V4.1-PHASE2] Task 3: 读取置信度等级
+        var confidenceLevel = res.data.confidence_level || null;
         sources = res.data.sources || [];
 
         if (res.data.assessmentResult) {
@@ -184,11 +296,15 @@ Page({
         }
       }
 
+      var messageId = res && res.data ? res.data.messageId : null;
       var assistantMsg = {
         role: 'assistant',
         content: replyContent,
         quickReplies: quickReplies,
-        timestamp: Date.now()
+        timestamp: Date.now(),
+        msgId: messageId,  // [V4.1-PHASE1] Task 3: 消息ID用于反馈状态持久化
+        // [V4.1-PHASE2] Task 3: 置信度等级
+        confidenceLevel: typeof confidenceLevel !== 'undefined' ? confidenceLevel : null
       };
 
       var newMessages = this.data.messages.concat([assistantMsg]);
@@ -204,7 +320,19 @@ Page({
       });
 
       this.saveHistory(newMessages);
+      // [V4.1-PHASE2] Task 2: 进度+1 + 里程碑检测
+      this._checkMilestone();
       this.scrollToBottom();
+
+      // [V4.1-PHASE1] Task 4: 事件埋点 — ai_chat_send
+      var turnNum = this.data.turnNumber + 1;
+      this.setData({ turnNumber: turnNum });
+      eventTracker.track('send', {
+        input_mode: 'keyboard',
+        message_length: text.length,
+        session_id: this.data.aiSessionId,
+        turn_number: turnNum
+      });
     } catch (err) {
       console.error('[Chat] 发送失败:', err);
       var failCount = (this._failCount || 0) + 1;
@@ -344,6 +472,76 @@ Page({
     });
   },
 
+  // [V4.1-PHASE1] Task 3: 页面加载后从本地缓存恢复反馈按钮状态
+  _restoreFeedbackState: function() {
+    var savedFeedback = wx.getStorageSync('__ai_feedback__') || {};
+    var msgs = this.data.messages;
+    var changed = false;
+    for (var i = 0; i < msgs.length; i++) {
+      if (msgs[i].role === 'assistant' && msgs[i].msgId && savedFeedback[msgs[i].msgId]) {
+        var fb = savedFeedback[msgs[i].msgId];
+        msgs[i].feedbackGiven = fb.rating === 1 ? 'like' : 'dislike';
+        changed = true;
+      }
+    }
+    if (changed) {
+      this.setData({ messages: msgs });
+    }
+  },
+
+
+  // [V4.1-PHASE2] Task 1: 从AI回答中提取动态quick_replies
+  _extractQuickReplies: function(responseContent, responseData) {
+    if (responseData && Array.isArray(responseData) && responseData.length > 0) {
+      try { return responseData.slice(0, 3); } catch(e) { return []; }
+    }
+    if (!responseContent) return [];
+    try {
+      var jsonMatch = responseContent.match(/\[\s*\{[\s\S]*?"id"\s*:\s*"qr_[\s\S]*?\}\s*\]/);
+      if (jsonMatch) {
+        var parsed = JSON.parse(jsonMatch[0]);
+        if (Array.isArray(parsed) && parsed.length > 0) {
+          return parsed.slice(0, 3);
+        }
+      }
+    } catch(e) {
+      console.warn('[PHASE2] quick_replies JSON\u89e3\u6790\u5931\u8d25');
+    }
+    return [];
+  },
+
+  // [V4.1-PHASE2 FIX] 防御性剥离 content 中的 ```quick_replies 代码块
+  // 防止云函数未剥离时前端暴露原始代码
+  _stripQuickRepliesFromContent: function(content) {
+    if (!content || typeof content !== 'string') return content || '';
+    return content.replace(/```quick_replies\s*\n[\s\S]*?\n\s*```/g, '')
+      .replace(/\n{3,}/g, '\n\n')
+      .trim();
+  },
+
+  // [V4.1-PHASE2] Task 2: 进度检测 + 里程碑
+  _checkMilestone: function() {
+    var progress = this.data.sessionProgress + 1;
+    this.setData({ sessionProgress: progress });
+    if (progress === 5) {
+      wx.showToast({ title: '\u5df2\u63a2\u7d22 5 \u4e2a\u95ee\u9898!', icon: 'none' });
+      if (typeof eventTracker !== "undefined" && eventTracker.track) {
+        eventTracker.track('milestone', { milestone_type: '5', session_id: this.data.aiSessionId, turn_number: progress });
+      }
+    } else if (progress === 10) {
+      var that = this;
+      wx.showModal({
+        title: '\U0001f389 \u89e3\u9501\u9690\u85cf\u653b\u7565',
+        content: '\u4f60\u5df2\u5b8c\u6210 10 \u8f6e\u5bf9\u8bdd!\u8bd5\u8bd5\u66f4\u6df1\u5165\u7684\u95ee\u9898\u5427~',
+        showCancel: false,
+        success: function() { that.setData({ milestoneReached: true }); }
+      });
+      if (typeof eventTracker !== "undefined" && eventTracker.track) {
+        eventTracker.track('milestone', { milestone_type: '10', session_id: this.data.aiSessionId, turn_number: progress });
+      }
+    }
+  },
+
   noop: function() {},
 
   // ========== K2安全护栏 ==========
@@ -372,26 +570,43 @@ Page({
     } else {
       msgs.push({ role: 'assistant', content: safeToken, timestamp: Date.now(), isStreaming: true });
     }
-    this.setData({ messages: msgs });
+    this.setData({
+      messages: msgs,
+      // [V4.1-PHASE1] Task 2: 更新流式字数统计（用于显示"已生成XX字"）
+      streamingWordCount: (msgs[msgs.length - 1] && msgs[msgs.length - 1].content || '').length
+    });
     this.scrollToBottom();
   },
 
-  finishStream: function(content, sources) {
+  finishStream: function(content, sources, meta) {
     var msgs = this.data.messages;
     var last = msgs[msgs.length - 1];
     if (last && last.role === 'assistant') {
       // S-02 fix: 流式完成后用完整escape+markdown格式化替换累加内容，确保一致性
-      last.content = this.formatReplyContent(content);
+      // [V4.1-PHASE2 FIX] 防御性剥离 quick_replies 代码块
+      var cleanStreamContent = this._stripQuickRepliesFromContent(content);
+      last.content = this.formatReplyContent(cleanStreamContent);
       last.isStreaming = false;
       last.sources = sources;
+      // [V4.1-PHASE1] Task 3: 保存消息ID用于反馈状态持久化
+      last.msgId = meta ? (meta.trace_id || meta.messageId || null) : null;
+      // [V4.1-PHASE2] Task 1: 从meta解析动态quick_replies
+      var qrData = meta ? (meta.quick_replies || meta.quickReplies || []) : [];
+      last.quickReplies = this._extractQuickReplies(content, qrData);
+      // [V4.1-PHASE2] Task 3: 从meta读取置信度等级
+      last.confidenceLevel = meta ? (meta.confidence_level || null) : null;
     }
     this.setData({
       messages: msgs,
       loading: false,
       sources: sources || [],
       showSources: (sources && sources.length > 0),
-      isStreaming: false
+      isStreaming: false,
+      // [V4.1-PHASE1] Task 2: 流式结束后清理字数统计
+      streamingWordCount: 0
     });
+    // [V4.1-PHASE2] Task 2: 进度+1 + 里程碑检测
+    this._checkMilestone();
   },
 
   // ========== 对话历史 ==========
@@ -403,21 +618,61 @@ Page({
   },
 
   // ========== 反馈 ==========
+  // [V4.1-PHASE1] Task 3: 反馈按钮状态持久化（本地缓存+云端同步+界面禁用）
   onFeedback: function(e) {
-    var type = e.currentTarget.dataset.type;
-    var msgId = this.data.currentMessageId;
+    var type = e.currentTarget.dataset.type;  // 'like' 或 'dislike'
+    var msgId = e.currentTarget.dataset.msgId;
 
+    var rating = type === 'like' ? 1 : 0;
+    var savedFeedback = wx.getStorageSync('__ai_feedback__') || {};
+
+    // 跳过已反馈的消息
+    if (msgId && savedFeedback[msgId]) {
+      wx.showToast({ title: '已反馈过', icon: 'none' });
+      return;
+    }
+
+    // 1. 本地缓存（刷新后保持状态）
+    if (msgId) {
+      savedFeedback[msgId] = { rating: rating, timestamp: Date.now() };
+      wx.setStorageSync('__ai_feedback__', savedFeedback);
+    }
+
+    // 2. 云端同步（调用ai-chat云函数feedback action）
     if (msgId) {
       wx.cloud.callFunction({
         name: 'ai-chat',
-        data: { action: 'feedback', messageId: msgId, feedback: type, timestamp: Date.now() }
-      }).catch(function(){});
+        data: {
+          action: 'feedback',
+          session_id: this.data.aiSessionId,
+          message_id: msgId,
+          rating: rating,
+          tags: [],
+          timestamp: Date.now()
+        }
+      }).catch(function(err) {
+        console.warn('[Chat] 反馈云端同步失败:', err);
+      });
     }
 
-    wx.showToast({
-      title: type === 'inaccurate' ? '已记录，我们会改进' : '感谢反馈',
-      icon: 'success'
+    // 3. 更新本地消息状态（按钮变灰不可再点）
+    var msgs = this.data.messages;
+    for (var i = msgs.length - 1; i >= 0; i--) {
+      if (msgs[i].role === 'assistant' && msgs[i].msgId === msgId) {
+        msgs[i].feedbackGiven = type;
+        break;
+      }
+    }
+    this.setData({ messages: msgs });
+
+    // 4. 轻提示
+    wx.showToast({ title: '反馈已收到', icon: 'success' });
+
+    // 5. 埋点
+    eventTracker.track('feedback', {
+      rating: rating,
+      message_id: msgId,
+      session_id: this.data.aiSessionId
     });
-    this.setData({ showFeedback: false });
   }
 });

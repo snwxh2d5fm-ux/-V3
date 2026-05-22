@@ -145,6 +145,17 @@ async function compareSolutionPaths(pathIds) {
   }
 }
 
+// ============ 流式能力检测 ============
+// [V4.1-PHASE1] Task 1: 修复流式能力检测 Bug — 代替 typeof wx.request !== 'undefined'
+// wx.canIUse('request.enableChunked') 精确检测微信基础库版本是否支持流式分块
+function isStreamSupported() {
+  try {
+    return !!(wx.canIUse && wx.canIUse('request.enableChunked'));
+  } catch(e) {
+    return false;
+  }
+}
+
 // ============ AI 对话服务 (v5: RAG增强+多轮记忆) ============
 
 /**
@@ -244,13 +255,14 @@ function sendChatMessageStream(sessionId, message, mode, context, history, callb
                 if (callbacks && callbacks.onDone) {
                   callbacks.onDone(fullContent, data);
                 }
+                // [V4.1-PHASE2 FIX] 传递云函数 done event 中的 quick_replies，修复代码块剥离后快捷回复丢失
                 resolve({
                   code: 200,
                   data: {
                     messageId: data.trace_id || ('msg_' + Date.now()),
-                    content: fullContent,
-                    sources: meta ? (meta.sources || []) : [],
-                    quickReplies: []
+                    content: data.content || fullContent,
+                    sources: data.sources || (meta ? (meta.sources || []) : []),
+                    quickReplies: data.quick_replies || []
                   }
                 });
               } else if (data.type === 'error') {
@@ -462,5 +474,7 @@ module.exports = {
   checkMembershipStatus, getUserOrders, getUserSubscriptions,
   fetchMembershipPlans, subscribeTemplateMessage,
   syncUserProfile,
-  matchSolutionPath, compareSolutionPaths
+  matchSolutionPath, compareSolutionPaths,
+  // [V4.1-PHASE1] Task 1: 流式能力检测
+  isStreamSupported
 };
