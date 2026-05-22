@@ -985,10 +985,16 @@ exports.main = async function (event, context) {
     // ====== Step 2: 构建消息 ======
     // [V4.1-PHASE2] ZGB-AI-202: 多轮对话记忆
     // REQ-010: 服务端记忆加载 + 合并去重 (专家评审 C3 双重校验)
+    // K5: 500ms超时不阻塞主流程
     var serverMemory = [];
     try {
       var ddb = getDb();
-      serverMemory = await memory.loadRecentMemory(sessionId, openid, ddb);
+      serverMemory = await Promise.race([
+        memory.loadRecentMemory(sessionId, openid, ddb),
+        new Promise(function(resolve) {
+          setTimeout(function() { resolve([]); }, 500);
+        })
+      ]);
       if (serverMemory.length > 0) {
         console.log('[ai-chat] Server memory loaded:', serverMemory.length, 'messages');
       }
@@ -1005,7 +1011,7 @@ exports.main = async function (event, context) {
     mergedHistory = memory.trimMemory(mergedHistory, 10);
 
     const historyMsgs = mergedHistory.length > 0
-      ? processHistory(mergedHistory)
+      ? (mergedHistory.length > 10 ? compressHistory(mergedHistory, 5) : processHistory(mergedHistory))
       : [];
     const contextMsg = buildContextMessage(sessionContext);
 
@@ -1082,7 +1088,9 @@ exports.main = async function (event, context) {
           userId: openid, openid: openid, turnNumber: turnNumber,
           ragHitCount: ragSources.length, streamEnabled: streamMode,
           // [V4.1-PHASE2] ZGB-AI-203: 置信度字段
-          confidenceLevel: confidenceLevel
+          confidenceLevel: confidenceLevel,
+          // [V4.2] AI对话反馈后台: RAG来源详情
+          sourceChunks: (ragResult.chunks || []).map(c => ({chunk_id: c._id, title: c.source_title || '', content_preview: (c.content || '').slice(0, 80)}))
         }).catch(() => {});
       }
     } else if (apiResult && apiResult.isStream) {
@@ -1117,7 +1125,8 @@ exports.main = async function (event, context) {
         userId: openid, openid: openid, turnNumber: turnNumber,
         ragHitCount: ragSources.length, streamEnabled: streamMode,
         // [V4.1-PHASE2] ZGB-AI-203: 置信度字段
-        confidenceLevel: confidenceLevel
+        confidenceLevel: confidenceLevel,
+        sourceChunks: []
       }).catch(() => {});
     }
 
@@ -1265,6 +1274,8 @@ async function handleStreamResponse(streamResponse, traceId, sessionId, mode, qu
     const finalSafety = scanForK2Leak(cleanContent);
     const allSafety = [...new Set([...safetyTriggered, ...finalSafety])];
 
+    // K3: 流式done event提取A-E置信度标签, 与流式/非流式响应结构一致
+    var streamConfidenceLabel = extractConfidenceLabel(cleanContent);
     // [V4.1-PHASE2] ZGB-AI-203: done event 中包含置信度信息
     res.write("data: " + JSON.stringify({
       type: 'done',
@@ -1273,7 +1284,8 @@ async function handleStreamResponse(streamResponse, traceId, sessionId, mode, qu
       safety_triggered: allSafety,
       trace_id: traceId,
       confidence_level: confidenceLevel || 'low',
-      hasConfidence: hasConfidence || false
+      hasConfidence: hasConfidence || false,
+      confidence_label: streamConfidenceLabel || null
     }) + "\n\n");
 
     if (!timedOut) {
@@ -1296,7 +1308,8 @@ async function handleStreamResponse(streamResponse, traceId, sessionId, mode, qu
         ragHitCount: sources ? sources.length : 0,
         streamEnabled: true,
         // [V4.1-PHASE2] ZGB-AI-203: 置信度字段
-        confidenceLevel: confidenceLevel || null
+        confidenceLevel: confidenceLevel || null,
+        sourceChunks: []
       }).catch(() => {});
     }
 
@@ -1361,7 +1374,8 @@ var CONFIDENCE_SEMANTIC = {
 function extractConfidenceLabel(content) {
   if (!content) return null;
   // 匹配 [置信度: X·标签] 格式
-  var regex = /\[置信度:\s*([A-E])·([^\]]+)\]/;
+  // K2: 兼容全角/半角冒号和分隔符
+  var regex = /\[置信度[：:]\s*([A-E])[·\-]\s*([^\]]+)\]/;
   var match = content.match(regex);
   if (!match) return null;
   var level = match[1];

@@ -129,12 +129,8 @@ function detectDomain(message, mode) {
   // 极短消息不做意图识别（"你好"/"谢谢"等）
   if (lower.length < 3) return null;
 
-  // 通用问候/功能询问不走领域过滤
-  for (var g = 0; g < GENERIC_WORDS.length; g++) {
-    if (lower.indexOf(GENERIC_WORDS[g]) !== -1) return null;
-  }
-
-  // 计算所有路径得分
+  // K4: 先计算领域得分, 仅当无任何领域匹配时才检查通用问候
+  // 避免"请介绍一下优才"被"介绍一下"拦截而跳过QMAS领域识别
   var scored = [];
   var domains = Object.keys(DOMAIN_KEYWORDS);
   for (var d = 0; d < domains.length; d++) {
@@ -142,6 +138,13 @@ function detectDomain(message, mode) {
     var score = scoreDomain(lower, DOMAIN_KEYWORDS[domain]);
     if (score > 0) {
       scored.push({ domain: domain, score: score });
+    }
+  }
+
+  // 无任何领域匹配时, 通用问候/功能询问不走领域过滤
+  if (scored.length === 0) {
+    for (var g = 0; g < GENERIC_WORDS.length; g++) {
+      if (lower.indexOf(GENERIC_WORDS[g]) !== -1) return null;
     }
   }
 
