@@ -2,6 +2,8 @@
  * @fileoverview 住港伴 — 本地存储引擎
  * 基于微信小程序本地文件系统和 Storage API
  * 所有用户原始材料存储在设备本地，不上传服务端
+ *
+ * V4.1: 增加存储版本管理 + Schema校验降级 + 备份容灾 (2026-05-22)
  */
 
 /** @const {string} 证件文件存储根目录 */
@@ -16,6 +18,203 @@ var PROCESS_KEY = '__processes__';
 var USER_KEY = '__user_data__';
 /** @const {string} 配置storage key */
 var CONFIG_KEY = '__config__';
+
+// ============================================================
+// 存储版本管理 (V4.1 — 2026-05-22)
+// ============================================================
+/** @const {number} 当前写入格式版本 */
+var STORAGE_VERSION = 2;
+/** @const {number} 最低可读格式版本（低于此版本 → 备份后重置） */
+var MIN_READABLE_VERSION = 1;
+/** @const {string} 存储版本号 key */
+var VERSION_KEY = '__storage_version__';
+/** @const {string} 存储健康状态 key */
+var HEALTH_KEY = '__storage_health__';
+/** @const {string} 坏数据备份键后缀 */
+var CORRUPTED_SUFFIX = '__corrupted__';
+/** @const {Array<string>} 流程线必需字段（缺一视为坏数据） */
+var PROCESS_REQUIRED_FIELDS = ['id', 'name', 'templateId', 'status', 'stages'];
+
+/**
+ * 获取存储版本号
+ * @returns {number}
+ */
+function getStorageVersion() {
+  return wx.getStorageSync(VERSION_KEY) || 1;
+}
+
+/**
+ * 写入存储版本号
+ * @param {number} v
+ */
+function setStorageVersion(v) {
+  wx.setStorageSync(VERSION_KEY, v);
+}
+
+/**
+ * 备份指定 storage key 到带时间戳的副本
+ * @param {string} key
+ */
+function _backupKey(key) {
+  try {
+    var val = wx.getStorageSync(key);
+    if (val !== undefined && val !== null && val !== '') {
+      wx.setStorageSync(key + CORRUPTED_SUFFIX + Date.now(), val);
+    }
+  } catch (e) { /* 静默 */ }
+}
+
+/**
+ * 上报存储健康状态
+ * @param {string} event
+ * @param {object} detail
+ */
+function _reportHealth(event, detail) {
+  try {
+    var health = wx.getStorageSync(HEALTH_KEY) || {};
+    health[event] = { at: new Date().toISOString(), detail: detail || {} };
+    wx.setStorageSync(HEALTH_KEY, health);
+  } catch (e) { /* 静默 */ }
+}
+
+// ============================================================
+// Schema 校验与数据修复
+// ============================================================
+
+/**
+ * 校验单条流程线结构完整性
+ * @param {*} line
+ * @returns {{ valid: boolean, reason?: string }}
+ */
+function validateProcessLine(line) {
+  if (!line || typeof line !== 'object') return { valid: false, reason: 'not_object' };
+  for (var i = 0; i < PROCESS_REQUIRED_FIELDS.length; i++) {
+    var f = PROCESS_REQUIRED_FIELDS[i];
+    if (line[f] === undefined || line[f] === null) return { valid: false, reason: 'missing_' + f };
+  }
+  if (!Array.isArray(line.stages)) return { valid: false, reason: 'stages_not_array' };
+  if (line.stages.length === 0) return { valid: false, reason: 'stages_empty' };
+  return { valid: true };
+}
+
+/**
+ * 启动时校验全部流程线，坏数据重命名备份后移除
+ * 确保坏数据不阻塞正常流程（P0-2 修复）
+ * @returns {{ repaired: boolean, corrupted: number, kept: number }}
+ */
+function validateAndRepairProcesses() {
+  var raw = wx.getStorageSync(PROCESS_KEY);
+  // null/undefined → 首次启动，无数据，正常
+  if (raw === null || raw === undefined) {
+    return { repaired: false, corrupted: 0, kept: 0 };
+  }
+  // 空字符串 / 非数组 → 整键损坏 → 备份后清空
+  if (raw === '' || !Array.isArray(raw)) {
+    _backupKey(PROCESS_KEY);
+    wx.setStorageSync(PROCESS_KEY, []);
+    _reportHealth('processes_key_corrupted', {});
+    return { repaired: true, corrupted: -1, kept: 0 };
+  }
+
+  var lines = raw;
+  var validLines = [];
+  var corruptedCount = 0;
+  for (var i = 0; i < lines.length; i++) {
+    var result = validateProcessLine(lines[i]);
+    if (result.valid) {
+      validLines.push(lines[i]);
+    } else {
+      var backupKey = PROCESS_KEY + CORRUPTED_SUFFIX + Date.now() + '_' + i;
+      try { wx.setStorageSync(backupKey, lines[i]); } catch (e) { /* 静默 */ }
+      corruptedCount++;
+      console.warn('[storage] 检测到损坏流程线，已备份至 ' + backupKey + '，原因: ' + result.reason);
+    }
+  }
+
+  if (corruptedCount > 0) {
+    wx.setStorageSync(PROCESS_KEY, validLines);
+    _reportHealth('processes_repaired', { corrupted: corruptedCount, kept: validLines.length });
+    return { repaired: true, corrupted: corruptedCount, kept: validLines.length };
+  }
+
+  return { repaired: false, corrupted: 0, kept: validLines.length };
+}
+
+/**
+ * 校验提醒数据结构
+ * @returns {{ repaired: boolean, corrupted: number }}
+ */
+function validateAndRepairReminders() {
+  var reminders = wx.getStorageSync(REMINDER_KEY) || [];
+  if (!Array.isArray(reminders)) {
+    _backupKey(REMINDER_KEY);
+    wx.setStorageSync(REMINDER_KEY, []);
+    _reportHealth('reminders_key_corrupted', {});
+    return { repaired: true, corrupted: -1 };
+  }
+  return { repaired: false, corrupted: 0 };
+}
+
+// ============================================================
+// 版本迁移与启动完整性校验
+// ============================================================
+
+/**
+ * 启动时执行存储版本迁移链
+ * - 版本过低 → 备份后重置
+ * - 版本在可读范围内但不等于当前 → 执行迁移
+ * - 版本高于当前 → 标记 _future_data，保留原样不删除
+ */
+function ensureStorageVersion() {
+  var v = getStorageVersion();
+
+  if (v < MIN_READABLE_VERSION) {
+    // 过于陈旧的格式 → 备份后重置
+    _backupKey(PROCESS_KEY);
+    _backupKey(REMINDER_KEY);
+    wx.setStorageSync(PROCESS_KEY, []);
+    wx.setStorageSync(REMINDER_KEY, []);
+    setStorageVersion(STORAGE_VERSION);
+    _reportHealth('storage_reset_old_version', { from: v, to: STORAGE_VERSION });
+    return;
+  }
+
+  if (v < STORAGE_VERSION) {
+    // 逐步迁移（未来可扩展具体迁移逻辑）
+    setStorageVersion(STORAGE_VERSION);
+    wx.setStorageSync('__last_migration__', { from: v, to: STORAGE_VERSION, at: new Date().toISOString() });
+    return;
+  }
+
+  if (v > STORAGE_VERSION) {
+    // 未来格式 → 保留原样，标记风险
+    var health = wx.getStorageSync(HEALTH_KEY) || {};
+    health._future_data = true;
+    health._future_version = v;
+    wx.setStorageSync(HEALTH_KEY, health);
+    console.warn('[storage] 检测到未来版本数据(v' + v + ')，当前版本v' + STORAGE_VERSION + '，数据已保留');
+    return;
+  }
+
+  // 版本一致，无需操作
+}
+
+/**
+ * 启动完整性校验入口（供 app.js onLaunch 调用）
+ * 执行顺序：版本迁移 → 数据校验修复
+ * @returns {{ version: number, processes: {repaired:boolean,corrupted:number,kept:number}, reminders: {repaired:boolean,corrupted:number} }}
+ */
+function runStorageStartupCheck() {
+  ensureStorageVersion();
+  var pResult = validateAndRepairProcesses();
+  var rResult = validateAndRepairReminders();
+  setStorageVersion(STORAGE_VERSION);
+  return {
+    version: STORAGE_VERSION,
+    processes: pResult,
+    reminders: rResult
+  };
+}
 
 /**
  * 初始化存储目录结构和元数据
@@ -144,6 +343,46 @@ function deleteReminder(reminderId) {
   return true;
 }
 
+/**
+ * 封存指定路径的所有活跃提醒
+ * @param {string} pathId
+ */
+function archiveRemindersByPath(pathId) {
+  if (!pathId) return;
+  try {
+    var reminders = getAllReminders();
+    var hasChange = false;
+    var updated = reminders.map(function(r) {
+      if (r.path === pathId && r.status === 'active') {
+        hasChange = true;
+        return Object.assign({}, r, { status: 'archived', archivedAt: new Date().toISOString() });
+      }
+      return r;
+    });
+    if (hasChange) { wx.setStorageSync(REMINDER_KEY, updated); }
+  } catch (e) { console.warn('[storage] archiveRemindersByPath error:', e); }
+}
+
+/**
+ * 恢复指定路径的所有被封存提醒
+ * @param {string} pathId
+ */
+function unarchiveRemindersByPath(pathId) {
+  if (!pathId) return;
+  try {
+    var reminders = getAllReminders();
+    var hasChange = false;
+    var updated = reminders.map(function(r) {
+      if (r.path === pathId && r.status === 'archived') {
+        hasChange = true;
+        return Object.assign({}, r, { status: 'active', unarchivedAt: new Date().toISOString() });
+      }
+      return r;
+    });
+    if (hasChange) { wx.setStorageSync(REMINDER_KEY, updated); }
+  } catch (e) { console.warn('[storage] unarchiveRemindersByPath error:', e); }
+}
+
 /** @param {object} processLine @returns {object} */
 function saveProcessLine(processLine) {
   var lines = getAllProcessLines();
@@ -196,9 +435,19 @@ module.exports = {
   getAllDocuments: getAllDocuments, getDocumentsByType: getDocumentsByType, saveFile: saveFile,
   readFile: readFile, deleteDocument: deleteDocument, searchDocuments: searchDocuments,
   saveReminder: saveReminder, getAllReminders: getAllReminders, updateReminder: updateReminder,
-  deleteReminder: deleteReminder, saveProcessLine: saveProcessLine, getProcessLine: getProcessLine,
+  deleteReminder: deleteReminder, archiveRemindersByPath: archiveRemindersByPath,
+  unarchiveRemindersByPath: unarchiveRemindersByPath,
+  saveProcessLine: saveProcessLine, getProcessLine: getProcessLine,
   getAllProcessLines: getAllProcessLines, saveProcessLines: saveProcessLines,
   getConfig: getConfig, setConfig: setConfig, saveDocuments: saveDocuments, saveReminders: saveReminders,
   initDBSync: initDBSync, syncAllToCloud: syncAllToCloud,
+  // V4.1 存储版本管理 + Schema 校验降级
+  getStorageVersion: getStorageVersion, setStorageVersion: setStorageVersion,
+  validateProcessLine: validateProcessLine, validateAndRepairProcesses: validateAndRepairProcesses,
+  validateAndRepairReminders: validateAndRepairReminders,
+  ensureStorageVersion: ensureStorageVersion, runStorageStartupCheck: runStorageStartupCheck,
+  // 常量导出
+  STORAGE_VERSION: STORAGE_VERSION, MIN_READABLE_VERSION: MIN_READABLE_VERSION,
+  VERSION_KEY: VERSION_KEY, HEALTH_KEY: HEALTH_KEY, CORRUPTED_SUFFIX: CORRUPTED_SUFFIX,
   FILE_BASE: FILE_BASE, META_KEY: META_KEY, REMINDER_KEY: REMINDER_KEY, PROCESS_KEY: PROCESS_KEY
 };
