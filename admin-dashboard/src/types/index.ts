@@ -83,3 +83,60 @@ export interface AuthState {
   adminUser: AdminUser | null;
   error: string | null;
 }
+
+// ====== V4.2 AI对话审核 ======
+export interface ConversationListItem {
+  _id: string;
+  timestamp: string;
+  _openid_prefix: string;
+  query_preview: string;
+  model: string;
+  round_count: number;
+  duration_ms: number;
+  review_status: 'unreviewed' | 'reviewed' | 'corrected';
+  has_correction: boolean;
+  overall_rating?: 'excellent' | 'good' | 'needs_improvement' | 'wrong';
+  path_label?: string;
+}
+
+export interface ConversationMessage {
+  role: 'user' | 'assistant';
+  content: string;
+  tokens: number;
+  source_chunks?: Array<{ chunk_id: string; title: string; content_preview: string }> | null;
+  safety_triggered?: string[];
+}
+
+export interface ConversationDetail {
+  _id: string;
+  timestamp: string;
+  _openid_prefix: string;
+  path_label: string;
+  messages: ConversationMessage[];
+  review: ReviewRecord | null;
+  correction: CorrectionRecord | null;
+  is_test_data: boolean;
+}
+
+export interface ReviewScores {
+  accuracy: number;
+  completeness: number;
+  compliance: number;
+  usefulness: number;
+}
+
+export interface ReviewRecord {
+  scores: ReviewScores;
+  overall: string;
+  error_tags: string[];
+  note: string;
+  reviewer: string;
+  reviewed_at: string;
+}
+
+export interface CorrectionRecord {
+  correct_answer: string;
+  source_refs: string[];
+  status: 'pending' | 'approved' | 'rejected';
+  submitted_at: string;
+}

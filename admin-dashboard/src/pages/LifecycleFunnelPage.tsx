@@ -60,13 +60,18 @@ export function LifecycleFunnelPage() {
               </div>
               <div className="text-right">
                 <div className="text-lg font-bold">{step.count}</div>
-                <div className={`text-xs ${step.rate > 50 ? 'text-green-400' : step.rate > 10 ? 'text-yellow-400' : 'text-red-400'}`}>
+                <div
+                  className={`text-xs ${step.rate > 50 ? 'text-green-400' : step.rate > 10 ? 'text-yellow-400' : 'text-red-400'}`}
+                >
                   {step.rate}% {i > 0 && <span className="text-[var(--muted-foreground)]">（流失 {step.drop}%）</span>}
                 </div>
               </div>
             </div>
             <div className="h-4 w-full rounded-full bg-[var(--muted)] overflow-hidden">
-              <div className="h-full rounded-full bg-[var(--primary)] transition-all" style={{ width: `${Math.max((step.count / maxCount) * 100, 2)}%` }} />
+              <div
+                className="h-full rounded-full bg-[var(--primary)] transition-all"
+                style={{ width: `${Math.max((step.count / maxCount) * 100, 2)}%` }}
+              />
             </div>
           </div>
         ))}

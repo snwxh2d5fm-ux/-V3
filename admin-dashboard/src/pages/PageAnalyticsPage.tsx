@@ -55,15 +55,26 @@ export function PageAnalyticsPage() {
     });
 
     const total = Object.values(grouped).reduce((s, g) => s + g.pv, 0) || 1;
-    const stats: ModuleStat[] = Object.entries(grouped).map(([module, g]) => ({
-      module, icon: g.icon, pv: g.pv, uv: Math.max(1, Math.floor(g.pv / 3)), pct: Math.round(g.pv / total * 100)
-    })).sort((a, b) => b.pv - a.pv);
+    const stats: ModuleStat[] = Object.entries(grouped)
+      .map(([module, g]) => ({
+        module,
+        icon: g.icon,
+        pv: g.pv,
+        uv: Math.max(1, Math.floor(g.pv / 3)),
+        pct: Math.round((g.pv / total) * 100),
+      }))
+      .sort((a, b) => b.pv - a.pv);
 
     setModuleStats(stats);
 
-    const pages = Object.entries(PAGE_MODULES).map(([page, info]) => ({
-      page, module: info.module, pv: Math.floor(Math.random() * 10) + 1
-    })).sort((a, b) => b.pv - a.pv).slice(0, 20);
+    const pages = Object.entries(PAGE_MODULES)
+      .map(([page, info]) => ({
+        page,
+        module: info.module,
+        pv: Math.floor(Math.random() * 10) + 1,
+      }))
+      .sort((a, b) => b.pv - a.pv)
+      .slice(0, 20);
     setTopPages(pages);
   }, []);
 
@@ -78,11 +89,13 @@ export function PageAnalyticsPage() {
 
       {/* Module UV Cards */}
       <div className="grid grid-cols-4 gap-3">
-        {moduleStats.map(s => (
+        {moduleStats.map((s) => (
           <div key={s.module} className="rounded-lg border border-[var(--border)] bg-[var(--card)] p-3 text-center">
             <div className="text-lg mb-1">{s.icon}</div>
             <div className="text-sm font-semibold">{s.module}</div>
-            <div className="text-xs text-[var(--muted-foreground)] mt-1">UV {s.uv} · PV {s.pv} · {s.pct}%</div>
+            <div className="text-xs text-[var(--muted-foreground)] mt-1">
+              UV {s.uv} · PV {s.pv} · {s.pct}%
+            </div>
             <div className="mt-2 h-1.5 w-full rounded-full bg-[var(--muted)] overflow-hidden">
               <div className="h-full rounded-full bg-[var(--primary)]" style={{ width: `${Math.max(s.pct, 5)}%` }} />
             </div>
@@ -97,9 +110,14 @@ export function PageAnalyticsPage() {
           {moduleStats.map((s, i) => (
             <div key={s.module} className="flex items-center gap-3">
               <span className="text-xs text-[var(--muted-foreground)] w-5">{i + 1}</span>
-              <span className="text-sm">{s.icon} {s.module}</span>
+              <span className="text-sm">
+                {s.icon} {s.module}
+              </span>
               <div className="flex-1 h-2 rounded-full bg-[var(--muted)] overflow-hidden">
-                <div className="h-full rounded-full bg-[var(--primary)]" style={{ width: `${Math.round(s.pv / maxPv * 100)}%` }} />
+                <div
+                  className="h-full rounded-full bg-[var(--primary)]"
+                  style={{ width: `${Math.round((s.pv / maxPv) * 100)}%` }}
+                />
               </div>
               <span className="text-xs text-[var(--muted-foreground)]">{s.pv} PV</span>
             </div>
@@ -125,7 +143,11 @@ export function PageAnalyticsPage() {
         <h2 className="mb-3 text-sm font-semibold">典型用户流转路径</h2>
         <div className="space-y-3">
           {[
-            { path: '引导页 → 身份选择 → 路径选择 → 攻略书 → 证件夹 → 提醒器 → 流程控', desc: '新用户完整onboarding → 深度使用路径', users: '~60%' },
+            {
+              path: '引导页 → 身份选择 → 路径选择 → 攻略书 → 证件夹 → 提醒器 → 流程控',
+              desc: '新用户完整onboarding → 深度使用路径',
+              users: '~60%',
+            },
             { path: '引导页 → 路径选择 → AI对话', desc: '直接咨询路径', users: '~25%' },
             { path: '攻略书 → 攻略书详情 → 攻略书详情', desc: '攻略书深度浏览', users: '~10%' },
             { path: '我的 → 会员中心 → 订单 → 开票', desc: '付费转化路径', users: '~5%' },
@@ -140,7 +162,8 @@ export function PageAnalyticsPage() {
           ))}
         </div>
         <p className="mt-3 text-xs text-[var(--muted-foreground)]">
-          ⚠️ 以上数据基于 tracker.js page_view 埋点聚合。实际 PV/UV 数据需等待 page_view_logs 积累（目前埋点模块已就绪，数据将在用户使用后逐步填充）
+          ⚠️ 以上数据基于 tracker.js page_view 埋点聚合。实际 PV/UV 数据需等待 page_view_logs
+          积累（目前埋点模块已就绪，数据将在用户使用后逐步填充）
         </p>
       </div>
     </div>

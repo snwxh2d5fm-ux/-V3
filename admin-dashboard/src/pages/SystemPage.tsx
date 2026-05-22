@@ -5,7 +5,10 @@ export function SystemPage() {
 
   return (
     <div className="space-y-6">
-      <div><h1 className="text-xl font-bold">系统健康</h1><p className="text-sm text-[var(--muted-foreground)]">云函数 · 数据库 · API 状态</p></div>
+      <div>
+        <h1 className="text-xl font-bold">系统健康</h1>
+        <p className="text-sm text-[var(--muted-foreground)]">云函数 · 数据库 · API 状态</p>
+      </div>
 
       <div className="grid grid-cols-3 gap-4">
         {[
@@ -26,7 +29,16 @@ export function SystemPage() {
       <div className="rounded-lg border border-[var(--border)] bg-[var(--card)] p-4">
         <h2 className="mb-3 text-sm font-semibold">网关端点</h2>
         <div className="grid grid-cols-2 gap-2 text-xs font-mono">
-          {['admin-stats','admin-codes','admin-users','admin-revenue','admin-ai-quality','admin-compliance','admin-content','admin-feedback'].map(fn => (
+          {[
+            'admin-stats',
+            'admin-codes',
+            'admin-users',
+            'admin-revenue',
+            'admin-ai-quality',
+            'admin-compliance',
+            'admin-content',
+            'admin-feedback',
+          ].map((fn) => (
             <div key={fn} className="rounded bg-[var(--muted)] px-2 py-1.5">
               https://{envId}.service.tcloudbase.com/{fn}
             </div>

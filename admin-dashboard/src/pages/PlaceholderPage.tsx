@@ -14,9 +14,7 @@ export function PlaceholderPage({ title, description, phase }: PlaceholderPagePr
       <div className="flex h-60 items-center justify-center rounded-lg border border-dashed border-[var(--border)] bg-[var(--card)]">
         <div className="text-center">
           <div className="text-4xl">🔧</div>
-          <p className="mt-2 text-sm text-[var(--muted-foreground)]">
-            {phase ? `${phase} 开发中` : '即将上线'}
-          </p>
+          <p className="mt-2 text-sm text-[var(--muted-foreground)]">{phase ? `${phase} 开发中` : '即将上线'}</p>
         </div>
       </div>
     </div>

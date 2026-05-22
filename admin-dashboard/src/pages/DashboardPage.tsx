@@ -31,8 +31,12 @@ export function DashboardPage() {
           setLoadState('error');
         }
       })
-      .catch(() => { if (!cancelled) setLoadState('error'); });
-    return () => { cancelled = true; };
+      .catch(() => {
+        if (!cancelled) setLoadState('error');
+      });
+    return () => {
+      cancelled = true;
+    };
   }, []);
 
   const isLoading = loadState === 'idle' || loadState === 'loading';
@@ -82,7 +86,11 @@ export function DashboardPage() {
         />
         <MetricCard
           label="邀请码激活"
-          value={data?.codesActivated != null && data?.codesGenerated != null ? `${data.codesActivated}/${data.codesGenerated}` : null}
+          value={
+            data?.codesActivated != null && data?.codesGenerated != null
+              ? `${data.codesActivated}/${data.codesGenerated}`
+              : null
+          }
           loading={isLoading}
           icon={<Ticket className="h-3.5 w-3.5" />}
         />
