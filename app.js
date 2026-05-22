@@ -3,7 +3,7 @@
  * 基于 PRD v4 + V5校验 + 方案库v1.0 + 7阶段流程指示器
  */
 const api = require('./utils/api');
-const { initStorage, initDBSync, syncAllToCloud } = require('./utils/storage');
+const { initStorage, initDBSync, syncAllToCloud, runStorageStartupCheck } = require('./utils/storage');
 const { initCrypto } = require('./utils/crypto');
 const { loadRules } = require('./utils/rule-engine');
 const { matchPersonaToPaths } = require('./data/solution-library');
@@ -88,6 +88,9 @@ App({
       initCrypto(),
       loadRules()
     ]);
+
+    // V4.1: 存储版本管理 + Schema 校验 + 健康上报
+    runStorageStartupCheck();
 
     this.globalData.rulesLoaded = true;
 

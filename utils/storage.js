@@ -61,7 +61,7 @@ function _backupKey(key) {
     if (val !== undefined && val !== null && val !== '') {
       wx.setStorageSync(key + CORRUPTED_SUFFIX + Date.now(), val);
     }
-  } catch (e) { /* 静默 */ }
+  } catch (e) { /* 备份失败不阻塞主流程 */ }
 }
 
 /**
@@ -74,11 +74,12 @@ function _reportHealth(event, detail) {
     var health = wx.getStorageSync(HEALTH_KEY) || {};
     health[event] = { at: new Date().toISOString(), detail: detail || {} };
     wx.setStorageSync(HEALTH_KEY, health);
-  } catch (e) { /* 静默 */ }
+  } catch (e) { /* 健康上报失败不阻塞启动流程 */ }
 }
 
 // ============================================================
 // Schema 校验与数据修复
+// ============================================================
 // ============================================================
 
 /**
@@ -125,9 +126,9 @@ function validateAndRepairProcesses() {
       validLines.push(lines[i]);
     } else {
       var backupKey = PROCESS_KEY + CORRUPTED_SUFFIX + Date.now() + '_' + i;
-      try { wx.setStorageSync(backupKey, lines[i]); } catch (e) { /* 静默 */ }
+      try { wx.setStorageSync(backupKey, lines[i]); } catch (e) { /* 备份失败不阻塞修复流程 */ }
       corruptedCount++;
-      console.warn('[storage] 检测到损坏流程线，已备份至 ' + backupKey + '，原因: ' + result.reason);
+      console.warn('[storage] 检测到损坏流程线(' + result.reason + ')，已自动修复并备份');
     }
   }
 
@@ -192,7 +193,7 @@ function ensureStorageVersion() {
     health._future_data = true;
     health._future_version = v;
     wx.setStorageSync(HEALTH_KEY, health);
-    console.warn('[storage] 检测到未来版本数据(v' + v + ')，当前版本v' + STORAGE_VERSION + '，数据已保留');
+    console.warn('[storage] 检测到未来版本格式，数据已保留未删除');
     return;
   }
 
