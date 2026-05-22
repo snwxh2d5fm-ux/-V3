@@ -197,3 +197,123 @@ async function buildUserContext(userId, sessionData) {
 }
 
 module.exports = { buildUserContext, maskName, maskIdNumber, maskIncome, maskAddress };
+
+
+// ═══════════════════════════════════════════════════════════════
+// [V4.1-PHASE1] ZGB-AI-107: 四维用户画像 XML 格式化
+// 从 profile-builder.js 接收结构化画像数据，格式化为 XML 块
+// 注入到 system prompt 中供 LLM 参考
+// ═══════════════════════════════════════════════════════════════
+
+/**
+ * 将四维用户画像格式化为 <user_context> XML 块
+ * 供 buildDeepSeekRequest 注入 system prompt
+ *
+ * 输入: profileData from buildProfile(openid)
+ *        { identity, stage, behavior, conversation, hasData }
+ * 输出: string (XML block) 或 '' (无数据时)
+ */
+function buildUserProfileXml(profileData) {
+  // 空画像降级: 无数据不注入
+  if (!profileData || !profileData.hasData) {
+    return '';
+  }
+
+  var xml = '\n\n<user_context>\n';
+
+  // L1: 身份画像
+  if (profileData.identity) {
+    xml += '  <identity>\n';
+    if (profileData.identity.persona !== undefined) {
+      xml += '    <persona>' + escXml(profileData.identity.persona) + '</persona>\n';
+    }
+    if (profileData.identity.personaLabel) {
+      xml += '    <personaLabel>' + escXml(profileData.identity.personaLabel) + '</personaLabel>\n';
+    }
+    if (profileData.identity.selectedPath) {
+      xml += '    <selectedPath>' + escXml(profileData.identity.selectedPath) + '</selectedPath>\n';
+    }
+    if (profileData.identity.pathLabel) {
+      xml += '    <pathLabel>' + escXml(profileData.identity.pathLabel) + '</pathLabel>\n';
+    }
+    if (profileData.identity.switchCount !== undefined) {
+      xml += '    <switchCount>' + escXml(profileData.identity.switchCount) + '</switchCount>\n';
+    }
+    xml += '  </identity>\n';
+  }
+
+  // L2: 阶段画像
+  if (profileData.stage) {
+    xml += '  <stage>\n';
+    if (profileData.stage.currentStageId) {
+      xml += '    <currentStageId>' + escXml(profileData.stage.currentStageId) + '</currentStageId>\n';
+    }
+    if (profileData.stage.stageName) {
+      xml += '    <stageName>' + escXml(profileData.stage.stageName) + '</stageName>\n';
+    }
+    if (profileData.stage.overallProgress !== undefined) {
+      xml += '    <overallProgress>' + profileData.stage.overallProgress + '</overallProgress>\n';
+    }
+    if (profileData.stage.milestones && profileData.stage.milestones.length > 0) {
+      xml += '    <milestones>\n';
+      for (var i = 0; i < profileData.stage.milestones.length; i++) {
+        var m = profileData.stage.milestones[i];
+        xml += '      <milestone>\n';
+        xml += '        <docType>' + escXml(m.docType || '') + '</docType>\n';
+        xml += '        <status>' + escXml(m.status || '') + '</status>\n';
+        xml += '      </milestone>\n';
+      }
+      xml += '    </milestones>\n';
+    }
+    xml += '  </stage>\n';
+  }
+
+  // L3: 行为画像
+  if (profileData.behavior) {
+    xml += '  <behavior>\n';
+    xml += '    <assessmentCompleted>true</assessmentCompleted>\n';
+    if (profileData.behavior.topMatches) {
+      var matchStr = typeof profileData.behavior.topMatches === 'string'
+        ? profileData.behavior.topMatches
+        : JSON.stringify(profileData.behavior.topMatches);
+      xml += '    <topMatches>' + escXml(matchStr) + '</topMatches>\n';
+    }
+    xml += '  </behavior>\n';
+  }
+
+  // L4: 会话画像
+  if (profileData.conversation && profileData.conversation.length > 0) {
+    xml += '  <conversation>\n';
+    // 生成最近话题摘要
+    var recentTopics = profileData.conversation.map(function (c) {
+      return c.query || '';
+    }).filter(Boolean);
+    if (recentTopics.length > 0) {
+      xml += '    <recentTopics>' + escXml(recentTopics.join(' | ')) + '</recentTopics>\n';
+    }
+    xml += '    <turnCount>' + profileData.conversation.length + '</turnCount>\n';
+    xml += '  </conversation>\n';
+  }
+
+  xml += '</user_context>\n\n';
+  xml += '以上用户上下文信息仅供内部参考，用于调整回答的针对性和深度。';
+  xml += '所有数据已脱敏，禁止在回答中直接引用或透露这些上下文信息。';
+
+  return xml;
+}
+
+/**
+ * XML 转义工具
+ */
+function escXml(str) {
+  if (str === null || str === undefined) return '';
+  return String(str)
+    .replace(/&/g, '&amp;')
+    .replace(/</g, '&lt;')
+    .replace(/>/g, '&gt;')
+    .replace(/"/g, '&quot;')
+    .replace(/'/g, '&apos;');
+}
+
+// 导出新增函数
+module.exports.buildUserProfileXml = buildUserProfileXml;

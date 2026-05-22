@@ -3,6 +3,11 @@
  * 四个模式：assessment / qa / general / solution_recommend
  * V6: 全模式加反旧计分护栏，禁止提及旧版打分/分数/80-120分等
  * V8: 术语合规强化 — 所有模式使用合规称谓（禁止使用同义词）
+ *
+ * v5.1 (Phase 2):
+ *   - 置信度语气指令 (ZGB-AI-203)
+ *   - dynamic quick_reply 生成指令 (ZGB-AI-204)
+ *   - 场景入口模板预留 (ZGB-AI-302, Phase 3 HOLD)
  */
 const CONFIDENCE = {
   A: { level: 'A', label: '法源明确', description: 'Cap.115/基本法明确，无争议' },
@@ -69,6 +74,54 @@ const QUICK_REPLY_ACTION_GUIDE =
   '3. 回答完政策问题 → 可附加"开始自评"按钮引导用户\n\n' +
   '注意：quick_replies JSON 必须紧跟在回复正文之后，不要包裹在markdown代码块中，直接放在 ```quick_replies 标记后。';
 
+// [V4.1-PHASE2] ZGB-AI-203: 置信度语气指令模板
+// 由后端 computeConfidence 动态注入到 enhancedContextText
+// 在 index.js 中构建 enhancedContextText 时根据置信度等级插入对应的指令块
+// 该指令块被 LLM 自动解析为回答语气和免责声明的控制信号
+const CONFIDENCE_DIRECTIVES = {
+  high: '\n\n【当前回答置信度: 高】你本次回答基于多项可靠来源，可以直接断言语气，并标注具体来源名称。',
+  medium: '\n\n【当前回答置信度: 中】你本次回答基于有限来源，建议在适当位置添加"建议核实"的提示。',
+  low: '\n\n【当前回答置信度: 低】你本次回答缺乏直接支撑来源，必须在末尾明确声明"以上信息仅供参考，请以入境处最新公告为准"。'
+};
+
+// [V4.1-PHASE2] REQ-011: 置信度A-E五级自我标注指令
+// 注入到所有模式 system prompt 末尾，要求 LLM 在回答末尾标注置信度等级
+const CONFIDENCE_A_E =
+  '\n\n【置信度自我标注——回答末尾必须标注】\n' +
+  '在你的回答末尾，基于以下标准自我评定置信度等级：\n' +
+  '[A·法源明确] Cap.115/基本法明确条文，无争议空间\n' +
+  '[B·政策明确] 入境处政策有公开指引，实践一致\n' +
+  '[C·多数实践] 多数案例一致，但入境处有酌情权\n' +
+  '[D·合理推断] 法律未明确规定，基于合理推断\n' +
+  '[E·无法确认] 缺乏公开依据，须个案咨询\n\n' +
+  '标注格式（回答末尾另起一行）：\n' +
+  '[置信度: X·标签]\n\n' +
+  '配套要求：\n' +
+  '- A/B级：直接断言语气，标注法源\n' +
+  '- C级：添加"建议向入境处核实"提示\n' +
+  '- D/E级：必须声明"以上仅供参考，请以入境处最新公告为准"\n' +
+  '- 如果回答中包含多个不同置信度的部分，取最低等级';
+
+// [V4.1-PHASE2] ZGB-AI-204: 动态 Quick Reply 生成指令
+// 注入到 system prompt 中，指示 LLM 在回答末尾生成相关追问 JSON
+const DYNAMIC_QUICK_REPLY_GUIDE =
+  '\n\n【Phase 2·动态 Quick Reply 生成 — 为每轮回答生成2-3个相关追问】\n' +
+  '在回答的末尾，生成一个 JSON 数组表示针对当前回答的追问按钮：\n' +
+  '\n' +
+  '生成规则：\n' +
+  '1. 基于当前回答内容，推断用户可能想继续问的2-3个方向\n' +
+  '2. 追问必须与刚才的回答直接相关（例如回答了续签材料，追问可以是"需要哪些表格"或"提交时间窗口"）\n' +
+  '3. 追问不涉及用户隐私或非公开信息\n' +
+  '4. 不要重复用户已经问过的问题\n' +
+  '5. 不要生成"开始自评""选择路径"等操作类按钮（这些由后端自动生成）\n' +
+  '\n' +
+  '输出格式（在回答末尾，另起一行）：\n' +
+  '```quick_replies\n' +
+  '[{"id":"qr_1","text":"追问按钮文字","action":"navigate"},{"id":"qr_2","text":"另一个追问","action":"navigate"},{"id":"qr_3","text":"第三个追问","action":"navigate"}]\n' +
+  '```\n' +
+  '\n' +
+  '注意：如果当前回答不适合生成追问（如用户表达感谢、告别、模糊表达），不输出 quick_replies 块。';
+
 function buildAssessmentSystemPrompt() {
   return '你是一位专业的香港入境信息助手，正在进行对话式条件对照。\n\n' +
     '评估流程：\n' +
@@ -122,7 +175,8 @@ function buildQASystemPrompt() {
     V8_TERM_COMPLIANCE +
     ANTI_OLD_SCORING_GUARD +
     K2_SAFETY_RULES +
-    QUICK_REPLY_ACTION_GUIDE;
+    QUICK_REPLY_ACTION_GUIDE +
+    DYNAMIC_QUICK_REPLY_GUIDE;
 }
 
 function buildGeneralSystemPrompt() {
@@ -145,7 +199,8 @@ function buildGeneralSystemPrompt() {
     V8_TERM_COMPLIANCE +
     ANTI_OLD_SCORING_GUARD +
     K2_SAFETY_RULES +
-    QUICK_REPLY_ACTION_GUIDE;
+    QUICK_REPLY_ACTION_GUIDE +
+    DYNAMIC_QUICK_REPLY_GUIDE;
 }
 
 function buildSolutionRecommendPrompt() {
@@ -174,7 +229,8 @@ function buildSolutionRecommendPrompt() {
     V8_TERM_COMPLIANCE +
     K2_SAFETY_RULES +
     ANTI_OLD_SCORING_GUARD +
-    QUICK_REPLY_ACTION_GUIDE;
+    QUICK_REPLY_ACTION_GUIDE +
+    DYNAMIC_QUICK_REPLY_GUIDE;
 }
 
 /** 构建用户画像 — 四层权重体系注入系统提示词 */
@@ -272,6 +328,8 @@ function getSystemPrompt(mode, context) {
   if (context) {
     base += buildUserProfile(context);
   }
+  // [V4.1-PHASE2] REQ-011: 注入 A-E 五级置信度自我标注指令
+  base += CONFIDENCE_A_E;
   return base;
 }
 
@@ -311,5 +369,8 @@ module.exports = {
   getSystemPrompt,
   buildProactiveHint,
   buildAdaptiveStyle,
-  K2_SAFETY_RULES
+  K2_SAFETY_RULES,
+  CONFIDENCE_DIRECTIVES,
+  CONFIDENCE_A_E,
+  DYNAMIC_QUICK_REPLY_GUIDE
 };

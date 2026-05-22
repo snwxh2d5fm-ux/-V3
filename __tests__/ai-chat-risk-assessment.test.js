@@ -639,7 +639,7 @@ describe('R8. 代码层安全缺陷扫描', () => {
   test('R8.8 process.env 访问安全', () => {
     // 只访问已知的环境变量，未泄漏
     const envAccesses = INDEX_CONTENT.match(/process\.env\.\w+/g) || [];
-    const allowedVars = ['DEEPSEEK_API_KEY', 'DEEPSEEK_MODEL', 'ENV_ID', 'AI_PROVIDER', 'AI_MODEL', 'MODEL_AB_RATIO', 'MODEL_AB_ALT'];
+    const allowedVars = ['DEEPSEEK_API_KEY', 'DEEPSEEK_MODEL', 'ENV_ID', 'AI_PROVIDER', 'AI_MODEL', 'MODEL_AB_RATIO', 'MODEL_AB_ALT', 'TENCENT_SECRET_ID', 'TENCENT_SECRET_KEY'];
     envAccesses.forEach(access => {
       const varName = access.replace('process.env.', '');
       expect(allowedVars).toContain(varName);

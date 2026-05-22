@@ -9,6 +9,12 @@
  *   - 对话日志: 记录每次对话的质量与安全标记
  *   - 三级降级: LLM → RAG直返 → 缓存响应
  *
+ * v5.1 (Phase 2) 新增:
+ *   - 混元 Embedding 语义 RAG (ZGB-AI-201)
+ *   - 三路融合排序 (向量×0.5 + 关键词×0.3 + 扩展×0.2)
+ *   - 多轮对话记忆摘要压缩 (ZGB-AI-202)
+ *   - 置信度分级 high/medium/low (ZGB-AI-203)
+ *
  * 输入 (标准模式): { sessionId, message, mode, context, history }
  * 输入 (流式模式): HTTP POST with same JSON body
  * 输出 (标准): { code, data: { messageId, content, quickReplies, assessmentResult, sources } }
@@ -18,11 +24,28 @@
  *   DEEPSEEK_API_KEY  - DeepSeek API 密钥
  *   DEEPSEEK_MODEL    - 模型名称（默认 deepseek-chat）
  *   ENV_ID            - CloudBase 环境ID
+ *   TENCENT_SECRET_ID - 腾讯云 SecretId (混元 Embedding)
+ *   TENCENT_SECRET_KEY - 腾讯云 SecretKey (混元 Embedding)
  */
 const cloudbase = require('@cloudbase/node-sdk');
 const https = require('https');
 const { URL } = require('url');
 const prompts = require('./prompts');
+const domainRouter = require('./domain-router');
+// [V4.1-PHASE1] ZGB-AI-107: 四维画像构建器 + XML格式化
+const { buildProfile } = require('./profile-builder');
+const { buildUserProfileXml } = require('./context-builder');
+const memory = require('./memory');
+
+// [V4.1-PHASE2] ZGB-AI-201: 混元 embedding SDK (按需加载，SDK不可用时降级为纯关键词检索)
+let hunyuanClient = null;
+try {
+  const HunyuanSDK = require('tencentcloud-sdk-nodejs-hunyuan');
+  hunyuanClient = HunyuanSDK.hunyuan.v20230901.Client;
+  console.log('[ai-chat] 混元 embedding SDK 加载成功');
+} catch(e) {
+  console.warn('[ai-chat] 混元 embedding SDK 不可用，向量检索降级为纯关键词:', e.message);
+}
 
 const DEEPSEEK_BASE_URL = 'https://api.deepseek.com/v1';
 const MAX_HISTORY_TURNS = 10;
@@ -30,11 +53,20 @@ const RAG_TOP_K = 5;
 const RAG_PREFILTER_MULTIPLIER = 5;
 
 // ========== CloudBase 初始化 ==========
+let _app = null;
 let db = null;
+
+// [V4.1-PHASE1] ZGB-AI-104: 提取app单例以支持getWXContext()
+function getApp() {
+  if (!_app) {
+    _app = cloudbase.init({ env: process.env.ENV_ID });
+  }
+  return _app;
+}
+
 function getDb() {
   if (!db) {
-    const app = cloudbase.init({ env: process.env.ENV_ID });
-    db = app.database();
+    db = getApp().database();
   }
   return db;
 }
@@ -168,6 +200,79 @@ function cosineSimilarity(a, b) {
   return denom === 0 ? 0 : dot / denom;
 }
 
+// [V4.1-PHASE2] ZGB-AI-201: 应用层向量 top-K 检索
+// 对 chunks 中所有包含 embedding 字段的分块计算余弦相似度
+function vectorSearch(queryEmbedding, chunks, topK) {
+  if (!queryEmbedding || !Array.isArray(queryEmbedding) || queryEmbedding.length === 0) return [];
+  if (!chunks || chunks.length === 0) return [];
+  var scored = chunks.map(function(chunk) {
+    var score = 0;
+    if (chunk.embedding && Array.isArray(chunk.embedding) && chunk.embedding.length > 0) {
+      score = cosineSimilarity(queryEmbedding, chunk.embedding);
+    }
+    return { chunk: chunk, score: score };
+  });
+  return scored
+    .filter(function(s) { return s.score > 0; })
+    .sort(function(a, b) { return b.score - a.score; })
+    .slice(0, topK || 20);
+}
+
+// [V4.1-PHASE2] ZGB-AI-201: 三路融合排序 (向量×0.5 + 关键词×0.3 + 扩展×0.2)
+// 将不同检索策略的结果按加权得分合并，去重后返回排序结果
+function fusionRank(vectorResults, keywordResults, extensionResults) {
+  var combined = new Map();
+
+  // 向量结果: 权重 0.5
+  for (var vi = 0; vi < vectorResults.length; vi++) {
+    var vItem = vectorResults[vi];
+    if (!vItem.chunk || !vItem.chunk._id) continue;
+    var vKey = String(vItem.chunk._id);
+    combined.set(vKey, {
+      chunk: vItem.chunk,
+      fusionScore: (vItem.score || 0) * 0.5
+    });
+  }
+
+  // 关键词结果: 权重 0.3
+  for (var ki = 0; ki < keywordResults.length; ki++) {
+    var kItem = keywordResults[ki];
+    if (!kItem.chunk || !kItem.chunk._id) continue;
+    var kKey = String(kItem.chunk._id);
+    var existing = combined.get(kKey);
+    var kScore = (kItem.score || 0.5) * 0.3;
+    if (existing) {
+      existing.fusionScore += kScore;
+    } else {
+      combined.set(kKey, {
+        chunk: kItem.chunk,
+        fusionScore: kScore
+      });
+    }
+  }
+
+  // 扩展/同义结果: 权重 0.2
+  var extList = extensionResults || [];
+  for (var ei = 0; ei < extList.length; ei++) {
+    var eItem = extList[ei];
+    if (!eItem.chunk || !eItem.chunk._id) continue;
+    var eKey = String(eItem.chunk._id);
+    var existing2 = combined.get(eKey);
+    var eScore = (eItem.score || 0.4) * 0.2;
+    if (existing2) {
+      existing2.fusionScore += eScore;
+    } else {
+      combined.set(eKey, {
+        chunk: eItem.chunk,
+        fusionScore: eScore
+      });
+    }
+  }
+
+  return Array.from(combined.values())
+    .sort(function(a, b) { return b.fusionScore - a.fusionScore; });
+}
+
 function scoreByKeywords(chunks, keywords) {
   return chunks.map(c => {
     const contentLower = (c.content || '').toLowerCase();
@@ -183,11 +288,91 @@ function scoreByKeywords(chunks, keywords) {
   }).sort((a, b) => b.score - a.score);
 }
 
-async function retrieveContext(query, mode, topK) {
+// [V4.1-PHASE2] ZGB-AI-201: 混元 embedding API 调用
+// REQ-009增强: 1500ms超时降级 + 客户端复用 + LRU缓存(50条)
+var hunyuanClientInstance = null;
+function getHunyuanClient() {
+  if (hunyuanClientInstance) return hunyuanClientInstance;
+  if (!hunyuanClient) return null;
+  if (!process.env.TENCENT_SECRET_ID || !process.env.TENCENT_SECRET_KEY) return null;
+  try {
+    hunyuanClientInstance = new hunyuanClient({
+      credential: {
+        secretId: process.env.TENCENT_SECRET_ID,
+        secretKey: process.env.TENCENT_SECRET_KEY
+      },
+      region: 'ap-guangzhou'
+    });
+    return hunyuanClientInstance;
+  } catch(e) { return null; }
+}
+
+var EMBEDDING_CACHE = {};
+var EMBEDDING_CACHE_SIZE = 50;
+var EMBEDDING_TIMEOUT_MS = 1500;
+
+function getEmbeddingCacheKey(text) {
+  return (text || '').trim().substring(0, 80).toLowerCase();
+}
+
+function getCachedEmbedding(text) {
+  var key = getEmbeddingCacheKey(text);
+  var entry = EMBEDDING_CACHE[key];
+  if (entry) return entry;
+  return null;
+}
+
+function setCachedEmbedding(text, embedding) {
+  var key = getEmbeddingCacheKey(text);
+  EMBEDDING_CACHE[key] = embedding;
+  var keys = Object.keys(EMBEDDING_CACHE);
+  if (keys.length > EMBEDDING_CACHE_SIZE) {
+    // 超过上限时删除最老的25条
+    var removeCount = keys.length - EMBEDDING_CACHE_SIZE + 25;
+    for (var i = 0; i < Math.min(removeCount, keys.length); i++) {
+      delete EMBEDDING_CACHE[keys[i]];
+    }
+  }
+}
+
+// 返回 1024维 Float32 数组，失败返回 null（触发降级）
+async function getEmbedding(text) {
+  var client = getHunyuanClient();
+  if (!client) return null;
+
+  // LRU 缓存优先
+  var cachedEmb = getCachedEmbedding(text);
+  if (cachedEmb) {
+    console.log('[ai-chat] Embedding cache hit');
+    return cachedEmb;
+  }
+
+  try {
+    // 1500ms 超时，超时回退关键词排序（专家评审 C1）
+    var resp = await Promise.race([
+      client.GetEmbedding({ Input: (text || '').substring(0, 2048) }),
+      new Promise(function(_, reject) {
+        setTimeout(function() { reject(new Error('Embedding API timeout after ' + EMBEDDING_TIMEOUT_MS + 'ms')); }, EMBEDDING_TIMEOUT_MS);
+      })
+    ]);
+    if (resp && resp.Data && resp.Data[0] && resp.Data[0].Embedding) {
+      var emb = resp.Data[0].Embedding;
+      setCachedEmbedding(text, emb);
+      return emb;
+    }
+    return null;
+  } catch(e) {
+    console.warn('[ai-chat] getEmbedding failed:', e.message);
+    return null;
+  }
+}
+
+async function retrieveContext(query, mode, topK, detectedDomain) {
   topK = topK || RAG_TOP_K;
 
-  // Phase 2.4: 缓存优先
-  var cached = getCachedRAG(query, mode);
+  // Phase 2.4: 缓存优先（domain变化时缓存key自然不同）
+  var cacheKey = getCacheKey(query, mode + (detectedDomain ? '_' + detectedDomain : ''));
+  var cached = getCachedRAG(query, mode + (detectedDomain ? '_' + detectedDomain : ''));
   if (cached) {
     console.log('[ai-chat] RAG cache hit');
     return cached;
@@ -197,8 +382,12 @@ async function retrieveContext(query, mode, topK) {
   const _ = ddb.command;
 
   // 构建领域过滤
-  const where = { content_grade: _.in(['green', 'yellow']) };
-  if (mode === 'assessment') {
+  var where = { content_grade: _.in(['green', 'yellow']) };
+
+  // REQ-008: qa模式使用领域意图识别结果
+  if (mode === 'qa' && detectedDomain) {
+    where = domainRouter.applyDomainFilter(where, detectedDomain, _);
+  } else if (mode === 'assessment') {
     where.knowledge_domain = _.in(['QMAS', 'TTPS', 'ASMTP', 'IANG', 'CIES']);
   } else if (mode === 'solution_recommend') {
     where.knowledge_domain = _.in(['QMAS', 'TTPS', 'ASMTP', 'IANG', 'CIES', 'TechTAS']);
@@ -236,11 +425,22 @@ async function retrieveContext(query, mode, topK) {
     }
   } catch(e) {
     console.error('[ai-chat] RAG retrieval error:', e.message);
-    return { chunks: [], sources: [] };
+    return { chunks: [], sources: [], contextText: '', fusionResults: [], avgScore: 0 };
   }
 
   if (allChunks.length === 0) {
-    return { chunks: [], sources: [] };
+    return { chunks: [], sources: [], contextText: '', fusionResults: [], avgScore: 0 };
+  }
+
+  // [V4.1-PHASE2] ZGB-AI-201: 尝试获取用户查询的向量嵌入 (非阻塞，失败则降级)
+  var queryEmbedding = null;
+  try {
+    queryEmbedding = await getEmbedding(query);
+    if (queryEmbedding) {
+      console.log('[ai-chat] 向量嵌入获取成功，维度:', queryEmbedding.length);
+    }
+  } catch(e) {
+    console.warn('[ai-chat] 向量嵌入获取失败，降级为纯关键词检索:', e.message);
   }
 
   // 关键词评分排序
@@ -251,16 +451,46 @@ async function retrieveContext(query, mode, topK) {
     scored = allChunks.map(c => ({ chunk: c, score: 1 }));
   }
 
-  // 如果有embedding，向量重排（对top 2x进行）
-  const candidates = scored.filter(s => s.score > 0).slice(0, topK * 2);
+  // [V4.1-PHASE2] ZGB-AI-201: 向量检索 + 融合排序
+  var vectorResults = [];
+  var fusionResults = [];
+  if (queryEmbedding) {
+    // 对全部 chunks 进行向量相似度计算
+    vectorResults = vectorSearch(queryEmbedding, allChunks, topK * 3);
+
+    // 三路融合排序: 向量 x 0.5 + 关键词 x 0.3 + 扩展(同义词) x 0.2
+    fusionResults = fusionRank(vectorResults, scored, []);
+    var fusionTop5Avg = fusionResults.length > 0
+      ? fusionResults.slice(0, 5).reduce(function(s, r) { return s + r.fusionScore; }, 0) / Math.min(5, fusionResults.length)
+      : 0;
+    console.log('[ai-chat] 融合排序完成，top-5 平均分:', fusionTop5Avg.toFixed(4));
+  }
+
+  // 选择排序结果: 向量融合优先，关键词兜底
+  var rankedResults = (fusionResults.length > 0) ? fusionResults : scored;
+
+  // 统一分数过滤
+  var candidates = rankedResults.filter(function(s) {
+    var sc = (s.score !== undefined) ? s.score : (s.fusionScore || 0);
+    return sc > 0;
+  }).slice(0, topK * 2);
 
   // 对高分候选进行K2安全过滤
   const safeCandidates = candidates.filter(s => {
-    const leaks = scanForK2Leak(s.chunk.content);
+    const leaks = scanForK2Leak((s.chunk && s.chunk.content) || '');
     return leaks.length === 0;
   });
 
   const top = safeCandidates.slice(0, topK);
+
+  // [V4.1-PHASE2] ZGB-AI-203: 计算融合排序 top-3 平均分供置信度参考
+  var avgFusionScore = 0;
+  if (fusionResults.length > 0) {
+    var confScores = fusionResults.slice(0, 3).map(function(r) { return r.fusionScore || 0; });
+    avgFusionScore = confScores.length > 0
+      ? confScores.reduce(function(a, b) { return a + b; }, 0) / confScores.length
+      : 0;
+  }
 
   // 构建格式化输出
   const sources = [];
@@ -281,11 +511,20 @@ async function retrieveContext(query, mode, topK) {
       ).join('\n\n')
     : '';
 
-  var result = { chunks: top.map(s => s.chunk), sources, contextText };
+  // [V4.1-PHASE2] 返回融合排序结果供置信度计算
+  var result = {
+    chunks: top.map(s => s.chunk),
+    sources,
+    contextText,
+    fusionResults: fusionResults,   // 供置信度计算
+    avgScore: avgFusionScore        // 供置信度分级
+  };
 
-  // Phase 2.4: 缓存写入
+  // Phase 2.4: 缓存写入（domain-aware key）
+  var cacheData = { chunks: top.map(s => s.chunk), sources, contextText, fusionResults: [], avgScore: 0 };
   if (top.length > 0) {
-    setCachedRAG(query, mode, result);
+    var domainSuffix = detectedDomain ? (Array.isArray(detectedDomain) ? detectedDomain.join(',') : detectedDomain) : '';
+    setCachedRAG(query, mode + (domainSuffix ? '_' + domainSuffix : ''), cacheData);
   }
 
   return result;
@@ -308,6 +547,42 @@ async function fetchBatch(ddb, where, maxItems) {
     offset += batchSize;
   }
   return all;
+}
+
+// [V4.1-PHASE2] ZGB-AI-203: 置信度分级计算
+// 基于 fusionRank top-3 平均分数和 RAG 命中源数量
+// 阈值: high >=0.75(且>=3源), medium >=0.5(且>=2源), low <0.5
+function computeConfidence(fusionResults, sources) {
+  var hitCount = (sources && sources.length) || 0;
+  if (hitCount === 0) {
+    return { level: 'low', label: 30, hasConfidence: false };
+  }
+
+  // 取 top-3 平均融合分数
+  var topScores = (fusionResults || []).slice(0, 3).map(function(r) { return r.fusionScore || 0; });
+  var avgScore = topScores.length > 0
+    ? topScores.reduce(function(a, b) { return a + b; }, 0) / topScores.length
+    : 0;
+
+  var level, numericScore;
+  if (avgScore >= 0.75 && hitCount >= 3) {
+    level = 'high';
+    numericScore = 90;
+  } else if (avgScore >= 0.5 && hitCount >= 2) {
+    level = 'medium';
+    numericScore = 65;
+  } else {
+    level = 'low';
+    numericScore = 35;
+  }
+
+  return {
+    level: level,
+    label: numericScore,
+    hasConfidence: true,
+    avgScore: avgScore,
+    hitCount: hitCount
+  };
 }
 
 // ========== LLM 调用 ==========
@@ -403,15 +678,18 @@ async function callDeepSeek(requestBody) {
 }
 
 // ========== 降级响应 ==========
-function buildFallbackResponse(retrievedChunks, mode) {
+function buildFallbackResponse(retrievedChunks, mode, tier) {
+  tier = tier || 'L3';
   if (retrievedChunks && retrievedChunks.length > 0) {
     const top = retrievedChunks.slice(0, 3);
-    const content = '🔍 以下是根据知识库检索到的相关信息（AI服务暂时降级）：\n\n' +
-      top.map((c, i) =>
-        `**${c.source_title || '来源 ' + (i + 1)}**\n${(c.content || '').substring(0, 500)}\n`
-      ).join('\n') +
-      '\n⚠️ 当前AI大模型服务暂时不可用，以上为知识库直接检索结果。如需更精准的回答，请稍后重试。';
-    return { content, quickReplies: undefined };
+    var sourcesList = top.map(function(c, i) {
+      return '**' + (c.source_title || '来源 ' + (i + 1)) + '**\n' + (c.content || '').substring(0, 500) + '\n';
+    }).join('\n');
+    var tierNote = tier === 'L2'
+      ? '⚠️ AI大模型服务暂时降级（L2·RAG直返），以上为知识库直接检索结果。'
+      : '⚠️ AI服务当前不可用（L3·兜底引导），建议查阅入境处官网或稍后重试。';
+    var content = '[' + tier + '·服务降级] ' + tierNote + '\n\n' + sourcesList;
+    return { content: content, quickReplies: undefined };
   }
   return null;
 }
@@ -436,6 +714,40 @@ function processHistory(history) {
       ? (msg.content || '').substring(0, 300)  // 截断长回复节省token
       : msg.content
   }));
+}
+
+// [V4.1-PHASE2] ZGB-AI-202: 多轮对话记忆 — 摘要压缩
+// 当 history > 5 轮时，将最早3轮压缩为1条摘要消息
+// 超过 5 轮的对话，早期轮次用一句话摘要保留核心上下文
+function compressHistory(history, maxTurns) {
+  if (!history || !Array.isArray(history) || history.length === 0) return [];
+
+  maxTurns = maxTurns || 5;
+
+  // 计算轮数 (每2条消息=1轮: user+assistant)
+  var turnCount = Math.ceil(history.length / 2);
+
+  if (turnCount <= maxTurns) {
+    return history;
+  }
+
+  // 需要压缩: 取最早3轮进行摘要 (3轮 = 6条消息)
+  var earlyTurns = history.slice(0, 6);
+  var recentTurns = history.slice(6);
+
+  // 构建摘要消息
+  var summaryLines = earlyTurns.map(function(m) {
+    var prefix = m.role === 'user' ? '用户: ' : '助手: ';
+    return prefix + (m.content || '').substring(0, 100);
+  });
+  var summaryText = summaryLines.join('\n');
+
+  var summaryEntry = {
+    role: 'user',
+    content: '[对话摘要] 以下为之前对话的摘要：\n' + summaryText.substring(0, 500)
+  };
+
+  return [summaryEntry].concat(recentTurns);
 }
 
 // ========== 上下文压缩 ==========
@@ -475,6 +787,8 @@ function buildContextMessage(context) {
 }
 
 // ========== 对话日志 ==========
+// [V4.1-PHASE1] ZGB-AI-104: 监控字段扩展 (+ user_id, turn_number, rag_hit_count, stream_enabled)
+// [V4.1-PHASE2] ZGB-AI-203: 新增 confidence_level 字段
 async function logConversation(data) {
   try {
     const ddb = getDb();
@@ -482,6 +796,7 @@ async function logConversation(data) {
       trace_id: data.traceId,
       session_id: data.sessionId,
       mode: data.mode,
+      _openid: data.openid || null,
       query: data.query,
       response_preview: (data.response || '').substring(0, 200),
       rag_sources: data.sources || [],
@@ -492,6 +807,13 @@ async function logConversation(data) {
       degradation_tier: data.tier || 'llm',
       cache_hit: data.cacheHit || false,
       safety_triggered: data.safetyTriggered || [],
+      // [V4.1-PHASE1] 新字段
+      user_id: data.userId || null,
+      turn_number: data.turnNumber || 0,
+      rag_hit_count: data.ragHitCount || 0,
+      stream_enabled: data.streamEnabled || false,
+      // [V4.1-PHASE2] ZGB-AI-203: 置信度字段
+      confidence_level: data.confidenceLevel || null,
       timestamp: new Date(),
     }).catch(() => {});
   } catch(e) {
@@ -500,19 +822,56 @@ async function logConversation(data) {
 }
 
 // ========== 用户反馈处理 ==========
-async function handleFeedback(params) {
+// [V4.1-PHASE1] ZGB-AI-103: 反馈闭环 — 新字段 + 幂等约束
+async function handleFeedback(params, openid) {
   try {
     const ddb = getDb();
+    const _ = ddb.command;
+    const message_id = params.message_id || params.messageId || '';
+    const session_id = params.session_id || params.sessionId || '';
+    const rating = params.rating !== undefined ? Number(params.rating) : (params.feedback === 'like' ? 1 : 0);
+
+    // 幂等检查: 同(_openid, message_id)不重复写入
+    if (message_id) {
+      const existing = await ddb.collection('conversation_feedback')
+        .where({ _openid: openid, message_id: message_id })
+        .limit(1)
+        .get();
+      if (existing.data && existing.data.length > 0) {
+        return { code: 409, message: 'DUPLICATE_FEEDBACK', data: { recorded: false } };
+      }
+    }
+
+    // 写入新字段
     await ddb.collection('conversation_feedback').add({
-      messageId: params.messageId || '',
-      feedback: params.feedback || 'unknown',
-      timestamp: params.timestamp ? new Date(params.timestamp) : new Date(),
-      sessionId: params.sessionId || '',
+      _openid: openid || params._openid || '',
+      session_id: session_id,
+      message_id: message_id,
+      rating: rating,
+      tags: params.tags || [],
+      comment: params.comment || '',
+      createdAt: new Date()
     });
     return { code: 200, message: 'ok', data: { recorded: true } };
   } catch(e) {
     console.warn('[ai-chat] Feedback recording failed:', e.message);
     return { code: 200, message: 'ok', data: { recorded: false } };
+  }
+}
+
+
+// [V4.1-PHASE1] ZGB-AI-104: 获取下一轮次号
+async function getNextTurnNumber(sessionId) {
+  if (!sessionId) return 1;
+  try {
+    const ddb = getDb();
+    const res = await ddb.collection('conversation_logs')
+      .where({ session_id: sessionId })
+      .count();
+    return (res.total || 0) + 1;
+  } catch(e) {
+    console.warn('[ai-chat] getNextTurnNumber failed:', e.message);
+    return 1;
   }
 }
 
@@ -525,9 +884,21 @@ exports.main = async function (event, context) {
     ? JSON.parse(event.body)
     : event;
 
+  // [V4.1-PHASE1] 从WXContext提取openid (兼容HTTP trigger)
+  var openid = '';
+  try {
+    var wxCtx = getApp().getWXContext();
+    openid = wxCtx.OPENID || '';
+  } catch(e) {
+    // HTTP trigger下getWXContext不可用
+  }
+  if (!openid && params._openid) {
+    openid = params._openid;
+  }
+
   // ====== 反馈动作处理 (非对话路径) ======
   if (params.action === 'feedback') {
-    return handleFeedback(params);
+    return handleFeedback(params, openid);
   }
 
   const sessionId = params.sessionId || ('sess_' + Date.now());
@@ -563,13 +934,77 @@ exports.main = async function (event, context) {
   let safetyTriggered = [];
   let ragSources = [];
 
+  // [V4.1-PHASE1] 计算本轮次号
+  let turnNumber = 0;
+  getNextTurnNumber(sessionId).then(function(n) { turnNumber = n; }).catch(function() {});
+
   try {
-    // ====== Step 1: RAG 检索 ======
-    const ragResult = await retrieveContext(message, chatMode);
+    // ====== Step 0: 领域意图识别 (REQ-008) ======
+    // qa 模式自动检测问题所属路径领域，精准过滤 RAG 来源
+    var detectedDomain = null;
+    if (chatMode === 'qa' || chatMode === 'assessment') {
+      detectedDomain = domainRouter.detectDomain(message, chatMode);
+      if (detectedDomain) {
+        var domainLabel = Array.isArray(detectedDomain) ? detectedDomain.join(',') : detectedDomain;
+        console.log('[ai-chat] Domain detected:', domainLabel);
+      }
+    }
+
+    // ====== Step 1: RAG 检索 + 用户画像 (并行) ======
+    // [V4.1-PHASE1] ZGB-AI-107: RAG + 画像并行查询，任一失败不阻塞另一路
+    const [ragResult, profileData] = await Promise.all([
+      retrieveContext(message, chatMode, undefined, detectedDomain),
+      buildProfile(openid).catch(function() { return { hasData: false }; })
+    ]);
     ragSources = ragResult.sources || [];
 
+    // [V4.1-PHASE2] ZGB-AI-203: 计算置信度
+    var confidenceInfo = computeConfidence(ragResult.fusionResults || [], ragResult.sources || []);
+    var confidenceLevel = confidenceInfo.level;
+    var hasConfidence = confidenceInfo.hasConfidence;
+
+    // [V4.1-PHASE2] ZGB-AI-203: 在 system prompt 中注入置信度指令
+    var confidenceDirective = '';
+    if (hasConfidence) {
+      if (confidenceLevel === 'high') {
+        confidenceDirective = '\n\n【当前回答置信度: 高】你本次回答基于多项可靠来源，可以直接断言语气，并标注具体来源名称。';
+      } else if (confidenceLevel === 'medium') {
+        confidenceDirective = '\n\n【当前回答置信度: 中】你本次回答基于有限来源，建议在适当位置添加"建议核实"的提示。';
+      } else {
+        confidenceDirective = '\n\n【当前回答置信度: 低】你本次回答缺乏直接支撑来源，必须在末尾明确声明"以上信息仅供参考，请以入境处最新公告为准"。';
+      }
+    }
+
+    // [V4.1-PHASE1] 构建画像XML上下文，注入system prompt
+    var profileContext = buildUserProfileXml(profileData);
+    // [V4.1-PHASE2] 注入置信度指令
+    var enhancedContextText = ragResult.contextText + profileContext + confidenceDirective;
+
     // ====== Step 2: 构建消息 ======
-    const historyMsgs = processHistory(history);
+    // [V4.1-PHASE2] ZGB-AI-202: 多轮对话记忆
+    // REQ-010: 服务端记忆加载 + 合并去重 (专家评审 C3 双重校验)
+    var serverMemory = [];
+    try {
+      var ddb = getDb();
+      serverMemory = await memory.loadRecentMemory(sessionId, openid, ddb);
+      if (serverMemory.length > 0) {
+        console.log('[ai-chat] Server memory loaded:', serverMemory.length, 'messages');
+      }
+    } catch(e) {
+      console.warn('[ai-chat] Server memory loading skipped:', e.message);
+    }
+
+    // 合并服务端记忆与客户端历史（客户端为时间锚点）
+    var mergedHistory = memory.mergeHistory(
+      (history && history.length > 0) ? history : [],
+      serverMemory
+    );
+    // 限制最多10条消息（5轮）
+    mergedHistory = memory.trimMemory(mergedHistory, 10);
+
+    const historyMsgs = mergedHistory.length > 0
+      ? processHistory(mergedHistory)
+      : [];
     const contextMsg = buildContextMessage(sessionContext);
 
     const messages = [];
@@ -580,7 +1015,7 @@ exports.main = async function (event, context) {
     messages.push({ role: 'user', content: message });
 
     // ====== Step 3: 调用 LLM（含RAG上下文） ======
-    const requestBody = buildDeepSeekRequest(messages, chatMode, ragResult.contextText, streamMode, sessionContext);
+    const requestBody = buildDeepSeekRequest(messages, chatMode, enhancedContextText, streamMode, sessionContext);
     const apiResult = await callDeepSeek(requestBody);
 
     let content, quickReplies, assessmentResult;
@@ -590,6 +1025,13 @@ exports.main = async function (event, context) {
       const llmResult = apiResult.result;
       if (llmResult && llmResult.choices && llmResult.choices.length > 0) {
         content = llmResult.choices[0].message.content;
+
+        // [V4.1-PHASE2] REQ-011: 置信度后处理拦截层 (专家评审 C4)
+        // 正则提取 [置信度: X·标签]，格式异常时降级为无标注（不阻塞回复）
+        var confidenceLabel = extractConfidenceLabel(content);
+        if (confidenceLabel) {
+          console.log('[ai-chat] Confidence labeled:', confidenceLabel.level);
+        }
 
         // Phase 2: 如果评估模式+JSON模式，解析结构化输出
         if (chatMode === 'assessment') {
@@ -616,6 +1058,13 @@ exports.main = async function (event, context) {
           assessmentResult = parseAssessmentResult(content);
         }
 
+        // [V4.1-PHASE2 FIX] 剥离 ```quick_replies 代码块，防止代码漏出到UI
+        var stripped = stripQuickRepliesBlock(content);
+        content = stripped.cleanedContent;
+        if (!quickReplies || quickReplies.length === 0) {
+          quickReplies = stripped.quickReplies;
+        }
+
         // 扫描回答中的K2泄露
         safetyTriggered = scanForK2Leak(content);
 
@@ -626,13 +1075,18 @@ exports.main = async function (event, context) {
           response: content, sources: ragSources.map(s => s.title),
           model: requestBody.model, tokens,
           latencyMs: Date.now() - startTime,
-          degraded: false, safetyTriggered
+          degraded: false, safetyTriggered,
+          // [V4.1-PHASE1] 监控字段
+          userId: openid, openid: openid, turnNumber: turnNumber,
+          ragHitCount: ragSources.length, streamEnabled: streamMode,
+          // [V4.1-PHASE2] ZGB-AI-203: 置信度字段
+          confidenceLevel: confidenceLevel
         }).catch(() => {});
       }
     } else if (apiResult && apiResult.isStream) {
       // 流式响应——在HTTP trigger下转发SSE
       if (context.httpContext && streamMode) {
-        return handleStreamResponse(apiResult.stream, traceId, sessionId, chatMode, message, ragSources, startTime, safetyTriggered, context);
+        return handleStreamResponse(apiResult.stream, traceId, sessionId, chatMode, message, ragSources, startTime, safetyTriggered, context, openid, turnNumber, streamMode, confidenceLevel, hasConfidence);
       }
       // 非HTTP环境下不支持流式，返回提示
       return respond(400, '流式响应需要HTTP trigger', null, context);
@@ -640,7 +1094,9 @@ exports.main = async function (event, context) {
 
     if (!content) {
       // ====== Step 4: 降级——RAG直接返回 ======
-      const fallback = buildFallbackResponse(ragResult.chunks, chatMode);
+      // REQ-012: 降级链L1/L2/L3标注 — 无LLM结果=至少L2
+      var fallbackTier = apiResult ? 'L2' : 'L3';
+      const fallback = buildFallbackResponse(ragResult.chunks, chatMode, fallbackTier);
       if (fallback) {
         content = fallback.content;
         quickReplies = fallback.quickReplies;
@@ -654,7 +1110,12 @@ exports.main = async function (event, context) {
         response: content, sources: ragSources.map(s => s.title),
         model: 'fallback', tokens: {},
         latencyMs: Date.now() - startTime,
-        degraded: true, safetyTriggered
+        degraded: true, safetyTriggered,
+        // [V4.1-PHASE1] 监控字段
+        userId: openid, openid: openid, turnNumber: turnNumber,
+        ragHitCount: ragSources.length, streamEnabled: streamMode,
+        // [V4.1-PHASE2] ZGB-AI-203: 置信度字段
+        confidenceLevel: confidenceLevel
       }).catch(() => {});
     }
 
@@ -665,12 +1126,16 @@ exports.main = async function (event, context) {
       quickReplies = generateAssessmentQuickReplies(step);
     }
 
+    // [V4.1-PHASE2] ZGB-AI-203: 在响应中包含置信度信息
     return respond(200, 'ok', {
       messageId: 'msg_' + Date.now() + '_' + Math.random().toString(36).substr(2, 9),
       content, quickReplies, assessmentResult,
       sources: ragSources,
       traceId,
       degraded,
+      confidence_level: confidenceLevel,
+      hasConfidence: hasConfidence,
+      confidence_label: confidenceLabel || null,  // REQ-011: A-E五级语义化标注
     }, context);
 
   } catch (error) {
@@ -680,7 +1145,12 @@ exports.main = async function (event, context) {
       response: 'ERROR: ' + (error.message || 'unknown'),
       sources: [], model: 'error', tokens: {},
       latencyMs: Date.now() - startTime,
-      degraded: true, safetyTriggered
+      degraded: true, safetyTriggered,
+      // [V4.1-PHASE1] 监控字段
+      userId: openid, openid: openid, turnNumber: turnNumber,
+      ragHitCount: ragSources.length, streamEnabled: streamMode,
+      // [V4.1-PHASE2] ZGB-AI-203: 置信度字段
+      confidenceLevel: null
     }).catch(() => {});
 
     return respond(500, 'AI对话服务异常：' + (error.message || '未知错误'), null, context);
@@ -688,7 +1158,9 @@ exports.main = async function (event, context) {
 };
 
 // ========== 流式响应处理 ==========
-async function handleStreamResponse(streamResponse, traceId, sessionId, mode, query, sources, startTime, safetyTriggered, ctx) {
+// [V4.1-PHASE1] ZGB-AI-104+107: 新增参数 + 流式超时检测(10s idle)
+// [V4.1-PHASE2] ZGB-AI-203: 新增 confidenceLevel/hasConfidence 参数注入 done event
+async function handleStreamResponse(streamResponse, traceId, sessionId, mode, query, sources, startTime, safetyTriggered, ctx, openid, turnNumber, streamMode, confidenceLevel, hasConfidence) {
   // 当云函数作为HTTP trigger时，context.httpContext存在
   // CloudBase HTTP访问服务支持SSE流式转发
   const httpCtx = ctx.httpContext;
@@ -706,23 +1178,39 @@ async function handleStreamResponse(streamResponse, traceId, sessionId, mode, qu
   });
 
   // 先发送元数据
-  res.write(`data: ${JSON.stringify({
+  res.write("data: " + JSON.stringify({
     type: 'meta',
-    traceId, sessionId, mode,
-    sources: sources.map(s => s.title),
-  })}\n\n`);
+    traceId: traceId,
+    sessionId: sessionId,
+    mode: mode,
+    sources: sources.map(function(s) { return s.title; }),
+  }) + "\n\n");
 
   try {
     let fullContent = '';
     const reader = streamResponse.body;
     let buffer = '';
+    let timedOut = false;
+    let lastTokenTime = Date.now();
+    const IDLE_TIMEOUT_MS = 10000; // [V4.1-PHASE1] 10s idle timeout
+
+    // [V4.1-PHASE1] 超时检测轮询
+    const timeoutPoller = setInterval(function() {
+      if (timedOut) return;
+      if (Date.now() - lastTokenTime >= IDLE_TIMEOUT_MS) {
+        timedOut = true;
+        console.log('[ai-chat] Stream idle timeout after', IDLE_TIMEOUT_MS, 'ms');
+      }
+    }, 1000);
 
     for await (const chunk of reader) {
+      if (timedOut) break;
       buffer += chunk.toString();
-      const lines = buffer.split('\n');
-      buffer = lines.pop() || '';
+      lastTokenTime = Date.now();
+      const linesArr = buffer.split('\n');
+      buffer = linesArr.pop() || '';
 
-      for (const line of lines) {
+      for (const line of linesArr) {
         if (line.startsWith('data: ')) {
           const data = line.substring(6).trim();
           if (data === '[DONE]') continue;
@@ -731,40 +1219,161 @@ async function handleStreamResponse(streamResponse, traceId, sessionId, mode, qu
             const delta = parsed.choices?.[0]?.delta?.content || '';
             if (delta) {
               fullContent += delta;
-              res.write(`data: ${JSON.stringify({ type: 'token', content: delta })}\n\n`);
+              res.write("data: " + JSON.stringify({ type: 'token', content: delta }) + "\n\n");
             }
           } catch(e) {}
         }
       }
     }
 
+    clearInterval(timeoutPoller);
+
+    // [V4.1-PHASE1] 超时截断: 追加"..."并记录timeout事件
+    if (timedOut) {
+      fullContent += '\n\n...';
+      res.write("data: " + JSON.stringify({ type: 'token', content: '\n\n...' }) + "\n\n");
+      // 记录timeout事件到conversation_logs
+      try {
+        const ddb = getDb();
+        ddb.collection('conversation_logs').add({
+          session_id: sessionId,
+          trace_id: traceId,
+          _openid: openid || '',
+          query: query,
+          response_preview: '[STREAM_TIMEOUT] truncated at ' + fullContent.length + ' chars',
+          model: process.env.DEEPSEEK_MODEL || 'deepseek-chat',
+          degraded: true,
+          degradation_tier: 'stream_timeout',
+          user_id: openid || null,
+          turn_number: turnNumber || 0,
+          rag_hit_count: sources ? sources.length : 0,
+          stream_enabled: true,
+          confidence_level: confidenceLevel || null,
+          timestamp: new Date()
+        }).catch(function() {});
+      } catch(logErr) {}
+    }
+
     // 发送完成标记
-    const finalSafety = scanForK2Leak(fullContent);
+    // [V4.1-PHASE2 FIX] 剥离 ```quick_replies 代码块，防止代码漏出到UI
+    var strippedStream = stripQuickRepliesBlock(fullContent);
+    var cleanContent = strippedStream.cleanedContent;
+    var streamQuickReplies = strippedStream.quickReplies;
+
+    const finalSafety = scanForK2Leak(cleanContent);
     const allSafety = [...new Set([...safetyTriggered, ...finalSafety])];
 
-    res.write(`data: ${JSON.stringify({
+    // [V4.1-PHASE2] ZGB-AI-203: done event 中包含置信度信息
+    res.write("data: " + JSON.stringify({
       type: 'done',
-      content: fullContent,
+      content: cleanContent,
+      quick_replies: streamQuickReplies,
       safety_triggered: allSafety,
       trace_id: traceId,
-    })}\n\n`);
+      confidence_level: confidenceLevel || 'low',
+      hasConfidence: hasConfidence || false
+    }) + "\n\n");
 
-    logConversation({
-      traceId, sessionId, mode, query,
-      response: fullContent, sources: sources.map(s => s.title),
-      model: process.env.DEEPSEEK_MODEL || 'deepseek-chat',
-      tokens: {}, latencyMs: Date.now() - startTime,
-      degraded: false, safetyTriggered: allSafety
-    }).catch(() => {});
+    if (!timedOut) {
+      logConversation({
+        traceId: traceId,
+        sessionId: sessionId,
+        mode: mode,
+        query: query,
+        response: cleanContent,
+        sources: sources.map(function(s) { return s.title; }),
+        model: process.env.DEEPSEEK_MODEL || 'deepseek-chat',
+        tokens: {},
+        latencyMs: Date.now() - startTime,
+        degraded: false,
+        safetyTriggered: allSafety,
+        // [V4.1-PHASE1] 监控字段
+        userId: openid || '',
+        openid: openid || '',
+        turnNumber: turnNumber || 0,
+        ragHitCount: sources ? sources.length : 0,
+        streamEnabled: true,
+        // [V4.1-PHASE2] ZGB-AI-203: 置信度字段
+        confidenceLevel: confidenceLevel || null
+      }).catch(() => {});
+    }
 
   } catch(e) {
-    res.write(`data: ${JSON.stringify({ type: 'error', message: e.message })}\n\n`);
+    res.write("data: " + JSON.stringify({ type: 'error', message: e.message }) + "\n\n");
   }
 
   res.end();
 }
+// ========== quick_replies 代码块剥离 ==========
+// 从 LLM 返回的 content 中剥离 ```quick_replies 代码块
+// 返回 { cleanedContent, quickReplies } — cleanedContent 不含 quick_replies 块
+function stripQuickRepliesBlock(content) {
+  if (!content || typeof content !== 'string') {
+    return { cleanedContent: content || '', quickReplies: [] };
+  }
+
+  var cleaned = content;
+  var quickReplies = [];
+
+  // 匹配 ```quick_replies\n[...JSON...]\n``` 模式
+  // 支持代码块前后可能有额外换行
+  var blockRegex = /```quick_replies\s*\n([\s\S]*?)\n\s*```/g;
+  var match;
+
+  while ((match = blockRegex.exec(content)) !== null) {
+    try {
+      var jsonStr = (match[1] || '').trim();
+      if (jsonStr.startsWith('[') && jsonStr.endsWith(']')) {
+        var parsed = JSON.parse(jsonStr);
+        if (Array.isArray(parsed) && parsed.length > 0) {
+          quickReplies = quickReplies.concat(parsed);
+        }
+      }
+    } catch(e) {
+      console.warn('[ai-chat] stripQuickReplies JSON parse failed:', e.message);
+    }
+  }
+
+  // 从 content 中移除所有 ```quick_replies 代码块（包括前后多余换行）
+  cleaned = content.replace(/```quick_replies\s*\n[\s\S]*?\n\s*```/g, '');
+  // 清理可能残留的多余空行（连续3个以上换行压缩为2个）
+  cleaned = cleaned.replace(/\n{3,}/g, '\n\n').trim();
+
+  return {
+    cleanedContent: cleaned,
+    quickReplies: quickReplies.slice(0, 5)  // 最多5个快捷回复
+  };
+}
 
 // ========== 辅助函数 ==========
+// [V4.1-PHASE2] REQ-011: 置信度后处理拦截层
+// 专家评审 C4: 正则提取 [置信度: A-E·标签]，格式异常降级无标注
+var CONFIDENCE_SEMANTIC = {
+  A: '非常可靠',
+  B: '比较可靠',
+  C: '建议核实',
+  D: '可能有误',
+  E: '仅供参考'
+};
+
+function extractConfidenceLabel(content) {
+  if (!content) return null;
+  // 匹配 [置信度: X·标签] 格式
+  var regex = /\[置信度:\s*([A-E])·([^\]]+)\]/;
+  var match = content.match(regex);
+  if (!match) return null;
+  var level = match[1];
+  var label = match[2] || '';
+  // 验证等级有效
+  if (!CONFIDENCE_SEMANTIC[level]) return null;
+  return {
+    level: level,
+    label: label,
+    semantic: CONFIDENCE_SEMANTIC[level],
+    raw: match[0]
+  };
+}
+
 function respond(code, message, data, ctx) {
   const body = { code, message, data: data || null };
   // 如果是在HTTP trigger上下文中，需要用res.json返回
