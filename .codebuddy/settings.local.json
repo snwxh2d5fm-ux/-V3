@@ -1,7 +1,5 @@
 {
   "enableAllProjectMcpServers": true,
-  "enabledMcpjsonServers": [
-    "cloudbase"
-  ],
+  "enabledMcpjsonServers": ["cloudbase"],
   "disabledMcpjsonServers": []
 }

@@ -11,8 +11,8 @@ Extend `AbstractAgent` and implement `run()` that returns `Observable<BaseEvent>
 ## Structure
 
 ```typescript
-import { AbstractAgent, RunAgentInput, BaseEvent, EventType } from "@ag-ui/client";
-import { Observable, Subscriber } from "rxjs";
+import { AbstractAgent, RunAgentInput, BaseEvent, EventType } from '@ag-ui/client';
+import { Observable, Subscriber } from 'rxjs';
 
 export class MyAdapter extends AbstractAgent {
   run(input: RunAgentInput): Observable<BaseEvent> {

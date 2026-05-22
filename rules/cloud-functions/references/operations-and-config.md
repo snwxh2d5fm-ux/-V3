@@ -17,16 +17,16 @@ Only use raw cloud API calls after reading the official docs or knowledge-base e
 
 ```javascript
 callCloudApi({
-  service: "tcb",
-  action: "GetFunctionLogs",
+  service: 'tcb',
+  action: 'GetFunctionLogs',
   params: {
-    EnvId: "{envId}",
-    FunctionName: "functionName",
+    EnvId: '{envId}',
+    FunctionName: 'functionName',
     Offset: 0,
     Limit: 10,
-    StartTime: "2024-01-01 00:00:00",
-    EndTime: "2024-01-01 23:59:59"
-  }
+    StartTime: '2024-01-01 00:00:00',
+    EndTime: '2024-01-01 23:59:59',
+  },
 });
 ```
 
@@ -34,13 +34,13 @@ callCloudApi({
 
 ```javascript
 callCloudApi({
-  service: "tcb",
-  action: "GetFunctionLogDetail",
+  service: 'tcb',
+  action: 'GetFunctionLogDetail',
   params: {
-    StartTime: "2024-01-01 00:00:00",
-    EndTime: "2024-01-01 23:59:59",
-    LogRequestId: "request-id-from-log-list"
-  }
+    StartTime: '2024-01-01 00:00:00',
+    EndTime: '2024-01-01 23:59:59',
+    LogRequestId: 'request-id-from-log-list',
+  },
 });
 ```
 
@@ -62,19 +62,19 @@ Use raw cloud API only after checking the documentation for `CreateCloudBaseGWAP
 
 ```javascript
 callCloudApi({
-  service: "tcb",
-  action: "CreateCloudBaseGWAPI",
+  service: 'tcb',
+  action: 'CreateCloudBaseGWAPI',
   params: {
     EnableUnion: true,
-    Path: "/api/users",
-    ServiceId: "{envId}",
+    Path: '/api/users',
+    ServiceId: '{envId}',
     Type: 6,
-    Name: "functionName",
+    Name: 'functionName',
     AuthSwitch: 2,
     PathTransmission: 2,
     EnableRegion: true,
-    Domain: "*"
-  }
+    Domain: '*',
+  },
 });
 ```
 
@@ -96,19 +96,19 @@ Do not overwrite function environment variables blindly.
 
 ```javascript
 const current = await queryFunctions({
-  action: "getFunctionDetail",
-  functionName: "functionName"
+  action: 'getFunctionDetail',
+  functionName: 'functionName',
 });
 
 const mergedEnvVariables = {
   ...current.EnvVariables,
-  ...newEnvVariables
+  ...newEnvVariables,
 };
 
 await manageFunctions({
-  action: "updateFunctionConfig",
-  functionName: "functionName",
-  envVariables: mergedEnvVariables
+  action: 'updateFunctionConfig',
+  functionName: 'functionName',
+  envVariables: mergedEnvVariables,
 });
 ```
 
@@ -141,18 +141,18 @@ Examples:
 
 Prefer the converged entrances below, but translate historical names when they appear in old prompts or old docs.
 
-| Historical name | Current action |
-| --- | --- |
-| `getFunctionList` | `queryFunctions(action="listFunctions")` |
-| `createFunction` | `manageFunctions(action="createFunction")` |
-| `updateFunctionCode` | `manageFunctions(action="updateFunctionCode")` |
-| `updateFunctionConfig` | `manageFunctions(action="updateFunctionConfig")` |
-| `getFunctionLogs` | `queryFunctions(action="listFunctionLogs")` |
-| `getFunctionLogDetail` | `queryFunctions(action="getFunctionLogDetail")` |
-| `manageFunctionTriggers` | `manageFunctions(action="createFunctionTrigger"|"deleteFunctionTrigger")` |
-| `readFunctionLayers` | `queryFunctions(action="listLayers"|"listLayerVersions"|"getLayerVersionDetail"|"listFunctionLayers")` |
-| `writeFunctionLayers` | `manageFunctions(action="createLayerVersion"|"deleteLayerVersion"|"attachLayer"|"detachLayer"|"updateFunctionLayers")` |
-| `createFunctionHTTPAccess` | `manageGateway(action="createAccess")` |
+| Historical name            | Current action                                   |
+| -------------------------- | ------------------------------------------------ | ------------------------- | ----------------------- | ---------------------- | ------------------------ |
+| `getFunctionList`          | `queryFunctions(action="listFunctions")`         |
+| `createFunction`           | `manageFunctions(action="createFunction")`       |
+| `updateFunctionCode`       | `manageFunctions(action="updateFunctionCode")`   |
+| `updateFunctionConfig`     | `manageFunctions(action="updateFunctionConfig")` |
+| `getFunctionLogs`          | `queryFunctions(action="listFunctionLogs")`      |
+| `getFunctionLogDetail`     | `queryFunctions(action="getFunctionLogDetail")`  |
+| `manageFunctionTriggers`   | `manageFunctions(action="createFunctionTrigger"  | "deleteFunctionTrigger")` |
+| `readFunctionLayers`       | `queryFunctions(action="listLayers"              | "listLayerVersions"       | "getLayerVersionDetail" | "listFunctionLayers")` |
+| `writeFunctionLayers`      | `manageFunctions(action="createLayerVersion"     | "deleteLayerVersion"      | "attachLayer"           | "detachLayer"          | "updateFunctionLayers")` |
+| `createFunctionHTTPAccess` | `manageGateway(action="createAccess")`           |
 
 ## CLI fallback
 

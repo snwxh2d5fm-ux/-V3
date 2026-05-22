@@ -7,7 +7,7 @@
 **PRD对照**: 分享功能验收标准31条 + 意见反馈功能  
 **合规基线**: 零诱导话术 / 零移民术语 / 无胁迫文案  
 **安全基线**: 家庭邀请码加密 / 数据隔离 / L3阻止分享  
-**隐私基线**: L3页面禁用默认分享 / 卡片不暴露L3字段 / 不携带用户标识  
+**隐私基线**: L3页面禁用默认分享 / 卡片不暴露L3字段 / 不携带用户标识
 
 ---
 
@@ -48,13 +48,13 @@
   | `reminders` | `financial_info` ❌ |
   | `process` | — ❌ |
 
-- **偏差**: 
+- **偏差**:
   1. 前端用户可选 4 种权限 (`documents`/`reminders`/`process`)，但后端仅认 `personal_info`/`document_upload`/`financial_info`
   2. 用户选择 `documents` 后点击"生成邀请码"→ `family-invite-create` 返回 `{code:400, msg:"无效的权限列表"}`
   3. `family-space-manage` 的 `update-permissions` 存在同样问题 (L89)
   4. WXML 权限标签映射名也不一致: "个人信息/证件/提醒/流程" vs 后端 "personal_info/document_upload/financial_info"
 - **影响**: 创建邀请码功能在除仅选 personal_info 外的所有场景下必然失败。基本功能不可用。
-- **修复**: 
+- **修复**:
   1. 统一前后端权限枚举: 使用同一套 key (如 `personal_info`/`documents`/`reminders`/`process`)，后端放开校验
   2. 或前端改为后端认可的 key 列表
   3. 同时修复 WXML 标签映射和 family-space-manage update-permissions 的校验
@@ -67,13 +67,13 @@
   - `cloudfunctions/share-create/index.js:33-101`
   - `cloudfunctions/content-safety-check/index.js` (已实现但未被调用)
 - **PRD条目**: 合规 — 零诱导话术 / 零移民术语; 安全 — 分享前内容安全审核
-- **偏差**: 
+- **偏差**:
   1. `content-safety-check` 云函数已完整实现 `check-text`(禁用术语/PII/诱导话术) 和 `check-content`(L1等级校验)
   2. 但 `share-create` 的 `handleCreate` 直接写入 `share_records` 集合，**未调用 content-safety-check**
   3. `share-preview` 前端也未在 `createShare` 前调用安全检测
   4. 与 `feedback-submit` 的流程不一致 — 后者在 submit 前先调 `content-moderation`
 - **影响**: 用户可通过任意方式构造含禁用术语、PII、诱导话术的分享内容，完全绕过合规门禁。
-- **修复**: 
+- **修复**:
   1. `share-create` 的 `handleCreate` 中，写入数据库前调用 `content-safety-check` 的 `check-text` (检查 contentTitle + contentDigest)
   2. 同时调用 `check-content` 验证 contentType 为 L1 可分享类型
   3. 前端 `share-preview` 的 `createShare` 在调用云函数前也做前端安全检查 (降级策略)
@@ -91,7 +91,7 @@
   4. 注释说"移除字面量'{openid}'降级为用户提示"说明之前的降级路径被有意移除
   5. 但如果 `user-auth` 因冷启动等临时原因失败，用户永远看不到记录
 - **影响**: user-auth 云函数异常时分享记录功能完全不可用，无真正 fallback。
-- **修复**: 
+- **修复**:
   1. 降级路径应使用 `wx.cloud.callFunction({name:'share-resolve', data:{action:'listMyRecords'}})` 由服务端通过 `cloud.getWXContext().OPENID` 鉴权
   2. 或 `queryByOpenid` 中直接使用 `db.collection('share_records').where({_openid: '{openid}'})` 但需确认安全规则已配置
 
@@ -181,7 +181,7 @@
 
 ### P2-04: share-card 组件属性命名 camelCase/kebab-case 不一致
 
-- **文件**: 
+- **文件**:
   - `subpkg-share/pages/share-preview/index.wxml:20-21` 使用 `content-title` / `content-digest`
   - `subpkg-share/components/share-card/index.js:7-14` 定义为 `contentTitle` / `contentDigest`
 - **问题**: 微信小程序会自动转换 `content-title` → `contentTitle`，功能正常但代码风格不一致。未来维护可能产生混淆。
@@ -215,26 +215,26 @@
 
 ## 📊 汇总
 
-| 级别 | 数量 | 关键项 |
-|:----:|:----:|--------|
-| P0 | 4 | formatTime崩溃 / 权限枚举断裂 / 合规门禁绕过 / 数据隔离降级虚设 |
-| P1 | 6 | 非原子写 / 邀请码明文 / 无速率限制 / 过期非幂等 / N+1查询 / imagePath格式 |
-| P2 | 7 | findIndex兼容性 / 速率内存化 / userId脱敏边界 / kebab-case / 无分页 / 硬编码过期 / base64术语 |
+| 级别 | 数量 | 关键项                                                                                        |
+| :--: | :--: | --------------------------------------------------------------------------------------------- |
+|  P0  |  4   | formatTime崩溃 / 权限枚举断裂 / 合规门禁绕过 / 数据隔离降级虚设                               |
+|  P1  |  6   | 非原子写 / 邀请码明文 / 无速率限制 / 过期非幂等 / N+1查询 / imagePath格式                     |
+|  P2  |  7   | findIndex兼容性 / 速率内存化 / userId脱敏边界 / kebab-case / 无分页 / 硬编码过期 / base64术语 |
 
 ## ✅ 已验证合规项 (通过)
 
-| 检查项 | 状态 | 证据 |
-|--------|:----:|------|
-| 零诱导话术 (分享文案) | ✅ | share-preview/index.wxml 免责声明"分享内容不含你的个人信息"，share-risk-dialog 风险提示用语合规 |
-| 零移民术语 | ✅ | content-safety-check BANNED_TERMS 覆盖移民相关禁用词 |
-| 无胁迫文案 | ✅ | 风险弹窗使用"请注意"/"建议"等建议性措辞，无"必须"/"否则"胁迫语气 |
-| 数据隔离 | ⚠️ | share-records 通过 userId 隔离查询，但降级路径不可靠 (P0-04) |
-| L3页面禁用默认分享 | ✅ | share-preview 仅在用户主动操作后触发 share，非自动分享 |
-| 卡片不暴露L3字段 | ✅ | share-resolve 返回仅含 contentType/contentId/contentDigest/landingPage，无个人信息 |
-| 不携带用户标识 | ✅ | share-resolve 返回数据无 userId/openid/昵称；share-preview onShareAppMessage 仅传 shareId |
-| PII脱敏 | ✅ | feedback-submit sanitizePII 覆盖身份证/手机号/邮箱/护照号；wecom-bot 日志脱敏 |
-| CDATA注入防护 | ✅ | wecom-bot escapeCdata 处理 `]]>` 序列 |
-| 密钥环境变量化 | ✅ | wecom-bot 全部凭据从 process.env 读取，无硬编码 |
+| 检查项                | 状态 | 证据                                                                                            |
+| --------------------- | :--: | ----------------------------------------------------------------------------------------------- |
+| 零诱导话术 (分享文案) |  ✅  | share-preview/index.wxml 免责声明"分享内容不含你的个人信息"，share-risk-dialog 风险提示用语合规 |
+| 零移民术语            |  ✅  | content-safety-check BANNED_TERMS 覆盖移民相关禁用词                                            |
+| 无胁迫文案            |  ✅  | 风险弹窗使用"请注意"/"建议"等建议性措辞，无"必须"/"否则"胁迫语气                                |
+| 数据隔离              |  ⚠️  | share-records 通过 userId 隔离查询，但降级路径不可靠 (P0-04)                                    |
+| L3页面禁用默认分享    |  ✅  | share-preview 仅在用户主动操作后触发 share，非自动分享                                          |
+| 卡片不暴露L3字段      |  ✅  | share-resolve 返回仅含 contentType/contentId/contentDigest/landingPage，无个人信息              |
+| 不携带用户标识        |  ✅  | share-resolve 返回数据无 userId/openid/昵称；share-preview onShareAppMessage 仅传 shareId       |
+| PII脱敏               |  ✅  | feedback-submit sanitizePII 覆盖身份证/手机号/邮箱/护照号；wecom-bot 日志脱敏                   |
+| CDATA注入防护         |  ✅  | wecom-bot escapeCdata 处理 `]]>` 序列                                                           |
+| 密钥环境变量化        |  ✅  | wecom-bot 全部凭据从 process.env 读取，无硬编码                                                 |
 
 ## 🔍 数据流闭合检查
 

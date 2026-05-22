@@ -3,5 +3,7 @@
   "version": "1.0.0",
   "description": "从 knowledge_chunks 批量生成攻略书条目",
   "main": "index.js",
-  "dependencies": { "wx-server-sdk": "~2.6.0" }
+  "dependencies": {
+    "wx-server-sdk": "~2.6.0"
+  }
 }

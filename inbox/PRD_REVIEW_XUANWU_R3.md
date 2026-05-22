@@ -63,7 +63,7 @@
 ### P0-04: db-seed 与 membership/index.js 会员权益文案不同步 [PRD未对齐]
 
 - **文件**: `cloudfunctions/db-seed/index.js` vs `subpkg-chat/pages/membership/index.js`
-- **偏差**: 
+- **偏差**:
   - db-seed 写入 `priceMonthly: 3990`(分)，前端展示 `priceMonthlyYuan: '39.90'`(元)
   - db-seed basic features 含 `'全部案例库'`，前端已移除
   - db-seed premium 无 `badge` 字段，前端新增 `badge: '尊享'`
@@ -154,33 +154,33 @@
 
 ## 📊 汇总
 
-| 级别 | 本轮新增 | 前序R2遗留 | 合计 |
-|:----:|:-------:|:---------:|:----:|
-| P0 | 3 | 2 | **5** |
-| P1 | 4 | 0 | **4** |
-| P2 | 6 | 0 | **6** |
+| 级别 | 本轮新增 | 前序R2遗留 | 合计  |
+| :--: | :------: | :--------: | :---: |
+|  P0  |    3     |     2      | **5** |
+|  P1  |    4     |     0      | **4** |
+|  P2  |    6     |     0      | **6** |
 
 ## ✅ 已验证修复 (本次commit正确交付的项)
 
-| # | 修复项 | 文件 | 状态 |
-|---|--------|------|:----:|
-| P0-F1 | 空流程展示路径选择器(非假数据) | pages/process/index/index.js | ✅ |
-| P0-F2 | URLSearchParams→buildQuery | utils/api.js | ✅ |
-| P0-F3 | iang→student_iang + 旧模板13/13 | data/templates.js | ✅ |
-| P0-F4 | Math.random移除 + GCM恒定时间 | utils/crypto.js | ✅ (先前的commit已修复) |
-| P0-F5 | 4条缺失路径补全(dependent/minor_student/exchange/retirement) | data/templates.js | ✅ |
-| P0-F6 | persona-path-compat 4→12角色全覆盖 | subpkg-low/data/persona-path-compat.js | ✅ |
-| P1-F1 | lifeGuideCache去重 | utils/lifeGuideCache.js | ✅ (先前的commit 6842f9a) |
-| P1-F2 | 会员页权益文案细化 | subpkg-chat/pages/membership/index.js + db-seed | ✅ |
-| P1-F3 | 反馈提交2字下限+分类提示 | subpkg-feedback/pages/submit/ | ✅ |
-| P1-F4 | 企微QR云存储兜底+微信号复制降级 | subpkg-feedback/pages/wecom-qr/ | ✅ |
-| P1-F5 | family-invite-create空间创建顺序修正(先空间后邀请) | cloudfunctions/family-invite-create/index.js | ✅ |
-| P2-F1 | date-parser重复字符'须须'→'须' | utils/date-parser.js | ✅ |
-| P2-F2 | doc-index重复slot(birth_cert) | data/document-index-templates.js | ✅ |
-| P2-F3 | scene-tags补 onboard-407 | data/scene-tags.js | ✅ |
-| P2-F4 | mine页通知设置路由+家庭空间会员拦截+分享 | pages/mine/index/index.js | ✅ |
-| P2-F5 | 5页面添加onShareAppMessage | pages/{5 files} | ✅ |
-| P2-F6 | notify-settings页面注册app.json | app.json | ✅ |
+| #     | 修复项                                                       | 文件                                            |           状态            |
+| ----- | ------------------------------------------------------------ | ----------------------------------------------- | :-----------------------: |
+| P0-F1 | 空流程展示路径选择器(非假数据)                               | pages/process/index/index.js                    |            ✅             |
+| P0-F2 | URLSearchParams→buildQuery                                   | utils/api.js                                    |            ✅             |
+| P0-F3 | iang→student_iang + 旧模板13/13                              | data/templates.js                               |            ✅             |
+| P0-F4 | Math.random移除 + GCM恒定时间                                | utils/crypto.js                                 |  ✅ (先前的commit已修复)  |
+| P0-F5 | 4条缺失路径补全(dependent/minor_student/exchange/retirement) | data/templates.js                               |            ✅             |
+| P0-F6 | persona-path-compat 4→12角色全覆盖                           | subpkg-low/data/persona-path-compat.js          |            ✅             |
+| P1-F1 | lifeGuideCache去重                                           | utils/lifeGuideCache.js                         | ✅ (先前的commit 6842f9a) |
+| P1-F2 | 会员页权益文案细化                                           | subpkg-chat/pages/membership/index.js + db-seed |            ✅             |
+| P1-F3 | 反馈提交2字下限+分类提示                                     | subpkg-feedback/pages/submit/                   |            ✅             |
+| P1-F4 | 企微QR云存储兜底+微信号复制降级                              | subpkg-feedback/pages/wecom-qr/                 |            ✅             |
+| P1-F5 | family-invite-create空间创建顺序修正(先空间后邀请)           | cloudfunctions/family-invite-create/index.js    |            ✅             |
+| P2-F1 | date-parser重复字符'须须'→'须'                               | utils/date-parser.js                            |            ✅             |
+| P2-F2 | doc-index重复slot(birth_cert)                                | data/document-index-templates.js                |            ✅             |
+| P2-F3 | scene-tags补 onboard-407                                     | data/scene-tags.js                              |            ✅             |
+| P2-F4 | mine页通知设置路由+家庭空间会员拦截+分享                     | pages/mine/index/index.js                       |            ✅             |
+| P2-F5 | 5页面添加onShareAppMessage                                   | pages/{5 files}                                 |            ✅             |
+| P2-F6 | notify-settings页面注册app.json                              | app.json                                        |            ✅             |
 
 ## 🔍 数据流闭合检查
 

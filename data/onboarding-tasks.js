@@ -14,11 +14,11 @@
  * 关卡7(续签准备) phase-7.js
  */
 
-var allTasks = [];
-for (var p = 0; p < 8; p++) {
-  var phaseTasks = require('./tasks/phase-' + p + '.js');
+const allTasks = [];
+for (let p = 0; p < 8; p++) {
+  const phaseTasks = require('./tasks/phase-' + p + '.js');
   if (Array.isArray(phaseTasks)) {
-    for (var i = 0; i < phaseTasks.length; i++) allTasks.push(phaseTasks[i]);
+    for (let i = 0; i < phaseTasks.length; i++) allTasks.push(phaseTasks[i]);
   }
 }
 

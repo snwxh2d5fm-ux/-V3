@@ -13,7 +13,7 @@ Page({
     // 隐私
     privacyMode: 'L1',
     // 缓存
-    cacheSize: '0 MB'
+    cacheSize: '0 MB',
   },
 
   onLoad() {
@@ -29,14 +29,14 @@ Page({
       const settings = wx.getStorageSync('__app_settings__') || {};
       const userData = wx.getStorageSync('user_data') || {};
       const privacyMode = wx.getStorageSync('__privacy_mode__') || 'L1';
-      
+
       this.setData({
         phoneHash: userData.phone ? userData.phone.slice(0, 3) + '****' + userData.phone.slice(-4) : '',
         memberSince: userData.createdAt || '',
         notifyReminder: settings.notifyReminder !== false,
         notifyPolicy: settings.notifyPolicy !== false,
         notifyUpdate: settings.notifyUpdate === true,
-        privacyMode
+        privacyMode,
       });
 
       // 计算缓存大小
@@ -102,7 +102,7 @@ Page({
             wx.showToast({ title: '清除失败', icon: 'none' });
           }
         }
-      }
+      },
     });
   },
 
@@ -121,7 +121,7 @@ Page({
             wx.showToast({ title: '退出失败', icon: 'none' });
           }
         }
-      }
+      },
     });
   },
 
@@ -141,26 +141,30 @@ Page({
               if (res2.confirm) {
                 wx.showLoading({ title: '注销中...' });
                 // 调用云函数删除服务端数据
-                wx.cloud.callFunction({
-                  name: 'user-auth',
-                  data: { action: 'deleteAccount' }
-                }).then(function() {
-                  wx.hideLoading();
-                }).catch(function() {
-                  wx.hideLoading();
-                }).finally(function() {
-                  try {
-                    wx.clearStorageSync();
-                    wx.reLaunch({ url: '/pages/login/login' });
-                  } catch (e) {
-                    wx.showToast({ title: '操作失败', icon: 'none' });
-                  }
-                });
+                wx.cloud
+                  .callFunction({
+                    name: 'user-auth',
+                    data: { action: 'deleteAccount' },
+                  })
+                  .then(function () {
+                    wx.hideLoading();
+                  })
+                  .catch(function () {
+                    wx.hideLoading();
+                  })
+                  .finally(function () {
+                    try {
+                      wx.clearStorageSync();
+                      wx.reLaunch({ url: '/pages/login/login' });
+                    } catch (e) {
+                      wx.showToast({ title: '操作失败', icon: 'none' });
+                    }
+                  });
               }
-            }
+            },
           });
         }
-      }
+      },
     });
-  }
+  },
 });

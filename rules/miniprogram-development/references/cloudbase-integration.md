@@ -56,7 +56,7 @@ Mini programs using CloudBase should initialize `wx.cloud` once during app start
 App({
   onLaunch() {
     wx.cloud.init({
-      env: "your-env-id",
+      env: 'your-env-id',
       traceUser: true,
     });
   },
@@ -80,7 +80,7 @@ Mini program CloudBase is **naturally login-free**.
 - In cloud functions, retrieve user identity with `cloud.getWXContext().OPENID`.
 
 ```js
-const cloud = require("wx-server-sdk");
+const cloud = require('wx-server-sdk');
 cloud.init({ env: cloud.DYNAMIC_CURRENT_ENV });
 
 exports.main = async () => {

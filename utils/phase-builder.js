@@ -11,10 +11,10 @@
  * @returns {Array} 4个阶段定义对象
  */
 function buildPhase2Stages(phase) {
-  var order = phase.order || 2;
-  var steps = phase.steps || [];
-  var stepCount = steps.length;
-  var chunk1 = Math.ceil(stepCount / 4) || 1;
+  const order = phase.order || 2;
+  const steps = phase.steps || [];
+  const stepCount = steps.length;
+  const chunk1 = Math.ceil(stepCount / 4) || 1;
 
   return [
     {
@@ -23,7 +23,7 @@ function buildPhase2Stages(phase) {
       order: order * 10 + 1,
       isMilestone: true,
       milestoneDocType: '路径确认凭证',
-      steps: steps.slice(0, chunk1)
+      steps: steps.slice(0, chunk1),
     },
     {
       id: 'phase2_submission',
@@ -31,7 +31,7 @@ function buildPhase2Stages(phase) {
       order: order * 10 + 2,
       isMilestone: true,
       milestoneDocType: '递交回执/确认邮件',
-      steps: steps.slice(chunk1, chunk1 * 2)
+      steps: steps.slice(chunk1, chunk1 * 2),
     },
     {
       id: 'phase2_awaiting',
@@ -39,7 +39,7 @@ function buildPhase2Stages(phase) {
       order: order * 10 + 3,
       isMilestone: true,
       milestoneDocType: '入境处受理回执',
-      steps: []
+      steps: [],
     },
     {
       id: 'phase2_activation',
@@ -47,8 +47,8 @@ function buildPhase2Stages(phase) {
       order: order * 10 + 4,
       isMilestone: true,
       milestoneDocType: '签证/进入许可',
-      steps: steps.slice(chunk1 * 2)
-    }
+      steps: steps.slice(chunk1 * 2),
+    },
   ];
 }
 
@@ -58,7 +58,7 @@ function buildPhase2Stages(phase) {
  * @returns {boolean}
  */
 function isPhase2Onboarding(phase) {
-  var pid = phase.id || '';
+  const pid = phase.id || '';
   return pid === 'phase2_onboarding' || pid.includes('phase2_onboarding');
 }
 
@@ -78,9 +78,9 @@ function toStageObject(ps, phaseId, isFirst) {
     milestoneDocType: ps.milestoneDocType,
     phaseId: phaseId,
     status: isFirst ? 'in_progress' : 'locked',
-    steps: (ps.steps || []).map(function(st) {
+    steps: (ps.steps || []).map(function (st) {
       return { stepId: st.id || '', stepName: st.name || '', status: 'pending', completedAt: null };
-    })
+    }),
   };
 }
 
@@ -89,11 +89,11 @@ function toStageObject(ps, phaseId, isFirst) {
  * @param {Array} stages - 已构建的阶段数组
  */
 function autoCompletePhase1(stages) {
-  for (var si = 0; si < stages.length; si++) {
-    var sid = stages[si].stageId || '';
+  for (let si = 0; si < stages.length; si++) {
+    const sid = stages[si].stageId || '';
     if (sid.includes('phase1') || sid.includes('evaluation')) {
       stages[si].status = 'completed';
-      stages[si].steps = (stages[si].steps || []).map(function(st) {
+      stages[si].steps = (stages[si].steps || []).map(function (st) {
         return Object.assign({}, st, { status: 'completed', completedAt: new Date().toISOString() });
       });
     } else if (stages[si].status === 'locked') {
@@ -107,5 +107,5 @@ module.exports = {
   buildPhase2Stages: buildPhase2Stages,
   isPhase2Onboarding: isPhase2Onboarding,
   toStageObject: toStageObject,
-  autoCompletePhase1: autoCompletePhase1
+  autoCompletePhase1: autoCompletePhase1,
 };

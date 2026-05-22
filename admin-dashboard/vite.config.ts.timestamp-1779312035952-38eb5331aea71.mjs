@@ -1,14 +1,13 @@
 // vite.config.ts
-import { defineConfig } from "file:///sessions/gallant-sharp-keller/mnt/%E6%B8%AF%E5%8A%A8%E4%BA%BA%E7%94%9F/%E4%BD%8F%E6%B8%AF%E4%BC%B4V4-2026-5-21%E5%8F%91%E7%89%88/admin-dashboard/node_modules/vite/dist/node/index.js";
-import react from "file:///sessions/gallant-sharp-keller/mnt/%E6%B8%AF%E5%8A%A8%E4%BA%BA%E7%94%9F/%E4%BD%8F%E6%B8%AF%E4%BC%B4V4-2026-5-21%E5%8F%91%E7%89%88/admin-dashboard/node_modules/@vitejs/plugin-react/dist/index.js";
-import path from "path";
-var __vite_injected_original_dirname = "/sessions/gallant-sharp-keller/mnt/\u6E2F\u52A8\u4EBA\u751F/\u4F4F\u6E2F\u4F34V4-2026-5-21\u53D1\u7248/admin-dashboard";
+import { defineConfig } from 'file:///sessions/gallant-sharp-keller/mnt/%E6%B8%AF%E5%8A%A8%E4%BA%BA%E7%94%9F/%E4%BD%8F%E6%B8%AF%E4%BC%B4V4-2026-5-21%E5%8F%91%E7%89%88/admin-dashboard/node_modules/vite/dist/node/index.js';
+import react from 'file:///sessions/gallant-sharp-keller/mnt/%E6%B8%AF%E5%8A%A8%E4%BA%BA%E7%94%9F/%E4%BD%8F%E6%B8%AF%E4%BC%B4V4-2026-5-21%E5%8F%91%E7%89%88/admin-dashboard/node_modules/@vitejs/plugin-react/dist/index.js';
+import path from 'path';
+var __vite_injected_original_dirname =
+  '/sessions/gallant-sharp-keller/mnt/\u6E2F\u52A8\u4EBA\u751F/\u4F4F\u6E2F\u4F34V4-2026-5-21\u53D1\u7248/admin-dashboard';
 var vite_config_default = defineConfig({
   plugins: [react()],
-  resolve: { alias: { "@": path.resolve(__vite_injected_original_dirname, "./src") } },
-  server: { port: 5173, host: "127.0.0.1" }
+  resolve: { alias: { '@': path.resolve(__vite_injected_original_dirname, './src') } },
+  server: { port: 5173, host: '127.0.0.1' },
 });
-export {
-  vite_config_default as default
-};
+export { vite_config_default as default };
 //# sourceMappingURL=data:application/json;base64,ewogICJ2ZXJzaW9uIjogMywKICAic291cmNlcyI6IFsidml0ZS5jb25maWcudHMiXSwKICAic291cmNlc0NvbnRlbnQiOiBbImNvbnN0IF9fdml0ZV9pbmplY3RlZF9vcmlnaW5hbF9kaXJuYW1lID0gXCIvc2Vzc2lvbnMvZ2FsbGFudC1zaGFycC1rZWxsZXIvbW50L1x1NkUyRlx1NTJBOFx1NEVCQVx1NzUxRi9cdTRGNEZcdTZFMkZcdTRGMzRWNC0yMDI2LTUtMjFcdTUzRDFcdTcyNDgvYWRtaW4tZGFzaGJvYXJkXCI7Y29uc3QgX192aXRlX2luamVjdGVkX29yaWdpbmFsX2ZpbGVuYW1lID0gXCIvc2Vzc2lvbnMvZ2FsbGFudC1zaGFycC1rZWxsZXIvbW50L1x1NkUyRlx1NTJBOFx1NEVCQVx1NzUxRi9cdTRGNEZcdTZFMkZcdTRGMzRWNC0yMDI2LTUtMjFcdTUzRDFcdTcyNDgvYWRtaW4tZGFzaGJvYXJkL3ZpdGUuY29uZmlnLnRzXCI7Y29uc3QgX192aXRlX2luamVjdGVkX29yaWdpbmFsX2ltcG9ydF9tZXRhX3VybCA9IFwiZmlsZTovLy9zZXNzaW9ucy9nYWxsYW50LXNoYXJwLWtlbGxlci9tbnQvJUU2JUI4JUFGJUU1JThBJUE4JUU0JUJBJUJBJUU3JTk0JTlGLyVFNCVCRCU4RiVFNiVCOCVBRiVFNCVCQyVCNFY0LTIwMjYtNS0yMSVFNSU4RiU5MSVFNyU4OSU4OC9hZG1pbi1kYXNoYm9hcmQvdml0ZS5jb25maWcudHNcIjtpbXBvcnQgeyBkZWZpbmVDb25maWcgfSBmcm9tICd2aXRlJ1xuaW1wb3J0IHJlYWN0IGZyb20gJ0B2aXRlanMvcGx1Z2luLXJlYWN0J1xuaW1wb3J0IHBhdGggZnJvbSAncGF0aCdcblxuZXhwb3J0IGRlZmF1bHQgZGVmaW5lQ29uZmlnKHtcbiAgcGx1Z2luczogW3JlYWN0KCldLFxuICByZXNvbHZlOiB7IGFsaWFzOiB7ICdAJzogcGF0aC5yZXNvbHZlKF9fZGlybmFtZSwgJy4vc3JjJykgfSB9LFxuICBzZXJ2ZXI6IHsgcG9ydDogNTE3MywgaG9zdDogJzEyNy4wLjAuMScgfSxcbn0pXG4iXSwKICAibWFwcGluZ3MiOiAiO0FBQXFkLFNBQVMsb0JBQW9CO0FBQ2xmLE9BQU8sV0FBVztBQUNsQixPQUFPLFVBQVU7QUFGakIsSUFBTSxtQ0FBbUM7QUFJekMsSUFBTyxzQkFBUSxhQUFhO0FBQUEsRUFDMUIsU0FBUyxDQUFDLE1BQU0sQ0FBQztBQUFBLEVBQ2pCLFNBQVMsRUFBRSxPQUFPLEVBQUUsS0FBSyxLQUFLLFFBQVEsa0NBQVcsT0FBTyxFQUFFLEVBQUU7QUFBQSxFQUM1RCxRQUFRLEVBQUUsTUFBTSxNQUFNLE1BQU0sWUFBWTtBQUMxQyxDQUFDOyIsCiAgIm5hbWVzIjogW10KfQo=

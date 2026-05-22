@@ -38,7 +38,7 @@ Requirements:
 The `scf_bootstrap` Node.js binary path must match the function runtime. Use this mapping:
 
 | Runtime value | `scf_bootstrap` binary path |
-| --- | --- |
+| ------------- | --------------------------- |
 | `Nodejs20.19` | `/var/lang/node20/bin/node` |
 | `Nodejs18.15` | `/var/lang/node18/bin/node` |
 | `Nodejs16.13` | `/var/lang/node16/bin/node` |
@@ -48,23 +48,23 @@ If the user specifies "Node.js 18", use runtime `Nodejs18.15` and the path `/var
 ## Minimal Node.js example
 
 ```javascript
-const http = require("http");
-const { URL } = require("url");
+const http = require('http');
+const { URL } = require('url');
 
 function sendJson(res, statusCode, data) {
-  res.writeHead(statusCode, { "Content-Type": "application/json; charset=utf-8" });
+  res.writeHead(statusCode, { 'Content-Type': 'application/json; charset=utf-8' });
   res.end(JSON.stringify(data));
 }
 
 function readJsonBody(req) {
   return new Promise((resolve, reject) => {
-    let raw = "";
+    let raw = '';
 
-    req.on("data", (chunk) => {
+    req.on('data', (chunk) => {
       raw += chunk;
     });
 
-    req.on("end", () => {
+    req.on('end', () => {
       if (!raw) {
         resolve({});
         return;
@@ -73,23 +73,23 @@ function readJsonBody(req) {
       try {
         resolve(JSON.parse(raw));
       } catch (error) {
-        reject(new Error("Invalid JSON body"));
+        reject(new Error('Invalid JSON body'));
       }
     });
 
-    req.on("error", reject);
+    req.on('error', reject);
   });
 }
 
 const server = http.createServer(async (req, res) => {
-  const url = new URL(req.url || "/", "http://127.0.0.1");
+  const url = new URL(req.url || '/', 'http://127.0.0.1');
 
-  if (req.method === "GET" && url.pathname === "/health") {
+  if (req.method === 'GET' && url.pathname === '/health') {
     sendJson(res, 200, { ok: true });
     return;
   }
 
-  if (req.method === "POST" && url.pathname === "/echo") {
+  if (req.method === 'POST' && url.pathname === '/echo') {
     try {
       const body = await readJsonBody(req);
       sendJson(res, 200, { received: body });
@@ -99,7 +99,7 @@ const server = http.createServer(async (req, res) => {
     return;
   }
 
-  sendJson(res, 404, { error: "Not Found" });
+  sendJson(res, 404, { error: 'Not Found' });
 });
 
 server.listen(9000);
@@ -137,23 +137,23 @@ That combination avoids the common ESM pitfall where `__dirname` is not defined.
 ### Example with method checks
 
 ```javascript
-const http = require("http");
-const { URL } = require("url");
+const http = require('http');
+const { URL } = require('url');
 
 function sendJson(res, statusCode, data) {
-  res.writeHead(statusCode, { "Content-Type": "application/json; charset=utf-8" });
+  res.writeHead(statusCode, { 'Content-Type': 'application/json; charset=utf-8' });
   res.end(JSON.stringify(data));
 }
 
 function readJsonBody(req) {
   return new Promise((resolve, reject) => {
-    let raw = "";
+    let raw = '';
 
-    req.on("data", (chunk) => {
+    req.on('data', (chunk) => {
       raw += chunk;
     });
 
-    req.on("end", () => {
+    req.on('end', () => {
       if (!raw) {
         resolve({});
         return;
@@ -162,23 +162,23 @@ function readJsonBody(req) {
       try {
         resolve(JSON.parse(raw));
       } catch (error) {
-        reject(new Error("Invalid JSON body"));
+        reject(new Error('Invalid JSON body'));
       }
     });
 
-    req.on("error", reject);
+    req.on('error', reject);
   });
 }
 
 const server = http.createServer(async (req, res) => {
-  const url = new URL(req.url || "/", "http://127.0.0.1");
+  const url = new URL(req.url || '/', 'http://127.0.0.1');
 
-  if (url.pathname === "/users" && req.method === "POST") {
+  if (url.pathname === '/users' && req.method === 'POST') {
     try {
       const { name, email } = await readJsonBody(req);
 
       if (!name || !email) {
-        sendJson(res, 400, { error: "name and email are required" });
+        sendJson(res, 400, { error: 'name and email are required' });
         return;
       }
 
@@ -190,12 +190,12 @@ const server = http.createServer(async (req, res) => {
     return;
   }
 
-  if (url.pathname === "/users") {
-    sendJson(res, 405, { error: "Method Not Allowed" });
+  if (url.pathname === '/users') {
+    sendJson(res, 405, { error: 'Method Not Allowed' });
     return;
   }
 
-  sendJson(res, 404, { error: "Not Found" });
+  sendJson(res, 404, { error: 'Not Found' });
 });
 
 server.listen(9000);
@@ -206,8 +206,8 @@ server.listen(9000);
 If the user explicitly asks for Express, keep in mind that Express 5 uses `path-to-regexp` semantics for wildcards. Do not use bare `*` or `/*` as the catch-all route.
 
 ```javascript
-app.all("/{*splat}", (req, res) => {
-  res.status(405).json({ error: "Method Not Allowed" });
+app.all('/{*splat}', (req, res) => {
+  res.status(405).json({ error: 'Method Not Allowed' });
 });
 ```
 
@@ -228,15 +228,15 @@ Prefer `manageFunctions` over CLI in agent flows.
 
 ```javascript
 manageFunctions({
-  action: "createFunction",
+  action: 'createFunction',
   func: {
-    name: "myHttpFunction",
-    type: "HTTP",
-    protocolType: "HTTP",
-    runtime: "Nodejs18.15",
-    timeout: 60
+    name: 'myHttpFunction',
+    type: 'HTTP',
+    protocolType: 'HTTP',
+    runtime: 'Nodejs18.15',
+    timeout: 60,
   },
-  functionRootPath: "/absolute/path/to/cloudfunctions"
+  functionRootPath: '/absolute/path/to/cloudfunctions',
 });
 ```
 
@@ -255,13 +255,13 @@ After creating an HTTP Function, it will reject unauthenticated callers with `EX
 
 ```javascript
 managePermissions({
-  action: "updateResourcePermission",
-  resourceType: "function",
-  resourceId: "myHttpFunction",
+  action: 'updateResourcePermission',
+  resourceType: 'function',
+  resourceId: 'myHttpFunction',
   permission: {
-    aclTag: "CUSTOM",
-    rule: "true"
-  }
+    aclTag: 'CUSTOM',
+    rule: 'true',
+  },
 });
 ```
 
@@ -278,13 +278,13 @@ For WebSocket workloads, keep the function type as HTTP and switch `protocolType
 
 ```javascript
 manageFunctions({
-  action: "createFunction",
+  action: 'createFunction',
   func: {
-    name: "mySocketFunction",
-    type: "HTTP",
-    protocolType: "WS"
+    name: 'mySocketFunction',
+    type: 'HTTP',
+    protocolType: 'WS',
   },
-  functionRootPath: "/absolute/path/to/cloudfunctions"
+  functionRootPath: '/absolute/path/to/cloudfunctions',
 });
 ```
 
@@ -305,11 +305,11 @@ Creating the function does not automatically create a browser-facing path. Add g
 
 ```javascript
 manageGateway({
-  action: "createAccess",
-  targetType: "function",
-  targetName: "myHttpFunction",
-  type: "HTTP",
-  path: "/api/hello"
+  action: 'createAccess',
+  targetType: 'function',
+  targetName: 'myHttpFunction',
+  type: 'HTTP',
+  path: '/api/hello',
 });
 ```
 
@@ -323,18 +323,18 @@ Before enabling public access, confirm both of these:
 ### SSE
 
 ```javascript
-res.setHeader("Content-Type", "text/event-stream");
-res.write(`data: ${JSON.stringify({ content: "Hello" })}\n\n`);
+res.setHeader('Content-Type', 'text/event-stream');
+res.write(`data: ${JSON.stringify({ content: 'Hello' })}\n\n`);
 ```
 
 ### WebSocket example
 
 ```javascript
-const WebSocket = require("ws");
+const WebSocket = require('ws');
 const wss = new WebSocket.Server({ port: 9000 });
 
-wss.on("connection", (ws) => {
-  ws.on("message", (message) => ws.send(`Echo: ${message}`));
+wss.on('connection', (ws) => {
+  ws.on('message', (message) => ws.send(`Echo: ${message}`));
 });
 ```
 

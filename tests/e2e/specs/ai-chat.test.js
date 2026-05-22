@@ -7,8 +7,14 @@
  */
 
 const {
-  goToTab, navigateTo, tapElement, findElement, findElements,
-  typeText, initTestState, waitFor,
+  goToTab,
+  navigateTo,
+  tapElement,
+  findElement,
+  findElements,
+  typeText,
+  initTestState,
+  waitFor,
 } = require('../helpers');
 
 let mp;
@@ -19,7 +25,6 @@ beforeAll(async () => {
 });
 
 describe('§7 AI Chat', () => {
-
   test('7.1 打开对话 → 界面正常加载', async () => {
     await navigateTo(mp, '/pages/chat/index/index');
     await waitFor(mp, 3000);
@@ -113,5 +118,4 @@ describe('§7 AI Chat', () => {
     const richText = await findElement(mp, 'rich-text, .rich-text');
     expect(richText).not.toBeNull();
   });
-
 });

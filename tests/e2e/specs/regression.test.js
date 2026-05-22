@@ -7,8 +7,14 @@
  */
 
 const {
-  goToTab, navigateTo, findElement, findElements,
-  initTestState, waitFor, reLaunch, switchTab,
+  goToTab,
+  navigateTo,
+  findElement,
+  findElements,
+  initTestState,
+  waitFor,
+  reLaunch,
+  switchTab,
 } = require('../helpers');
 
 let mp;
@@ -22,7 +28,6 @@ beforeAll(async () => {
 // §8 我的 + 会员 (7项)
 // ============================================================
 describe('§8 我的 + 会员', () => {
-
   test('8.1 进入我的Tab → 页面正常渲染', async () => {
     await goToTab(mp, 'mine');
     await waitFor(mp, 2000);
@@ -71,14 +76,12 @@ describe('§8 我的 + 会员', () => {
     const page = await mp.currentPage();
     expect(page.path).toContain('detail');
   });
-
 });
 
 // ============================================================
 // §10 异常场景 (5项)
 // ============================================================
 describe('§10 异常场景', () => {
-
   test('10.1 冷启动 → 首页正常渲染', async () => {
     await reLaunch(mp, '/pages/home/home');
     await waitFor(mp, 3000);
@@ -110,7 +113,9 @@ describe('§10 异常场景', () => {
   test('10.4 全部已注册页面 → 无死链接', async () => {
     const appJson = require('../../../app.json');
     const pages = appJson.pages || [];
-    const tabPages = (appJson.tabBar?.list || []).map(function(t) { return t.pagePath; });
+    const tabPages = (appJson.tabBar?.list || []).map(function (t) {
+      return t.pagePath;
+    });
     const failures = [];
 
     for (const pagePath of pages) {
@@ -138,14 +143,12 @@ describe('§10 异常场景', () => {
     const page = await mp.currentPage();
     expect(page.path).toContain('add');
   });
-
 });
 
 // ============================================================
 // §11 PRD变更验证 (7项)
 // ============================================================
 describe('§11 PRD变更验证', () => {
-
   test('11.1 智能上传已移除 → 页面无相关入口', async () => {
     await goToTab(mp, 'documents');
     await waitFor(mp, 2000);
@@ -208,5 +211,4 @@ describe('§11 PRD变更验证', () => {
     const ringProgress = await findElement(mp, 'progress-bar, .ring-progress, .circular-progress');
     expect(!!ringProgress).toBe(true);
   });
-
 });

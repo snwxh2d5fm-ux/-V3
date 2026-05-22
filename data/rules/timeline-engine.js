@@ -64,10 +64,10 @@ function generateTimeline(userState) {
       pathType: template.pathType,
       pathName: template.pathName,
       visaInfo: template.visaInfo,
-      uniqueFeatures: template.uniqueFeatures
+      uniqueFeatures: template.uniqueFeatures,
     },
     ...enriched,
-    generatedAt: new Date().toISOString()
+    generatedAt: new Date().toISOString(),
   };
 }
 
@@ -80,12 +80,12 @@ function collectAllPhases(template, pathType) {
   for (let phase = 1; phase <= 7; phase++) {
     const phaseKey = `phase${phase}`;
     const nodes = template.phases[phaseKey] || [];
-    nodes.forEach(node => {
+    nodes.forEach((node) => {
       allNodes.push({
         ...node,
         phaseId: phase,
         phaseKey,
-        pathType
+        pathType,
       });
     });
   }
@@ -100,12 +100,12 @@ function resolveNodeDates(nodes, anchorDates, nodeStates) {
   const today = new Date();
   today.setHours(0, 0, 0, 0);
 
-  return nodes.map(node => {
+  return nodes.map((node) => {
     // 如果节点已有状态，保留
     const existingState = nodeStates[node.nodeId];
 
     // 计算锚点日期
-    let anchorDate = getAnchorDate(node.timeLogic.anchorField, anchorDates, today);
+    const anchorDate = getAnchorDate(node.timeLogic.anchorField, anchorDates, today);
 
     // 计算实际日期
     let targetDate = null;
@@ -131,7 +131,7 @@ function resolveNodeDates(nodes, anchorDates, nodeStates) {
       anchorDate: anchorDate.toISOString().split('T')[0],
       targetDate: targetDate ? targetDate.toISOString().split('T')[0] : null,
       reminderDates,
-      status: existingState ? existingState.status : determineInitialStatus(targetDate, today)
+      status: existingState ? existingState.status : determineInitialStatus(targetDate, today),
     };
   });
 }
@@ -147,7 +147,7 @@ function getAnchorDate(anchorField, anchorDates, fallback) {
     activationDate: anchorDates.activationDate,
     entryDate: anchorDates.activationDate || anchorDates.firstEntryDate,
     firstEntryDate: anchorDates.firstEntryDate,
-    submissionDate: anchorDates.submissionDate
+    submissionDate: anchorDates.submissionDate,
   };
 
   // 直接映射
@@ -169,7 +169,7 @@ function getAnchorDate(anchorField, anchorDates, fallback) {
     const month = d.getMonth();
     // 映射到最近的下一个季度末: Q1=3月, Q2=6月, Q3=9月, Q4=12月
     const quarterEndMonths = [2, 5, 8, 11]; // 0-indexed: Mar, Jun, Sep, Dec
-    const nextQuarterEnd = quarterEndMonths.find(m => m >= month) || 14; // 14 = next year Q1
+    const nextQuarterEnd = quarterEndMonths.find((m) => m >= month) || 14; // 14 = next year Q1
     if (nextQuarterEnd === 14) {
       d.setFullYear(d.getFullYear() + 1);
       d.setMonth(2); // March
@@ -226,11 +226,13 @@ function getPrerequisiteDate(node, nodeStates) {
 function calculateReminderDates(targetDate, reminderSchedule) {
   if (!targetDate || !reminderSchedule || !reminderSchedule.milestones) return [];
 
-  return reminderSchedule.milestones.map(offsetDays => {
-    const d = new Date(targetDate);
-    d.setDate(d.getDate() - offsetDays); // 正数=提前提醒
-    return d.toISOString().split('T')[0];
-  }).sort();
+  return reminderSchedule.milestones
+    .map((offsetDays) => {
+      const d = new Date(targetDate);
+      d.setDate(d.getDate() - offsetDays); // 正数=提前提醒
+      return d.toISOString().split('T')[0];
+    })
+    .sort();
 }
 
 /**
@@ -254,7 +256,7 @@ function determineInitialStatus(targetDate, today) {
 function groupByPhase(nodes, currentPhase) {
   const grouped = {};
   for (let phase = 1; phase <= 7; phase++) {
-    const phaseNodes = nodes.filter(n => n.phaseId === phase);
+    const phaseNodes = nodes.filter((n) => n.phaseId === phase);
     const sorted = phaseNodes.sort((a, b) => {
       if (!a.targetDate) return 1;
       if (!b.targetDate) return -1;
@@ -268,8 +270,8 @@ function groupByPhase(nodes, currentPhase) {
       isCompleted: phase < currentPhase,
       isLocked: phase > currentPhase,
       totalNodes: sorted.length,
-      completedNodes: sorted.filter(n => n.status === 'completed').length,
-      nodes: sorted
+      completedNodes: sorted.filter((n) => n.status === 'completed').length,
+      nodes: sorted,
     };
   }
   return grouped;
@@ -286,7 +288,7 @@ function getPhaseName(phase) {
     4: '等待获批',
     5: '获批激活',
     6: '抵港生活',
-    7: '永居'
+    7: '永居',
   };
   return names[phase] || `阶段${phase}`;
 }
@@ -313,22 +315,22 @@ function enrichWithStatus(timeline, currentPhase) {
 
     // 计算当前阶段进度
     const total = phaseNodes.length;
-    const completed = phaseNodes.filter(n => n.status === 'completed').length;
+    const completed = phaseNodes.filter((n) => n.status === 'completed').length;
     allPhaseProgress.push({
       phase,
       name: getPhaseName(phase),
       completed,
       total,
-      percentage: total > 0 ? Math.round((completed / total) * 100) : 0
+      percentage: total > 0 ? Math.round((completed / total) * 100) : 0,
     });
 
     // 标记当前阶段的首个待处理节点
     if (phase === currentPhase && !currentActiveNode) {
-      currentActiveNode = phaseNodes.find(n => n.status === 'active' || n.status === 'pending');
+      currentActiveNode = phaseNodes.find((n) => n.status === 'active' || n.status === 'pending');
     }
 
     // 收集即将到期的节点（7天内）
-    phaseNodes.forEach(node => {
+    phaseNodes.forEach((node) => {
       if (!node.targetDate || node.status === 'completed' || node.status === 'skipped') return;
 
       const target = new Date(node.targetDate);
@@ -344,14 +346,14 @@ function enrichWithStatus(timeline, currentPhase) {
     phases: timeline,
     progress: allPhaseProgress,
     currentActiveNode,
-    upcomingNodes: upcomingNodes.slice(0, 10),  // 最多10个
+    upcomingNodes: upcomingNodes.slice(0, 10), // 最多10个
     overdueNodes: overdueNodes.slice(0, 10),
     summary: {
       totalNodes: allPhaseProgress.reduce((s, p) => s + p.total, 0),
       completedNodes: allPhaseProgress.reduce((s, p) => s + p.completed, 0),
       upcomingCount: upcomingNodes.length,
-      overdueCount: overdueNodes.length
-    }
+      overdueCount: overdueNodes.length,
+    },
   };
 }
 
@@ -417,7 +419,7 @@ function recalibrateTimeline(userState, milestone) {
       const nextVed = calculateNextVed(
         updatedState.anchorDates.ved,
         userState.currentPath,
-        (updatedState.anchorDates.renewalCount || 0)
+        updatedState.anchorDates.renewalCount || 0,
       );
       updatedState.anchorDates.ved = nextVed;
       // 重置Phase 6节点状态，准备下一轮续签倒计时
@@ -438,7 +440,7 @@ function markPrecedingPhasesCompleted(state, upToPhase) {
   for (let phase = 1; phase <= upToPhase; phase++) {
     const phaseKey = `phase${phase}`;
     const nodes = template.phases[phaseKey] || [];
-    nodes.forEach(node => {
+    nodes.forEach((node) => {
       if (!state.nodeStates[node.nodeId]) {
         state.nodeStates[node.nodeId] = { status: 'completed', completedAt: new Date().toISOString() };
       } else if (state.nodeStates[node.nodeId].status !== 'completed') {
@@ -469,12 +471,12 @@ function calculateNextVed(currentVed, pathType, renewalCount) {
  */
 function resetPhase6Nodes(state) {
   const phase6Nodes = templates.getTemplate(state.currentPath).phases.phase6 || [];
-  phase6Nodes.forEach(node => {
+  phase6Nodes.forEach((node) => {
     state.nodeStates[node.nodeId] = { status: 'pending' };
   });
 }
 
 module.exports = {
   generateTimeline,
-  recalibrateTimeline
+  recalibrateTimeline,
 };

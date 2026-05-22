@@ -18,33 +18,43 @@ Page({
       { id: 'clean', icon: '🧹', title: '清理缓存', desc: '清理本地过期缓存数据' },
       { id: 'export', icon: '📤', title: '导出数据', desc: '导出脱敏后的数据报告' },
       { id: 'reset', icon: '⚠️', title: '重置数据库', desc: '清空云端数据重新开始' },
-      { id: 'invite', icon: '🎫', title: '内测码管理', desc: '生成/查询/撤销内测码', url: '/subpkg-low/pages/admin-invite/index' }
+      {
+        id: 'invite',
+        icon: '🎫',
+        title: '内测码管理',
+        desc: '生成/查询/撤销内测码',
+        url: '/subpkg-low/pages/admin-invite/index',
+      },
     ],
     aiOps: [
       { id: 'aiDashboard', icon: '📊', title: 'AI对话看板', desc: '准确率/成本/安全事件' },
-      { id: 'aiEvalDaily', icon: '🔬', title: '每日评估采样', desc: '运行20题准确率测试' }
-    ]
+      { id: 'aiEvalDaily', icon: '🔬', title: '每日评估采样', desc: '运行20题准确率测试' },
+    ],
   },
 
-  onShow() { this.loadStatus(); },
+  onShow() {
+    this.loadStatus();
+  },
 
   // Phase 3: AI看板
   async loadAiDashboard() {
     this.setData({ aiDashboardLoading: true });
     try {
-      var res = await wx.cloud.callFunction({ name: 'ai-eval', data: { action: 'dashboard' } });
+      const res = await wx.cloud.callFunction({ name: 'ai-eval', data: { action: 'dashboard' } });
       if (res.result && res.result.code === 200) {
         this.setData({ aiDashboard: res.result.data, aiDashboardLoading: false });
       }
-    } catch(e) { this.setData({ aiDashboardLoading: false }); }
+    } catch (e) {
+      this.setData({ aiDashboardLoading: false });
+    }
   },
 
   onAiAction(e) {
-    var id = e.currentTarget.dataset.id;
+    const id = e.currentTarget.dataset.id;
     if (id === 'aiDashboard') this.loadAiDashboard();
     else if (id === 'aiEvalDaily') {
       wx.showLoading({ title: '评估中...' });
-      wx.cloud.callFunction({ name: 'ai-eval', data: { action: 'daily_sample' } }).finally(function() {
+      wx.cloud.callFunction({ name: 'ai-eval', data: { action: 'daily_sample' } }).finally(function () {
         wx.hideLoading();
         wx.showToast({ title: '已提交评估任务' });
       });
@@ -58,7 +68,9 @@ Page({
       try {
         const res = await wx.cloud.callFunction({ name: 'db-admin', data: { action: 'stats' } });
         if (res.result) this.setData({ cloudStats: res.result.stats || this.data.cloudStats });
-      } catch (e) { console.log('[AdminDB] cloud stats failed'); }
+      } catch (e) {
+        console.debug('[AdminDB] cloud stats failed');
+      }
     }
   },
 
@@ -72,8 +84,13 @@ Page({
           if (app.globalData.cloudReady) await wx.cloud.callFunction({ name: 'db-admin', data: { action: 'sync' } });
           wx.setStorageSync('__db_sync_state__', { status: 'synced', time: Date.now() });
           this.setData({ syncStatus: 'synced', lastSyncTime: Date.now() });
-          wx.hideLoading(); wx.showToast({ title: '同步完成', icon: 'success' });
-        } catch (e) { this.setData({ syncStatus: 'error' }); wx.hideLoading(); wx.showToast({ title: '同步失败', icon: 'none' }); }
+          wx.hideLoading();
+          wx.showToast({ title: '同步完成', icon: 'success' });
+        } catch (e) {
+          this.setData({ syncStatus: 'error' });
+          wx.hideLoading();
+          wx.showToast({ title: '同步失败', icon: 'none' });
+        }
         break;
       case 'pull':
         wx.showLoading({ title: '拉取中...' });
@@ -87,23 +104,46 @@ Page({
               if (processes) saveProcessLines(processes);
             }
           }
-          wx.hideLoading(); wx.showToast({ title: '拉取完成', icon: 'success' });
-        } catch (e) { wx.hideLoading(); wx.showToast({ title: '拉取失败', icon: 'none' }); }
+          wx.hideLoading();
+          wx.showToast({ title: '拉取完成', icon: 'success' });
+        } catch (e) {
+          wx.hideLoading();
+          wx.showToast({ title: '拉取失败', icon: 'none' });
+        }
         break;
       case 'backup':
         wx.showLoading({ title: '备份中...' });
         try {
           if (app.globalData.cloudReady) await wx.cloud.callFunction({ name: 'db-admin', data: { action: 'backup' } });
-          wx.hideLoading(); wx.showToast({ title: '备份完成', icon: 'success' });
-        } catch (e) { wx.hideLoading(); wx.showToast({ title: '备份失败', icon: 'none' }); }
+          wx.hideLoading();
+          wx.showToast({ title: '备份完成', icon: 'success' });
+        } catch (e) {
+          wx.hideLoading();
+          wx.showToast({ title: '备份失败', icon: 'none' });
+        }
         break;
       case 'clean':
-        wx.showModal({ title: '清理缓存', content: '将清理本地过期缓存，确认继续？', success(r) { if (r.confirm) wx.showToast({ title: '清理完成', icon: 'success' }); } });
+        wx.showModal({
+          title: '清理缓存',
+          content: '将清理本地过期缓存，确认继续？',
+          success(r) {
+            if (r.confirm) wx.showToast({ title: '清理完成', icon: 'success' });
+          },
+        });
         break;
-      case 'export': wx.showToast({ title: '导出功能开发中', icon: 'none' }); break;
+      case 'export':
+        wx.showToast({ title: '导出功能开发中', icon: 'none' });
+        break;
       case 'reset':
-        wx.showModal({ title: '⚠️ 危险操作', content: '将清空云端数据库。确认继续？', confirmText: '确认重置', confirmColor: '#DC2626',
-          success(r) { if (r.confirm) wx.showToast({ title: '需管理权限', icon: 'none' }); } });
+        wx.showModal({
+          title: '⚠️ 危险操作',
+          content: '将清空云端数据库。确认继续？',
+          confirmText: '确认重置',
+          confirmColor: '#DC2626',
+          success(r) {
+            if (r.confirm) wx.showToast({ title: '需管理权限', icon: 'none' });
+          },
+        });
         break;
       case 'invite':
         wx.navigateTo({ url: '/subpkg-low/pages/admin-invite/index' });
@@ -114,8 +154,13 @@ Page({
   async updateAIModel() {
     wx.showLoading({ title: '更新模型...' });
     try {
-      if (app.globalData.cloudReady) await wx.cloud.callFunction({ name: 'db-admin', data: { action: 'updateAIConfig' } });
-      wx.hideLoading(); wx.showToast({ title: 'AI配置已更新', icon: 'success' });
-    } catch (e) { wx.hideLoading(); wx.showToast({ title: '更新失败', icon: 'none' }); }
-  }
+      if (app.globalData.cloudReady)
+        await wx.cloud.callFunction({ name: 'db-admin', data: { action: 'updateAIConfig' } });
+      wx.hideLoading();
+      wx.showToast({ title: 'AI配置已更新', icon: 'success' });
+    } catch (e) {
+      wx.hideLoading();
+      wx.showToast({ title: '更新失败', icon: 'none' });
+    }
+  },
 });

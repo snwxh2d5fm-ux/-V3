@@ -3,7 +3,7 @@
  * 港漂通关手册 · 新手任务管理器
  * 基于 wx.setStorageSync / wx.getStorageSync 的全量持久化
  */
-var STORAGE_KEY = '__onboarding__';
+const STORAGE_KEY = '__onboarding__';
 
 /**
  * 读取完整进度对象
@@ -11,22 +11,29 @@ var STORAGE_KEY = '__onboarding__';
  */
 function getProgress() {
   try {
-    var raw = wx.getStorageSync(STORAGE_KEY);
+    const raw = wx.getStorageSync(STORAGE_KEY);
     // P0-E fix: 从云端拉取最新进度 (跨设备同步)
     if (wx.cloud && wx.cloud.callFunction) {
-      wx.cloud.callFunction({
-        name: 'guidebook-sync',
-        data: { action: 'getProgress' }
-      }).then(function(res) {
-        if (res.result && res.result.code === 0 && res.result.data && res.result.data.progress) {
-          var cloudProgress = res.result.data.progress;
-          if (!raw || (cloudProgress.updatedAt && (!raw.updatedAt || new Date(cloudProgress.updatedAt) > new Date(raw.updatedAt)))) {
-            wx.setStorageSync(STORAGE_KEY, cloudProgress);
+      wx.cloud
+        .callFunction({
+          name: 'guidebook-sync',
+          data: { action: 'getProgress' },
+        })
+        .then(function (res) {
+          if (res.result && res.result.code === 0 && res.result.data && res.result.data.progress) {
+            const cloudProgress = res.result.data.progress;
+            if (
+              !raw ||
+              (cloudProgress.updatedAt &&
+                (!raw.updatedAt || new Date(cloudProgress.updatedAt) > new Date(raw.updatedAt)))
+            ) {
+              wx.setStorageSync(STORAGE_KEY, cloudProgress);
+            }
           }
-        }
-      }).catch(function(e) {
-        console.warn('[OnboardingStorage] Cloud pull failed:', e.errMsg);
-      });
+        })
+        .catch(function (e) {
+          console.warn('[OnboardingStorage] Cloud pull failed:', e.errMsg);
+        });
     }
     if (!raw) return null;
     return raw;
@@ -46,12 +53,14 @@ function saveProgress(progress) {
     wx.setStorageSync(STORAGE_KEY, progress);
     // 异步同步到云端 (失败不影响本地)
     if (wx.cloud && wx.cloud.callFunction) {
-      wx.cloud.callFunction({
-        name: 'guidebook-sync',
-        data: { action: 'saveProgress', progress: progress }
-      }).catch(function(e) {
-        console.warn('[OnboardingStorage] Cloud sync failed (non-blocking):', e.errMsg);
-      });
+      wx.cloud
+        .callFunction({
+          name: 'guidebook-sync',
+          data: { action: 'saveProgress', progress: progress },
+        })
+        .catch(function (e) {
+          console.warn('[OnboardingStorage] Cloud sync failed (non-blocking):', e.errMsg);
+        });
     }
   } catch (e) {
     console.error('[OnboardingStorage] saveProgress error:', e);
@@ -65,39 +74,39 @@ function saveProgress(progress) {
  * @returns {object} 新建的 progress 对象
  */
 function initOnboarding(params) {
-  var now = new Date().toISOString();
-  var arrivalScenario = params.arrivalScenario || 'fresh';
+  const now = new Date().toISOString();
+  const arrivalScenario = params.arrivalScenario || 'fresh';
 
   // TC-3.1.1 fix: 始终初始化全部8关 (unlocked=true)，
   // 实际锁定由 guidebooks/index mergeProgress 通过 STAGE_BRIDGE_MAP 动态计算
-  var phases = {};
-  for (var p = 0; p <= 7; p++) {
+  const phases = {};
+  for (let p = 0; p <= 7; p++) {
     phases[String(p)] = { unlocked: true, completed: false };
   }
 
-  var progress = {
+  const progress = {
     userId: '',
     pathParams: {
       visaType: params.visaType || '',
       familyStatus: params.familyStatus || 'single',
       arrivalScenario: arrivalScenario,
       existingAssets: Array.isArray(params.existingAssets) ? params.existingAssets : [],
-      housingIntent: params.housingIntent || 'undecided'
+      housingIntent: params.housingIntent || 'undecided',
     },
     startedAt: now,
-    currentPhase: arrivalScenario === 'pre-arrival' ? 0 : (arrivalScenario === 'delayed' ? 2 : 1),
+    currentPhase: arrivalScenario === 'pre-arrival' ? 0 : arrivalScenario === 'delayed' ? 2 : 1,
     tasks: {},
     phases: phases,
     renewalDossier: {
       address: { items: [], completeness: 0 },
       employment: { items: [], completeness: 0 },
       family: { items: [], completeness: 0, applicable: params.familyStatus !== 'single' },
-      visa: { items: [], completeness: 0 }
+      visa: { items: [], completeness: 0 },
     },
     flags: {
-      housingWizardDone: false
+      housingWizardDone: false,
     },
-    updatedAt: now
+    updatedAt: now,
   };
   saveProgress(progress);
   return progress;
@@ -108,12 +117,12 @@ function initOnboarding(params) {
  * @param {string} taskId 任务标识符，如 "onboard-101"
  */
 function completeTask(taskId) {
-  var progress = getProgress();
+  const progress = getProgress();
   if (!progress) return;
   progress.tasks[taskId] = {
     status: 'completed',
     completedAt: new Date().toISOString(),
-    materialCollected: false
+    materialCollected: false,
   };
   saveProgress(progress);
 }
@@ -126,24 +135,24 @@ function completeTask(taskId) {
  * @param {string} docCategory 材料归类，枚举值: "address"|"employment"|"family"|"visa"
  */
 function completeTaskWithMaterial(taskId, imagePath, docType, docCategory) {
-  var progress = getProgress();
+  const progress = getProgress();
   if (!progress) return;
-  var now = new Date().toISOString();
+  const now = new Date().toISOString();
   progress.tasks[taskId] = {
     status: 'completed',
     completedAt: now,
     materialCollected: true,
     imagePath: imagePath || '',
-    docType: docType || ''
+    docType: docType || '',
   };
   // 写入 renewalDossier
   if (docCategory && progress.renewalDossier[docCategory]) {
-    var dossier = progress.renewalDossier[docCategory];
+    const dossier = progress.renewalDossier[docCategory];
     dossier.items.push({
       taskId: taskId,
       docType: docType || '',
       imagePath: imagePath || '',
-      collectedAt: now
+      collectedAt: now,
     });
     // 重新计算该分类的 completeness
     dossier.completeness = recalcCompleteness(dossier.items);
@@ -157,11 +166,11 @@ function completeTaskWithMaterial(taskId, imagePath, docType, docCategory) {
  * @param {string} reason 跳过原因，如 "已拥有: hkid"
  */
 function skipTask(taskId, reason) {
-  var progress = getProgress();
+  const progress = getProgress();
   if (!progress) return;
   progress.tasks[taskId] = {
     status: 'skipped',
-    skipReason: reason || ''
+    skipReason: reason || '',
   };
   saveProgress(progress);
 }
@@ -171,17 +180,17 @@ function skipTask(taskId, reason) {
  * @param {string} taskId 任务标识符
  */
 function resetTask(taskId) {
-  var progress = getProgress();
+  const progress = getProgress();
   if (!progress) return;
   delete progress.tasks[taskId];
   // 同时清理 renewalDossier 中关联的材料条目
-  var categories = ['address', 'employment', 'family', 'visa'];
-  for (var c = 0; c < categories.length; c++) {
-    var cat = categories[c];
+  const categories = ['address', 'employment', 'family', 'visa'];
+  for (let c = 0; c < categories.length; c++) {
+    const cat = categories[c];
     if (!progress.renewalDossier[cat]) continue;
-    var filtered = [];
-    var items = progress.renewalDossier[cat].items;
-    for (var i = 0; i < items.length; i++) {
+    const filtered = [];
+    const items = progress.renewalDossier[cat].items;
+    for (let i = 0; i < items.length; i++) {
       if (items[i].taskId !== taskId) {
         filtered.push(items[i]);
       }
@@ -197,9 +206,9 @@ function resetTask(taskId) {
  * @param {number|string} phase 阶段编号（使用字符串键）
  */
 function unlockPhase(phase) {
-  var progress = getProgress();
+  const progress = getProgress();
   if (!progress) return;
-  var key = String(phase);
+  const key = String(phase);
   if (!progress.phases[key]) {
     progress.phases[key] = {};
   }
@@ -216,10 +225,10 @@ function unlockPhase(phase) {
  * @param {number|string} phase 阶段编号
  */
 function completePhase(phase) {
-  var progress = getProgress();
+  const progress = getProgress();
   if (!progress) return;
-  var key = String(phase);
-  var now = new Date().toISOString();
+  const key = String(phase);
+  const now = new Date().toISOString();
   if (!progress.phases[key]) {
     progress.phases[key] = {};
   }
@@ -227,7 +236,7 @@ function completePhase(phase) {
   progress.phases[key].completed = true;
   progress.phases[key].completedAt = now;
   // 自动解锁下一阶段
-  var nextKey = String(Number(phase) + 1);
+  const nextKey = String(Number(phase) + 1);
   if (!progress.phases[nextKey]) {
     progress.phases[nextKey] = {};
   }
@@ -236,7 +245,7 @@ function completePhase(phase) {
     progress.phases[nextKey].completed = false;
   }
   // 同步 currentPhase
-  var nextNum = Number(phase) + 1;
+  const nextNum = Number(phase) + 1;
   if (nextNum > progress.currentPhase) {
     progress.currentPhase = nextNum;
   }
@@ -278,7 +287,7 @@ function resetAll() {
  * @returns {object|null}
  */
 function getRenewalDossier() {
-  var progress = getProgress();
+  const progress = getProgress();
   if (!progress) return null;
   return progress.renewalDossier;
 }
@@ -288,22 +297,22 @@ function getRenewalDossier() {
  * @returns {object} { address: float, employment: float, family: float, visa: float, overall: float }
  */
 function getRenewalReadiness() {
-  var progress = getProgress();
+  const progress = getProgress();
   if (!progress) return { address: 0, employment: 0, family: 0, visa: 0, overall: 0 };
-  var dossier = progress.renewalDossier;
-  var scores = {
+  const dossier = progress.renewalDossier;
+  const scores = {
     address: dossier.address ? dossier.address.completeness || 0 : 0,
     employment: dossier.employment ? dossier.employment.completeness || 0 : 0,
     family: dossier.family ? (dossier.family.applicable === false ? 0 : dossier.family.completeness || 0) : 0,
-    visa: dossier.visa ? dossier.visa.completeness || 0 : 0
+    visa: dossier.visa ? dossier.visa.completeness || 0 : 0,
   };
   // overall = 适用分类的平均值
-  var applicableCount = 0;
-  var totalScore = 0;
-  var categories = ['address', 'employment', 'family', 'visa'];
-  for (var i = 0; i < categories.length; i++) {
-    var cat = categories[i];
-    var isApplicable = dossier[cat] ? dossier[cat].applicable !== false : true;
+  let applicableCount = 0;
+  let totalScore = 0;
+  const categories = ['address', 'employment', 'family', 'visa'];
+  for (let i = 0; i < categories.length; i++) {
+    const cat = categories[i];
+    const isApplicable = dossier[cat] ? dossier[cat].applicable !== false : true;
     if (isApplicable) {
       totalScore += scores[cat];
       applicableCount++;
@@ -324,25 +333,31 @@ function getRenewalReadiness() {
  * @returns {string}
  */
 function exportChecklist() {
-  var progress = getProgress();
+  const progress = getProgress();
   if (!progress) return '';
-  var dossier = progress.renewalDossier;
-  var lines = [];
+  const dossier = progress.renewalDossier;
+  const lines = [];
   lines.push('【港漂通关手册 · 已收集材料清单】');
   lines.push('');
 
-  var CAT_LABELS = { address: '🏠 居住证明', employment: '💼 工作证明', family: '👨‍👩‍👧 家庭证明', visa: '📄 签证记录', auxiliary: '📎 辅助材料' };
-  var categoryOrder = ['visa', 'address', 'employment', 'family'];
+  const CAT_LABELS = {
+    address: '🏠 居住证明',
+    employment: '💼 工作证明',
+    family: '👨‍👩‍👧 家庭证明',
+    visa: '📄 签证记录',
+    auxiliary: '📎 辅助材料',
+  };
+  const categoryOrder = ['visa', 'address', 'employment', 'family'];
 
-  var totalCount = 0;
-  for (var o = 0; o < categoryOrder.length; o++) {
-    var catKey = categoryOrder[o];
-    var catData = dossier[catKey];
+  let totalCount = 0;
+  for (let o = 0; o < categoryOrder.length; o++) {
+    const catKey = categoryOrder[o];
+    const catData = dossier[catKey];
     if (!catData || !catData.items || catData.items.length === 0) continue;
-    var label = CAT_LABELS[catKey] || catKey;
+    const label = CAT_LABELS[catKey] || catKey;
     lines.push('【' + label + '】' + '  已完成: ' + Math.round((catData.completeness || 0) * 100) + '%');
-    for (var j = 0; j < catData.items.length; j++) {
-      var item = catData.items[j];
+    for (let j = 0; j < catData.items.length; j++) {
+      const item = catData.items[j];
       lines.push('  - ' + (item.docType || item.taskId || '材料'));
       totalCount++;
     }
@@ -366,7 +381,7 @@ function exportChecklist() {
  */
 function recalcCompleteness(items) {
   if (!items || items.length === 0) return 0;
-  var score = Math.min(items.length / 4, 1);
+  const score = Math.min(items.length / 4, 1);
   return Math.round(score * 100) / 100;
 }
 
@@ -385,7 +400,7 @@ function clamp01(val) {
  * 标记找房向导已完成
  */
 function markHousingWizardDone() {
-  var progress = getProgress();
+  const progress = getProgress();
   if (!progress) return false;
   if (!progress.flags) progress.flags = {};
   progress.flags.housingWizardDone = true;
@@ -398,7 +413,7 @@ function markHousingWizardDone() {
  * @returns {boolean}
  */
 function isHousingWizardDone() {
-  var progress = getProgress();
+  const progress = getProgress();
   if (!progress) return false;
   return !!(progress.flags && progress.flags.housingWizardDone);
 }
@@ -419,5 +434,5 @@ module.exports = {
   getRenewalReadiness: getRenewalReadiness,
   exportChecklist: exportChecklist,
   markHousingWizardDone: markHousingWizardDone,
-  isHousingWizardDone: isHousingWizardDone
+  isHousingWizardDone: isHousingWizardDone,
 };

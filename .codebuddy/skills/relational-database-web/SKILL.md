@@ -69,10 +69,10 @@ npm install @cloudbase/js-sdk
 ## Canonical initialization
 
 ```javascript
-import cloudbase from "@cloudbase/js-sdk";
+import cloudbase from '@cloudbase/js-sdk';
 
 const app = cloudbase.init({
-  env: "your-env-id"
+  env: 'your-env-id',
 });
 
 const auth = app.auth();
@@ -105,10 +105,10 @@ const db = app.rdb();
 ## Example: shared frontend DB client
 
 ```javascript
-import cloudbase from "@cloudbase/js-sdk";
+import cloudbase from '@cloudbase/js-sdk';
 
 const app = cloudbase.init({
-  env: "your-env-id"
+  env: 'your-env-id',
 });
 
 export const db = app.rdb();
@@ -117,22 +117,19 @@ export const db = app.rdb();
 ## Example: Supabase-style query
 
 ```javascript
-const { data, error } = await db
-  .from("posts")
-  .select("*")
-  .order("created_at", { ascending: false });
+const { data, error } = await db.from('posts').select('*').order('created_at', { ascending: false });
 
 if (error) {
-  console.error("Failed to load posts", error.message);
+  console.error('Failed to load posts', error.message);
 }
 ```
 
 ## Example: insert / update / delete
 
 ```javascript
-await db.from("posts").insert({ title: "Hello" });
-await db.from("posts").update({ title: "Updated" }).eq("id", 1);
-await db.from("posts").delete().eq("id", 1);
+await db.from('posts').insert({ title: 'Hello' });
+await db.from('posts').update({ title: 'Updated' }).eq('id', 1);
+await db.from('posts').delete().eq('id', 1);
 ```
 
 ## Key principle

@@ -4,7 +4,9 @@
  */
 const crypto = require('crypto');
 
-function sha256(s) { return crypto.createHash('sha256').update(String(s)).digest('hex'); }
+function sha256(s) {
+  return crypto.createHash('sha256').update(String(s)).digest('hex');
+}
 
 describe('admin-stats — 核心逻辑', () => {
   describe('sha256 哈希', () => {
@@ -32,15 +34,34 @@ describe('admin-stats — 核心逻辑', () => {
   });
 
   describe('getDashboard 数据结构', () => {
-    const requiredFields = ['totalUsers','newUsers7d','activeUsers7d','usersByPath','usersByMembership','aiAccuracyAvg','aiConversations7d','safetyEvents7d','codesGenerated','codesActivated','complianceIssues','k2LeakDetected'];
+    const requiredFields = [
+      'totalUsers',
+      'newUsers7d',
+      'activeUsers7d',
+      'usersByPath',
+      'usersByMembership',
+      'aiAccuracyAvg',
+      'aiConversations7d',
+      'safetyEvents7d',
+      'codesGenerated',
+      'codesActivated',
+      'complianceIssues',
+      'k2LeakDetected',
+    ];
     it('返回所有必需字段', () => {
       expect(requiredFields.length).toBe(12);
     });
   });
 
   describe('API Key 鉴权', () => {
-    it('缺少 API Key 返回 401', () => { expect(true).toBe(true); });
-    it('无效 API Key 返回 401', () => { expect(true).toBe(true); });
-    it('有效 API Key 放行', () => { expect(true).toBe(true); });
+    it('缺少 API Key 返回 401', () => {
+      expect(true).toBe(true);
+    });
+    it('无效 API Key 返回 401', () => {
+      expect(true).toBe(true);
+    });
+    it('有效 API Key 放行', () => {
+      expect(true).toBe(true);
+    });
   });
 });

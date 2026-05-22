@@ -7,14 +7,14 @@ Deploy AG-UI compatible agents as HTTP servers.
 ### run() - Standalone
 
 ```typescript
-import { run } from "@cloudbase/agent-server";
+import { run } from '@cloudbase/agent-server';
 run({ createAgent: () => ({ agent }), port: 9000 });
 ```
 
 ### createExpressServer() - Get App
 
 ```typescript
-import { createExpressServer } from "@cloudbase/agent-server";
+import { createExpressServer } from '@cloudbase/agent-server';
 const app = createExpressServer({ createAgent: () => ({ agent }) });
 app.listen(9000);
 ```
@@ -22,18 +22,18 @@ app.listen(9000);
 ### createExpressRoutes() - Add to Existing
 
 ```typescript
-import { createExpressRoutes } from "@cloudbase/agent-server";
-createExpressRoutes({ createAgent: () => ({ agent }), express: app, basePath: "/api/" });
+import { createExpressRoutes } from '@cloudbase/agent-server';
+createExpressRoutes({ createAgent: () => ({ agent }), express: app, basePath: '/api/' });
 ```
 
 ## Endpoints Created
 
-| Endpoint | Purpose |
-|----------|---------|
-| `/agui` | CopilotKit RPC endpoint |
-| `/send-message` | AG-UI endpoint (SSE) |
-| `/healthz` | Health check |
-| `/chat/completions` | OpenAI-compatible endpoint |
+| Endpoint                      | Purpose                                       |
+| ----------------------------- | --------------------------------------------- |
+| `/agui`                       | CopilotKit RPC endpoint                       |
+| `/send-message`               | AG-UI endpoint (SSE)                          |
+| `/healthz`                    | Health check                                  |
+| `/chat/completions`           | OpenAI-compatible endpoint                    |
 | `/v1/aibot/bots/:agentId/...` | Same endpoints with bot ID (when no basePath) |
 
 ## AgentCreatorContext
@@ -56,12 +56,12 @@ createAgent: (ctx: AgentCreatorContext) => ({
 ```typescript
 createAgent: (ctx) => {
   const db = connectToDatabase();
-  ctx.logger?.info("Connected to database");
+  ctx.logger?.info('Connected to database');
   return {
     agent: new LanggraphAgent({ workflow }),
-    cleanup: () => db.close()
+    cleanup: () => db.close(),
   };
-}
+};
 ```
 
 ## All Options
@@ -86,19 +86,19 @@ run({
 
 ```typescript
 import {
-  noopLogger,           // Silent logger (default)
-  createConsoleLogger,  // Console logger
+  noopLogger, // Silent logger (default)
+  createConsoleLogger, // Console logger
   generateRequestId,
   extractRequestId,
-  getOrGenerateRequestId
-} from "@cloudbase/agent-server";
+  getOrGenerateRequestId,
+} from '@cloudbase/agent-server';
 
 // Custom logger (Pino-style interface)
 const logger = {
   info: (obj, msg) => console.log(msg, obj),
   error: (obj, msg) => console.error(msg, obj),
   debug: (obj, msg) => console.debug(msg, obj),
-  child: (bindings) => ({ ...logger })
+  child: (bindings) => ({ ...logger }),
 };
 ```
 
@@ -109,33 +109,30 @@ Requires `@cloudbase/agent-observability` package:
 ```typescript
 run({
   createAgent,
-  observability: { type: "console" }  // Logs traces to stdout
+  observability: { type: 'console' }, // Logs traces to stdout
 });
 
 // OTLP exporter (Langfuse, Jaeger, etc.)
 run({
   createAgent,
   observability: {
-    type: "otlp",
-    url: "https://cloud.langfuse.com/api/public/otlp/v1/traces",
-    headers: { Authorization: "Basic xxx" }
-  }
+    type: 'otlp',
+    url: 'https://cloud.langfuse.com/api/public/otlp/v1/traces',
+    headers: { Authorization: 'Basic xxx' },
+  },
 });
 
 // Multiple exporters
 run({
   createAgent,
-  observability: [
-    { type: "console" },
-    { type: "otlp", url: "http://localhost:4318/v1/traces" }
-  ]
+  observability: [{ type: 'console' }, { type: 'otlp', url: 'http://localhost:4318/v1/traces' }],
 });
 ```
 
 ## Error Handling
 
 ```typescript
-import { ErrorCode, isErrorWithCode } from "@cloudbase/agent-server";
+import { ErrorCode, isErrorWithCode } from '@cloudbase/agent-server';
 
 // ErrorCode enum values for error handling
 ```

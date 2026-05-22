@@ -1,15 +1,44 @@
 /* 发票记录列表样式 */
 
-page { background: #f5f7fa; }
-.page { padding-bottom: 60rpx; }
+page {
+  background: #f5f7fa;
+}
+.page {
+  padding-bottom: 60rpx;
+}
 
-.loading-wrap { display: flex; justify-content: center; padding: 200rpx 0; }
-.loading-text { font-size: 28rpx; color: var(--gray-400); }
+.loading-wrap {
+  display: flex;
+  justify-content: center;
+  padding: 200rpx 0;
+}
+.loading-text {
+  font-size: 28rpx;
+  color: var(--gray-400);
+}
 
-.empty-wrap { display: flex; flex-direction: column; align-items: center; padding: 160rpx 40rpx; }
-.empty-icon { font-size: 80rpx; margin-bottom: 24rpx; }
-.empty-text { font-size: 32rpx; color: #333; font-weight: 600; margin-bottom: 12rpx; }
-.empty-desc { font-size: 26rpx; color: var(--gray-400); margin-bottom: 40rpx; text-align: center; }
+.empty-wrap {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  padding: 160rpx 40rpx;
+}
+.empty-icon {
+  font-size: 80rpx;
+  margin-bottom: 24rpx;
+}
+.empty-text {
+  font-size: 32rpx;
+  color: #333;
+  font-weight: 600;
+  margin-bottom: 12rpx;
+}
+.empty-desc {
+  font-size: 26rpx;
+  color: var(--gray-400);
+  margin-bottom: 40rpx;
+  text-align: center;
+}
 
 .btn-primary {
   background: linear-gradient(135deg, var(--color-primary), var(--color-info));
@@ -20,17 +49,21 @@ page { background: #f5f7fa; }
   font-size: 28rpx;
   font-weight: 600;
 }
-.btn-primary::after { border: none; }
+.btn-primary::after {
+  border: none;
+}
 
 /* 发票列表 */
-.invoice-list { padding: 24rpx 32rpx; }
+.invoice-list {
+  padding: 24rpx 32rpx;
+}
 
 .invoice-card {
   background: var(--white);
   border-radius: 16rpx;
   padding: 28rpx;
   margin-bottom: 20rpx;
-  box-shadow: 0 2rpx 12rpx rgba(0,0,0,0.04);
+  box-shadow: 0 2rpx 12rpx rgba(0, 0, 0, 0.04);
 }
 
 .invoice-header {
@@ -42,7 +75,11 @@ page { background: #f5f7fa; }
   border-bottom: 1rpx solid #f0f0f0;
 }
 
-.invoice-product { font-size: 32rpx; font-weight: 600; color: #1a1a2e; }
+.invoice-product {
+  font-size: 32rpx;
+  font-weight: 600;
+  color: #1a1a2e;
+}
 
 .invoice-status {
   font-size: 24rpx;
@@ -50,11 +87,21 @@ page { background: #f5f7fa; }
   border-radius: 8rpx;
   font-weight: 500;
 }
-.status-pending { background: var(--color-warning-bg); color: #92400E; }
-.status-issued { background: #D1FAE5; color: var(--color-success); }
-.status-rejected { background: #FEE2E2; color: var(--color-error); }
+.status-pending {
+  background: var(--color-warning-bg);
+  color: #92400e;
+}
+.status-issued {
+  background: #d1fae5;
+  color: var(--color-success);
+}
+.status-rejected {
+  background: #fee2e2;
+  color: var(--color-error);
+}
 
-.invoice-body {}
+.invoice-body {
+}
 
 .invoice-row {
   display: flex;
@@ -63,12 +110,27 @@ page { background: #f5f7fa; }
   padding: 10rpx 0;
 }
 
-.invoice-label { font-size: 26rpx; color: var(--gray-400); }
-.invoice-value { font-size: 26rpx; color: #333; }
-.invoice-value.price { font-weight: 700; color: var(--color-error); font-size: 30rpx; }
-.invoice-value.issued { color: var(--color-success); font-weight: 500; }
+.invoice-label {
+  font-size: 26rpx;
+  color: var(--gray-400);
+}
+.invoice-value {
+  font-size: 26rpx;
+  color: #333;
+}
+.invoice-value.price {
+  font-weight: 700;
+  color: var(--color-error);
+  font-size: 30rpx;
+}
+.invoice-value.issued {
+  color: var(--color-success);
+  font-weight: 500;
+}
 
-.safe-bottom { height: 40rpx; }
+.safe-bottom {
+  height: 40rpx;
+}
 
 /* 加载更多 */
 .load-more {

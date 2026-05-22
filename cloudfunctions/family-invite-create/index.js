@@ -17,8 +17,8 @@ function validatePermissions(permissions) {
     return false;
   }
   // 对齐客户端侧权限值：personal_info/documents/reminders/process
-  var allowed = ['personal_info', 'documents', 'reminders', 'process', 'document_upload', 'financial_info'];
-  for (var i = 0; i < permissions.length; i++) {
+  const allowed = ['personal_info', 'documents', 'reminders', 'process', 'document_upload', 'financial_info'];
+  for (let i = 0; i < permissions.length; i++) {
     if (allowed.indexOf(permissions[i]) === -1) {
       return false;
     }
@@ -28,18 +28,18 @@ function validatePermissions(permissions) {
 
 exports.main = async (event) => {
   try {
-    var { action } = event;
+    const { action } = event;
     if (action !== 'create') {
       return { code: 400, msg: '无效的操作类型' };
     }
 
-    var wxContext = cloud.getWXContext();
-    var openid = wxContext.OPENID;
+    const wxContext = cloud.getWXContext();
+    const openid = wxContext.OPENID;
     if (!openid) {
       return { code: 401, msg: '请先登录' };
     }
 
-    var { role, permissions } = event;
+    const { role, permissions } = event;
 
     if (!validateRole(role)) {
       return { code: 400, msg: '无效的家属角色，仅支持 spouse 或 child' };
@@ -51,8 +51,8 @@ exports.main = async (event) => {
 
     // financial_info 默认关闭
     if (permissions.indexOf('financial_info') !== -1) {
-      var filteredPermissions = [];
-      for (var i = 0; i < permissions.length; i++) {
+      const filteredPermissions = [];
+      for (let i = 0; i < permissions.length; i++) {
         if (permissions[i] !== 'financial_info') {
           filteredPermissions.push(permissions[i]);
         }
@@ -61,11 +61,14 @@ exports.main = async (event) => {
     }
 
     // 检查是否已有家庭空间
-    var existingSpace = await db.collection('family_spaces').where({
-      ownerUserId: openid
-    }).get();
+    const existingSpace = await db
+      .collection('family_spaces')
+      .where({
+        ownerUserId: openid,
+      })
+      .get();
 
-    var spaceId;
+    let spaceId;
     if (existingSpace.data.length > 0) {
       // 已有空间：仅追加新邀请，不重复创建空间
       spaceId = existingSpace.data[0].spaceId;
@@ -78,17 +81,17 @@ exports.main = async (event) => {
           ownerUserId: openid,
           members: [],
           createdAt: db.serverDate(),
-          updatedAt: db.serverDate()
-        }
+          updatedAt: db.serverDate(),
+        },
       });
     }
 
     // 生成邀请码
-    var inviteCode = crypto.randomBytes(12).toString('hex');
+    const inviteCode = crypto.randomBytes(12).toString('hex');
 
     // 有效期48小时
-    var now = Date.now();
-    var expiresAt = new Date(now + 48 * 3600000).toISOString();
+    const now = Date.now();
+    const expiresAt = new Date(now + 48 * 3600000).toISOString();
 
     // 写入邀请记录（关联到已有或新建的空间）
     await db.collection('family_invites').add({
@@ -100,8 +103,8 @@ exports.main = async (event) => {
         permissions: permissions,
         status: 'pending',
         createdAt: db.serverDate(),
-        expiresAt: expiresAt
-      }
+        expiresAt: expiresAt,
+      },
     });
 
     // 写入审计日志
@@ -112,10 +115,10 @@ exports.main = async (event) => {
         detail: {
           inviteCode: inviteCode,
           role: role,
-          permissions: permissions
+          permissions: permissions,
         },
-        createdAt: db.serverDate()
-      }
+        createdAt: db.serverDate(),
+      },
     });
 
     return {
@@ -124,10 +127,9 @@ exports.main = async (event) => {
         inviteCode: inviteCode,
         expiresAt: expiresAt,
         role: role,
-        permissions: permissions
-      }
+        permissions: permissions,
+      },
     };
-
   } catch (err) {
     console.error('[family-invite-create]', err);
     return { code: 500, msg: '服务异常' };

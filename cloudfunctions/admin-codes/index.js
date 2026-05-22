@@ -20,7 +20,11 @@ exports.main = async (event) => {
   // HTTP 网关调用时 event.body 是 JSON 字符串
   let body = event;
   if (event.body && typeof event.body === 'string') {
-    try { body = JSON.parse(event.body); } catch (_) { /* keep raw */ }
+    try {
+      body = JSON.parse(event.body);
+    } catch (_) {
+      /* keep raw */
+    }
   }
   const { action, params = {}, _apiKey } = body;
 
@@ -33,10 +37,14 @@ exports.main = async (event) => {
 
   try {
     switch (action) {
-      case 'listCodes':      return await listCodes(params, admin);
-      case 'getCodeStats':   return await getCodeStats(params);
-      case 'generateCodes':  return await generateCodes(params, admin);
-      default:               return { code: 400, msg: '无效操作: ' + action };
+      case 'listCodes':
+        return await listCodes(params, admin);
+      case 'getCodeStats':
+        return await getCodeStats(params);
+      case 'generateCodes':
+        return await generateCodes(params, admin);
+      default:
+        return { code: 400, msg: '无效操作: ' + action };
     }
   } catch (err) {
     console.error('[admin-codes]', err);
@@ -46,9 +54,7 @@ exports.main = async (event) => {
 
 async function validateApiKey(apiKey) {
   const keyHash = sha256(apiKey);
-  const res = await db.collection('admin_users')
-    .where({ apiKeyHash: keyHash, status: 'active' })
-    .limit(1).get();
+  const res = await db.collection('admin_users').where({ apiKeyHash: keyHash, status: 'active' }).limit(1).get();
   return res.data.length > 0 ? res.data[0] : null;
 }
 
@@ -62,18 +68,20 @@ async function listCodes(params, admin) {
   if (batchId) query.batchId = batchId;
 
   const [result, count] = await Promise.all([
-    db.collection('invite_codes')
+    db
+      .collection('invite_codes')
       .where(query)
       .orderBy('generatedAt', 'desc')
       .skip((page - 1) * pageSize)
       .limit(pageSize)
       .get(),
-    db.collection('invite_codes').where(query).count()
+    db.collection('invite_codes').where(query).count(),
   ]);
 
   return {
-    code: 0, msg: 'ok',
-    data: { total: count.total, page, pageSize, list: result.data }
+    code: 0,
+    msg: 'ok',
+    data: { total: count.total, page, pageSize, list: result.data },
   };
 }
 
@@ -86,12 +94,15 @@ async function getCodeStats(params) {
 
   const [total, activated] = await Promise.all([
     db.collection('invite_codes').where(query).count(),
-    db.collection('invite_codes').where({ ...query, status: 'used' }).count()
+    db
+      .collection('invite_codes')
+      .where({ ...query, status: 'used' })
+      .count(),
   ]);
 
   const generated = total.total;
   const actCount = activated.total;
-  const rate = generated > 0 ? Math.round(actCount / generated * 100) + '%' : '0%';
+  const rate = generated > 0 ? Math.round((actCount / generated) * 100) + '%' : '0%';
 
   return { code: 0, msg: 'ok', data: { generated, activated: actCount, activationRate: rate } };
 }
@@ -110,11 +121,9 @@ async function generateCodes(params, admin) {
     return { code: 400, msg: '兑换码需指定套餐 (planId)' };
   }
 
-  const batchId = 'batch_' + new Date().toISOString().slice(0, 10).replace(/-/g, '') + '_' +
-    crypto.randomBytes(3).toString('hex');
-  const expiresAt = expiresInDays > 0
-    ? new Date(Date.now() + expiresInDays * 86400000).toISOString()
-    : null;
+  const batchId =
+    'batch_' + new Date().toISOString().slice(0, 10).replace(/-/g, '') + '_' + crypto.randomBytes(3).toString('hex');
+  const expiresAt = expiresInDays > 0 ? new Date(Date.now() + expiresInDays * 86400000).toISOString() : null;
 
   const codes = [];
   for (let i = 0; i < qty; i++) {
@@ -131,7 +140,7 @@ async function generateCodes(params, admin) {
       generatedBy: admin.email,
       generatedAt: new Date().toISOString(),
       expiresAt,
-      note: batchName || ''
+      note: batchName || '',
     });
   }
 
@@ -149,17 +158,18 @@ async function generateCodes(params, admin) {
       detail: { codeType, count: qty, planId },
       ip: '',
       success: true,
-      createdAt: new Date()
-    }
+      createdAt: new Date(),
+    },
   });
 
   return {
-    code: 0, msg: 'ok',
-    data: { batchId, count: qty, codes: codes.map(c => c.code) }
+    code: 0,
+    msg: 'ok',
+    data: { batchId, count: qty, codes: codes.map((c) => c.code) },
   };
 }
 
 function mapPlanName(planId) {
-  const map = { 'annual_399': '年卡', 'pro_2999': '专业版', 'enterprise_6999': '企业版' };
+  const map = { annual_399: '年卡', pro_2999: '专业版', enterprise_6999: '企业版' };
   return map[planId] || planId;
 }

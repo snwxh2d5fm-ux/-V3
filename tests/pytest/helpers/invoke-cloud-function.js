@@ -15,40 +15,44 @@
  */
 'use strict';
 
-var functionName = process.argv[2];
-var cloudfunctionsDir = process.argv[3];
-var paramsJson = process.argv[4];
+const functionName = process.argv[2];
+const cloudfunctionsDir = process.argv[3];
+const paramsJson = process.argv[4];
 
 if (!functionName || !cloudfunctionsDir || !paramsJson) {
-  console.log(JSON.stringify({
-    error: 'Usage: invoke-cloud-function.js <functionName> <cloudfunctionsDir> <paramsJson>'
-  }));
+  console.log(
+    JSON.stringify({
+      error: 'Usage: invoke-cloud-function.js <functionName> <cloudfunctionsDir> <paramsJson>',
+    }),
+  );
   process.exit(0);
 }
 
 try {
-  var path = require('path');
-  var indexPath = path.resolve(cloudfunctionsDir, functionName, 'index.js');
+  const path = require('path');
+  const indexPath = path.resolve(cloudfunctionsDir, functionName, 'index.js');
 
   // 清除 require 缓存以确保每次都是新的加载
   delete require.cache[indexPath];
 
-  var mod = require(indexPath);
+  const mod = require(indexPath);
 
   if (typeof mod.main !== 'function') {
     console.log(JSON.stringify({ error: 'exports.main is not a function' }));
     process.exit(0);
   }
 
-  var params = JSON.parse(paramsJson);
-  var promise = mod.main(params);
+  const params = JSON.parse(paramsJson);
+  const promise = mod.main(params);
 
   // 支持 sync 和 async main
-  Promise.resolve(promise).then(function(result) {
-    console.log(JSON.stringify(result));
-  }).catch(function(err) {
-    console.log(JSON.stringify({ error: err.message }));
-  });
+  Promise.resolve(promise)
+    .then(function (result) {
+      console.log(JSON.stringify(result));
+    })
+    .catch(function (err) {
+      console.log(JSON.stringify({ error: err.message }));
+    });
 } catch (err) {
   console.log(JSON.stringify({ error: err.message }));
 }

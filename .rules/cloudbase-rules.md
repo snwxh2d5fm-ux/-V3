@@ -44,14 +44,14 @@ These rules override convenience. They are a gate before saying "done". Full rat
 
 ### High-priority routing table
 
-| Scenario | Read first | Then read | Do NOT route to first | Must check before action |
-|----------|------------|-----------|------------------------|--------------------------|
-| Web login / registration | `{auth-tool}` | `{auth-web}`, `{web-development}` | `{cloud-functions}`, `{http-api}` | Provider status and publishable key |
-| Mini program + CloudBase | `{miniprogram-development}` | `{auth-wechat}`, `{no-sql-wx-mp-sdk}` | `{auth-web}`, `{web-development}` | Whether the project uses `wx.cloud` |
-| Native App / raw HTTP | `{http-api}` | `{auth-tool}`, `{relational-database-tool}` | `{auth-web}`, `{no-sql-web-sdk}` | SDK boundary, OpenAPI, auth method |
-| Cloud Functions | `{cloud-functions}` | domain rule | `{cloudrun-development}` | Event vs HTTP function, runtime |
-| CloudRun backend | `{cloudrun-development}` | domain rule | `{cloud-functions}` | Container boundary, Dockerfile, CORS |
-| UI generation | `rules/ui-design/rule.md` | platform rule | backend-only rules | Design specification first |
+| Scenario                 | Read first                  | Then read                                   | Do NOT route to first             | Must check before action             |
+| ------------------------ | --------------------------- | ------------------------------------------- | --------------------------------- | ------------------------------------ |
+| Web login / registration | `{auth-tool}`               | `{auth-web}`, `{web-development}`           | `{cloud-functions}`, `{http-api}` | Provider status and publishable key  |
+| Mini program + CloudBase | `{miniprogram-development}` | `{auth-wechat}`, `{no-sql-wx-mp-sdk}`       | `{auth-web}`, `{web-development}` | Whether the project uses `wx.cloud`  |
+| Native App / raw HTTP    | `{http-api}`                | `{auth-tool}`, `{relational-database-tool}` | `{auth-web}`, `{no-sql-web-sdk}`  | SDK boundary, OpenAPI, auth method   |
+| Cloud Functions          | `{cloud-functions}`         | domain rule                                 | `{cloudrun-development}`          | Event vs HTTP function, runtime      |
+| CloudRun backend         | `{cloudrun-development}`    | domain rule                                 | `{cloud-functions}`               | Container boundary, Dockerfile, CORS |
+| UI generation            | `rules/ui-design/rule.md`   | platform rule                               | backend-only rules                | Design specification first           |
 
 ## 🗂️ Rule File Path Resolution Strategy
 
@@ -67,33 +67,34 @@ When this document references a rule file, try locations in this order:
 
 ### Rule Name Mapping
 
-| Rule Shorthand | Full Rule Name |
-|----------------|----------------|
-| `auth-tool` | Authentication Tool Configuration |
-| `auth-web` | Web Authentication |
-| `auth-wechat` | WeChat Mini Program Authentication |
-| `auth-nodejs` | Node.js Authentication |
-| `web-development` | Web Platform Development |
-| `miniprogram-development` | Mini Program Platform Development |
-| `cloudrun-development` | CloudRun Backend Development |
-| `cloud-functions` | Cloud Functions Development |
-| `http-api` | HTTP API Usage |
-| `relational-database-tool` | MySQL Database Tool Operations |
-| `relational-database-web` | MySQL Web SDK |
-| `no-sql-web-sdk` | NoSQL Web SDK |
-| `no-sql-wx-mp-sdk` | NoSQL WeChat Mini Program SDK |
-| `cloudbase-platform` | CloudBase Platform Knowledge |
-| `cloud-storage-web` | Cloud Storage Web SDK |
-| `ui-design` | UI Design Guidelines |
-| `spec-workflow` | Software Engineering Workflow |
-| `data-model-creation` | Data Model Creation |
-| `ai-model-web` | AI Model Calling (Web SDK) |
-| `ai-model-nodejs` | AI Model Calling (Node SDK) |
-| `ai-model-wechat` | AI Model Calling (WeChat Mini Program) |
+| Rule Shorthand             | Full Rule Name                         |
+| -------------------------- | -------------------------------------- |
+| `auth-tool`                | Authentication Tool Configuration      |
+| `auth-web`                 | Web Authentication                     |
+| `auth-wechat`              | WeChat Mini Program Authentication     |
+| `auth-nodejs`              | Node.js Authentication                 |
+| `web-development`          | Web Platform Development               |
+| `miniprogram-development`  | Mini Program Platform Development      |
+| `cloudrun-development`     | CloudRun Backend Development           |
+| `cloud-functions`          | Cloud Functions Development            |
+| `http-api`                 | HTTP API Usage                         |
+| `relational-database-tool` | MySQL Database Tool Operations         |
+| `relational-database-web`  | MySQL Web SDK                          |
+| `no-sql-web-sdk`           | NoSQL Web SDK                          |
+| `no-sql-wx-mp-sdk`         | NoSQL WeChat Mini Program SDK          |
+| `cloudbase-platform`       | CloudBase Platform Knowledge           |
+| `cloud-storage-web`        | Cloud Storage Web SDK                  |
+| `ui-design`                | UI Design Guidelines                   |
+| `spec-workflow`            | Software Engineering Workflow          |
+| `data-model-creation`      | Data Model Creation                    |
+| `ai-model-web`             | AI Model Calling (Web SDK)             |
+| `ai-model-nodejs`          | AI Model Calling (Node SDK)            |
+| `ai-model-wechat`          | AI Model Calling (WeChat Mini Program) |
 
 ### Usage Example
 
 When you see "Read `{auth-web}` rule file" in this document:
+
 - Try: `.codebuddy/rules/tcb/rules/auth-web/rule.md` first
 - Then: `rules/auth-web/rule.md`
 - Finally: Search with pattern `*auth-web*rule.md`
@@ -107,6 +108,7 @@ When you see "Read `{auth-web}` rule file" in this document:
 **⚠️ CRITICAL: Read this section first based on your project type**
 
 ### When Developing a Web Project:
+
 1. **Environment Check**: Call `envQuery` tool first (applies to all interactions)
 2. **⚠️ Existing Implementation Priority**: If the workspace already contains the target pages or services, inspect and patch the active handlers first instead of recreating parallel structure.
 3. **⚠️ UI Design (CRITICAL, but only for visual work)**: **Read `rules/ui-design/rule.md` first only when the task actually asks for visual design generation or redesign.** If the workspace already has fixed structure and the task is functional completion, prioritize wiring the current pages and handlers instead of producing a design specification.
@@ -119,6 +121,7 @@ When you see "Read `{auth-web}` rule file" in this document:
    - MySQL: `rules/relational-database-web/rule.md` + `rules/relational-database-tool/rule.md`
 
 ### When Developing a Mini Program Project:
+
 1. **Environment Check**: Call `envQuery` tool first (applies to all interactions)
 2. **⚠️ UI Design (CRITICAL)**: **MUST read `rules/ui-design/rule.md` FIRST before generating any page, interface, component, or style** - This is NOT optional. You MUST explicitly read this file and output the design specification before writing any UI code.
 3. **Core Capabilities**: Read Core Capabilities section below (especially UI Design and Database + Authentication for Mini Program)
@@ -129,6 +132,7 @@ When you see "Read `{auth-web}` rule file" in this document:
    - MySQL: `rules/relational-database-tool/rule.md` (via tools)
 
 ### When Developing a Native App Project (iOS/Android/Flutter/React Native/etc.):
+
 1. **Environment Check**: Call `envQuery` tool first (applies to all interactions)
 2. **⚠️ Platform Limitation**: **Native apps (iOS, Android, Flutter, React Native, and other native mobile frameworks) do NOT support CloudBase SDK** - Must use HTTP API to call CloudBase capabilities
 3. **⚠️ UI Design (CRITICAL)**: **MUST read `rules/ui-design/rule.md` FIRST before generating any page, interface, component, or style** - This is NOT optional. You MUST explicitly read this file and output the design specification before writing any UI code.
@@ -165,11 +169,13 @@ When user mentions ANY of these words, immediately read the auth-tool rule file:
 **Rule File Location Strategy:**
 
 When you see `{rule-name}` notation in this document, apply the path resolution strategy from the top of this file:
+
 1. Try `.codebuddy/rules/tcb/rules/{rule-name}/rule.md` first (CodeBuddy)
 2. Then try `rules/{rule-name}/rule.md` (Other editors)
 3. Use `search_file` with pattern `*{rule-name}*rule.md` if both fail
 
 **Specific example for auth-tool:**
+
 1. `.codebuddy/rules/tcb/rules/auth-tool/rule.md` (CodeBuddy)
 2. `rules/auth-tool/rule.md` (Other editors: Cursor, WindSurf, etc.)
 3. Use `search_file` with pattern `*auth-tool*rule.md` if both fail
@@ -185,11 +191,13 @@ When you see `{rule-name}` notation in this document, apply the path resolution 
 As the most important part of application development, the following four core capabilities must be done well, without needing to read different rules for different platforms:
 
 ### 1. ⚠️ UI Design (CRITICAL - Highest Priority)
+
 **⚠️ MANDATORY: Must strictly follow `rules/ui-design/rule.md` rules for ALL design work**
 
 **🚨 CRITICAL ENFORCEMENT: You MUST explicitly read the file `rules/ui-design/rule.md` before generating ANY UI code. This is NOT a suggestion - it is a MANDATORY requirement.**
 
 **Before generating ANY page, interface, component, or style:**
+
 1. **MUST FIRST explicitly read `rules/ui-design/rule.md` file** - Use file reading tools to read this file, do NOT skip this step
 2. **MUST complete design specification output** before writing any code:
    - Purpose Statement
@@ -201,6 +209,7 @@ As the most important part of application development, the following four core c
 4. **MUST avoid** generic AI aesthetics (common fonts, clichéd color schemes, templated designs)
 
 **This applies to ALL tasks involving:**
+
 - Page generation
 - Interface creation
 - Component design
@@ -212,9 +221,11 @@ As the most important part of application development, the following four core c
 **⚠️ VIOLATION DETECTION: If you find yourself writing UI code without first reading `rules/ui-design/rule.md`, STOP immediately and read the file first.**
 
 ### 2. Database + Authentication
+
 **Strengthen database and authentication capabilities**
 
 **Authentication**:
+
 - **Web Projects**:
   - Must use CloudBase Web SDK built-in authentication, refer to `rules/auth-web/rule.md`
   - Platform development rules: Refer to `rules/web-development/rule.md` for Web SDK integration, static hosting deployment, and build configuration
@@ -224,6 +235,7 @@ As the most important part of application development, the following four core c
 - **Node.js Backend**: Refer to `rules/auth-nodejs/rule.md`
 
 **Database Operations**:
+
 - **Web Projects**:
   - NoSQL Database: Refer to `rules/no-sql-web-sdk/rule.md`
   - MySQL Relational Database: Refer to `rules/relational-database-web/rule.md` (Web application development) and `rules/relational-database-tool/rule.md` (Management via tools)
@@ -234,7 +246,9 @@ As the most important part of application development, the following four core c
   - Platform development rules: Refer to `rules/miniprogram-development/rule.md` for mini program database integration and wx.cloud usage
 
 ### 3. Static Hosting Deployment (Web)
+
 **Refer to deployment process in `rules/web-development/rule.md`**
+
 - Use CloudBase static hosting after build completion
 - Deploy using `manageHosting(action="upload")`
 - `manageHosting(action="upload")` is for static hosting only; use `manageStorage` / `queryStorage` when the task needs a COS object that must be queried by the storage SDK
@@ -242,6 +256,7 @@ As the most important part of application development, the following four core c
 - Generate markdown format access links with random queryString
 
 ### 4. Backend Deployment (Cloud Functions or CloudRun)
+
 - **Cloud Function Deployment**: Refer to `rules/cloud-functions/rule.md` - Prefer `queryFunctions` to inspect existing functions, then call `manageFunctions(action="createFunction")` or `manageFunctions(action="updateFunctionCode")` to deploy. **Important**: Runtime cannot be changed after creation, must select correct runtime initially.
   - Legacy compatibility: if older prompts mention `getFunctionList`, `createFunction`, or `updateFunctionCode`, map them to `queryFunctions` / `manageFunctions(...)` before execution.
 - **CloudRun Deployment**: Refer to `rules/cloudrun-development/rule.md` - Use `manageCloudRun` tool for containerized deployment
@@ -252,13 +267,17 @@ As the most important part of application development, the following four core c
 **Important: To ensure development quality, AI must complete the following steps before starting work:**
 
 ### 0. Environment Check (First Step)
+
 After user inputs any content, first check CloudBase environment status:
+
 - Ensure current CloudBase environment ID is known
 - If not present in conversation history, must call `envQuery` tool with parameter `action=info` to query current environment information and environment ID
 - **Important**: When environment ID configuration is involved in code later, automatically use the queried environment ID, no need for manual user input
 
 ### 1. Scenario Identification
+
 Identify current development scenario type, mainly for understanding project type, but core capabilities apply to all projects:
+
 - **Web Projects**: React/Vue/native JS frontend projects
 - **WeChat Mini Programs**: Mini program CloudBase projects
 - **Native Apps**: Native mobile applications (iOS, Android, Flutter, React Native, etc.) that use HTTP API (no SDK support)
@@ -270,6 +289,7 @@ Identify current development scenario type, mainly for understanding project typ
 ### 2. Platform-Specific Quick Guide
 
 **Web Projects - Required Rule Files:**
+
 - `rules/web-development/rule.md` - Platform development rules (SDK integration, static hosting, build configuration)
 - `rules/auth-web/rule.md` - Authentication (MUST use Web SDK built-in authentication)
 - `rules/no-sql-web-sdk/rule.md` - NoSQL database operations
@@ -280,6 +300,7 @@ Identify current development scenario type, mainly for understanding project typ
 - `rules/ai-model-web/rule.md` - AI model calling for Web apps (text generation, streaming)
 
 **Mini Program Projects - Required Rule Files:**
+
 - `rules/miniprogram-development/rule.md` - Platform development rules (project structure, WeChat Developer Tools, wx.cloud)
 - `rules/auth-wechat/rule.md` - Authentication (naturally login-free, get OPENID in cloud functions)
 - `rules/no-sql-wx-mp-sdk/rule.md` - NoSQL database operations
@@ -288,68 +309,80 @@ Identify current development scenario type, mainly for understanding project typ
 - `rules/ai-model-wechat/rule.md` - AI model calling for Mini Program (text generation, streaming with callbacks)
 
 **Native App Projects (iOS/Android/Flutter/React Native/etc.) - Required Rule Files:**
+
 - **⚠️ `rules/http-api/rule.md`** - **MANDATORY** - HTTP API usage for all CloudBase operations (SDK not supported)
 - **⚠️ `rules/relational-database-tool/rule.md`** - **MANDATORY** - MySQL database operations (via tools)
 - **⚠️ Database Limitation**: Only MySQL database is supported. If users need MySQL, **MUST prompt them to enable it in console**: [Enable MySQL Database](https://tcb.cloud.tencent.com/dev?envId=${envId}#/db/mysql/table/default/)
 
 **Native App Projects (iOS/Android/Flutter/React Native/etc.) - Optional Rule Files:**
+
 - `rules/cloudbase-platform/rule.md` - Universal CloudBase platform knowledge
 - `rules/ai-model-nodejs/rule.md` - AI model calling via HTTP API (text generation, streaming, image generation)
 - `rules/ui-design/rule.md` - UI design guidelines (if UI is involved)
 
 **Universal Rule Files (All Projects):**
+
 - **⚠️ `rules/ui-design/rule.md`** - **MANDATORY - HIGHEST PRIORITY** - Must read FIRST before any UI/page/component/style generation
 - `rules/spec-workflow/rule.md` - Standard software engineering process (if needed)
 
 ### 3. Development Confirmation
+
 Before starting work, suggest confirming with user:
+
 1. "I identify this as a [scenario type] project"
 2. "I will strictly follow core capability requirements and refer to relevant rule files"
 3. "Please confirm if my understanding is correct"
 
 ## Core Behavior Rules
+
 1. **Tool Priority**: For Tencent CloudBase operations, must prioritize using CloudBase tools
 2. **Project Understanding**: First read current project's README.md, follow project instructions for development
-4. **Directory Standards**: Before outputting project code in current directory, first check current directory files
-5. **Development Order**: When developing, prioritize frontend first, then backend, ensuring frontend interface and interaction logic are completed first, then implement backend business logic
-6. **⚠️ UI Design Rules Mandatory Application**: When tasks involve generating pages, interfaces, components, styles, or any frontend visual elements, **MUST FIRST explicitly read the file `rules/ui-design/rule.md` using file reading tools**, then strictly follow the rule file, ensuring generated interfaces have distinctive aesthetic styles and high-quality visual design, avoiding generic AI aesthetics. **You MUST output the design specification before writing any UI code.**
-7. **Backend Development Priority Strategy**: When developing backend, prioritize using SDK to directly call CloudBase database, rather than through cloud functions, unless specifically needed (such as complex business logic, server-side computation, calling third-party APIs, etc.)
-8. **Deployment Order**: When there are backend dependencies, prioritize deploying backend before previewing frontend
-9. **Interactive Confirmation**: Use interactiveDialog to clarify when requirements are unclear, must confirm before executing high-risk operations
-10. **Real-time Communication**: Use CloudBase real-time database watch capability
-11. **⚠️ Authentication Rules**: When users develop projects, if user login authentication is needed, must use built-in authentication functions, must strictly distinguish authentication methods by platform
-   - **Web Projects**: **MUST use CloudBase Web SDK built-in authentication** — delegate provider configuration to `{auth-tool}` and the browser sign-in flow (`signInWithPassword` / `signInWithPhone` / `onLoginStateChanged` / `getLoginState`) to `{auth-web}`. Do NOT default to `signInAnonymously()`, and do NOT recommend `auth.toDefaultLoginPage()` — the hosted login page is no longer the preferred path. Route the user to your own `/login` page and call the `auth-web` APIs there.
-   - **Mini Program Projects**: **Naturally login-free**, get `wxContext.OPENID` in cloud functions, refer to `rules/auth-wechat/rule.md`
-   - **Native Apps (iOS/Android)**: **MUST use HTTP API** for authentication, refer to `rules/http-api/rule.md` and Authentication API swagger
+3. **Directory Standards**: Before outputting project code in current directory, first check current directory files
+4. **Development Order**: When developing, prioritize frontend first, then backend, ensuring frontend interface and interaction logic are completed first, then implement backend business logic
+5. **⚠️ UI Design Rules Mandatory Application**: When tasks involve generating pages, interfaces, components, styles, or any frontend visual elements, **MUST FIRST explicitly read the file `rules/ui-design/rule.md` using file reading tools**, then strictly follow the rule file, ensuring generated interfaces have distinctive aesthetic styles and high-quality visual design, avoiding generic AI aesthetics. **You MUST output the design specification before writing any UI code.**
+6. **Backend Development Priority Strategy**: When developing backend, prioritize using SDK to directly call CloudBase database, rather than through cloud functions, unless specifically needed (such as complex business logic, server-side computation, calling third-party APIs, etc.)
+7. **Deployment Order**: When there are backend dependencies, prioritize deploying backend before previewing frontend
+8. **Interactive Confirmation**: Use interactiveDialog to clarify when requirements are unclear, must confirm before executing high-risk operations
+9. **Real-time Communication**: Use CloudBase real-time database watch capability
+10. **⚠️ Authentication Rules**: When users develop projects, if user login authentication is needed, must use built-in authentication functions, must strictly distinguish authentication methods by platform
+
+- **Web Projects**: **MUST use CloudBase Web SDK built-in authentication** — delegate provider configuration to `{auth-tool}` and the browser sign-in flow (`signInWithPassword` / `signInWithPhone` / `onLoginStateChanged` / `getLoginState`) to `{auth-web}`. Do NOT default to `signInAnonymously()`, and do NOT recommend `auth.toDefaultLoginPage()` — the hosted login page is no longer the preferred path. Route the user to your own `/login` page and call the `auth-web` APIs there.
+- **Mini Program Projects**: **Naturally login-free**, get `wxContext.OPENID` in cloud functions, refer to `rules/auth-wechat/rule.md`
+- **Native Apps (iOS/Android)**: **MUST use HTTP API** for authentication, refer to `rules/http-api/rule.md` and Authentication API swagger
+
 12. **⚠️ Authentication Configuration Mandatory Check**: When user mentions any authentication-related requirements:
-   - **MUST FIRST read** `{auth-tool}` rule file using the path resolution strategy at the top of this document
-   - **MUST FIRST check** current authentication configuration status
-   - **MUST FIRST enable** required authentication methods
-   - **MUST verify** configuration is effective
-   - **ONLY THEN implement** frontend authentication code
+
+- **MUST FIRST read** `{auth-tool}` rule file using the path resolution strategy at the top of this document
+- **MUST FIRST check** current authentication configuration status
+- **MUST FIRST enable** required authentication methods
+- **MUST verify** configuration is effective
+- **ONLY THEN implement** frontend authentication code
+
 13. **⚠️ Native App Development Rules**: When developing native mobile applications (iOS, Android, Flutter, React Native, and other native mobile frameworks):
-   - **SDK Not Supported**: CloudBase SDK is NOT available for native apps, MUST use HTTP API
-   - **Database Limitation**: Only MySQL database is supported via HTTP API
-   - **MySQL Database Setup**: If users need MySQL database, MUST prompt them to enable it in console first at: [CloudBase Console - MySQL Database](https://tcb.cloud.tencent.com/dev?envId=${envId}#/db/mysql/table/default/) (replace `${envId}` with actual environment ID)
-   - **Required Rules**: MUST read `rules/http-api/rule.md` and `rules/relational-database-tool/rule.md`
+
+- **SDK Not Supported**: CloudBase SDK is NOT available for native apps, MUST use HTTP API
+- **Database Limitation**: Only MySQL database is supported via HTTP API
+- **MySQL Database Setup**: If users need MySQL database, MUST prompt them to enable it in console first at: [CloudBase Console - MySQL Database](https://tcb.cloud.tencent.com/dev?envId=${envId}#/db/mysql/table/default/) (replace `${envId}` with actual environment ID)
+- **Required Rules**: MUST read `rules/http-api/rule.md` and `rules/relational-database-tool/rule.md`
 
 ## Development Workflow
 
 ### Development
 
-1. **⚠️ UI Design Document Reading (MANDATORY)**: 
+1. **⚠️ UI Design Document Reading (MANDATORY)**:
    - **Before generating ANY page, interface, component, or style, MUST FIRST explicitly read the file `rules/ui-design/rule.md` using file reading tools**
    - **MUST output the design specification** (Purpose Statement, Aesthetic Direction, Color Palette, Typography, Layout Strategy) before writing any UI code
    - This is NOT optional - you MUST read the file and follow the design thinking framework and frontend aesthetics guidelines
    - Avoid generating generic AI aesthetic style interfaces
 
-3. **Mini Program TabBar Material Download - Download Remote Material Links**: Mini program Tabbar and other material images must use **png** format, must use downloadRemoteFile tool to download files locally. Can select from Unsplash, wikimedia (generally choose 500 size), Pexels, Apple official UI and other resources
+2. **Mini Program TabBar Material Download - Download Remote Material Links**: Mini program Tabbar and other material images must use **png** format, must use downloadRemoteFile tool to download files locally. Can select from Unsplash, wikimedia (generally choose 500 size), Pexels, Apple official UI and other resources
 
 If remote links are needed in the application, can continue to call uploadFile to upload and obtain temporary access links and cloud storage cloudId
 
 3. **Query Professional Knowledge from Knowledge Base**: If uncertain about any CloudBase knowledge, can use searchKnowledgeBase tool to intelligently search CloudBase knowledge base (supports CloudBase and cloud functions, mini program frontend knowledge, etc.), quickly obtain professional documents and answers through vector search
 
 4. **WeChat Developer Tools Open Project Workflow**:
+
 - When detecting current project is a mini program project, suggest user to use WeChat Developer Tools for preview, debugging, and publishing
 - Before opening, confirm project.config.json has appid field configured. If not configured, must ask user to provide it
 - Use WeChat Developer built-in CLI command to open project (pointing to directory containing project.config.json):
@@ -378,11 +411,13 @@ If remote links are needed in the application, can continue to call uploadFile t
 1. To help others who don't use AI understand what resources are available, can generate a cloudbaserc.json file after generation
 
 ### Tool Interface Call Rules
+
 When calling tool services, you need to fully understand the data types of all interfaces to be called, as well as return value types. If you're not sure which interface to call, first check the documentation and tool descriptions, then determine which interface and parameters to call based on the documentation and tool descriptions. Do not have incorrect method parameters or parameter type errors.
 
 For example, many interfaces require a confirm parameter, which is a boolean type. If you don't provide this parameter, or provide incorrect data type, the interface will return an error.
 
 ### Environment ID Auto-Configuration Rules
+
 - When generating project configuration files (such as `cloudbaserc.json`, `project.config.json`, etc.), automatically use the environment ID queried by `envQuery`
 - If the conversation only provides an environment alias, nickname, or shorthand, first resolve it with `envQuery(action=list, alias=..., aliasExact=true)` and use the returned full `EnvId`
 - Do not pass alias-like short forms directly into `auth.set_env`, SDK init, console links, or generated config files; if the alias is ambiguous or missing, stop and ask the user to confirm
@@ -394,6 +429,7 @@ For example, many interfaces require a confirm parameter, which is a boolean typ
 **Note**: For detailed information, refer to the specific skill files. This section provides quick reference only.
 
 ### Platform Development Skills
+
 - **Web**: `rules/web-development/rule.md` - SDK integration, static hosting, build configuration
 - **Mini Program**: `rules/miniprogram-development/rule.md` - Project structure, WeChat Developer Tools, wx.cloud
 - **Cloud Functions**: `rules/cloud-functions/rule.md` - Cloud function development, deployment, logging, HTTP access
@@ -401,32 +437,38 @@ For example, many interfaces require a confirm parameter, which is a boolean typ
 - **Platform (Universal)**: `rules/cloudbase-platform/rule.md` - Environment, authentication, services
 
 ### Authentication Skills
+
 - **Web**: `rules/auth-web/rule.md` - **MUST use Web SDK built-in authentication**
 - **Mini Program**: `rules/auth-wechat/rule.md` - **Naturally login-free, get OPENID in cloud functions**
 - **Node.js**: `rules/auth-nodejs/rule.md`
 - **Auth Tool (MCP)**: `rules/auth-tool/rule.md` - Configure and manage authentication providers (enable/disable login methods, setup provider settings) via MCP tools
 
 ### Database Skills
+
 - **NoSQL (Web)**: `rules/no-sql-web-sdk/rule.md`
 - **NoSQL (Mini Program)**: `rules/no-sql-wx-mp-sdk/rule.md`
 - **MySQL (Web)**: `rules/relational-database-web/rule.md`
 - **MySQL (Tool)**: `rules/relational-database-tool/rule.md`
 
 ### Storage Skills
+
 - **Cloud Storage (Web)**: `rules/cloud-storage-web/rule.md` - Upload, download, temporary URLs, file management using Web SDK
 
 ### AI Skills
+
 - **AI Model Calling (Web)**: `rules/ai-model-web/rule.md` - Call AI models in browser apps via @cloudbase/js-sdk. Supports text generation and streaming.
 - **AI Model Calling (Node.js)**: `rules/ai-model-nodejs/rule.md` - Call AI models in backend/cloud functions via @cloudbase/node-sdk ≥3.16.0. Supports text generation, streaming, and image generation.
 - **AI Model Calling (WeChat)**: `rules/ai-model-wechat/rule.md` - Call AI models in Mini Program via wx.cloud.extend.AI. Supports text generation and streaming with callbacks.
 
 ### 🎨 ⚠️ UI Design Skill (CRITICAL - Read FIRST)
+
 - **`rules/ui-design/rule.md`** - **MANDATORY - HIGHEST PRIORITY**
   - **MUST read FIRST before generating ANY interface/page/component/style**
   - Design thinking framework, complete design process, frontend aesthetics guidelines
   - **NO EXCEPTIONS**: All UI work requires reading this file first
 
 ### Workflow Skills
+
 - **Spec Workflow**: `rules/spec-workflow/rule.md` - Standard software engineering process (requirements, design, tasks)
 
 ## Development Quality Checklist
@@ -434,21 +476,23 @@ For example, many interfaces require a confirm parameter, which is a boolean typ
 To ensure development quality, recommend completing the following checks before starting tasks:
 
 ### Recommended Steps
+
 0. **[ ] Environment Check**: Call `envQuery` tool to check CloudBase environment status (applies to all interactions)
 1. **[ ] Scenario Identification**: Clearly identify what type of project this is (Web/Mini Program/Database/UI/AI)
-3. **[ ] Core Capability Confirmation**: Confirm all four core capabilities have been considered
+2. **[ ] Core Capability Confirmation**: Confirm all four core capabilities have been considered
    - UI Design: Have you explicitly read the file `rules/ui-design/rule.md` using file reading tools?
    - Database + Authentication: Have you referred to corresponding authentication and database skills?
    - Static Hosting Deployment: Have you understood the deployment process?
    - Backend Deployment: Have you understood cloud function or CloudRun deployment process?
-4. **[ ] UI Design Rules Check (MANDATORY)**: If task involves generating pages, interfaces, components, or styles:
+3. **[ ] UI Design Rules Check (MANDATORY)**: If task involves generating pages, interfaces, components, or styles:
    - Have you explicitly read the file `rules/ui-design/rule.md` using file reading tools? (Required: YES)
    - Have you output the design specification before writing code? (Required: YES)
    - Have you understood and will follow the design thinking framework? (Required: YES)
-5. **[ ] User Confirmation**: Confirm with user whether scenario identification and core capability understanding are correct
-6. **[ ] Rule Execution**: Strictly follow core capability requirements and relevant rule files for development
+4. **[ ] User Confirmation**: Confirm with user whether scenario identification and core capability understanding are correct
+5. **[ ] Rule Execution**: Strictly follow core capability requirements and relevant rule files for development
 
 ### ⚠️ Common Issues to Avoid
+
 - **❌ DO NOT skip reading UI design document** - Must explicitly read `rules/ui-design/rule.md` file before generating any UI code
 - Avoid skipping core capabilities and starting development directly
 - Avoid mixing APIs and authentication methods from different platforms
@@ -457,7 +501,9 @@ To ensure development quality, recommend completing the following checks before 
 - Important technical solutions should be confirmed with users
 
 ### Quality Assurance
+
 If development is found to not comply with standards, can:
+
 - Point out specific issues
 - Require re-execution of rule check process
 - Clearly specify rule files that need to be followed
@@ -465,7 +511,6 @@ If development is found to not comply with standards, can:
 ## CloudBase Console Entry Points
 
 After creating/deploying resources, provide corresponding console management page links. All console URLs follow the pattern: `https://tcb.cloud.tencent.com/dev?envId=${envId}#/{path}`
-
 
 ## Deployment Workflow
 
@@ -477,15 +522,16 @@ When users request deployment to CloudBase:
    - Determine if this is a new deployment or update to existing services
 
 1. **Backend Deployment (if applicable)**:
-  - Only for Node.js cloud functions: deploy directly using `manageFunctions(action="createFunction")` / `manageFunctions(action="updateFunctionCode")`
-    - Legacy compatibility: if older materials mention `createFunction`, `updateFunctionCode`, or `getFunctionList`, map them to the converged tools first
-    - Before deploying, decide whether the function is Event or HTTP. Event Functions use `exports.main = async (event, context) => {}`.
-     - HTTP Functions are standard web services: they must listen on port `9000`, include `scf_bootstrap`, and for Node.js should default to native `http.createServer((req, res) => { ... })`. Parse `req.url` and the streamed request body manually, set response headers explicitly, and do not write the function as `exports.main` unless you intentionally choose Functions Framework.
-   - For other languages backend server (Java, Go, PHP, Python, Node.js): deploy to Cloud Run
-   - Ensure backend code supports CORS by default
-   - Prepare Dockerfile for containerized deployment
-   - Use `manageCloudRun` tool for deployment
-   - Set MinNum instances to at least 1 to reduce cold start latency
+
+- Only for Node.js cloud functions: deploy directly using `manageFunctions(action="createFunction")` / `manageFunctions(action="updateFunctionCode")`
+  - Legacy compatibility: if older materials mention `createFunction`, `updateFunctionCode`, or `getFunctionList`, map them to the converged tools first
+  - Before deploying, decide whether the function is Event or HTTP. Event Functions use `exports.main = async (event, context) => {}`.
+  - HTTP Functions are standard web services: they must listen on port `9000`, include `scf_bootstrap`, and for Node.js should default to native `http.createServer((req, res) => { ... })`. Parse `req.url` and the streamed request body manually, set response headers explicitly, and do not write the function as `exports.main` unless you intentionally choose Functions Framework.
+- For other languages backend server (Java, Go, PHP, Python, Node.js): deploy to Cloud Run
+- Ensure backend code supports CORS by default
+- Prepare Dockerfile for containerized deployment
+- Use `manageCloudRun` tool for deployment
+- Set MinNum instances to at least 1 to reduce cold start latency
 
 2. **Frontend Deployment (if applicable)**:
    - After backend deployment completes, update frontend API endpoints using the returned API addresses
@@ -502,7 +548,6 @@ When users request deployment to CloudBase:
    - Include backend API endpoints and frontend access URLs
    - Document CloudBase resources used (functions, cloud run, hosting, database, etc.)
    - This helps with future updates and maintenance
-
 
 ### Core Function Entry Points
 

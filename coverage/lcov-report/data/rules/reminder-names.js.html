@@ -1,0 +1,430 @@
+
+<!doctype html>
+<html lang="en">
+
+<head>
+    <title>Code coverage report for data/rules/reminder-names.js</title>
+    <meta charset="utf-8" />
+    <link rel="stylesheet" href="../../prettify.css" />
+    <link rel="stylesheet" href="../../base.css" />
+    <link rel="shortcut icon" type="image/x-icon" href="../../favicon.png" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <style type='text/css'>
+        .coverage-summary .sorter {
+            background-image: url(../../sort-arrow-sprite.png);
+        }
+    </style>
+</head>
+    
+<body>
+<div class='wrapper'>
+    <div class='pad1'>
+        <h1><a href="../../index.html">All files</a> / <a href="index.html">data/rules</a> reminder-names.js</h1>
+        <div class='clearfix'>
+            
+            <div class='fl pad1y space-right2'>
+                <span class="strong">0% </span>
+                <span class="quiet">Statements</span>
+                <span class='fraction'>0/1</span>
+            </div>
+        
+            
+            <div class='fl pad1y space-right2'>
+                <span class="strong">100% </span>
+                <span class="quiet">Branches</span>
+                <span class='fraction'>0/0</span>
+            </div>
+        
+            
+            <div class='fl pad1y space-right2'>
+                <span class="strong">100% </span>
+                <span class="quiet">Functions</span>
+                <span class='fraction'>0/0</span>
+            </div>
+        
+            
+            <div class='fl pad1y space-right2'>
+                <span class="strong">0% </span>
+                <span class="quiet">Lines</span>
+                <span class='fraction'>0/1</span>
+            </div>
+        
+            
+        </div>
+        <p class="quiet">
+            Press <em>n</em> or <em>j</em> to go to the next uncovered block, <em>b</em>, <em>p</em> or <em>k</em> for the previous block.
+        </p>
+        <template id="filterTemplate">
+            <div class="quiet">
+                Filter:
+                <input type="search" id="fileSearch">
+            </div>
+        </template>
+    </div>
+    <div class='status-line low'></div>
+    <pre><table class="coverage">
+<tr><td class="line-count quiet"><a name='L1'></a><a href='#L1'>1</a>
+<a name='L2'></a><a href='#L2'>2</a>
+<a name='L3'></a><a href='#L3'>3</a>
+<a name='L4'></a><a href='#L4'>4</a>
+<a name='L5'></a><a href='#L5'>5</a>
+<a name='L6'></a><a href='#L6'>6</a>
+<a name='L7'></a><a href='#L7'>7</a>
+<a name='L8'></a><a href='#L8'>8</a>
+<a name='L9'></a><a href='#L9'>9</a>
+<a name='L10'></a><a href='#L10'>10</a>
+<a name='L11'></a><a href='#L11'>11</a>
+<a name='L12'></a><a href='#L12'>12</a>
+<a name='L13'></a><a href='#L13'>13</a>
+<a name='L14'></a><a href='#L14'>14</a>
+<a name='L15'></a><a href='#L15'>15</a>
+<a name='L16'></a><a href='#L16'>16</a>
+<a name='L17'></a><a href='#L17'>17</a>
+<a name='L18'></a><a href='#L18'>18</a>
+<a name='L19'></a><a href='#L19'>19</a>
+<a name='L20'></a><a href='#L20'>20</a>
+<a name='L21'></a><a href='#L21'>21</a>
+<a name='L22'></a><a href='#L22'>22</a>
+<a name='L23'></a><a href='#L23'>23</a>
+<a name='L24'></a><a href='#L24'>24</a>
+<a name='L25'></a><a href='#L25'>25</a>
+<a name='L26'></a><a href='#L26'>26</a>
+<a name='L27'></a><a href='#L27'>27</a>
+<a name='L28'></a><a href='#L28'>28</a>
+<a name='L29'></a><a href='#L29'>29</a>
+<a name='L30'></a><a href='#L30'>30</a>
+<a name='L31'></a><a href='#L31'>31</a>
+<a name='L32'></a><a href='#L32'>32</a>
+<a name='L33'></a><a href='#L33'>33</a>
+<a name='L34'></a><a href='#L34'>34</a>
+<a name='L35'></a><a href='#L35'>35</a>
+<a name='L36'></a><a href='#L36'>36</a>
+<a name='L37'></a><a href='#L37'>37</a>
+<a name='L38'></a><a href='#L38'>38</a>
+<a name='L39'></a><a href='#L39'>39</a>
+<a name='L40'></a><a href='#L40'>40</a>
+<a name='L41'></a><a href='#L41'>41</a>
+<a name='L42'></a><a href='#L42'>42</a>
+<a name='L43'></a><a href='#L43'>43</a>
+<a name='L44'></a><a href='#L44'>44</a>
+<a name='L45'></a><a href='#L45'>45</a>
+<a name='L46'></a><a href='#L46'>46</a>
+<a name='L47'></a><a href='#L47'>47</a>
+<a name='L48'></a><a href='#L48'>48</a>
+<a name='L49'></a><a href='#L49'>49</a>
+<a name='L50'></a><a href='#L50'>50</a>
+<a name='L51'></a><a href='#L51'>51</a>
+<a name='L52'></a><a href='#L52'>52</a>
+<a name='L53'></a><a href='#L53'>53</a>
+<a name='L54'></a><a href='#L54'>54</a>
+<a name='L55'></a><a href='#L55'>55</a>
+<a name='L56'></a><a href='#L56'>56</a>
+<a name='L57'></a><a href='#L57'>57</a>
+<a name='L58'></a><a href='#L58'>58</a>
+<a name='L59'></a><a href='#L59'>59</a>
+<a name='L60'></a><a href='#L60'>60</a>
+<a name='L61'></a><a href='#L61'>61</a>
+<a name='L62'></a><a href='#L62'>62</a>
+<a name='L63'></a><a href='#L63'>63</a>
+<a name='L64'></a><a href='#L64'>64</a>
+<a name='L65'></a><a href='#L65'>65</a>
+<a name='L66'></a><a href='#L66'>66</a>
+<a name='L67'></a><a href='#L67'>67</a>
+<a name='L68'></a><a href='#L68'>68</a>
+<a name='L69'></a><a href='#L69'>69</a>
+<a name='L70'></a><a href='#L70'>70</a>
+<a name='L71'></a><a href='#L71'>71</a>
+<a name='L72'></a><a href='#L72'>72</a>
+<a name='L73'></a><a href='#L73'>73</a>
+<a name='L74'></a><a href='#L74'>74</a>
+<a name='L75'></a><a href='#L75'>75</a>
+<a name='L76'></a><a href='#L76'>76</a>
+<a name='L77'></a><a href='#L77'>77</a>
+<a name='L78'></a><a href='#L78'>78</a>
+<a name='L79'></a><a href='#L79'>79</a>
+<a name='L80'></a><a href='#L80'>80</a>
+<a name='L81'></a><a href='#L81'>81</a>
+<a name='L82'></a><a href='#L82'>82</a>
+<a name='L83'></a><a href='#L83'>83</a>
+<a name='L84'></a><a href='#L84'>84</a>
+<a name='L85'></a><a href='#L85'>85</a>
+<a name='L86'></a><a href='#L86'>86</a>
+<a name='L87'></a><a href='#L87'>87</a>
+<a name='L88'></a><a href='#L88'>88</a>
+<a name='L89'></a><a href='#L89'>89</a>
+<a name='L90'></a><a href='#L90'>90</a>
+<a name='L91'></a><a href='#L91'>91</a>
+<a name='L92'></a><a href='#L92'>92</a>
+<a name='L93'></a><a href='#L93'>93</a>
+<a name='L94'></a><a href='#L94'>94</a>
+<a name='L95'></a><a href='#L95'>95</a>
+<a name='L96'></a><a href='#L96'>96</a>
+<a name='L97'></a><a href='#L97'>97</a>
+<a name='L98'></a><a href='#L98'>98</a>
+<a name='L99'></a><a href='#L99'>99</a>
+<a name='L100'></a><a href='#L100'>100</a>
+<a name='L101'></a><a href='#L101'>101</a>
+<a name='L102'></a><a href='#L102'>102</a>
+<a name='L103'></a><a href='#L103'>103</a>
+<a name='L104'></a><a href='#L104'>104</a>
+<a name='L105'></a><a href='#L105'>105</a>
+<a name='L106'></a><a href='#L106'>106</a>
+<a name='L107'></a><a href='#L107'>107</a>
+<a name='L108'></a><a href='#L108'>108</a>
+<a name='L109'></a><a href='#L109'>109</a>
+<a name='L110'></a><a href='#L110'>110</a>
+<a name='L111'></a><a href='#L111'>111</a>
+<a name='L112'></a><a href='#L112'>112</a>
+<a name='L113'></a><a href='#L113'>113</a>
+<a name='L114'></a><a href='#L114'>114</a>
+<a name='L115'></a><a href='#L115'>115</a>
+<a name='L116'></a><a href='#L116'>116</a></td><td class="line-coverage quiet"><span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span></td><td class="text"><pre class="prettyprint lang-js">/**
+ * @fileoverview 提醒规则ID → 中文名称映射表
+ * 从 pages/reminders/detail/detail.js 提取
+ * 90+条规则覆盖全部身份路径和场景
+ * @module data/rules/reminder-names
+ */
+<span class="cstat-no" title="statement not covered" >module.exports = {</span>
+  R_PASSPORT_EXPIRY: '护照到期提醒',
+  R_EEP_EXPIRY: '回乡证到期提醒',
+  R_PERMIT_EXPIRY: '港澳通行证到期提醒',
+  R_VISA_EXPIRY_GENERAL: '签证到期提醒',
+  R_HKID_RENEWAL: '香港身份证换领',
+  R_ADDRESS_PROOF: '住址证明更新',
+  R_ADDRESS_PROOF_QUARTERLY: '季度住址证明更新',
+  R_TAX_FILING: '年度报税截止',
+  R_TAX_PROVISIONAL: '暂缴税提醒',
+  R_MPF_CONTRIBUTION: '强积金月供提醒',
+  R_MPF_ANNUAL: '强积金年度审查',
+  R_BANK_ACCOUNT_OPEN: '银行开户办理',
+  R_BANK_STATEMENT: '银行月结单提醒',
+  R_MEDICAL_INSURANCE: '医疗保险续保',
+  R_VISA_ACTIVATION: '签证激活截止',
+  R_IANG_APPLY: 'IANG申请窗口',
+  R_QMAS_TIMELINE: '优才申请全流程',
+  R_TTPS_TIMELINE: '高才通申请全流程',
+  R_ASMTP_TIMELINE: '专才申请全流程',
+  R_PR_APPLICATION: '永居申请提交',
+  R_DEPENDENT_VISA: '受养人签证到期',
+  R_RENEWAL_WINDOW: '续签窗口开启',
+  R_RENTAL_CONTRACT: '租房合约到期',
+  R_CHILD_SCHOOL: '子女入学报名',
+  R_DRIVING_LICENSE: '香港驾照办理',
+  R_STUDENT_APPLY: '学校申请截止',
+  R_STUDENT_OFFER: '录取通知确认',
+  R_STUDENT_VISA: '学生签证申请',
+  R_STUDENT_PRE_DEPARTURE: '赴港行前准备',
+  R_STUDENT_ARRIVAL: '抵港报到注册',
+  R_STUDENT_SEMESTER: '学期注册选课',
+  R_STUDENT_GRADUATION: '毕业手续办理',
+  R_STUDENT_IANG_APPLY: 'IANG签证申请',
+  R_STUDENT_IANG_ACTIVATE: 'IANG签证激活',
+  R_PARTTIME_ENROLL: '兼读课程注册',
+  R_PARTTIME_ATTENDANCE: '兼读出勤核查',
+  R_PARTTIME_PATH_SWITCH: '兼读转路径评估',
+  R_TTPSA_INCOME_VERIFY: '年收入证明准备',
+  R_TTPSA_APPLY: '高才A类递交申请',
+  R_TTPSA_APPROVED: '高才A类获批确认',
+  R_TTPSA_RENEWAL: '高才A类续签准备',
+  R_TTPSB_ELIGIBILITY: '百强大学资格确认',
+  R_TTPSB_APPLY: '高才B类递交申请',
+  R_TTPSB_RENEWAL: '高才B类续签准备',
+  R_TTPSC_QUOTA_CHECK: 'C类名额确认',
+  R_TTPSC_APPLY: '高才C类递交申请',
+  R_QMAS_ASSESS: '优才12项自评',
+  R_QMAS_APPLY: '优才递交申请',
+  R_QMAS_APPROVED: '优才原则上批准',
+  R_QMAS_RESIDENCY: '优才居港维持',
+  R_QMAS_RENEWAL: '优才续签准备',
+  R_ASMTP_EMPLOYER: '雇主担保材料',
+  R_ASMTP_APPLY: '专才递交申请',
+  R_ASMTP_JOB_CHANGE: '转工重新申请',
+  R_ASMTP_RENEWAL: '专才续签准备',
+  R_TECHTAS_ELIGIBILITY: '科技人才资格确认',
+  R_TECHTAS_APPLY: '科技人才递交申请',
+  R_CIES_ASSET_VERIFY: '投资资产验证',
+  R_CIES_APPLY: 'CIES递交申请',
+  R_CIES_MAINTAIN: '投资资产维持',
+  R_DEPENDENT_APPLY: '受养人递交申请',
+  R_DEPENDENT_PR_ELIGIBLE: '受养人永居资格',
+  R_DEPENDENT_SPOUSE_WORK: '配偶工作许可',
+  R_MINOR_GUARDIAN: '监护人文件准备',
+  R_MINOR_SCHOOL: '子女在港入学',
+  R_EXCHANGE_APPLY: '交换生申请',
+  R_EXCHANGE_DEPARTURE: '交换生出境准备',
+  R_APPROVAL_ACTIVATE: '获批后激活签证',
+  R_ACTIVATION_ARRIVAL: '抵港后证件办理',
+  R_RENEWAL_PREP_UNIVERSAL: '续签通用准备',
+  R_RENEWAL_DOCUMENTS: '续签材料清单',
+  R_PR_PREP_7YEAR: '7年永居准备',
+  R_PR_APPLY: '永居申请递交',
+  R_PR_POST_APPROVAL: '永居获批后手续',
+  R_ANNUAL_TAX: '年度报税',
+  R_ANNUAL_DOCUMENT_REVIEW: '年度证件核查',
+  R_ANNUAL_TRAVEL_RECORD: '年度出入境记录',
+  R_CHAIN_APPROVAL_TO_ACTIVATION: '获批到激活全流程',
+  R_URGENT_VISA_EXPIRY: '签证即将到期',
+  R_URGENT_OVERSTAY: '逾期逗留警告',
+  R_SETTLE_MOBILE: '手机上台办理',
+  R_SETTLE_OCTOPUS: '八达通办理',
+  R_SETTLE_UTILITIES: '水电煤开户',
+  R_SETTLE_INSURANCE: '香港保险购买',
+  R_SETTLE_LIBRARY: '公共图书馆办证',
+  R_SETTLE_COMMUNITY: '社区活动融入',
+  R_BIZ_REGISTRATION: '公司注册办理',
+  R_BIZ_ANNUAL: '公司年审',
+  R_BIZ_AUDIT: '公司审计',
+  R_BIZ_OFFICE_RENTAL: '办公室租赁',
+  R_BIZ_MPF_EMPLOYER: '雇主强积金供款',
+  R_DOC_NOTARIZE: '文件公证',
+  R_DOC_TRANSLATION: '文件翻译',
+  R_FAMILY_SPOUSE_WORK_PERMIT: '配偶工作许可',
+  R_FAMILY_CHILD_VACCINE: '子女疫苗接种',
+  R_FAMILY_CHILD_DOCS: '子女证件办理',
+  R_FAMILY_ELDERLY_PARENTS: '父母来港安排',
+  R_MAINTAIN_CONSUMPTION_RECORD: '消费流水留存',
+  R_MAINTAIN_HEALTH_RECORD: '就医记录留存',
+  R_MAINTAIN_SOCIAL: '社交活动参与',
+  R_MAINTAIN_QUARTERLY_REVIEW: '季度进度回顾',
+  R_PRECHECK_APPLICATION: '申请材料预检',
+  R_PRECHECK_PASSPORT_PHOTO: '证件照合规检查',
+  R_SPECIAL_TRAVEL_RESTRICTION: '出行限制提醒',
+  R_SPECIAL_VISA_EXTENSION: '签证延期申请',
+  R_STUDENT_PARTTIME_WORK: '学生兼职许可',
+  R_STUDENT_INTERNSHIP: '实习机会申请',
+};
+&nbsp;</pre></td></tr></table></pre>
+
+                <div class='push'></div><!-- for sticky footer -->
+            </div><!-- /wrapper -->
+            <div class='footer quiet pad2 space-top1 center small'>
+                Code coverage generated by
+                <a href="https://istanbul.js.org/" target="_blank" rel="noopener noreferrer">istanbul</a>
+                at 2026-05-21T14:01:31.572Z
+            </div>
+        <script src="../../prettify.js"></script>
+        <script>
+            window.onload = function () {
+                prettyPrint();
+            };
+        </script>
+        <script src="../../sorter.js"></script>
+        <script src="../../block-navigation.js"></script>
+    </body>
+</html>
+    

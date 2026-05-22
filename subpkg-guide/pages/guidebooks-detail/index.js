@@ -1,19 +1,19 @@
 /** @deprecated 2026-05-14 — PRD v6不再有详情页概念。Phase 4清理。 */
 /**
  * 住港伴 v4.5 — 攻略详情页 (PRD v4 §3.7.4 + 排版美化)
- * 
+ *
  * ====== 正文解析引擎 (v4.5 新增) ======
  * 将 sections[].body 原始文本解析为结构化段落数组
  * type: 'heading' | 'numbered' | 'bullet' | 'paragraph' | 'keypoint'
- * 
+ *
  * ====== 3通道数据加载 ======
  * Channel 1: app.globalData.__guideDetailCache__[id] (0ms)
  * Channel 2: require('guidebook-data').getById(id) (0ms)
  * Channel 3: 云函数 guidebook.getArticleDetail (后台)
  */
-var app = getApp();
-var constants = require('../../../data/constants');
-var guideData = require('../../../data/guidebook-data');
+const app = getApp();
+const constants = require('../../../data/constants');
+const guideData = require('../../../data/guidebook-data');
 
 // ========== 正文智能解析 ==========
 
@@ -24,19 +24,19 @@ var guideData = require('../../../data/guidebook-data');
  */
 function splitInternalNumbered(paragraph) {
   // 综合匹配所有编号前缀模式
-  var patterns = [
-    /\d+[\.、\)）]/g,          // "1." "2、" "3)" "4）"
-    /[①②③④⑤⑥⑦⑧⑨⑩]/g,        // 圆圈数字
-    /[⑪⑫⑬⑭⑮⑯⑰⑱⑲⑳]/g,        // 圆圈数字 11-20
-    /坑\d+[：:]/g,              // "坑1：" "坑2："
-    /准则\d/g,                  // "准则1"
-    /注意[：:]/g,               // "注意："
-    /提示[：:]/g                // "提示："
+  const patterns = [
+    /\d+[\.、\)）]/g, // "1." "2、" "3)" "4）"
+    /[①②③④⑤⑥⑦⑧⑨⑩]/g, // 圆圈数字
+    /[⑪⑫⑬⑭⑮⑯⑰⑱⑲⑳]/g, // 圆圈数字 11-20
+    /坑\d+[：:]/g, // "坑1：" "坑2："
+    /准则\d/g, // "准则1"
+    /注意[：:]/g, // "注意："
+    /提示[：:]/g, // "提示："
   ];
 
-  var matches = [];
-  for (var i = 0; i < patterns.length; i++) {
-    var re = new RegExp(patterns[i].source, 'g');
+  const matches = [];
+  for (let i = 0; i < patterns.length; i++) {
+    const re = new RegExp(patterns[i].source, 'g');
     var m;
     while ((m = re.exec(paragraph)) !== null) {
       // 排除数字紧跟在非数字字符后的单数字假匹配（如 "10" 中的 "1"）
@@ -49,11 +49,13 @@ function splitInternalNumbered(paragraph) {
   }
 
   // 按位置排序
-  matches.sort(function(a, b) { return a.index - b.index; });
+  matches.sort(function (a, b) {
+    return a.index - b.index;
+  });
 
   // 去重 + 过滤重叠（同一位置只保留最长的一个）
-  var unique = [];
-  for (var j = 0; j < matches.length; j++) {
+  const unique = [];
+  for (let j = 0; j < matches.length; j++) {
     if (j === 0 || matches[j].index !== matches[j - 1].index) {
       unique.push(matches[j]);
     }
@@ -63,11 +65,11 @@ function splitInternalNumbered(paragraph) {
   if (unique.length < 2) return null;
 
   // 拆分：在每个编号前缀前切开
-  var parts = [];
-  for (var k = 0; k < unique.length; k++) {
-    var start = unique[k].index;
-    var end = k + 1 < unique.length ? unique[k + 1].index : paragraph.length;
-    var part = paragraph.substring(start, end).trim();
+  const parts = [];
+  for (let k = 0; k < unique.length; k++) {
+    const start = unique[k].index;
+    const end = k + 1 < unique.length ? unique[k + 1].index : paragraph.length;
+    let part = paragraph.substring(start, end).trim();
     // 去掉尾部的句号/中文句号（隔离符）
     part = part.replace(/[。.]$/, '');
     // 去掉尾部的分号
@@ -119,22 +121,28 @@ function classifyLine(segments, line, opts) {
 
 function parseBodyIntoSegments(body) {
   if (!body) return [];
-  var segments = [];
-  var currentPara = '';
+  const segments = [];
+  let currentPara = '';
   // 按自然段分割
-  var paragraphs = body.split(/\n+/);
-  for (var i = 0; i < paragraphs.length; i++) {
-    var p = paragraphs[i].trim();
+  const paragraphs = body.split(/\n+/);
+  for (let i = 0; i < paragraphs.length; i++) {
+    const p = paragraphs[i].trim();
     if (!p) {
-      if (currentPara) { segments.push({ type: 'paragraph', content: currentPara.trim() }); currentPara = ''; }
+      if (currentPara) {
+        segments.push({ type: 'paragraph', content: currentPara.trim() });
+        currentPara = '';
+      }
       continue;
     }
 
     // ★ 核心新增：检测内联编号/要点 → 自动拆分
-    var subItems = splitInternalNumbered(p);
+    const subItems = splitInternalNumbered(p);
     if (subItems) {
-      if (currentPara) { segments.push({ type: 'paragraph', content: currentPara.trim() }); currentPara = ''; }
-      for (var s = 0; s < subItems.length; s++) {
+      if (currentPara) {
+        segments.push({ type: 'paragraph', content: currentPara.trim() });
+        currentPara = '';
+      }
+      for (let s = 0; s < subItems.length; s++) {
         var result = classifyLine(segments, subItems[s]);
         if (result) currentPara += (currentPara ? '\n' : '') + result;
       }
@@ -154,12 +162,12 @@ function parseBodyIntoSegments(body) {
 
 function parseSections(sections) {
   if (!sections || !sections.length) return [];
-  var parsed = [];
-  for (var i = 0; i < sections.length; i++) {
-    var s = sections[i];
+  const parsed = [];
+  for (let i = 0; i < sections.length; i++) {
+    const s = sections[i];
     parsed.push({
       heading: s.heading || '',
-      segments: parseBodyIntoSegments(s.body || '')
+      segments: parseBodyIntoSegments(s.body || ''),
     });
   }
   return parsed;
@@ -167,25 +175,36 @@ function parseSections(sections) {
 
 Page({
   data: {
-    guide: null, guideId: '', loading: true, loadError: false, notFound: false,
-    contentType: 'article', parsedSections: [],
-    userRating: null, ratingSubmitting: false, relatedGuides: [],
-    showFullContent: false, showConfidenceInfo: false
+    guide: null,
+    guideId: '',
+    loading: true,
+    loadError: false,
+    notFound: false,
+    contentType: 'article',
+    parsedSections: [],
+    userRating: null,
+    ratingSubmitting: false,
+    relatedGuides: [],
+    showFullContent: false,
+    showConfidenceInfo: false,
   },
 
-  onLoad: function(options) {
-    var id = options.id;
-    if (!id) { this.setData({ notFound: true, loading: false }); return; }
+  onLoad: function (options) {
+    const id = options.id;
+    if (!id) {
+      this.setData({ notFound: true, loading: false });
+      return;
+    }
     this.setData({ guideId: id });
-    var ratings = wx.getStorageSync('guide_ratings_detail') || {};
+    const ratings = wx.getStorageSync('guide_ratings_detail') || {};
     this.setData({ userRating: ratings[id] || null });
     this.loadDetail(id);
   },
 
-  loadDetail: function(id) {
-    var that = this;
+  loadDetail: function (id) {
+    const that = this;
     that.setData({ loading: true, loadError: false });
-    var cached = app.globalData.__guideDetailCache__ && app.globalData.__guideDetailCache__[id];
+    const cached = app.globalData.__guideDetailCache__ && app.globalData.__guideDetailCache__[id];
     // 缓存有效时渲染，但本地数据优先（缓存的云端数据可能不完整）
     if (cached && cached.sections && cached.sections.length > 0 && !guideData.getById(id)) {
       that.renderGuide(cached);
@@ -197,159 +216,255 @@ Page({
       that.loadRelated(cached);
       return;
     }
-    var localGuide = guideData.getById(id);
+    const localGuide = guideData.getById(id);
     if (localGuide) {
-      var ratingCache = wx.getStorageSync('guide_ratings') || {};
-      var data = {};
-      var keys = Object.keys(localGuide);
-      for (var i = 0; i < keys.length; i++) { data[keys[i]] = localGuide[keys[i]]; }
+      const ratingCache = wx.getStorageSync('guide_ratings') || {};
+      const data = {};
+      const keys = Object.keys(localGuide);
+      for (let i = 0; i < keys.length; i++) {
+        data[keys[i]] = localGuide[keys[i]];
+      }
       data.helpful = ratingCache[id] || localGuide.helpful;
       that.renderGuide(data);
       that.loadRelated(data);
       that.refreshFromCloud(id);
       return;
     }
-    that.loadFromCloud(id, function(cloudGuide) {
-      if (cloudGuide) { that.renderGuide(cloudGuide); that.loadRelated(cloudGuide); return; }
+    that.loadFromCloud(id, function (cloudGuide) {
+      if (cloudGuide) {
+        that.renderGuide(cloudGuide);
+        that.loadRelated(cloudGuide);
+        return;
+      }
       that.setData({ loading: false, loadError: true });
     });
   },
 
-  loadFromCloud: function(id, callback) {
-    if (!app.globalData.cloudReady && !wx.cloud) { callback(null); return; }
-    wx.cloud.callFunction({ name: 'guidebook', data: { action: 'getArticleDetail', articleId: id } }).then(function(res) {
-      if (res.result && res.result.code === 0 && res.result.data) {
-        var data = res.result.data;
-        // 云数据用 content/mergedContent，转成 renderGuide 期望的 sections 格式
-        if (!data.sections || !data.sections.length) {
-          var body = data.mergedContent || data.content || '';
-          if (body) {
-            data.sections = [{ heading: data.title || '正文', body: body }];
-            data.contentType = 'article';
+  loadFromCloud: function (id, callback) {
+    if (!app.globalData.cloudReady && !wx.cloud) {
+      callback(null);
+      return;
+    }
+    wx.cloud
+      .callFunction({ name: 'guidebook', data: { action: 'getArticleDetail', articleId: id } })
+      .then(function (res) {
+        if (res.result && res.result.code === 0 && res.result.data) {
+          const data = res.result.data;
+          // 云数据用 content/mergedContent，转成 renderGuide 期望的 sections 格式
+          if (!data.sections || !data.sections.length) {
+            const body = data.mergedContent || data.content || '';
+            if (body) {
+              data.sections = [{ heading: data.title || '正文', body: body }];
+              data.contentType = 'article';
+            }
           }
+          callback(data);
+        } else {
+          callback(null);
         }
-        callback(data);
-      } else { callback(null); }
-    }).catch(function(e) { console.log('[攻略详情] 云端失败:', e.message); callback(null); });
+      })
+      .catch(function (e) {
+        console.debug('[攻略详情] 云端失败:', e.message);
+        callback(null);
+      });
   },
 
-  refreshFromCloud: function(id) {
+  refreshFromCloud: function (id) {
     if (!app.globalData.cloudReady && !wx.cloud) return;
     // 本地已有完整sections→不覆盖
-    var guide = this.data.guide;
+    const guide = this.data.guide;
     if (guide && guide.sections && guide.sections.length >= 2) return;
-    var that = this;
-    wx.cloud.callFunction({ name: 'guidebook', data: { action: 'getArticleDetail', articleId: id } }).then(function(res) {
-      if (res.result && res.result.code === 0 && res.result.data) {
-        var data = res.result.data;
-        // 同样转换 content/mergedContent → sections
-        if (!data.sections || !data.sections.length) {
-          var body = data.mergedContent || data.content || '';
-          if (body) {
-            data.sections = [{ heading: data.title || '正文', body: body }];
-            data.contentType = 'article';
+    const that = this;
+    wx.cloud
+      .callFunction({ name: 'guidebook', data: { action: 'getArticleDetail', articleId: id } })
+      .then(function (res) {
+        if (res.result && res.result.code === 0 && res.result.data) {
+          const data = res.result.data;
+          // 同样转换 content/mergedContent → sections
+          if (!data.sections || !data.sections.length) {
+            const body = data.mergedContent || data.content || '';
+            if (body) {
+              data.sections = [{ heading: data.title || '正文', body: body }];
+              data.contentType = 'article';
+            }
           }
+          if (!app.globalData.__guideDetailCache__) app.globalData.__guideDetailCache__ = {};
+          app.globalData.__guideDetailCache__[id] = data;
+          // 刷新后重新渲染
+          that.renderGuide(data);
         }
-        if (!app.globalData.__guideDetailCache__) app.globalData.__guideDetailCache__ = {};
-        app.globalData.__guideDetailCache__[id] = data;
-        // 刷新后重新渲染
-        that.renderGuide(data);
-      }
-    }).catch(function() {});
+      })
+      .catch(function () {});
   },
 
-  renderGuide: function(guide) {
+  renderGuide: function (guide) {
     // 云攻略无 sections → 从 content/mergedContent 自动构建
     if ((!guide.sections || !guide.sections.length) && (guide.mergedContent || guide.content)) {
       guide.sections = [{ heading: guide.title || '', body: guide.mergedContent || guide.content || '' }];
     }
-    var ct = guide.contentType;
+    let ct = guide.contentType;
     if (!ct) {
       if (guide.faqAnswer && guide.faqAnswer.length > 0) ct = 'faq';
       else if (guide.steps && guide.steps.length > 0) ct = 'steps';
       else ct = 'article';
     }
-    var confidence = guide.confidence || 'B';
-    var confidenceInfo = constants.CONFIDENCE_LEVELS[confidence] || constants.CONFIDENCE_LEVELS.B;
-    var parsedSections = ct === 'faq' ? (function(text) { if (!text) return []; var result = []; var paragraphs = text.split(/\n+/); for (var i = 0; i < paragraphs.length; i++) { var b = paragraphs[i].trim(); if (!b) continue; var c = b.indexOf('：'); if (c < 0) c = b.indexOf(':'); if (c > 0 && c < 40) { result.push({ type: 'heading', content: b.substring(0, c+1) }); if (b.length > c + 1) result.push({ type: 'body', content: b.substring(c+1).trim() }); } else if (/^\d+[.]/.test(b)) { result.push({ type: 'numbered', content: b }); } else if (/^[-]/.test(b)) { result.push({ type: 'bullet', content: b.replace(/^[-]\s*/, '') }); } else { result.push({ type: 'body', content: b }); } } return result; })(guide.faqAnswer) : parseSections(guide.sections);
+    const confidence = guide.confidence || 'B';
+    const confidenceInfo = constants.CONFIDENCE_LEVELS[confidence] || constants.CONFIDENCE_LEVELS.B;
+    const parsedSections =
+      ct === 'faq'
+        ? (function (text) {
+            if (!text) return [];
+            const result = [];
+            const paragraphs = text.split(/\n+/);
+            for (let i = 0; i < paragraphs.length; i++) {
+              const b = paragraphs[i].trim();
+              if (!b) continue;
+              let c = b.indexOf('：');
+              if (c < 0) c = b.indexOf(':');
+              if (c > 0 && c < 40) {
+                result.push({ type: 'heading', content: b.substring(0, c + 1) });
+                if (b.length > c + 1) result.push({ type: 'body', content: b.substring(c + 1).trim() });
+              } else if (/^\d+[.]/.test(b)) {
+                result.push({ type: 'numbered', content: b });
+              } else if (/^[-]/.test(b)) {
+                result.push({ type: 'bullet', content: b.replace(/^[-]\s*/, '') });
+              } else {
+                result.push({ type: 'body', content: b });
+              }
+            }
+            return result;
+          })(guide.faqAnswer)
+        : parseSections(guide.sections);
 
     this.setData({
       guide: {
-        id: guide.id, title: guide.title, icon: guide.icon,
-        desc: guide.desc || '', contentType: ct,
-        faqAnswer: guide.faqAnswer || '', steps: guide.steps || [],
-        sections: guide.sections || [], pitfalls: guide.pitfalls || [],
-        materials: guide.materials || [], source: guide.source || '攻略书',
-        updated: guide.updated || '', rating: guide.rating || '4.0',
-        helpful: guide.helpful || 0, confidence: confidence,
-        confidenceInfo: confidenceInfo, tags: guide.tags || [],
+        id: guide.id,
+        title: guide.title,
+        icon: guide.icon,
+        desc: guide.desc || '',
+        contentType: ct,
+        faqAnswer: guide.faqAnswer || '',
+        steps: guide.steps || [],
+        sections: guide.sections || [],
+        pitfalls: guide.pitfalls || [],
+        materials: guide.materials || [],
+        source: guide.source || '攻略书',
+        updated: guide.updated || '',
+        rating: guide.rating || '4.0',
+        helpful: guide.helpful || 0,
+        confidence: confidence,
+        confidenceInfo: confidenceInfo,
+        tags: guide.tags || [],
         legalBasis: guide.legalBasis || '',
         applicableConditions: guide.applicableConditions || '',
-        content: guide.content || ''
+        content: guide.content || '',
       },
-      parsedSections: parsedSections, contentType: ct, loading: false
-    })
+      parsedSections: parsedSections,
+      contentType: ct,
+      loading: false,
+    });
   },
 
-  loadRelated: function(guide) {
-    var category = guide.category || 'life';
-    var all = guideData.getByCategory(category);
-    var related = [];
-    for (var i = 0; i < all.length; i++) {
-      if (all[i].id !== guide.id) { related.push(all[i]); if (related.length >= 4) break; }
+  loadRelated: function (guide) {
+    const category = guide.category || 'life';
+    const all = guideData.getByCategory(category);
+    const related = [];
+    for (let i = 0; i < all.length; i++) {
+      if (all[i].id !== guide.id) {
+        related.push(all[i]);
+        if (related.length >= 4) break;
+      }
     }
     this.setData({ relatedGuides: related });
   },
 
-  rateArticle: function(e) {
+  rateArticle: function (e) {
     if (this.data.ratingSubmitting) return;
-    var that = this, rating = e.currentTarget.dataset.rating;
-    var previousRating = that.data.userRating;
-    var newRating = previousRating === rating ? null : rating;
+    const that = this,
+      rating = e.currentTarget.dataset.rating;
+    const previousRating = that.data.userRating;
+    const newRating = previousRating === rating ? null : rating;
     that.setData({ userRating: newRating, ratingSubmitting: true });
     try {
-      var ratings = wx.getStorageSync('guide_ratings_detail') || {};
+      const ratings = wx.getStorageSync('guide_ratings_detail') || {};
       if (newRating) ratings[that.data.guideId] = newRating;
       else delete ratings[that.data.guideId];
       wx.setStorageSync('guide_ratings_detail', ratings);
-      var mainRatings = wx.getStorageSync('guide_ratings') || {};
-      var helpful = that.data.guide.helpful || 0;
-      if (newRating === 'up' && previousRating !== 'up') { helpful++; if (previousRating === 'down') helpful++; }
-      else if (newRating === 'down' && previousRating !== 'down') { helpful = Math.max(0, helpful - 1); if (previousRating === 'up') helpful = Math.max(0, helpful - 1); }
-      else if (!newRating && previousRating === 'up') helpful = Math.max(0, helpful - 1);
+      const mainRatings = wx.getStorageSync('guide_ratings') || {};
+      let helpful = that.data.guide.helpful || 0;
+      if (newRating === 'up' && previousRating !== 'up') {
+        helpful++;
+        if (previousRating === 'down') helpful++;
+      } else if (newRating === 'down' && previousRating !== 'down') {
+        helpful = Math.max(0, helpful - 1);
+        if (previousRating === 'up') helpful = Math.max(0, helpful - 1);
+      } else if (!newRating && previousRating === 'up') helpful = Math.max(0, helpful - 1);
       else if (!newRating && previousRating === 'down') helpful++;
       mainRatings[that.data.guideId] = helpful;
       wx.setStorageSync('guide_ratings', mainRatings);
       that.setData({ 'guide.helpful': helpful });
       if (app.globalData.cloudReady || wx.cloud) {
-        wx.cloud.callFunction({ name: 'guidebook', data: { action: 'rateArticle', articleId: that.data.guideId, rating: newRating, previousRating: previousRating } }).catch(function() {});
+        wx.cloud
+          .callFunction({
+            name: 'guidebook',
+            data: {
+              action: 'rateArticle',
+              articleId: that.data.guideId,
+              rating: newRating,
+              previousRating: previousRating,
+            },
+          })
+          .catch(function () {});
       }
-    } catch(err) { console.error(err); wx.showToast({ title: '评分失败', icon: 'none' }); }
+    } catch (err) {
+      console.error(err);
+      wx.showToast({ title: '评分失败', icon: 'none' });
+    }
     that.setData({ ratingSubmitting: false });
   },
 
-  toggleBookmark: function() {
-    var bookmarks = wx.getStorageSync('guidebook_bookmarks') || [];
-    var id = this.data.guideId, index = bookmarks.indexOf(id);
-    if (index >= 0) { bookmarks.splice(index, 1); wx.showToast({ title: '已取消收藏', icon: 'none' }); }
-    else { bookmarks.unshift(id); wx.showToast({ title: '已收藏', icon: 'success' }); }
+  toggleBookmark: function () {
+    const bookmarks = wx.getStorageSync('guidebook_bookmarks') || [];
+    const id = this.data.guideId,
+      index = bookmarks.indexOf(id);
+    if (index >= 0) {
+      bookmarks.splice(index, 1);
+      wx.showToast({ title: '已取消收藏', icon: 'none' });
+    } else {
+      bookmarks.unshift(id);
+      wx.showToast({ title: '已收藏', icon: 'success' });
+    }
     wx.setStorageSync('guidebook_bookmarks', bookmarks);
   },
 
-  toggleFullContent: function() { this.setData({ showFullContent: !this.data.showFullContent }); },
-  toggleConfidenceInfo: function() { this.setData({ showConfidenceInfo: !this.data.showConfidenceInfo }); },
-  navigateToRelated: function(e) {
-    var id = e.currentTarget.dataset.id;
+  toggleFullContent: function () {
+    this.setData({ showFullContent: !this.data.showFullContent });
+  },
+  toggleConfidenceInfo: function () {
+    this.setData({ showConfidenceInfo: !this.data.showConfidenceInfo });
+  },
+  navigateToRelated: function (e) {
+    const id = e.currentTarget.dataset.id;
     if (id) {
-      var g = guideData.getById(id);
-      if (g) { if (!app.globalData.__guideDetailCache__) app.globalData.__guideDetailCache__ = {}; app.globalData.__guideDetailCache__[id] = g; }
+      const g = guideData.getById(id);
+      if (g) {
+        if (!app.globalData.__guideDetailCache__) app.globalData.__guideDetailCache__ = {};
+        app.globalData.__guideDetailCache__[id] = g;
+      }
       wx.redirectTo({ url: '/subpkg-guide/pages/guidebooks-detail/index?id=' + id });
     }
   },
-  goBack: function() { wx.navigateBack(); },
-  retry: function() { this.loadDetail(this.data.guideId); },
-  onShareAppMessage: function() {
-    var guide = this.data.guide;
-    return { title: guide ? guide.title : '住港伴 — 香港身份攻略', path: '/subpkg-guide/pages/guidebooks-detail/index?id=' + this.data.guideId };
-  }
+  goBack: function () {
+    wx.navigateBack();
+  },
+  retry: function () {
+    this.loadDetail(this.data.guideId);
+  },
+  onShareAppMessage: function () {
+    const guide = this.data.guide;
+    return {
+      title: guide ? guide.title : '住港伴 — 香港身份攻略',
+      path: '/subpkg-guide/pages/guidebooks-detail/index?id=' + this.data.guideId,
+    };
+  },
 });

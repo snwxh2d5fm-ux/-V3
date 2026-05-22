@@ -4,10 +4,7 @@
  * 运行: npm run test:e2e:process
  */
 
-const {
-  goToTab, navigateTo, findElement, findElements,
-  initTestState, waitFor, reLaunch,
-} = require('../helpers');
+const { goToTab, navigateTo, findElement, findElements, initTestState, waitFor, reLaunch } = require('../helpers');
 
 let mp;
 
@@ -19,7 +16,6 @@ beforeAll(async () => {
 });
 
 describe('§5 流程控 (process)', () => {
-
   test('5.1 进入流程控 → 页面正常渲染', async () => {
     const page = await mp.currentPage();
     expect(page.path).toContain('process');
@@ -43,5 +39,4 @@ describe('§5 流程控 (process)', () => {
     const page = await mp.currentPage();
     expect(page.path).toBe('pages/process/detail/detail');
   });
-
 });

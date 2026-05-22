@@ -17,27 +17,41 @@ const db = cloud.database();
 const _ = db.command;
 
 // 单次最大导入条数 (CloudBase 云函数写操作限制)
-var MAX_BATCH = 100;
+const MAX_BATCH = 100;
 
 // ============================================================
 //  V7: K2 内容拦截 — 防止识别库完整版(含防伪特征等)误导入
 // ============================================================
-var K2_FORBIDDEN_PATTERNS = [
-  '圆角边框', '防伪特征', '光变油墨', '微缩文字', '全息防伪',
-  '安全特征', 'AES-256', 'PBKDF2', 'WASM', 'Canny',
-  '边缘检测', '轮廓近似', '校验位算法', 'MOD 11', 'MOD11',
-  'validation_rules', 'vault_mode', 'privacy_level',
+const K2_FORBIDDEN_PATTERNS = [
+  '圆角边框',
+  '防伪特征',
+  '光变油墨',
+  '微缩文字',
+  '全息防伪',
+  '安全特征',
+  'AES-256',
+  'PBKDF2',
+  'WASM',
+  'Canny',
+  '边缘检测',
+  '轮廓近似',
+  '校验位算法',
+  'MOD 11',
+  'MOD11',
+  'validation_rules',
+  'vault_mode',
+  'privacy_level',
 ];
 
 // K2 结构化字段 — 这些字段只应存在于识别引擎内部，不应进入知识底座
-var K2_STRUCTURED_FIELDS = ['visual_features', 'validation_rules', 'vault_mode', 'privacy_level'];
+const K2_STRUCTURED_FIELDS = ['visual_features', 'validation_rules', 'vault_mode', 'privacy_level'];
 
 /**
  * 检测文本内容是否含 K2 禁止关键词
  */
 function containsK2Content(text) {
   if (!text || typeof text !== 'string') return false;
-  for (var i = 0; i < K2_FORBIDDEN_PATTERNS.length; i++) {
+  for (let i = 0; i < K2_FORBIDDEN_PATTERNS.length; i++) {
     if (text.indexOf(K2_FORBIDDEN_PATTERNS[i]) !== -1) {
       return true;
     }
@@ -50,7 +64,7 @@ function containsK2Content(text) {
  * 这些字段在知识底座中不应存在 — 仅效率宝/OCR引擎内部使用
  */
 function containsK2StructuredFields(record) {
-  for (var i = 0; i < K2_STRUCTURED_FIELDS.length; i++) {
+  for (let i = 0; i < K2_STRUCTURED_FIELDS.length; i++) {
     if (record[K2_STRUCTURED_FIELDS[i]] !== undefined) {
       return true;
     }
@@ -62,8 +76,10 @@ function containsK2StructuredFields(record) {
  * 检测记录是否为识别库来源
  */
 function isDocRecognitionLibrarySource(record) {
-  return record.source === 'doc_recognition_library' &&
-         (containsK2StructuredFields(record) || containsK2Content(record.content));
+  return (
+    record.source === 'doc_recognition_library' &&
+    (containsK2StructuredFields(record) || containsK2Content(record.content))
+  );
 }
 
 /**
@@ -83,7 +99,11 @@ function scanForK2(record) {
 
   // 检查3: 记录本身含K2结构化字段 (防御性, 无论source为何)
   if (containsK2StructuredFields(record)) {
-    return { blocked: true, reason: 'K2 blocked: record contains structured K2 fields (visual_features/validation_rules/vault_mode/privacy_level)' };
+    return {
+      blocked: true,
+      reason:
+        'K2 blocked: record contains structured K2 fields (visual_features/validation_rules/vault_mode/privacy_level)',
+    };
   }
 
   return { blocked: false, reason: '' };
@@ -120,13 +140,13 @@ async function importChunk(batch, collection) {
     return { code: 400, message: `单次最多导入 ${MAX_BATCH} 条, 当前 ${batch.length} 条` };
   }
 
-  var stats = { total: batch.length, inserted: 0, skipped: 0, errors: 0, k2_blocked: 0 };
+  const stats = { total: batch.length, inserted: 0, skipped: 0, errors: 0, k2_blocked: 0 };
 
-  for (var idx = 0; idx < batch.length; idx++) {
-    var item = batch[idx];
+  for (let idx = 0; idx < batch.length; idx++) {
+    const item = batch[idx];
     try {
       // V7: K2 内容拦截 — 在去重之前先扫描
-      var k2Result = scanForK2(item);
+      const k2Result = scanForK2(item);
       if (k2Result.blocked) {
         console.warn('[knowledge-import V7] ' + k2Result.reason);
         stats.k2_blocked++;
@@ -139,9 +159,7 @@ async function importChunk(batch, collection) {
         continue;
       }
 
-      const exist = await db.collection(collection)
-        .where({ content_hash: item.content_hash })
-        .count();
+      const exist = await db.collection(collection).where({ content_hash: item.content_hash }).count();
 
       if (exist.total > 0) {
         stats.skipped++;
@@ -167,7 +185,16 @@ async function importChunk(batch, collection) {
 
   return {
     code: 0,
-    message: '导入完成: ' + stats.inserted + ' 新增, ' + stats.skipped + ' 跳过, ' + stats.errors + ' 失败, ' + stats.k2_blocked + ' K2拦截',
+    message:
+      '导入完成: ' +
+      stats.inserted +
+      ' 新增, ' +
+      stats.skipped +
+      ' 跳过, ' +
+      stats.errors +
+      ' 失败, ' +
+      stats.k2_blocked +
+      ' K2拦截',
     data: stats,
   };
 }
@@ -202,20 +229,29 @@ async function importFromFile(fileID, collection) {
     }
 
     // 分批写入 (每批 MAX_BATCH 条)
-    var totalStats = { total: records.length, inserted: 0, skipped: 0, errors: 0, k2_blocked: 0 };
+    const totalStats = { total: records.length, inserted: 0, skipped: 0, errors: 0, k2_blocked: 0 };
 
-    for (var i = 0; i < records.length; i += MAX_BATCH) {
-      var chunk = records.slice(i, i + MAX_BATCH);
-      var result = await importChunk(chunk, collection);
+    for (let i = 0; i < records.length; i += MAX_BATCH) {
+      const chunk = records.slice(i, i + MAX_BATCH);
+      const result = await importChunk(chunk, collection);
       totalStats.inserted += result.data.inserted;
       totalStats.skipped += result.data.skipped;
       totalStats.errors += result.data.errors;
-      totalStats.k2_blocked += (result.data.k2_blocked || 0);
+      totalStats.k2_blocked += result.data.k2_blocked || 0;
     }
 
     return {
       code: 0,
-      message: '文件导入完成: ' + totalStats.inserted + ' 新增, ' + totalStats.skipped + ' 跳过, ' + totalStats.errors + ' 失败, ' + totalStats.k2_blocked + ' K2拦截',
+      message:
+        '文件导入完成: ' +
+        totalStats.inserted +
+        ' 新增, ' +
+        totalStats.skipped +
+        ' 跳过, ' +
+        totalStats.errors +
+        ' 失败, ' +
+        totalStats.k2_blocked +
+        ' K2拦截',
       data: totalStats,
     };
   } catch (e) {
@@ -234,26 +270,23 @@ async function verifyData(expectedCount) {
 
     // 按批次统计
     const batchStats = {};
-    const batches = ['ANSWERKEY-V5.2', 'ANSWERKEY-V5.2-Q11', 'TESTBANK-V1',
-                     'ZHIHU-20260510', 'POLICY-V1'];
+    const batches = ['ANSWERKEY-V5.2', 'ANSWERKEY-V5.2-Q11', 'TESTBANK-V1', 'ZHIHU-20260510', 'POLICY-V1'];
 
     for (const batch of batches) {
-      const res = await db.collection('knowledge_chunks')
-        .where({ pipeline_batch: batch })
-        .count();
+      const res = await db.collection('knowledge_chunks').where({ pipeline_batch: batch }).count();
       batchStats[batch] = res.total;
     }
 
     // 按 content_grade 统计
-    const greenRes = await db.collection('knowledge_chunks')
-      .where({ content_grade: 'green' }).count();
-    const yellowRes = await db.collection('knowledge_chunks')
-      .where({ content_grade: 'yellow' }).count();
+    const greenRes = await db.collection('knowledge_chunks').where({ content_grade: 'green' }).count();
+    const yellowRes = await db.collection('knowledge_chunks').where({ content_grade: 'yellow' }).count();
 
     return {
       code: 0,
       message: expectedCount
-        ? (actual >= expectedCount ? '✅ 数据完整' : `⚠️ 预期 ${expectedCount}, 实际 ${actual}`)
+        ? actual >= expectedCount
+          ? '✅ 数据完整'
+          : `⚠️ 预期 ${expectedCount}, 实际 ${actual}`
         : '校验完成',
       data: {
         totalDocuments: actual,
@@ -275,16 +308,13 @@ async function getImportStats() {
     const total = await db.collection('knowledge_chunks').count();
 
     // 取最近导入的10条样本
-    const sample = await db.collection('knowledge_chunks')
-      .orderBy('createdAt', 'desc')
-      .limit(10)
-      .get();
+    const sample = await db.collection('knowledge_chunks').orderBy('createdAt', 'desc').limit(10).get();
 
     return {
       code: 0,
       data: {
         totalDocuments: total.total,
-        recentImports: sample.data.map(r => ({
+        recentImports: sample.data.map((r) => ({
           source_title: r.source_title,
           pipeline_batch: r.pipeline_batch,
           content_grade: r.content_grade,

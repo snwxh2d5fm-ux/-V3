@@ -19,7 +19,12 @@ const PII_PATTERNS = [
   { name: 'PHONE_CN', pattern: /1[3-9]\d{9}/g, label: '手机号', level: 'L1' },
   { name: 'PHONE_HK', pattern: /[5-9]\d{7}/g, label: '香港电话', level: 'L1' },
   { name: 'EMAIL', pattern: /[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}/g, label: '邮箱', level: 'L2' },
-  { name: 'SALARY', pattern: /(?:月薪|年薪|工资|Salary)\s*[:：]?\s*[HKD$￥\d,.]+\s*(?:万|k|K|w|W)?/g, label: '薪资信息', level: 'L2' }
+  {
+    name: 'SALARY',
+    pattern: /(?:月薪|年薪|工资|Salary)\s*[:：]?\s*[HKD$￥\d,.]+\s*(?:万|k|K|w|W)?/g,
+    label: '薪资信息',
+    level: 'L2',
+  },
 ];
 
 // 内存缓存
@@ -33,13 +38,20 @@ exports.main = async (event, context) => {
 
   try {
     switch (action) {
-      case 'scan':        return await scanText(text);
-      case 'batchScan':   return await batchScan(textList || []);
-      case 'clean':       return await cleanText(text);
-      case 'getRules':    return await getRules();
-      case 'addRule':     return await addRule(event);
-      case 'refreshRules':return await refreshRules();
-      default:            return { code: 400, msg: '无效操作' };
+      case 'scan':
+        return await scanText(text);
+      case 'batchScan':
+        return await batchScan(textList || []);
+      case 'clean':
+        return await cleanText(text);
+      case 'getRules':
+        return await getRules();
+      case 'addRule':
+        return await addRule(event);
+      case 'refreshRules':
+        return await refreshRules();
+      default:
+        return { code: 400, msg: '无效操作' };
     }
   } catch (err) {
     console.error('[content-clean]', err);
@@ -56,26 +68,31 @@ async function _loadBlockedKeywords() {
     return { keywords: _blockedKeywords, regex: _blockedRegex };
   }
 
-  const result = await db.collection('content_rules')
-    .where({ ruleType: "blocked_keyword", isActive: true }).limit(200).get();
+  const result = await db
+    .collection('content_rules')
+    .where({ ruleType: 'blocked_keyword', isActive: true })
+    .limit(200)
+    .get();
 
   const keywords = [];
   const regexPatterns = [];
 
   for (const rule of result.data) {
     if (rule.keywords?.length) {
-      keywords.push(...rule.keywords.map(k => ({
-        keyword: k,
-        category: rule.category || 'general',
-        severity: rule.severity || 'high'
-      })));
+      keywords.push(
+        ...rule.keywords.map((k) => ({
+          keyword: k,
+          category: rule.category || 'general',
+          severity: rule.severity || 'high',
+        })),
+      );
     }
     if (rule.pattern) {
       try {
         regexPatterns.push({
           category: rule.category || 'general',
           regex: new RegExp(rule.pattern, rule.flags || 'gi'),
-          label: rule.label || rule.category
+          label: rule.label || rule.category,
         });
       } catch (e) {
         console.warn(`[content-clean] 无效正则: ${rule.pattern}`);
@@ -111,7 +128,7 @@ async function scanText(text) {
         label,
         level,
         count: matches.length,
-        samples: matches.slice(0, 3)
+        samples: matches.slice(0, 3),
       });
     }
   }
@@ -125,7 +142,7 @@ async function scanText(text) {
         type: 'BLOCKED_KEYWORD',
         keyword,
         category,
-        severity
+        severity,
       });
     }
   }
@@ -140,7 +157,7 @@ async function scanText(text) {
         category,
         label,
         count: matches.length,
-        samples: matches.slice(0, 3)
+        samples: matches.slice(0, 3),
       });
     }
   }
@@ -150,8 +167,8 @@ async function scanText(text) {
     data: {
       clean: findings.length === 0,
       findings,
-      scannedAt: new Date().toISOString()
-    }
+      scannedAt: new Date().toISOString(),
+    },
   };
 }
 
@@ -169,9 +186,9 @@ async function batchScan(textList) {
     code: 0,
     data: {
       total: results.length,
-      cleanCount: results.filter(r => r.clean).length,
-      results
-    }
+      cleanCount: results.filter((r) => r.clean).length,
+      results,
+    },
   };
 }
 
@@ -187,7 +204,8 @@ async function cleanText(text) {
   let cleaned = text;
 
   // 替换身份证号
-  cleaned = cleaned.replace(/\d{17}[\dXx]/g, '****')
+  cleaned = cleaned
+    .replace(/\d{17}[\dXx]/g, '****')
     .replace(/[A-Z]{1,2}\d{6}\([0-9A]\)/g, '****')
     .replace(/[A-Z]\d{8}/g, '****')
     .replace(/1[3-9]\d{9}/g, '****')
@@ -195,14 +213,14 @@ async function cleanText(text) {
     .replace(/[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}/g, '****');
 
   // 薪资脱敏
-  cleaned = cleaned.replace(
-    /(?:月薪|年薪|工资|Salary)\s*[:：]?\s*[HKD$￥\d,.]+\s*(?:万|k|K|w|W)?/g,
-    '****'
-  );
+  cleaned = cleaned.replace(/(?:月薪|年薪|工资|Salary)\s*[:：]?\s*[HKD$￥\d,.]+\s*(?:万|k|K|w|W)?/g, '****');
 
   // DB 中的自定义脱敏规则
-  const customCleanRules = await db.collection('content_rules')
-    .where({ ruleType: "sanitize_pattern", isActive: true }).limit(200).get();
+  const customCleanRules = await db
+    .collection('content_rules')
+    .where({ ruleType: 'sanitize_pattern', isActive: true })
+    .limit(200)
+    .get();
 
   for (const rule of customCleanRules.data) {
     if (rule.pattern) {
@@ -220,8 +238,8 @@ async function cleanText(text) {
     data: {
       original: text,
       cleaned,
-      wasModified: cleaned !== text
-    }
+      wasModified: cleaned !== text,
+    },
   };
 }
 
@@ -230,26 +248,37 @@ async function cleanText(text) {
  * CC-04: 管理端查询规则列表
  */
 async function getRules() {
-  const keywordsResult = await db.collection('content_rules')
-    .where({ ruleType: "blocked_keyword", isActive: true }).limit(200).get();
+  const keywordsResult = await db
+    .collection('content_rules')
+    .where({ ruleType: 'blocked_keyword', isActive: true })
+    .limit(200)
+    .get();
 
-  const sanitizeResult = await db.collection('content_rules')
-    .where({ ruleType: "sanitize_pattern", isActive: true }).limit(200).get();
+  const sanitizeResult = await db
+    .collection('content_rules')
+    .where({ ruleType: 'sanitize_pattern', isActive: true })
+    .limit(200)
+    .get();
 
-  const piiResult = await db.collection('content_rules')
-    .where({ ruleType: "pii_pattern", isActive: true }).limit(200).get();
+  const piiResult = await db
+    .collection('content_rules')
+    .where({ ruleType: 'pii_pattern', isActive: true })
+    .limit(200)
+    .get();
 
   return {
     code: 0,
     data: {
       blockedKeywords: keywordsResult.data,
       sanitizePatterns: sanitizeResult.data,
-      piiPatterns: PII_PATTERNS.map(p => ({
-        name: p.name, label: p.label, level: p.level
+      piiPatterns: PII_PATTERNS.map((p) => ({
+        name: p.name,
+        label: p.label,
+        level: p.level,
       })),
       dbPiiPatterns: piiResult.data,
-      totalRules: keywordsResult.data.length + sanitizeResult.data.length + piiResult.data.length
-    }
+      totalRules: keywordsResult.data.length + sanitizeResult.data.length + piiResult.data.length,
+    },
   };
 }
 
@@ -277,8 +306,8 @@ async function addRule(event) {
       severity: severity || 'medium',
       isActive: true,
       createdAt: db.serverDate(),
-      updatedAt: db.serverDate()
-    }
+      updatedAt: db.serverDate(),
+    },
   });
 
   // 刷新缓存

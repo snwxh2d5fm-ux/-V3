@@ -1,4 +1,4 @@
-# REVIEW: 闸门基础设施恢复 — __tests__/scripts/tests 重新纳入版本控制
+# REVIEW: 闸门基础设施恢复 — **tests**/scripts/tests 重新纳入版本控制
 
 **日期**: 2026-05-19
 **来源**: Hermes 闸门

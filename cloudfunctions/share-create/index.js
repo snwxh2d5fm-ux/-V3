@@ -1,14 +1,14 @@
-var cloud = require('wx-server-sdk');
+const cloud = require('wx-server-sdk');
 cloud.init({ env: cloud.DYNAMIC_CURRENT_ENV });
-var db = cloud.database();
-var _ = db.command;
+const db = cloud.database();
+const _ = db.command;
 
-var L1_CONTENT_TYPES = ['guide_collection', 'doc_template', 'policy_update'];
-var SAFE_CHARS = '23456789ABCDEFGHJKMNPQRSTUVWXYZ';
+const L1_CONTENT_TYPES = ['guide_collection', 'doc_template', 'policy_update'];
+const SAFE_CHARS = '23456789ABCDEFGHJKMNPQRSTUVWXYZ';
 
 function generateShortId() {
-  var result = '';
-  for (var i = 0; i < 8; i++) {
+  let result = '';
+  for (let i = 0; i < 8; i++) {
     result += SAFE_CHARS.charAt(Math.floor(Math.random() * SAFE_CHARS.length));
   }
   return result;
@@ -16,7 +16,7 @@ function generateShortId() {
 
 exports.main = async (event) => {
   try {
-    var { action } = event;
+    const { action } = event;
 
     switch (action) {
       case 'create':
@@ -31,7 +31,7 @@ exports.main = async (event) => {
 };
 
 async function handleCreate(event) {
-  var { contentType, contentId, contentTitle, contentDigest } = event;
+  const { contentType, contentId, contentTitle, contentDigest } = event;
 
   // Validate contentType
   if (!contentType) {
@@ -55,11 +55,11 @@ async function handleCreate(event) {
   }
 
   // Get user identity
-  var wxContext = cloud.getWXContext();
-  var openid = wxContext.OPENID;
+  const wxContext = cloud.getWXContext();
+  const openid = wxContext.OPENID;
 
   // Generate unique share ID
-  var shareId = generateShortId();
+  const shareId = generateShortId();
 
   // Write share record
   await db.collection('share_records').add({
@@ -70,12 +70,12 @@ async function handleCreate(event) {
       contentId: contentId,
       contentDigest: {
         title: contentTitle,
-        summary: contentDigest || ''
+        summary: contentDigest || '',
       },
       createdAt: db.serverDate(),
       expiresAt: new Date(Date.now() + 7 * 86400000).toISOString(),
-      status: 'active'
-    }
+      status: 'active',
+    },
   });
 
   // Write audit log
@@ -86,16 +86,16 @@ async function handleCreate(event) {
       detail: {
         shareId: shareId,
         contentType: contentType,
-        contentId: contentId
+        contentId: contentId,
       },
-      createdAt: db.serverDate()
-    }
+      createdAt: db.serverDate(),
+    },
   });
 
   return {
     code: 0,
     data: {
-      shareId: shareId
-    }
+      shareId: shareId,
+    },
   };
 }

@@ -61,12 +61,12 @@
   flex-shrink: 0;
 }
 .badge-locked {
-  background: #E8F0FE;
+  background: #e8f0fe;
   color: #1a73e8;
 }
 .badge-stopped {
-  background: #F3F4F6;
-  color: #9CA3AF;
+  background: #f3f4f6;
+  color: #9ca3af;
 }
 
 /* 卡片内容 */
@@ -87,23 +87,23 @@
 .reason-box {
   margin-top: 20rpx;
   padding: 20rpx;
-  background: #FEF7E0;
+  background: #fef7e0;
   border-radius: 12rpx;
-  border-left: 4rpx solid #F9AB00;
+  border-left: 4rpx solid #f9ab00;
 }
 .reason-permanent {
-  background: #E8F5E9;
-  border-left-color: #34A853;
+  background: #e8f5e9;
+  border-left-color: #34a853;
 }
 .reason-label {
   font-size: 22rpx;
   font-weight: 700;
-  color: #E37400;
+  color: #e37400;
   display: block;
   margin-bottom: 6rpx;
 }
 .reason-permanent .reason-label {
-  color: #1E8E3E;
+  color: #1e8e3e;
 }
 .reason-text {
   font-size: 24rpx;
@@ -125,10 +125,10 @@
   flex: 1;
 }
 .status-ok {
-  color: #1E8E3E;
+  color: #1e8e3e;
 }
 .status-needs {
-  color: #E37400;
+  color: #e37400;
 }
 .status-rejected {
   color: #d93025;
@@ -184,13 +184,13 @@
 }
 .footer-text {
   font-size: 22rpx;
-  color: #9CA3AF;
+  color: #9ca3af;
 }
 
 /* ===== 客服入口 ===== */
 .card-service {
-  border: 1rpx solid #E8F0FE;
-  background: #FAFDFF;
+  border: 1rpx solid #e8f0fe;
+  background: #fafdff;
 }
 .service-row {
   display: flex;

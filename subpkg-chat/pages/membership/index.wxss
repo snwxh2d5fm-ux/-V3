@@ -1,7 +1,7 @@
 /* pages/membership/index — 会员方案页样式 */
 
 page {
-background: var(--gray-100);
+  background: var(--gray-100);
   font-family: -apple-system, BlinkMacSystemFont, 'PingFang SC', sans-serif;
 }
 
@@ -32,7 +32,7 @@ background: var(--gray-100);
   padding: 28rpx 32rpx;
   background: var(--white);
   border-radius: 16rpx;
-  box-shadow: 0 2rpx 12rpx rgba(0,0,0,0.04);
+  box-shadow: 0 2rpx 12rpx rgba(0, 0, 0, 0.04);
 }
 .status-label {
   font-size: 24rpx;
@@ -45,10 +45,18 @@ background: var(--gray-100);
   font-weight: 700;
   color: var(--gray-700);
 }
-.status-level.free { color: var(--gray-400); }
-.status-level.basic { color: var(--color-success); }
-.status-level.pro { color: var(--color-info); }
-.status-level.premium { color: #7C3AED; }
+.status-level.free {
+  color: var(--gray-400);
+}
+.status-level.basic {
+  color: var(--color-success);
+}
+.status-level.pro {
+  color: var(--color-info);
+}
+.status-level.premium {
+  color: #7c3aed;
+}
 .lock-badge {
   font-size: 24rpx;
   color: var(--color-error);
@@ -73,11 +81,17 @@ background: var(--gray-100);
   background: var(--white);
   border-radius: 14rpx;
   padding: 24rpx 0;
-  box-shadow: 0 2rpx 12rpx rgba(0,0,0,0.04);
+  box-shadow: 0 2rpx 12rpx rgba(0, 0, 0, 0.04);
 }
 
-.entry-icon { font-size: 36rpx; }
-.entry-text { font-size: 28rpx; color: var(--gray-700); font-weight: 500; }
+.entry-icon {
+  font-size: 36rpx;
+}
+.entry-text {
+  font-size: 28rpx;
+  color: var(--gray-700);
+  font-weight: 500;
+}
 
 /* ========== 周期切换 ========== */
 .period-switch {
@@ -103,7 +117,7 @@ background: var(--gray-100);
   background: var(--white);
   color: var(--color-primary);
   font-weight: 600;
-  box-shadow: 0 2rpx 8rpx rgba(0,0,0,0.08);
+  box-shadow: 0 2rpx 8rpx rgba(0, 0, 0, 0.08);
 }
 .save-tag {
   font-size: 20rpx;
@@ -131,7 +145,7 @@ background: var(--gray-100);
 }
 .plan-card.highlighted {
   border-color: var(--color-primary);
-  box-shadow: 0 4rpx 24rpx rgba(26,115,232,0.12);
+  box-shadow: 0 4rpx 24rpx rgba(26, 115, 232, 0.12);
   background: linear-gradient(135deg, var(--color-info-bg) 0%, var(--white) 40%);
 }
 .plan-card.current {
@@ -169,9 +183,18 @@ background: var(--gray-100);
   border-radius: 6rpx;
   font-weight: 600;
 }
-.plan-level-tag.basic { background: var(--color-success-bg); color: var(--color-success); }
-.plan-level-tag.pro { background: var(--color-info-bg); color: var(--color-info); }
-.plan-level-tag.premium { background: #F5F3FF; color: #7C3AED; }
+.plan-level-tag.basic {
+  background: var(--color-success-bg);
+  color: var(--color-success);
+}
+.plan-level-tag.pro {
+  background: var(--color-info-bg);
+  color: var(--color-info);
+}
+.plan-level-tag.premium {
+  background: #f5f3ff;
+  color: #7c3aed;
+}
 
 /* 价格 */
 .plan-price {
@@ -262,15 +285,18 @@ background: var(--gray-100);
   font-weight: 600;
   border-radius: 12rpx;
   text-align: center;
-background: var(--gray-100);
+  background: var(--gray-100);
   color: var(--gray-400);
 }
 
 /* ========== 支付结果弹窗 ========== */
 .result-overlay {
   position: fixed;
-  top: 0; left: 0; right: 0; bottom: 0;
-  background: rgba(0,0,0,0.5);
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background: rgba(0, 0, 0, 0.5);
   display: flex;
   align-items: center;
   justify-content: center;

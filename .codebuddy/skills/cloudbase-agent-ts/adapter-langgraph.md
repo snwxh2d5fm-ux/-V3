@@ -15,18 +15,18 @@ import {
   LanggraphAgent,
   ClientStateAnnotation,
   ClientState,
-  CloudBaseSaver  // Tencent CloudBase checkpointer
-} from "@cloudbase/agent-adapter-langgraph";
+  CloudBaseSaver, // Tencent CloudBase checkpointer
+} from '@cloudbase/agent-adapter-langgraph';
 ```
 
 ## Basic Usage
 
 ```typescript
-import { LanggraphAgent } from "@cloudbase/agent-adapter-langgraph";
+import { LanggraphAgent } from '@cloudbase/agent-adapter-langgraph';
 
 const agent = new LanggraphAgent({
-  compiledWorkflow: graph,  // compiled StateGraph (required)
-  logger: myLogger,         // optional
+  compiledWorkflow: graph, // compiled StateGraph (required)
+  logger: myLogger, // optional
 });
 ```
 
@@ -37,7 +37,7 @@ const agent = new LanggraphAgent({
 ### MemorySaver (Development)
 
 ```typescript
-import { MemorySaver } from "@langchain/langgraph";
+import { MemorySaver } from '@langchain/langgraph';
 
 const graph = workflow.compile({ checkpointer: new MemorySaver() });
 ```
@@ -47,22 +47,22 @@ const graph = workflow.compile({ checkpointer: new MemorySaver() });
 Persistent storage using Tencent CloudBase document database. On CloudBase cloud function/cloudrun, requests are authenticated - extract user ID from the JWT in Authorization header.
 
 ```typescript
-import { run } from "@cloudbase/agent-server";
-import { CloudBaseSaver, LanggraphAgent } from "@cloudbase/agent-adapter-langgraph";
-import tcb from "@cloudbase/node-sdk";
+import { run } from '@cloudbase/agent-server';
+import { CloudBaseSaver, LanggraphAgent } from '@cloudbase/agent-adapter-langgraph';
+import tcb from '@cloudbase/node-sdk';
 
 const app = tcb.init({ env: process.env.CLOUDBASE_ENV_ID });
 
 run({
   createAgent: ({ request }) => {
     // Extract user ID from JWT (sub field)
-    const token = request.headers.get("Authorization")?.slice(7);
-    const payload = JSON.parse(atob(token.split(".")[1]));
+    const token = request.headers.get('Authorization')?.slice(7);
+    const payload = JSON.parse(atob(token.split('.')[1]));
     const userId = payload.sub;
 
     const checkpointer = new CloudBaseSaver({
       db: app.database(),
-      userId,  // Multi-tenant isolation
+      userId, // Multi-tenant isolation
     });
 
     const graph = workflow.compile({ checkpointer });
@@ -85,7 +85,7 @@ Client tools are tools defined by the client, not the server. They let the agent
 ### Server Side: Bind and Route
 
 ```typescript
-import { ClientState } from "@cloudbase/agent-adapter-langgraph";
+import { ClientState } from '@cloudbase/agent-adapter-langgraph';
 
 // 1. Bind client tools to model (alongside server tools)
 async function chatNode(state: ClientState) {
@@ -95,43 +95,41 @@ async function chatNode(state: ClientState) {
 }
 
 // 2. Route client tool calls to END (let client handle)
-function shouldContinue(state: ClientState): "tools" | "end" {
+function shouldContinue(state: ClientState): 'tools' | 'end' {
   const lastMessage = state.messages[state.messages.length - 1];
   if (lastMessage.tool_calls?.length > 0) {
-    const hasServerToolCall = lastMessage.tool_calls.some(tc => serverToolNames.has(tc.name));
-    if (hasServerToolCall) return "tools";  // Server executes
+    const hasServerToolCall = lastMessage.tool_calls.some((tc) => serverToolNames.has(tc.name));
+    if (hasServerToolCall) return 'tools'; // Server executes
   }
-  return "end";  // Client tool or no tool → end, client handles
+  return 'end'; // Client tool or no tool → end, client handles
 }
 ```
 
 ## Complete Workflow Pattern
 
 ```typescript
-import { StateGraph, START, END, Command } from "@langchain/langgraph";
-import { ClientStateAnnotation, ClientState } from "@cloudbase/agent-adapter-langgraph";
-import { MemorySaver } from "@langchain/langgraph";
-import { ChatOpenAI } from "@langchain/openai";
-import { SystemMessage } from "@langchain/core/messages";
-import { RunnableConfig } from "@langchain/core/runnables";
+import { StateGraph, START, END, Command } from '@langchain/langgraph';
+import { ClientStateAnnotation, ClientState } from '@cloudbase/agent-adapter-langgraph';
+import { MemorySaver } from '@langchain/langgraph';
+import { ChatOpenAI } from '@langchain/openai';
+import { SystemMessage } from '@langchain/core/messages';
+import { RunnableConfig } from '@langchain/core/runnables';
 
 async function chatNode(state: ClientState, config?: RunnableConfig) {
-  const model = new ChatOpenAI({ model: "gpt-4o" });
+  const model = new ChatOpenAI({ model: 'gpt-4o' });
   const modelWithTools = model.bindTools([...(state.client?.tools || [])], {
-    parallel_tool_calls: false,  // Recommended: avoid race conditions
+    parallel_tool_calls: false, // Recommended: avoid race conditions
   });
 
-  const response = await modelWithTools.invoke([
-    new SystemMessage({ content: "You are a helpful assistant." }),
-    ...state.messages,
-  ], config);
+  const response = await modelWithTools.invoke(
+    [new SystemMessage({ content: 'You are a helpful assistant.' }), ...state.messages],
+    config,
+  );
 
   return new Command({ goto: END, update: { messages: [response] } });
 }
 
-const workflow = new StateGraph(ClientStateAnnotation)
-  .addNode("chat_node", chatNode)
-  .addEdge(START, "chat_node");
+const workflow = new StateGraph(ClientStateAnnotation).addNode('chat_node', chatNode).addEdge(START, 'chat_node');
 
 export const graph = workflow.compile({ checkpointer: new MemorySaver() });
 ```
@@ -141,13 +139,13 @@ export const graph = workflow.compile({ checkpointer: new MemorySaver() });
 Deploy your LangGraph workflow as an HTTP endpoint that speaks the AG-UI protocol. Clients can connect via SSE to stream events.
 
 ```typescript
-import { run } from "@cloudbase/agent-server";
-import { LanggraphAgent } from "@cloudbase/agent-adapter-langgraph";
+import { run } from '@cloudbase/agent-server';
+import { LanggraphAgent } from '@cloudbase/agent-adapter-langgraph';
 
 run({
   createAgent: () => ({
-    agent: new LanggraphAgent({ compiledWorkflow: graph })
+    agent: new LanggraphAgent({ compiledWorkflow: graph }),
   }),
-  port: 3000
+  port: 3000,
 });
 ```

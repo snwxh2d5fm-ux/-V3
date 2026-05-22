@@ -2,8 +2,12 @@
  * 单元测试: admin-codes 云函数 — 码生成 + 输入校验
  */
 const crypto = require('crypto');
-function sha256(s) { return crypto.createHash('sha256').update(String(s)).digest('hex'); }
-function randomCode() { return 'ZGB-' + crypto.randomBytes(4).toString('hex').toUpperCase(); }
+function sha256(s) {
+  return crypto.createHash('sha256').update(String(s)).digest('hex');
+}
+function randomCode() {
+  return 'ZGB-' + crypto.randomBytes(4).toString('hex').toUpperCase();
+}
 
 describe('admin-codes — 核心逻辑', () => {
   describe('randomCode 格式', () => {

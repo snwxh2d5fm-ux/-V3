@@ -13,7 +13,7 @@ const constants = require('../../../data/constants');
 Page({
   data: {
     // 模式
-    action: '',               // '' | 'ocr' | 'paste' | 'add' | 'rule' | 'timeline'
+    action: '', // '' | 'ocr' | 'paste' | 'add' | 'rule' | 'timeline'
     isEdit: false,
 
     // 路径感知时间线
@@ -31,11 +31,11 @@ Page({
 
     // 关联证件
     linkedDocs: [],
-    allDocs: [],              // 全部证件(供选择)
+    allDocs: [], // 全部证件(供选择)
 
     // 前置提醒链
-    dependencyChain: [],      // 依赖此提醒的前置提醒链
-    dependents: [],           // 依赖此提醒的后续提醒
+    dependencyChain: [], // 依赖此提醒的前置提醒链
+    dependents: [], // 依赖此提醒的后续提醒
 
     // 编辑表单
     formTitle: '',
@@ -67,7 +67,7 @@ Page({
     availableRules: [],
     selectedRuleId: '',
 
-    loading: true
+    loading: true,
   },
 
   onLoad(options) {
@@ -76,7 +76,7 @@ Page({
 
     // Bug #9: 保存path参数供initTimeline使用 + _autogen标记触发自动生成
     this._options_path = options.path || '';
-    this._options_from_autogen = (options._autogen === '1');
+    this._options_from_autogen = options._autogen === '1';
 
     this.setData({ action });
 
@@ -98,51 +98,63 @@ Page({
 
   // ========== 路径感知时间线 ==========
   initTimeline() {
-    var session = wx.getStorageSync('__session__') || {};
-    var app = getApp();
+    const session = wx.getStorageSync('__session__') || {};
+    const app = getApp();
     // Bug #9 修复: 优先从options.path读取（来自自动生成流程），否则fallback到globalData
-    var path = this._options_path || (app && app.globalData && app.globalData.selectedPath) || session.selectedPath || '';
-    var pathNames = {
-      'qmas': '优才计划', 'ttps_a': '高才通A类', 'ttps_b': '高才通B类', 'ttps_c': '高才通C类',
-      'asmpt': '专才计划', 'student_iang': '学生→IANG', 'dependent': '受养人',
-      'cies': 'CIES投资类身份规划', 'permanent': '永居申请'
+    const path =
+      this._options_path || (app && app.globalData && app.globalData.selectedPath) || session.selectedPath || '';
+    const pathNames = {
+      qmas: '优才计划',
+      ttps_a: '高才通A类',
+      ttps_b: '高才通B类',
+      ttps_c: '高才通C类',
+      asmpt: '专才计划',
+      student_iang: '学生→IANG',
+      dependent: '受养人',
+      cies: 'CIES投资类身份规划',
+      permanent: '永居申请',
     };
-    var visaYearsMap = { 'qmas': 2, 'ttps_a': 3, 'ttps_b': 2, 'ttps_c': 2, 'asmpt': 2, 'student_iang': 1 };
+    const visaYearsMap = { qmas: 2, ttps_a: 3, ttps_b: 2, ttps_c: 2, asmpt: 2, student_iang: 1 };
     this.setData({
       timelinePath: path,
       timelinePathName: pathNames[path] || path,
-      visaYears: String(visaYearsMap[path] || 2)
+      visaYears: String(visaYearsMap[path] || 2),
     });
 
     // Bug #9 修复: 自动生成时间线 — 以今天作为默认激活日期
     // 用户来自 auto-generate 流程已确认要生成，避免空状态
     if (path && this._options_from_autogen) {
-      var today = new Date();
-      var y = today.getFullYear();
-      var m = today.getMonth() + 1;
-      var d = today.getDate();
-      var todayStr = y + '-' + (m < 10 ? '0' + m : m) + '-' + (d < 10 ? '0' + d : d);
+      const today = new Date();
+      const y = today.getFullYear();
+      const m = today.getMonth() + 1;
+      const d = today.getDate();
+      const todayStr = y + '-' + (m < 10 ? '0' + m : m) + '-' + (d < 10 ? '0' + d : d);
       this.setData({ activationDate: todayStr });
       this.generateTimeline();
       // 自动生成后直接保存提醒到列表，不等用户手动点保存
-      var that = this;
-      setTimeout(function() { that.saveTimelineReminders(); }, 500);
+      const that = this;
+      setTimeout(function () {
+        that.saveTimelineReminders();
+      }, 500);
     }
   },
 
   /** 根据激活日期+模板生成时间线 */
   generateTimeline() {
-    var activation = this.data.activationDate;
-    if (!activation) { wx.showToast({ title: '请填写预期提交申请时间', icon: 'none' }); return; }
+    const activation = this.data.activationDate;
+    if (!activation) {
+      wx.showToast({ title: '请填写预期提交申请时间', icon: 'none' });
+      return;
+    }
 
-    var path = this.data.timelinePath;
-    var template = TIMELINE_TEMPLATES[path] || TIMELINE_TEMPLATES['qmas'];
-    var start = new Date(activation);
-    var stages = [];
+    const path = this.data.timelinePath;
+    const template = TIMELINE_TEMPLATES[path] || TIMELINE_TEMPLATES['qmas'];
+    const start = new Date(activation);
+    const stages = [];
 
-    template.nodes.forEach(function(node) {
-      var date = addDays(start, node.offsetDays);
-      var iconMap = { milestone: '✅', deadline: '📅', renewal: '🔄', pr: '🏁', material: '📋' };
+    template.nodes.forEach(function (node) {
+      const date = addDays(start, node.offsetDays);
+      const iconMap = { milestone: '✅', deadline: '📅', renewal: '🔄', pr: '🏁', material: '📋' };
       stages.push({
         label: node.label,
         date: date,
@@ -150,71 +162,101 @@ Page({
         icon: iconMap[node.type] || '📍',
         desc: node.desc || '',
         materials: node.materials || [],
-        range: node.range || null
+        range: node.range || null,
       });
     });
 
     // 如果填了身份证日期，插入HKID节点
     if (this.data.hkidDate) {
-      stages.push({ label: '办理香港身份证', date: this.data.hkidDate, type: 'milestone', icon: '🆔', desc: '', materials: ['photo'], range: null });
+      stages.push({
+        label: '办理香港身份证',
+        date: this.data.hkidDate,
+        type: 'milestone',
+        icon: '🆔',
+        desc: '',
+        materials: ['photo'],
+        range: null,
+      });
     }
 
     // 按日期排序
-    stages.sort(function(a, b) { return new Date(a.date) - new Date(b.date); });
-    stages.forEach(function(s, i) { s.index = i + 1; });
+    stages.sort(function (a, b) {
+      return new Date(a.date) - new Date(b.date);
+    });
+    stages.forEach(function (s, i) {
+      s.index = i + 1;
+    });
 
     this.setData({ timelineStages: stages });
   },
 
   /** 修改时间线节点日期 */
-  onTimelineDateChange: function(e) {
-    var idx = e.currentTarget.dataset.idx;
-    var newDate = e.detail.value;
-    var stages = this.data.timelineStages.slice();
+  onTimelineDateChange: function (e) {
+    const idx = e.currentTarget.dataset.idx;
+    const newDate = e.detail.value;
+    const stages = this.data.timelineStages.slice();
     if (stages[idx]) {
       stages[idx].date = newDate;
-      stages.sort(function(a, b) { return new Date(a.date) - new Date(b.date); });
-      stages.forEach(function(s, i) { s.index = i + 1; });
+      stages.sort(function (a, b) {
+        return new Date(a.date) - new Date(b.date);
+      });
+      stages.forEach(function (s, i) {
+        s.index = i + 1;
+      });
       this.setData({ timelineStages: stages });
     }
   },
 
   /** 一键生成提醒到提醒列表 */
   saveTimelineReminders() {
-    var that = this;
-    var stages = this.data.timelineStages;
-    if (!stages.length) { wx.showToast({ title: '先生成时间线', icon: 'none' }); return; }
+    const that = this;
+    const stages = this.data.timelineStages;
+    if (!stages.length) {
+      wx.showToast({ title: '先生成时间线', icon: 'none' });
+      return;
+    }
 
     wx.showModal({
       title: '批量生成提醒',
       content: '将为 ' + stages.length + ' 个时间节点生成提醒，确认？',
-      success: function(res) {
+      success: function (res) {
         if (!res.confirm) return;
-        var count = 0;
-        stages.forEach(function(s) {
+        let count = 0;
+        stages.forEach(function (s) {
           saveReminder({
-            id: 'TL_' + Date.now() + '_' + (count++),
-            title: s.label, deadline: s.date,
+            id: 'TL_' + Date.now() + '_' + count++,
+            title: s.label,
+            deadline: s.date,
             description: that.data.timelinePathName + ' · ' + s.type,
-            type: 'rule_engine', confidence: 'B',
-            linkedDocIds: [], status: 'active',
-            createdAt: new Date().toISOString()
+            type: 'rule_engine',
+            confidence: 'B',
+            linkedDocIds: [],
+            status: 'active',
+            createdAt: new Date().toISOString(),
           });
         });
         wx.showToast({ title: '已生成 ' + stages.length + ' 个提醒', icon: 'success' });
-        setTimeout(function() { wx.navigateBack(); }, 1200);
-      }
+        setTimeout(function () {
+          wx.navigateBack();
+        }, 1200);
+      },
     });
   },
 
-  onActivationDateChange(e) { this.setData({ activationDate: (e.detail && e.detail.value) || e.detail }); },
-  onHkidDateChange(e) { this.setData({ hkidDate: (e.detail && e.detail.value) || e.detail }); },
-  onVisaYearsChange(e) { this.setData({ visaYears: e.detail.value }); },
+  onActivationDateChange(e) {
+    this.setData({ activationDate: (e.detail && e.detail.value) || e.detail });
+  },
+  onHkidDateChange(e) {
+    this.setData({ hkidDate: (e.detail && e.detail.value) || e.detail });
+  },
+  onVisaYearsChange(e) {
+    this.setData({ visaYears: e.detail.value });
+  },
 
   // ========== 加载提醒详情 ==========
   loadReminderDetail(id) {
     const reminders = getAllReminders();
-    const reminder = reminders.find(r => r.id === id);
+    const reminder = reminders.find((r) => r.id === id);
 
     if (!reminder) {
       wx.showToast({ title: '提醒不存在', icon: 'none' });
@@ -246,7 +288,7 @@ Page({
       formConfidence: reminder.confidence || 'B',
       formType: reminder.type || 'manual',
       formLinkedDocIds: reminder.linkedDocIds || [],
-      loading: false
+      loading: false,
     });
   },
 
@@ -256,14 +298,14 @@ Page({
       const docs = getAllDocuments();
       this.setData({ allDocs: docs });
     } catch (e) {
-      console.log('[提醒详情] 加载证件列表失败');
+      console.debug('[提醒详情] 加载证件列表失败');
     }
   },
 
   getLinkedDocuments(docIds) {
     if (!docIds || docIds.length === 0) return [];
     const allDocs = getAllDocuments();
-    return allDocs.filter(d => docIds.includes(d.id));
+    return allDocs.filter((d) => docIds.includes(d.id));
   },
 
   // ========== 依赖链 ==========
@@ -276,14 +318,14 @@ Page({
 
     while (currentId && !visited.has(currentId)) {
       visited.add(currentId);
-      const dep = allReminders.find(r => r.id === currentId);
+      const dep = allReminders.find((r) => r.id === currentId);
       if (dep) {
         chain.unshift({
           id: dep.id,
           label: dep.title || dep.label,
           deadline: dep.deadline,
           status: dep.status,
-          countdown: getCountdown(dep.deadline)
+          countdown: getCountdown(dep.deadline),
         });
         currentId = dep.dependsOn;
       } else {
@@ -295,21 +337,21 @@ Page({
 
   buildDependents(reminder, allReminders) {
     return allReminders
-      .filter(r => r.dependsOn === reminder.id)
-      .map(r => ({
+      .filter((r) => r.dependsOn === reminder.id)
+      .map((r) => ({
         id: r.id,
         label: r.title || r.label,
         deadline: r.deadline,
         status: r.status,
-        countdown: getCountdown(r.deadline)
+        countdown: getCountdown(r.deadline),
       }));
   },
 
   // ========== 操作: 完成 ==========
-  onChangeDeadline: function(e) {
-    var newDate = e.detail.value;
+  onChangeDeadline: function (e) {
+    const newDate = e.detail.value;
     updateReminder(this.data.reminderId, { deadline: newDate, updatedAt: new Date().toISOString() });
-    var r = this.data.reminder;
+    const r = this.data.reminder;
     r.deadline = newDate;
     this.setData({ reminder: r });
     wx.showToast({ title: '已更新截止日期', icon: 'success' });
@@ -321,16 +363,18 @@ Page({
       updateReminder(this.data.reminderId, {
         status: 'completed',
         completedAt: new Date().toISOString(),
-        updatedAt: new Date().toISOString()
+        updatedAt: new Date().toISOString(),
       });
       // 检查并激活后续依赖提醒
       this.activateDependents();
       // 同步云端
       if (app.globalData.cloudReady) {
-        await wx.cloud.callFunction({
-          name: 'reminder-engine',
-          data: { action: 'complete', reminderId: this.data.reminderId }
-        }).catch(() => {});
+        await wx.cloud
+          .callFunction({
+            name: 'reminder-engine',
+            data: { action: 'complete', reminderId: this.data.reminderId },
+          })
+          .catch(() => {});
       }
       wx.hideLoading();
       wx.showToast({ title: '✅ 已完成', icon: 'success' });
@@ -344,7 +388,7 @@ Page({
   // 当前置提醒完成时，激活后续依赖提醒
   activateDependents() {
     if (this.data.dependents.length === 0) return;
-    this.data.dependents.forEach(dep => {
+    this.data.dependents.forEach((dep) => {
       if (dep.status === 'locked') {
         updateReminder(dep.id, { status: 'active', updatedAt: new Date().toISOString() });
       }
@@ -359,7 +403,7 @@ Page({
     this.setData({
       showDeferModal: true,
       deferDays: 7,
-      deferDate: newDate.toISOString().slice(0, 10)
+      deferDate: newDate.toISOString().slice(0, 10),
     });
   },
 
@@ -370,7 +414,7 @@ Page({
     const newDate = new Date(currentDeadline.getTime() + days * 86400000);
     this.setData({
       deferDays: days,
-      deferDate: newDate.toISOString().slice(0, 10)
+      deferDate: newDate.toISOString().slice(0, 10),
     });
   },
 
@@ -381,13 +425,15 @@ Page({
         status: 'deferred',
         deadline: this.data.deferDate,
         deferredFrom: this.data.reminder.deadline,
-        updatedAt: new Date().toISOString()
+        updatedAt: new Date().toISOString(),
       });
       if (app.globalData.cloudReady) {
-        await wx.cloud.callFunction({
-          name: 'reminder-engine',
-          data: { action: 'defer', reminderId: this.data.reminderId, newDeadline: this.data.deferDate }
-        }).catch(() => {});
+        await wx.cloud
+          .callFunction({
+            name: 'reminder-engine',
+            data: { action: 'defer', reminderId: this.data.reminderId, newDeadline: this.data.deferDate },
+          })
+          .catch(() => {});
       }
       wx.hideLoading();
       wx.showToast({ title: '已延期', icon: 'success' });
@@ -415,13 +461,15 @@ Page({
         try {
           updateReminder(this.data.reminderId, {
             status: 'ignored',
-            updatedAt: new Date().toISOString()
+            updatedAt: new Date().toISOString(),
           });
           if (app.globalData.cloudReady) {
-            await wx.cloud.callFunction({
-              name: 'reminder-engine',
-              data: { action: 'ignore', reminderId: this.data.reminderId }
-            }).catch(() => {});
+            await wx.cloud
+              .callFunction({
+                name: 'reminder-engine',
+                data: { action: 'ignore', reminderId: this.data.reminderId },
+              })
+              .catch(() => {});
           }
           wx.hideLoading();
           wx.showToast({ title: '已忽略', icon: 'success' });
@@ -430,7 +478,7 @@ Page({
           wx.hideLoading();
           wx.showToast({ title: '操作失败', icon: 'none' });
         }
-      }
+      },
     });
   },
 
@@ -445,17 +493,19 @@ Page({
         try {
           deleteReminder(this.data.reminderId);
           if (app.globalData.cloudReady) {
-            await wx.cloud.callFunction({
-              name: 'reminder-engine',
-              data: { action: 'delete', reminderId: this.data.reminderId }
-            }).catch(() => {});
+            await wx.cloud
+              .callFunction({
+                name: 'reminder-engine',
+                data: { action: 'delete', reminderId: this.data.reminderId },
+              })
+              .catch(() => {});
           }
           wx.showToast({ title: '已删除', icon: 'success' });
           setTimeout(() => wx.navigateBack(), 800);
         } catch (e) {
           wx.showToast({ title: '操作失败', icon: 'none' });
         }
-      }
+      },
     });
   },
 
@@ -464,11 +514,21 @@ Page({
     this.setData({ isEdit: !this.data.isEdit });
   },
 
-  onTitleInput(e) { this.setData({ formTitle: e.detail.value }); },
-  onDeadlineInput(e) { this.setData({ formDeadline: e.detail.value }); },
-  onDeadlinePickerChange(e) { this.setData({ formDeadline: e.detail.value }); },
-  onDescriptionInput(e) { this.setData({ formDescription: e.detail.value }); },
-  onConfidenceChange(e) { this.setData({ formConfidence: e.detail.value }); },
+  onTitleInput(e) {
+    this.setData({ formTitle: e.detail.value });
+  },
+  onDeadlineInput(e) {
+    this.setData({ formDeadline: e.detail.value });
+  },
+  onDeadlinePickerChange(e) {
+    this.setData({ formDeadline: e.detail.value });
+  },
+  onDescriptionInput(e) {
+    this.setData({ formDescription: e.detail.value });
+  },
+  onConfidenceChange(e) {
+    this.setData({ formConfidence: e.detail.value });
+  },
 
   async saveEdit() {
     if (!this.data.formTitle.trim()) {
@@ -489,22 +549,24 @@ Page({
         description: this.data.formDescription.trim(),
         confidence: this.data.formConfidence,
         linkedDocIds: this.data.formLinkedDocIds,
-        updatedAt: new Date().toISOString()
+        updatedAt: new Date().toISOString(),
       });
       if (app.globalData.cloudReady) {
-        await wx.cloud.callFunction({
-          name: 'reminder-engine',
-          data: {
-            action: 'update',
-            reminderId: this.data.reminderId,
-            updates: {
-              title: this.data.formTitle.trim(),
-              deadline: this.data.formDeadline,
-              description: this.data.formDescription.trim(),
-              confidence: this.data.formConfidence
-            }
-          }
-        }).catch(() => {});
+        await wx.cloud
+          .callFunction({
+            name: 'reminder-engine',
+            data: {
+              action: 'update',
+              reminderId: this.data.reminderId,
+              updates: {
+                title: this.data.formTitle.trim(),
+                deadline: this.data.formDeadline,
+                description: this.data.formDescription.trim(),
+                confidence: this.data.formConfidence,
+              },
+            },
+          })
+          .catch(() => {});
       }
       wx.hideLoading();
       wx.showToast({ title: '已保存', icon: 'success' });
@@ -523,7 +585,7 @@ Page({
 
   toggleLinkedDoc(e) {
     const docId = e.currentTarget.dataset.docId;
-    let ids = [...this.data.formLinkedDocIds];
+    const ids = [...this.data.formLinkedDocIds];
     const idx = ids.indexOf(docId);
     if (idx >= 0) {
       ids.splice(idx, 1);
@@ -560,7 +622,7 @@ Page({
     this.setData({
       formDeadline: date,
       formType: 'ocr',
-      parsedDates: []
+      parsedDates: [],
     });
   },
 
@@ -574,7 +636,7 @@ Page({
         const imagePath = res.tempFilePaths[0];
         this.setData({ ocrImagePath: imagePath });
         this.runOCR(imagePath);
-      }
+      },
     });
   },
 
@@ -582,58 +644,60 @@ Page({
     this.setData({ ocrParsing: true, ocrResult: null });
 
     // 10秒超时兜底
-    var timeoutId = setTimeout(() => {
+    const timeoutId = setTimeout(() => {
       if (this.data.ocrParsing) {
         this.setData({
           ocrResult: { dates: [], message: '识别超时，请在下方手动输入' },
-          ocrParsing: false
+          ocrParsing: false,
         });
       }
     }, 10000);
 
     try {
-      var compressedPath = imagePath;
+      let compressedPath = imagePath;
       try {
-        var compressRes = await new Promise((resolve, reject) => {
+        const compressRes = await new Promise((resolve, reject) => {
           wx.compressImage({ src: imagePath, quality: 40, success: (r) => resolve(r.tempFilePath), fail: reject });
         });
         compressedPath = compressRes;
-      } catch (e) { /* 压缩失败用原图 */ }
+      } catch (e) {
+        /* 压缩失败用原图 */
+      }
 
-      var cloudPath = '_ocr_temp/reminder_' + Date.now() + '.jpg';
-      var uploadRes = await new Promise((resolve, reject) => {
+      const cloudPath = '_ocr_temp/reminder_' + Date.now() + '.jpg';
+      const uploadRes = await new Promise((resolve, reject) => {
         wx.cloud.uploadFile({ cloudPath, filePath: compressedPath, success: resolve, fail: reject });
       });
-      var fileID = uploadRes.fileID;
+      const fileID = uploadRes.fileID;
 
-      var cloudRes = await wx.cloud.callFunction({
+      const cloudRes = await wx.cloud.callFunction({
         name: 'ocr-service',
-        data: { action: 'recognizeDates', fileID: fileID }
+        data: { action: 'recognizeDates', fileID: fileID },
       });
 
       clearTimeout(timeoutId);
 
-      var result = cloudRes.result || {};
+      const result = cloudRes.result || {};
       if (result.code === 0 && result.data && result.data.dates && result.data.dates.length > 0) {
         this.setData({ ocrResult: result.data, ocrParsing: false });
         // 自动填入第一个识别到的日期
-        var first = result.data.dates[0];
+        const first = result.data.dates[0];
         this.setData({
           formDeadline: first.date || first,
-          formTitle: first.label || '自动识别提醒'
+          formTitle: first.label || '自动识别提醒',
         });
         return;
       }
 
       this.setData({
         ocrResult: result.data || { dates: [], message: '未识别到日期，请在下方手动输入' },
-        ocrParsing: false
+        ocrParsing: false,
       });
     } catch (e) {
       clearTimeout(timeoutId);
       this.setData({
         ocrResult: { dates: [], message: '识别失败，请在下方手动输入' },
-        ocrParsing: false
+        ocrParsing: false,
       });
     }
   },
@@ -648,16 +712,16 @@ Page({
     this.setData({
       formDeadline: date,
       formTitle: label || this.data.formTitle,
-      formType: 'ocr'
+      formType: 'ocr',
     });
   },
 
   // ========== 规则引擎 ==========
   loadAvailableRules() {
     try {
-      var reminderRules = require('../../../data/rules/reminders.js');
-      var ruleNames = require("../../../data/rules/reminder-names.js");
-      var rulesWithNames = reminderRules.map(function(r) {
+      const reminderRules = require('../../../data/rules/reminders.js');
+      const ruleNames = require('../../../data/rules/reminder-names.js');
+      const rulesWithNames = reminderRules.map(function (r) {
         r.name = ruleNames[r.rule_id] || '';
         r.icon = r.icon || '📋';
         return r;
@@ -683,7 +747,7 @@ Page({
     wx.showLoading({ title: '生成提醒链...' });
 
     try {
-      const rule = this.data.availableRules.find(r => r.rule_id === this.data.selectedRuleId);
+      const rule = this.data.availableRules.find((r) => r.rule_id === this.data.selectedRuleId);
       if (!rule) {
         wx.hideLoading();
         wx.showToast({ title: '规则未找到', icon: 'none' });
@@ -719,11 +783,11 @@ Page({
           source: {
             type: 'rule_engine',
             ruleId: rule.rule_id,
-            eventDate: baseEventDate
+            eventDate: baseEventDate,
           },
           linkedDocIds: [],
           createdAt: new Date().toISOString(),
-          updatedAt: new Date().toISOString()
+          updatedAt: new Date().toISOString(),
         };
         saveReminder(reminder);
       });
@@ -732,7 +796,7 @@ Page({
       wx.showToast({
         title: `已生成 ${rule.reminders.length} 个提醒`,
         icon: 'success',
-        duration: 2000
+        duration: 2000,
       });
       setTimeout(() => wx.navigateBack(), 1500);
     } catch (e) {
@@ -750,14 +814,14 @@ Page({
 
   getRuleChainLabel(ruleId) {
     const map = {
-      'R_APPROVAL_001': '获批后流程',
-      'R_VISA_ACTIVATE_001': '签证激活流程',
-      'R_HKID_001': '身份证办理',
-      'R_RENEWAL_PREP_001': '续签准备',
-      'R_TAX_001': '税务提醒',
-      'R_PR_001': '永居冲刺',
-      'R_MPF_001': '强积金检查',
-      'R_PERMIT_EXPIRY_001': '通行证到期'
+      R_APPROVAL_001: '获批后流程',
+      R_VISA_ACTIVATE_001: '签证激活流程',
+      R_HKID_001: '身份证办理',
+      R_RENEWAL_PREP_001: '续签准备',
+      R_TAX_001: '税务提醒',
+      R_PR_001: '永居冲刺',
+      R_MPF_001: '强积金检查',
+      R_PERMIT_EXPIRY_001: '通行证到期',
     };
     return map[ruleId] || '规则链';
   },
@@ -794,15 +858,17 @@ Page({
         source: { type: 'manual' },
         linkedDocIds: this.data.formLinkedDocIds,
         createdAt: new Date().toISOString(),
-        updatedAt: new Date().toISOString()
+        updatedAt: new Date().toISOString(),
       };
       saveReminder(reminder);
 
       if (app.globalData.cloudReady) {
-        await wx.cloud.callFunction({
-          name: 'reminder-engine',
-          data: { action: 'add', reminder }
-        }).catch(() => {});
+        await wx.cloud
+          .callFunction({
+            name: 'reminder-engine',
+            data: { action: 'add', reminder },
+          })
+          .catch(() => {});
       }
 
       wx.hideLoading();
@@ -822,12 +888,12 @@ Page({
 
   goBack() {
     wx.navigateBack();
-  }
+  },
 });
 
 /** 日期加减天数 */
 function addDays(date, days) {
-  var d = new Date(date);
+  const d = new Date(date);
   d.setDate(d.getDate() + days);
   return d.toISOString().slice(0, 10);
 }

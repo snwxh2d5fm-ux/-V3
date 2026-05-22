@@ -1,6 +1,6 @@
 ---
 name: ai-model-nodejs
-description: "Use this skill for Node.js backend AI via @cloudbase/node-sdk (>=3.16.0) — cloud functions, CloudRun, Express, Koa, NestJS, serverless APIs, scheduled jobs, LLM proxies. Only SDK supporting image generation (ai.createImageModel + generateImage). Text models via ai.createModel with groups cloudbase, hunyuan-exp, or custom-*. Model IDs (deepseek-v4-flash, deepseek-v3.2, hunyuan-2.0-instruct-20251111, glm-5, kimi-k2.6) go in the model field of generateText/streamText. MUST run two-step preflight before code — see body. Keywords: backend, 云函数, 云托管, serverless, LLM proxy, agent orchestration, generateText, streamText, generateImage, createModel, hunyuan-image, Token Credits, TokenHub, Hunyuan, DeepSeek, GLM, Kimi, MiniMax. NOT for browser/Web (use ai-model-web) or Mini Program (use ai-model-wechat)."
+description: 'Use this skill for Node.js backend AI via @cloudbase/node-sdk (>=3.16.0) — cloud functions, CloudRun, Express, Koa, NestJS, serverless APIs, scheduled jobs, LLM proxies. Only SDK supporting image generation (ai.createImageModel + generateImage). Text models via ai.createModel with groups cloudbase, hunyuan-exp, or custom-*. Model IDs (deepseek-v4-flash, deepseek-v3.2, hunyuan-2.0-instruct-20251111, glm-5, kimi-k2.6) go in the model field of generateText/streamText. MUST run two-step preflight before code — see body. Keywords: backend, 云函数, 云托管, serverless, LLM proxy, agent orchestration, generateText, streamText, generateImage, createModel, hunyuan-image, Token Credits, TokenHub, Hunyuan, DeepSeek, GLM, Kimi, MiniMax. NOT for browser/Web (use ai-model-web) or Mini Program (use ai-model-wechat).'
 version: 2.19.4
 alwaysApply: false
 ---
@@ -39,24 +39,24 @@ Use this skill for **calling AI models from Node.js backends, cloud functions, o
 
 Read this before writing any `createModel(...)` line. Agents frequently hallucinate this argument. There are **exactly three** legal shapes. Anything else is a bug.
 
-| ✅ Legal `ai.createModel(...)` argument | When to use it |
-|----------------------------------------|----------------|
-| `"cloudbase"` | **The main managed group for server-side projects** (TokenHub-backed, multi-vendor pool). Vendor + concrete model go into the **`model` field** of `generateText` / `streamText`, e.g. `{ model: "deepseek-v4-flash" }`. **No model is enabled by default — always check `DescribeAIModels` first and, if the target model is missing, enable it with `UpdateAIModel` before calling the SDK.** |
-| `"hunyuan-exp"` | Only if `DescribeAIModels` explicitly returns this legacy builtin group for the current env. |
-| `"custom-<your-name>"` | A user-defined GroupName you onboarded via `CreateAIModel`. **Must** start with `custom-` (e.g. `custom-kimi`, `custom-openai-compat`). |
+| ✅ Legal `ai.createModel(...)` argument | When to use it                                                                                                                                                                                                                                                                                                                                                                                  |
+| --------------------------------------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `"cloudbase"`                           | **The main managed group for server-side projects** (TokenHub-backed, multi-vendor pool). Vendor + concrete model go into the **`model` field** of `generateText` / `streamText`, e.g. `{ model: "deepseek-v4-flash" }`. **No model is enabled by default — always check `DescribeAIModels` first and, if the target model is missing, enable it with `UpdateAIModel` before calling the SDK.** |
+| `"hunyuan-exp"`                         | Only if `DescribeAIModels` explicitly returns this legacy builtin group for the current env.                                                                                                                                                                                                                                                                                                    |
+| `"custom-<your-name>"`                  | A user-defined GroupName you onboarded via `CreateAIModel`. **Must** start with `custom-` (e.g. `custom-kimi`, `custom-openai-compat`).                                                                                                                                                                                                                                                         |
 
 > Image generation is a separate entry point: `ai.createImageModel("hunyuan-image")`. Do not mix it with `createModel(...)`.
 
 ### ❌ Do NOT write any of these — they are all wrong
 
 ```js
-ai.createModel("deepseek")                 // wrong — that's a vendor, not a GroupName
-ai.createModel("deepseek-v4-flash")        // wrong — model id goes in the `model` field
-ai.createModel("hunyuan") / "hunyuan-2.0-instruct-20251111"  // wrong — vendor / model name
-ai.createModel("glm") / "kimi" / "minimax"  // wrong — vendor names
-ai.createModel("openai") / "moonshot"       // wrong — vendor names
-ai.createModel("custom")                   // wrong — placeholder; use your real custom-<name>
-ai.createModel(modelName)                  // wrong — do not reuse the variable that holds the model id
+ai.createModel('deepseek'); // wrong — that's a vendor, not a GroupName
+ai.createModel('deepseek-v4-flash'); // wrong — model id goes in the `model` field
+ai.createModel('hunyuan') / 'hunyuan-2.0-instruct-20251111'; // wrong — vendor / model name
+ai.createModel('glm') / 'kimi' / 'minimax'; // wrong — vendor names
+ai.createModel('openai') / 'moonshot'; // wrong — vendor names
+ai.createModel('custom'); // wrong — placeholder; use your real custom-<name>
+ai.createModel(modelName); // wrong — do not reuse the variable that holds the model id
 ```
 
 ### ✅ Correct pattern — GroupName vs Model are two different fields
@@ -99,11 +99,13 @@ callCloudApi(service="tcb", action="DescribeEnvPostpayPackage", params={ EnvId }
 ```
 
 **Pass conditions (all required):**
+
 - `envPostpayPackageInfoList` contains at least one entry
 - That entry's `postpayPackageId` starts with `pkg_tcb_tokencredits_`
 - That entry's `status` is NOT in `[3, 4]` (3 / 4 typically mean expired / disabled; trust the live response)
 
 - ❌ **Not satisfied** → **stop writing code** and surface this to the user (replacing `{envId}` with the real id):
+
   > The current environment has no active Token Credits resource pack. Please purchase one before calling any AI API:
   > https://buy.cloud.tencent.com/lowcode?buyType=resPack&envId={envId}&resourceType=token
   >
@@ -261,6 +263,7 @@ Set `timeout` inside the `func` object:
 - **Default**: 20 seconds (usually too short for AI operations)
 
 **Recommended timeouts:**
+
 - **Text generation (`generateText`)**: 60 – 120 s
 - **Streaming (`streamText`)**: 60 – 120 s
 - **Image generation (`generateImage`)**: 300 – 900 s (recommended: 900 s)
@@ -273,7 +276,7 @@ const tcb = require('@cloudbase/node-sdk');
 const app = tcb.init({
   env: '<YOUR_ENV_ID>',
   secretId: '<YOUR_SECRET_ID>',
-  secretKey: '<YOUR_SECRET_KEY>'
+  secretKey: '<YOUR_SECRET_KEY>',
 });
 
 const ai = app.ai();
@@ -286,17 +289,17 @@ const ai = app.ai();
 > **Prerequisite:** the two-step preflight (eligibility + group readiness) has passed. The example below assumes the user did not specify a model, so it uses the `cloudbase` managed group + `deepseek-v4-flash`.
 
 ```js
-const model = ai.createModel("cloudbase");
+const model = ai.createModel('cloudbase');
 
 const result = await model.generateText({
-  model: "deepseek-v4-flash",  // must already be enabled in this env (DescribeAIModels → UpdateAIModel)
-  messages: [{ role: "user", content: "Give me a one-paragraph intro to Li Bai." }],
+  model: 'deepseek-v4-flash', // must already be enabled in this env (DescribeAIModels → UpdateAIModel)
+  messages: [{ role: 'user', content: 'Give me a one-paragraph intro to Li Bai.' }],
 });
 
-console.log(result.text);           // generated text string
-console.log(result.usage);          // { prompt_tokens, completion_tokens, total_tokens }
-console.log(result.messages);       // full message history
-console.log(result.rawResponses);   // raw model responses
+console.log(result.text); // generated text string
+console.log(result.usage); // { prompt_tokens, completion_tokens, total_tokens }
+console.log(result.messages); // full message history
+console.log(result.rawResponses); // raw model responses
 ```
 
 ---
@@ -304,17 +307,17 @@ console.log(result.rawResponses);   // raw model responses
 ## Error Handling Pattern
 
 ```js
-const model = ai.createModel("cloudbase");
+const model = ai.createModel('cloudbase');
 
 try {
   const result = await model.generateText({
-    model: "deepseek-v4-flash",
-    messages: [{ role: "user", content: "Summarize today's deployment logs." }],
+    model: 'deepseek-v4-flash',
+    messages: [{ role: 'user', content: "Summarize today's deployment logs." }],
   });
 
   console.log(result.text);
 } catch (error) {
-  console.error("AI request failed", error);
+  console.error('AI request failed', error);
 }
 ```
 
@@ -325,26 +328,26 @@ try {
 > **Prerequisite:** the two-step preflight has passed.
 
 ```js
-const model = ai.createModel("cloudbase");
+const model = ai.createModel('cloudbase');
 
 const res = await model.streamText({
-  model: "deepseek-v4-flash",
-  messages: [{ role: "user", content: "Give me a one-paragraph intro to Li Bai." }],
+  model: 'deepseek-v4-flash',
+  messages: [{ role: 'user', content: 'Give me a one-paragraph intro to Li Bai.' }],
 });
 
 // Option 1: iterate the text stream (recommended)
 for await (let text of res.textStream) {
-  console.log(text);  // incremental text chunks
+  console.log(text); // incremental text chunks
 }
 
 // Option 2: iterate the data stream for full response chunks
 for await (let data of res.dataStream) {
-  console.log(data);  // full response chunk with metadata
+  console.log(data); // full response chunk with metadata
 }
 
 // Option 3: access final results
-const messages = await res.messages;  // full message history
-const usage = await res.usage;        // token usage
+const messages = await res.messages; // full message history
+const usage = await res.usage; // token usage
 ```
 
 ---
@@ -356,40 +359,40 @@ const usage = await res.usage;        // token usage
 ⚠️ **Image generation also consumes the Token Credits resource pack**, so the two-step preflight must pass before calling it. Per-call cost is higher than text and calls take longer (set cloud function timeout to 900 s).
 
 ```js
-const imageModel = ai.createImageModel("hunyuan-image");
+const imageModel = ai.createImageModel('hunyuan-image');
 
 const res = await imageModel.generateImage({
-  model: "hunyuan-image",
-  prompt: "A cute kitten playing on the grass",
-  size: "1024x1024",
-  version: "v1.9",
+  model: 'hunyuan-image',
+  prompt: 'A cute kitten playing on the grass',
+  size: '1024x1024',
+  version: 'v1.9',
 });
 
-console.log(res.data[0].url);           // image URL (valid for 24 hours)
-console.log(res.data[0].revised_prompt);// revised prompt when revise=true
+console.log(res.data[0].url); // image URL (valid for 24 hours)
+console.log(res.data[0].revised_prompt); // revised prompt when revise=true
 ```
 
 ### Image Generation Parameters
 
 ```ts
 interface HunyuanGenerateImageInput {
-  model: "hunyuan-image";      // required
-  prompt: string;                       // required: image description
-  version?: "v1.8.1" | "v1.9";         // default: "v1.8.1"
-  size?: string;                        // default: "1024x1024"
-  negative_prompt?: string;             // v1.9 only
-  style?: string;                       // v1.9 only
-  revise?: boolean;                     // default: true
-  n?: number;                           // default: 1
-  footnote?: string;                    // watermark, max 16 chars
-  seed?: number;                        // range: [1, 4294967295]
+  model: 'hunyuan-image'; // required
+  prompt: string; // required: image description
+  version?: 'v1.8.1' | 'v1.9'; // default: "v1.8.1"
+  size?: string; // default: "1024x1024"
+  negative_prompt?: string; // v1.9 only
+  style?: string; // v1.9 only
+  revise?: boolean; // default: true
+  n?: number; // default: 1
+  footnote?: string; // watermark, max 16 chars
+  seed?: number; // range: [1, 4294967295]
 }
 
 interface HunyuanGenerateImageOutput {
   id: string;
   created: number;
   data: Array<{
-    url: string;                        // image URL (24h valid)
+    url: string; // image URL (24h valid)
     revised_prompt?: string;
   }>;
 }
@@ -401,31 +404,31 @@ interface HunyuanGenerateImageOutput {
 
 ```ts
 interface BaseChatModelInput {
-  model: string;                        // required: model name
-  messages: Array<ChatModelMessage>;    // required: message array
-  temperature?: number;                 // optional: sampling temperature
-  topP?: number;                        // optional: nucleus sampling
+  model: string; // required: model name
+  messages: Array<ChatModelMessage>; // required: message array
+  temperature?: number; // optional: sampling temperature
+  topP?: number; // optional: nucleus sampling
 }
 
 type ChatModelMessage =
-  | { role: "user"; content: string }
-  | { role: "system"; content: string }
-  | { role: "assistant"; content: string };
+  | { role: 'user'; content: string }
+  | { role: 'system'; content: string }
+  | { role: 'assistant'; content: string };
 
 interface GenerateTextResult {
-  text: string;                         // generated text
-  messages: Array<ChatModelMessage>;    // full message history
-  usage: Usage;                         // token usage
-  rawResponses: Array<unknown>;         // raw model responses
-  error?: unknown;                      // error if any
+  text: string; // generated text
+  messages: Array<ChatModelMessage>; // full message history
+  usage: Usage; // token usage
+  rawResponses: Array<unknown>; // raw model responses
+  error?: unknown; // error if any
 }
 
 interface StreamTextResult {
-  textStream: AsyncIterable<string>;    // incremental text stream
+  textStream: AsyncIterable<string>; // incremental text stream
   dataStream: AsyncIterable<DataChunk>; // full data stream
-  messages: Promise<ChatModelMessage[]>;// final message history
-  usage: Promise<Usage>;                // final token usage
-  error?: unknown;                      // error if any
+  messages: Promise<ChatModelMessage[]>; // final message history
+  usage: Promise<Usage>; // final token usage
+  error?: unknown; // error if any
 }
 
 interface Usage {

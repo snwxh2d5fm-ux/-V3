@@ -1,6 +1,6 @@
 ---
 name: ai-model-web
-description: "Use this skill when a browser/Web app (React, Vue, Angular, Next, Nuxt, static sites, SPAs, dashboards, AI chat UI) needs AI models via @cloudbase/js-sdk. Default routing for page/页面/Web/前端/frontend/网页/H5 AI — call directly from browser, do NOT propose a Node.js proxy. Covers generateText and streamText. Models via ai.createModel with groups cloudbase, hunyuan-exp, or custom-*. Model IDs (deepseek-v4-flash, deepseek-v3.2, hunyuan-2.0-instruct-20251111, glm-5, kimi-k2.6) go in the model field. MUST run two-step preflight before code — see body. Keywords: 页面, Web, 前端, React, Vue, Next, Nuxt, SPA, AI chat UI, generateText, streamText, createModel, hunyuan-exp, Token Credits, TokenHub, Hunyuan, DeepSeek, GLM, Kimi, MiniMax. NOT for Node.js backend (use ai-model-nodejs), Mini Program (use ai-model-wechat), or image generation (Node SDK only)."
+description: 'Use this skill when a browser/Web app (React, Vue, Angular, Next, Nuxt, static sites, SPAs, dashboards, AI chat UI) needs AI models via @cloudbase/js-sdk. Default routing for page/页面/Web/前端/frontend/网页/H5 AI — call directly from browser, do NOT propose a Node.js proxy. Covers generateText and streamText. Models via ai.createModel with groups cloudbase, hunyuan-exp, or custom-*. Model IDs (deepseek-v4-flash, deepseek-v3.2, hunyuan-2.0-instruct-20251111, glm-5, kimi-k2.6) go in the model field. MUST run two-step preflight before code — see body. Keywords: 页面, Web, 前端, React, Vue, Next, Nuxt, SPA, AI chat UI, generateText, streamText, createModel, hunyuan-exp, Token Credits, TokenHub, Hunyuan, DeepSeek, GLM, Kimi, MiniMax. NOT for Node.js backend (use ai-model-nodejs), Mini Program (use ai-model-wechat), or image generation (Node SDK only).'
 version: 2.19.0
 alwaysApply: false
 ---
@@ -39,23 +39,23 @@ Use this skill for **calling AI models in browser/Web applications** via `@cloud
 
 Read this before writing any `createModel(...)` line. The single most common mistake when agents generate code for this SDK is hallucinating the argument. There are **exactly three** legal shapes. Anything else is a bug.
 
-| ✅ Legal `ai.createModel(...)` argument | When to use it |
-|----------------------------------------|----------------|
-| `"cloudbase"` | **The main managed group for new projects** (TokenHub-backed, multi-vendor pool). Vendor + concrete model go into the **`model` field** of `generateText` / `streamText`, e.g. `{ model: "deepseek-v4-flash" }`. **No model is enabled by default — always check `DescribeAIModels` first and, if the target model is missing, enable it with `UpdateAIModel` before calling the SDK.** |
-| `"hunyuan-exp"` | Only if `DescribeAIModels` explicitly returns this legacy builtin group for the current env (mainly the Mini Program Growth Plan — see `ai-model-wechat`). |
-| `"custom-<your-name>"` | A user-defined GroupName you onboarded via `CreateAIModel`. **Must** start with `custom-` (e.g. `custom-kimi`, `custom-openai-compat`). |
+| ✅ Legal `ai.createModel(...)` argument | When to use it                                                                                                                                                                                                                                                                                                                                                                          |
+| --------------------------------------- | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `"cloudbase"`                           | **The main managed group for new projects** (TokenHub-backed, multi-vendor pool). Vendor + concrete model go into the **`model` field** of `generateText` / `streamText`, e.g. `{ model: "deepseek-v4-flash" }`. **No model is enabled by default — always check `DescribeAIModels` first and, if the target model is missing, enable it with `UpdateAIModel` before calling the SDK.** |
+| `"hunyuan-exp"`                         | Only if `DescribeAIModels` explicitly returns this legacy builtin group for the current env (mainly the Mini Program Growth Plan — see `ai-model-wechat`).                                                                                                                                                                                                                              |
+| `"custom-<your-name>"`                  | A user-defined GroupName you onboarded via `CreateAIModel`. **Must** start with `custom-` (e.g. `custom-kimi`, `custom-openai-compat`).                                                                                                                                                                                                                                                 |
 
 ### ❌ Do NOT write any of these — they are all wrong
 
 ```js
-ai.createModel("deepseek")                 // wrong — that's a vendor, not a GroupName
-ai.createModel("deepseek-v4-flash")        // wrong — that's a model name, goes in the `model` field
-ai.createModel("hunyuan")                  // wrong — vendor family, not a GroupName
-ai.createModel("hunyuan-2.0-instruct-20251111")  // wrong — model name
-ai.createModel("glm") / ai.createModel("kimi") / ai.createModel("minimax")  // wrong — vendor names
-ai.createModel("openai") / ai.createModel("moonshot")  // wrong — vendor names
-ai.createModel("custom")                   // wrong — placeholder; use your real custom-<name>
-ai.createModel(modelName)                  // wrong — do not reuse the variable that holds the model id
+ai.createModel('deepseek'); // wrong — that's a vendor, not a GroupName
+ai.createModel('deepseek-v4-flash'); // wrong — that's a model name, goes in the `model` field
+ai.createModel('hunyuan'); // wrong — vendor family, not a GroupName
+ai.createModel('hunyuan-2.0-instruct-20251111'); // wrong — model name
+ai.createModel('glm') / ai.createModel('kimi') / ai.createModel('minimax'); // wrong — vendor names
+ai.createModel('openai') / ai.createModel('moonshot'); // wrong — vendor names
+ai.createModel('custom'); // wrong — placeholder; use your real custom-<name>
+ai.createModel(modelName); // wrong — do not reuse the variable that holds the model id
 ```
 
 ### ✅ Correct pattern — GroupName vs Model are two different fields
@@ -98,11 +98,13 @@ callCloudApi(service="tcb", action="DescribeEnvPostpayPackage", params={ EnvId }
 ```
 
 **Pass conditions (all required):**
+
 - `envPostpayPackageInfoList` contains at least one entry
 - That entry's `postpayPackageId` starts with `pkg_tcb_tokencredits_`
 - That entry's `status` is NOT in `[3, 4]` (3 / 4 typically mean expired / disabled; trust the live response)
 
 - ❌ **Not satisfied** → **stop writing code** and surface this to the user (replacing `{envId}` with the real id):
+
   > The current environment has no active Token Credits resource pack. Please purchase one before calling any AI API:
   > https://buy.cloud.tencent.com/lowcode?buyType=resPack&envId={envId}&resourceType=token
   >
@@ -232,11 +234,11 @@ npm install @cloudbase/js-sdk
 > Do **not** fall back to `signInAnonymously()` for AI features — anonymous users cannot call AI models. Only use anonymous login for non-AI read-only demos where the user explicitly requests it and accepts the trade-off.
 
 ```js
-import cloudbase from "@cloudbase/js-sdk";
+import cloudbase from '@cloudbase/js-sdk';
 
 const app = cloudbase.init({
-  env: "<YOUR_ENV_ID>",
-  accessKey: "<YOUR_PUBLISHABLE_KEY>"  // Get it from the CloudBase console
+  env: '<YOUR_ENV_ID>',
+  accessKey: '<YOUR_PUBLISHABLE_KEY>', // Get it from the CloudBase console
 });
 
 const auth = app.auth();
@@ -248,7 +250,7 @@ const auth = app.auth();
 const { data: sessionData } = await auth.getSession();
 if (!sessionData?.session || sessionData.session.user?.is_anonymous) {
   // No real login or anonymous session — route to sign-in page
-  window.location.href = "/login";
+  window.location.href = '/login';
   return;
 }
 
@@ -269,17 +271,17 @@ const ai = app.ai();
 > **Prerequisite:** the two-step preflight (eligibility + group readiness) has passed, and the target model has been confirmed present in `DescribeAIModels({ GroupName: "cloudbase" }).Models[]` — if it was not, it should already have been enabled via `UpdateAIModel`. The example below uses `deepseek-v4-flash` only for illustration; substitute the actual model the user asked for.
 
 ```js
-const model = ai.createModel("cloudbase");
+const model = ai.createModel('cloudbase');
 
 const result = await model.generateText({
-  model: "deepseek-v4-flash",  // must already be enabled in this env (DescribeAIModels → UpdateAIModel)
-  messages: [{ role: "user", content: "Give me a one-paragraph intro to Li Bai." }],
+  model: 'deepseek-v4-flash', // must already be enabled in this env (DescribeAIModels → UpdateAIModel)
+  messages: [{ role: 'user', content: 'Give me a one-paragraph intro to Li Bai.' }],
 });
 
-console.log(result.text);           // generated text string
-console.log(result.usage);          // { prompt_tokens, completion_tokens, total_tokens }
-console.log(result.messages);       // full message history
-console.log(result.rawResponses);   // raw model responses
+console.log(result.text); // generated text string
+console.log(result.usage); // { prompt_tokens, completion_tokens, total_tokens }
+console.log(result.messages); // full message history
+console.log(result.rawResponses); // raw model responses
 ```
 
 ---
@@ -289,26 +291,26 @@ console.log(result.rawResponses);   // raw model responses
 > **Prerequisite:** the two-step preflight has passed.
 
 ```js
-const model = ai.createModel("cloudbase");
+const model = ai.createModel('cloudbase');
 
 const res = await model.streamText({
-  model: "deepseek-v4-flash",
-  messages: [{ role: "user", content: "Give me a one-paragraph intro to Li Bai." }],
+  model: 'deepseek-v4-flash',
+  messages: [{ role: 'user', content: 'Give me a one-paragraph intro to Li Bai.' }],
 });
 
 // Option 1: iterate the text stream (recommended)
 for await (let text of res.textStream) {
-  console.log(text);  // incremental text chunks
+  console.log(text); // incremental text chunks
 }
 
 // Option 2: iterate the data stream for full response chunks
 for await (let data of res.dataStream) {
-  console.log(data);  // full response chunk with metadata
+  console.log(data); // full response chunk with metadata
 }
 
 // Option 3: access final results
-const messages = await res.messages;  // full message history
-const usage = await res.usage;        // token usage
+const messages = await res.messages; // full message history
+const usage = await res.usage; // token usage
 ```
 
 ---
@@ -316,17 +318,17 @@ const usage = await res.usage;        // token usage
 ## Error Handling Pattern
 
 ```js
-const model = ai.createModel("cloudbase");
+const model = ai.createModel('cloudbase');
 
 try {
   const result = await model.generateText({
-    model: "deepseek-v4-flash",
-    messages: [{ role: "user", content: "Generate a concise onboarding checklist." }],
+    model: 'deepseek-v4-flash',
+    messages: [{ role: 'user', content: 'Generate a concise onboarding checklist.' }],
   });
 
   console.log(result.text);
 } catch (error) {
-  console.error("Failed to call CloudBase AI from Web", error);
+  console.error('Failed to call CloudBase AI from Web', error);
 }
 ```
 
@@ -336,31 +338,31 @@ try {
 
 ```ts
 interface BaseChatModelInput {
-  model: string;                        // required: model name
-  messages: Array<ChatModelMessage>;    // required: message array
-  temperature?: number;                 // optional: sampling temperature
-  topP?: number;                        // optional: nucleus sampling
+  model: string; // required: model name
+  messages: Array<ChatModelMessage>; // required: message array
+  temperature?: number; // optional: sampling temperature
+  topP?: number; // optional: nucleus sampling
 }
 
 type ChatModelMessage =
-  | { role: "user"; content: string }
-  | { role: "system"; content: string }
-  | { role: "assistant"; content: string };
+  | { role: 'user'; content: string }
+  | { role: 'system'; content: string }
+  | { role: 'assistant'; content: string };
 
 interface GenerateTextResult {
-  text: string;                         // generated text
-  messages: Array<ChatModelMessage>;    // full message history
-  usage: Usage;                         // token usage
-  rawResponses: Array<unknown>;         // raw model responses
-  error?: unknown;                      // error if any
+  text: string; // generated text
+  messages: Array<ChatModelMessage>; // full message history
+  usage: Usage; // token usage
+  rawResponses: Array<unknown>; // raw model responses
+  error?: unknown; // error if any
 }
 
 interface StreamTextResult {
-  textStream: AsyncIterable<string>;    // incremental text stream
+  textStream: AsyncIterable<string>; // incremental text stream
   dataStream: AsyncIterable<DataChunk>; // full data stream
-  messages: Promise<ChatModelMessage[]>;// final message history
-  usage: Promise<Usage>;                // final token usage
-  error?: unknown;                      // error if any
+  messages: Promise<ChatModelMessage[]>; // final message history
+  usage: Promise<Usage>; // final token usage
+  error?: unknown; // error if any
 }
 
 interface Usage {

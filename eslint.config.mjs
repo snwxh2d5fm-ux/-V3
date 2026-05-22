@@ -5,13 +5,7 @@ export default [
   js.configs.recommended,
   prettier,
   {
-    ignores: [
-      'node_modules/',
-      'cloudfunctions/*/node_modules/',
-      'miniprogram_npm/',
-      'dist/',
-      'admin-dashboard/',
-    ],
+    ignores: ['node_modules/', 'cloudfunctions/*/node_modules/', 'miniprogram_npm/', 'dist/', 'admin-dashboard/'],
   },
   {
     languageOptions: {

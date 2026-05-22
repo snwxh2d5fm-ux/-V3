@@ -5,36 +5,38 @@
  * 缓存: 生成后存到 vault 目录，下次直接打开，新照片上传后自动失效重新生成
  */
 
-var STORAGE_KEY = '__slot_pdfs__'; // { slotKey: { path, docCount } }
+const STORAGE_KEY = '__slot_pdfs__'; // { slotKey: { path, docCount } }
 
 /** 获取已保存的 PDF 路径（文档数不变时才有效） */
 function getSavedPDF(slotKey, currentDocCount) {
   try {
-    var map = wx.getStorageSync(STORAGE_KEY) || {};
-    var entry = map[slotKey];
+    const map = wx.getStorageSync(STORAGE_KEY) || {};
+    const entry = map[slotKey];
     if (!entry || !entry.path) return null;
     // 文档数变了 → 缓存失效，需重新生成
     if (currentDocCount !== undefined && entry.docCount !== currentDocCount) return null;
     return entry.path;
-  } catch(e) { return null; }
+  } catch (e) {
+    return null;
+  }
 }
 
 /** 保存 PDF 路径（含文档计数） */
 function savePDF(slotKey, filePath, docCount) {
   try {
-    var map = wx.getStorageSync(STORAGE_KEY) || {};
+    const map = wx.getStorageSync(STORAGE_KEY) || {};
     map[slotKey] = { path: filePath, docCount: docCount };
     wx.setStorageSync(STORAGE_KEY, map);
-  } catch(e) {}
+  } catch (e) {}
 }
 
 /** 清除卡槽 PDF 缓存（新增照片后调用） */
 function clearSlotPDF(slotKey) {
   try {
-    var map = wx.getStorageSync(STORAGE_KEY) || {};
+    const map = wx.getStorageSync(STORAGE_KEY) || {};
     delete map[slotKey];
     wx.setStorageSync(STORAGE_KEY, map);
-  } catch(e) {}
+  } catch (e) {}
 }
 
 /**
@@ -44,16 +46,16 @@ function clearSlotPDF(slotKey) {
  * @param {Array}  uploadedDocs
  */
 function generateSlotPDF(slotKey, slotName, uploadedDocs, _retryCount) {
-  var retryCount = _retryCount || 0;
-  var docCount = (uploadedDocs || []).length;
+  const retryCount = _retryCount || 0;
+  const docCount = (uploadedDocs || []).length;
   // 检查缓存（文档数不变时直接打开）
-  var cached = getSavedPDF(slotKey, docCount);
+  const cached = getSavedPDF(slotKey, docCount);
   if (cached) {
     wx.openDocument({
       filePath: cached,
       fileType: 'pdf',
       showMenu: true,
-      fail: function() {
+      fail: function () {
         if (retryCount >= 3) {
           wx.showToast({ title: 'PDF 打开失败，请重试', icon: 'none' });
           clearSlotPDF(slotKey);
@@ -61,7 +63,7 @@ function generateSlotPDF(slotKey, slotName, uploadedDocs, _retryCount) {
         }
         clearSlotPDF(slotKey);
         generateSlotPDF(slotKey, slotName, uploadedDocs, retryCount + 1);
-      }
+      },
     });
     return;
   }
@@ -71,8 +73,8 @@ function generateSlotPDF(slotKey, slotName, uploadedDocs, _retryCount) {
     return;
   }
 
-  var paths = [];
-  uploadedDocs.forEach(function(d) {
+  const paths = [];
+  uploadedDocs.forEach(function (d) {
     if (d.filePath) paths.push(d.filePath);
   });
   if (!paths.length) {
@@ -82,85 +84,110 @@ function generateSlotPDF(slotKey, slotName, uploadedDocs, _retryCount) {
 
   wx.showLoading({ title: '合成PDF中...' });
 
-  var uploadPromises = paths.map(function(p, idx) {
-    return new Promise(function(resolve, reject) {
+  const uploadPromises = paths.map(function (p, idx) {
+    return new Promise(function (resolve, reject) {
       // 验证文件可读
       try {
-        var fs = wx.getFileSystemManager();
+        const fs = wx.getFileSystemManager();
         fs.accessSync(p);
-      } catch(e) {
+      } catch (e) {
         reject(new Error('文件不可读: ' + p));
         return;
       }
-      var cloudPath = '_pdf_temp/' + Date.now() + '_' + idx + '_' + Math.random().toString(36).slice(2, 5) + '.jpg';
+      const cloudPath = '_pdf_temp/' + Date.now() + '_' + idx + '_' + Math.random().toString(36).slice(2, 5) + '.jpg';
       wx.cloud.uploadFile({
-        cloudPath: cloudPath, filePath: p,
+        cloudPath: cloudPath,
+        filePath: p,
         config: { env: 'cloudbase-d1g17tgt7cc199a60' },
-        success: function(r) { resolve(r.fileID); },
-        fail: function(err) {
+        success: function (r) {
+          resolve(r.fileID);
+        },
+        fail: function (err) {
           // 兜底：压缩后重试
           wx.compressImage({
-            src: p, quality: 60,
-            success: function(cRes) {
+            src: p,
+            quality: 60,
+            success: function (cRes) {
               wx.cloud.uploadFile({
-                cloudPath: cloudPath, filePath: cRes.tempFilePath,
-                success: function(r2) { resolve(r2.fileID); },
-                fail: function(e2) { reject(e2); }
+                cloudPath: cloudPath,
+                filePath: cRes.tempFilePath,
+                success: function (r2) {
+                  resolve(r2.fileID);
+                },
+                fail: function (e2) {
+                  reject(e2);
+                },
               });
             },
-            fail: function() { reject(err); }
+            fail: function () {
+              reject(err);
+            },
           });
-        }
+        },
       });
     });
   });
 
-  Promise.all(uploadPromises).then(function(fileIDs) {
-    return wx.cloud.callFunction({
-      name: 'generate-pdf',
-      data: { action: 'create', fileIDs: fileIDs, title: slotName || '证件卡槽' }
-    });
-  }).then(function(res) {
-    var result = res.result || {};
-    if (result.code === 0 && result.data && result.data.pdfFileID) {
-      return new Promise(function(resolve, reject) {
-        wx.cloud.downloadFile({
-          fileID: result.data.pdfFileID,
-          success: function(dfRes) { resolve(dfRes.tempFilePath); },
-          fail: reject
+  Promise.all(uploadPromises)
+    .then(function (fileIDs) {
+      return wx.cloud.callFunction({
+        name: 'generate-pdf',
+        data: { action: 'create', fileIDs: fileIDs, title: slotName || '证件卡槽' },
+      });
+    })
+    .then(function (res) {
+      const result = res.result || {};
+      if (result.code === 0 && result.data && result.data.pdfFileID) {
+        return new Promise(function (resolve, reject) {
+          wx.cloud.downloadFile({
+            fileID: result.data.pdfFileID,
+            success: function (dfRes) {
+              resolve(dfRes.tempFilePath);
+            },
+            fail: reject,
+          });
         });
-      });
-    }
-    wx.hideLoading();
-    wx.showToast({ title: (res.result || {}).error || '生成失败', icon: 'none' });
-    return null;
-  }).then(function(tempPath) {
-    if (!tempPath) return;
-    // 持久化到 vault 目录
-    var vaultBase = wx.env.USER_DATA_PATH + '/vault/';
-    var fs = wx.getFileSystemManager();
-    try { fs.accessSync(vaultBase); } catch(_) { fs.mkdirSync(vaultBase, true); }
-    var persistPath = vaultBase + 'pdf_' + slotKey + '_' + Date.now() + '.pdf';
-    try {
-      fs.copyFileSync(tempPath, persistPath);
-      savePDF(slotKey, persistPath, docCount);
+      }
       wx.hideLoading();
-      wx.openDocument({
-        filePath: persistPath,
-        fileType: 'pdf',
-        showMenu: true,
-        success: function() { wx.showToast({ title: 'PDF已保存到卡槽', icon: 'success' }); },
-        fail: function() { wx.showToast({ title: '请用其他应用打开', icon: 'none' }); }
-      });
-    } catch(e) {
+      wx.showToast({ title: (res.result || {}).error || '生成失败', icon: 'none' });
+      return null;
+    })
+    .then(function (tempPath) {
+      if (!tempPath) return;
+      // 持久化到 vault 目录
+      const vaultBase = wx.env.USER_DATA_PATH + '/vault/';
+      const fs = wx.getFileSystemManager();
+      try {
+        fs.accessSync(vaultBase);
+      } catch (_) {
+        fs.mkdirSync(vaultBase, true);
+      }
+      const persistPath = vaultBase + 'pdf_' + slotKey + '_' + Date.now() + '.pdf';
+      try {
+        fs.copyFileSync(tempPath, persistPath);
+        savePDF(slotKey, persistPath, docCount);
+        wx.hideLoading();
+        wx.openDocument({
+          filePath: persistPath,
+          fileType: 'pdf',
+          showMenu: true,
+          success: function () {
+            wx.showToast({ title: 'PDF已保存到卡槽', icon: 'success' });
+          },
+          fail: function () {
+            wx.showToast({ title: '请用其他应用打开', icon: 'none' });
+          },
+        });
+      } catch (e) {
+        wx.hideLoading();
+        wx.showToast({ title: '保存失败', icon: 'none' });
+      }
+    })
+    .catch(function (err) {
       wx.hideLoading();
-      wx.showToast({ title: '保存失败', icon: 'none' });
-    }
-  }).catch(function(err) {
-    wx.hideLoading();
-    console.error('[PDF] 合成失败:', err);
-    wx.showToast({ title: '网络异常，请重试', icon: 'none' });
-  });
+      console.error('[PDF] 合成失败:', err);
+      wx.showToast({ title: '网络异常，请重试', icon: 'none' });
+    });
 }
 
 module.exports = { generateSlotPDF, getSavedPDF, clearSlotPDF };

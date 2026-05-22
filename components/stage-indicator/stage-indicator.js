@@ -6,6 +6,6 @@
 Component({
   properties: {
     stages: { type: Array, value: [] },
-    progress: { type: Number, value: 0 }
-  }
-})
+    progress: { type: Number, value: 0 },
+  },
+});

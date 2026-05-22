@@ -85,10 +85,10 @@ Typical tasks:
 ## SDK initialization
 
 ```javascript
-import cloudbase from "@cloudbase/js-sdk";
+import cloudbase from '@cloudbase/js-sdk';
 
 const app = cloudbase.init({
-  env: "your-env-id"
+  env: 'your-env-id',
 });
 ```
 
@@ -109,8 +109,8 @@ Initialization rules:
 
 ```javascript
 const result = await app.uploadFile({
-  cloudPath: "uploads/avatar.jpg",
-  filePath: selectedFile
+  cloudPath: 'uploads/avatar.jpg',
+  filePath: selectedFile,
 });
 ```
 
@@ -128,12 +128,12 @@ const result = await app.uploadFile({
 
 ```javascript
 await app.uploadFile({
-  cloudPath: "uploads/avatar.jpg",
+  cloudPath: 'uploads/avatar.jpg',
   filePath: selectedFile,
   onUploadProgress: ({ loaded, total }) => {
     const percent = Math.round((loaded * 100) / total);
     console.log(percent);
-  }
+  },
 });
 ```
 
@@ -143,10 +143,10 @@ await app.uploadFile({
 const result = await app.getTempFileURL({
   fileList: [
     {
-      fileID: "cloud://env-id/uploads/avatar.jpg",
-      maxAge: 3600
-    }
-  ]
+      fileID: 'cloud://env-id/uploads/avatar.jpg',
+      maxAge: 3600,
+    },
+  ],
 });
 ```
 
@@ -156,17 +156,17 @@ Typical upload + preview flow:
 
 ```javascript
 const uploadResult = await app.uploadFile({
-  cloudPath: "uploads/avatar.jpg",
-  filePath: selectedFile
+  cloudPath: 'uploads/avatar.jpg',
+  filePath: selectedFile,
 });
 
 const tempUrlResult = await app.getTempFileURL({
-  fileList: [{ fileID: uploadResult.fileID, maxAge: 3600 }]
+  fileList: [{ fileID: uploadResult.fileID, maxAge: 3600 }],
 });
 
 const previewUrl = tempUrlResult.fileList?.[0]?.tempFileURL || tempUrlResult.fileList?.[0]?.download_url;
 if (!previewUrl) {
-  throw new Error("Failed to resolve temporary file URL after upload");
+  throw new Error('Failed to resolve temporary file URL after upload');
 }
 ```
 
@@ -174,7 +174,7 @@ if (!previewUrl) {
 
 ```javascript
 await app.deleteFile({
-  fileList: ["cloud://env-id/uploads/old-avatar.jpg"]
+  fileList: ['cloud://env-id/uploads/old-avatar.jpg'],
 });
 ```
 
@@ -184,7 +184,7 @@ Always inspect per-file results before assuming deletion succeeded.
 
 ```javascript
 await app.downloadFile({
-  fileID: "cloud://env-id/uploads/report.pdf"
+  fileID: 'cloud://env-id/uploads/report.pdf',
 });
 ```
 
@@ -228,11 +228,11 @@ Typical examples:
 ```javascript
 try {
   const result = await app.uploadFile({
-    cloudPath: "uploads/file.jpg",
-    filePath: selectedFile
+    cloudPath: 'uploads/file.jpg',
+    filePath: selectedFile,
   });
   console.log(result.fileID);
 } catch (error) {
-  console.error("Storage operation failed:", error);
+  console.error('Storage operation failed:', error);
 }
 ```

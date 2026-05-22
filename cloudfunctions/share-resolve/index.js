@@ -1,17 +1,17 @@
-var cloud = require('wx-server-sdk');
+const cloud = require('wx-server-sdk');
 cloud.init({ env: cloud.DYNAMIC_CURRENT_ENV });
-var db = cloud.database();
-var _ = db.command;
+const db = cloud.database();
+const _ = db.command;
 
-var LANDING_PAGE_MAP = {
-  'guide_collection': '/pages/guidebooks/guidebooks-detail',
-  'doc_template': '/pages/doc-templates/detail',
-  'policy_update': '/pages/policy/detail'
+const LANDING_PAGE_MAP = {
+  guide_collection: '/pages/guidebooks/guidebooks-detail',
+  doc_template: '/pages/doc-templates/detail',
+  policy_update: '/pages/policy/detail',
 };
 
 exports.main = async (event) => {
   try {
-    var { action } = event;
+    const { action } = event;
 
     switch (action) {
       case 'resolve':
@@ -28,40 +28,46 @@ exports.main = async (event) => {
 };
 
 async function handleResolve(event) {
-  var { shareId } = event;
+  const { shareId } = event;
 
   if (!shareId) {
     return { code: 400, msg: '缺少分享标识' };
   }
 
   // Query active share record
-  var result = await db.collection('share_records').where({
-    shareId: shareId,
-    status: 'active'
-  }).get();
+  const result = await db
+    .collection('share_records')
+    .where({
+      shareId: shareId,
+      status: 'active',
+    })
+    .get();
 
   if (result.data.length === 0) {
     return { code: 404, msg: '内容已失效或不存在' };
   }
 
-  var record = result.data[0];
+  const record = result.data[0];
 
   // Check if expired
-  var now = new Date();
-  var expiresAt = new Date(record.expiresAt);
+  const now = new Date();
+  const expiresAt = new Date(record.expiresAt);
   if (now > expiresAt) {
-    await db.collection('share_records').where({
-      shareId: shareId
-    }).update({
-      data: {
-        status: 'expired'
-      }
-    });
+    await db
+      .collection('share_records')
+      .where({
+        shareId: shareId,
+      })
+      .update({
+        data: {
+          status: 'expired',
+        },
+      });
     return { code: 404, msg: '内容已过期' };
   }
 
   // Compute landing page
-  var landingPage = LANDING_PAGE_MAP[record.contentType] || '/pages/index/index';
+  const landingPage = LANDING_PAGE_MAP[record.contentType] || '/pages/index/index';
 
   // Return content info only — no sharer personal info
   return {
@@ -70,42 +76,48 @@ async function handleResolve(event) {
       contentType: record.contentType,
       contentId: record.contentId,
       contentDigest: record.contentDigest,
-      landingPage: landingPage
-    }
+      landingPage: landingPage,
+    },
   };
 }
 
 async function handleRevoke(event) {
-  var { shareId } = event;
+  const { shareId } = event;
 
   if (!shareId) {
     return { code: 400, msg: '缺少分享标识' };
   }
 
-  var wxContext = cloud.getWXContext();
-  var openid = wxContext.OPENID;
+  const wxContext = cloud.getWXContext();
+  const openid = wxContext.OPENID;
 
   // Query own active share record
-  var result = await db.collection('share_records').where({
-    shareId: shareId,
-    userId: openid,
-    status: 'active'
-  }).get();
+  const result = await db
+    .collection('share_records')
+    .where({
+      shareId: shareId,
+      userId: openid,
+      status: 'active',
+    })
+    .get();
 
   if (result.data.length === 0) {
     return { code: 404, msg: '分享记录不存在或无权操作' };
   }
 
   // Update status to revoked
-  await db.collection('share_records').where({
-    shareId: shareId,
-    userId: openid
-  }).update({
-    data: {
-      status: 'revoked',
-      revokedAt: db.serverDate()
-    }
-  });
+  await db
+    .collection('share_records')
+    .where({
+      shareId: shareId,
+      userId: openid,
+    })
+    .update({
+      data: {
+        status: 'revoked',
+        revokedAt: db.serverDate(),
+      },
+    });
 
   // Write audit log
   await db.collection('audit_logs').add({
@@ -113,14 +125,14 @@ async function handleRevoke(event) {
       _openid: openid,
       action: 'share_content_revoked',
       detail: {
-        shareId: shareId
+        shareId: shareId,
       },
-      createdAt: db.serverDate()
-    }
+      createdAt: db.serverDate(),
+    },
   });
 
   return {
     code: 0,
-    msg: '已撤回'
+    msg: '已撤回',
   };
 }

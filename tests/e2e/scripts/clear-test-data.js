@@ -36,7 +36,7 @@ async function main() {
       const info = await mp.evaluate(() => {
         return {
           storageSize: wx.getStorageInfoSync().keys.length,
-          currentPage: getCurrentPages()[0]?.route || 'unknown'
+          currentPage: getCurrentPages()[0]?.route || 'unknown',
         };
       });
       console.log(`   剩余key数: ${info.storageSize}`);
@@ -50,7 +50,7 @@ async function main() {
   // 4. 清空测试fixtures
   const fixturesDir = path.resolve(__dirname, 'fixtures');
   const files = ['case-processes.json', 'processes.json', 'case-vault-meta.json', 'documents.json'];
-  files.forEach(f => {
+  files.forEach((f) => {
     const p = path.join(fixturesDir, f);
     if (fs.existsSync(p)) {
       fs.writeFileSync(p, '{}');
@@ -61,4 +61,7 @@ async function main() {
   console.log('\n✅ 清理完成 — 可进行真机测试');
 }
 
-main().catch(e => { console.error(e); process.exit(1); });
+main().catch((e) => {
+  console.error(e);
+  process.exit(1);
+});

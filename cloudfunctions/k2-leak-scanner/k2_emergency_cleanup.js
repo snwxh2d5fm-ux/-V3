@@ -28,31 +28,33 @@ async function emergencyCleanK2(dryRun) {
   // 作为后备方案
   const k2Pattern = db.RegExp({
     regexp: 'visual_features|validation_rules|vault_mode|privacy_level|圆角边框|全息防伪|光变油墨',
-    options: 'i'
+    options: 'i',
   });
 
   try {
     // 方法1: 按source字段匹配
-    var res = await db.collection(collection)
+    const res = await db
+      .collection(collection)
       .where(sourceMatched)
       .field({ content: true, source_title: true, content_hash: true })
       .get();
 
-    var matchedBySource = res.data;
+    const matchedBySource = res.data;
 
     // 方法2: 按内容K2特征匹配（后备，以防source字段未设置）
-    var res2 = await db.collection(collection)
+    const res2 = await db
+      .collection(collection)
       .where({ content: k2Pattern })
       .field({ content: true, source_title: true, content_hash: true })
       .get();
 
     // 合并去重
-    var allMatched = matchedBySource.slice();
-    var seenHashes = {};
-    for (var i = 0; i < matchedBySource.length; i++) {
+    const allMatched = matchedBySource.slice();
+    const seenHashes = {};
+    for (let i = 0; i < matchedBySource.length; i++) {
       seenHashes[matchedBySource[i].content_hash] = true;
     }
-    for (var j = 0; j < res2.data.length; j++) {
+    for (let j = 0; j < res2.data.length; j++) {
       if (!seenHashes[res2.data[j].content_hash]) {
         allMatched.push(res2.data[j]);
         seenHashes[res2.data[j].content_hash] = true;
@@ -67,7 +69,7 @@ async function emergencyCleanK2(dryRun) {
           matched_count: allMatched.length,
           matched_by_source: matchedBySource.length,
           matched_by_pattern: res2.data.length,
-          records: allMatched.map(function(r) {
+          records: allMatched.map(function (r) {
             return {
               content_hash: r.content_hash,
               source_title: r.source_title,
@@ -79,21 +81,17 @@ async function emergencyCleanK2(dryRun) {
     }
 
     // 执行删除
-    var deleteSource = 0;
-    var deletePattern = 0;
+    let deleteSource = 0;
+    let deletePattern = 0;
 
-    for (var k = 0; k < matchedBySource.length; k++) {
-      await db.collection(collection)
-        .where({ content_hash: matchedBySource[k].content_hash })
-        .remove();
+    for (let k = 0; k < matchedBySource.length; k++) {
+      await db.collection(collection).where({ content_hash: matchedBySource[k].content_hash }).remove();
       deleteSource++;
     }
 
-    for (var l = 0; l < res2.data.length; l++) {
+    for (let l = 0; l < res2.data.length; l++) {
       if (!seenHashes[res2.data[l].content_hash]) {
-        await db.collection(collection)
-          .where({ content_hash: res2.data[l].content_hash })
-          .remove();
+        await db.collection(collection).where({ content_hash: res2.data[l].content_hash }).remove();
         deletePattern++;
       }
     }
@@ -108,7 +106,6 @@ async function emergencyCleanK2(dryRun) {
         remaining_total: (await db.collection(collection).count()).total,
       },
     };
-
   } catch (err) {
     return { code: 500, message: 'K2清理失败: ' + (err.message || String(err)) };
   }

@@ -13,7 +13,10 @@ page {
   justify-content: center;
   padding: 200rpx 0;
 }
-.loading-text { font-size: 28rpx; color: var(--gray-400); }
+.loading-text {
+  font-size: 28rpx;
+  color: var(--gray-400);
+}
 
 /* 成功页 */
 .success-card {
@@ -24,9 +27,21 @@ page {
   text-align: center;
 }
 
-.success-icon { font-size: 80rpx; margin-bottom: 24rpx; }
-.success-title { font-size: 36rpx; font-weight: 700; color: var(--color-success); margin-bottom: 12rpx; }
-.success-msg { font-size: 28rpx; color: #666; margin-bottom: 48rpx; }
+.success-icon {
+  font-size: 80rpx;
+  margin-bottom: 24rpx;
+}
+.success-title {
+  font-size: 36rpx;
+  font-weight: 700;
+  color: var(--color-success);
+  margin-bottom: 12rpx;
+}
+.success-msg {
+  font-size: 28rpx;
+  color: #666;
+  margin-bottom: 48rpx;
+}
 
 /* 订单摘要 */
 .order-summary {
@@ -34,12 +49,28 @@ page {
   padding: 28rpx 32rpx;
   background: var(--white);
   border-radius: 16rpx;
-  box-shadow: 0 2rpx 12rpx rgba(0,0,0,0.04);
+  box-shadow: 0 2rpx 12rpx rgba(0, 0, 0, 0.04);
 }
 
-.summary-label { font-size: 24rpx; color: var(--gray-400); display: block; margin-bottom: 8rpx; }
-.summary-name { font-size: 30rpx; font-weight: 600; color: #333; display: block; }
-.summary-amount { font-size: 40rpx; font-weight: 800; color: var(--color-error); display: block; margin-top: 8rpx; }
+.summary-label {
+  font-size: 24rpx;
+  color: var(--gray-400);
+  display: block;
+  margin-bottom: 8rpx;
+}
+.summary-name {
+  font-size: 30rpx;
+  font-weight: 600;
+  color: #333;
+  display: block;
+}
+.summary-amount {
+  font-size: 40rpx;
+  font-weight: 800;
+  color: var(--color-error);
+  display: block;
+  margin-top: 8rpx;
+}
 
 /* 类型切换 */
 .type-switch {
@@ -63,7 +94,7 @@ page {
   background: var(--white);
   color: var(--color-primary);
   font-weight: 600;
-  box-shadow: 0 2rpx 8rpx rgba(0,0,0,0.08);
+  box-shadow: 0 2rpx 8rpx rgba(0, 0, 0, 0.08);
 }
 
 /* 表单 */
@@ -114,14 +145,28 @@ page {
 .privacy-notice {
   margin: 24rpx 32rpx;
   padding: 28rpx;
-  background: linear-gradient(135deg, var(--color-success), #10B981);
+  background: linear-gradient(135deg, var(--color-success), #10b981);
   border-radius: 16rpx;
   color: var(--white);
 }
 
-.privacy-icon { font-size: 36rpx; display: block; margin-bottom: 8rpx; }
-.privacy-title { font-size: 28rpx; font-weight: 700; display: block; margin-bottom: 8rpx; }
-.privacy-text { font-size: 24rpx; opacity: 0.9; line-height: 1.6; display: block; }
+.privacy-icon {
+  font-size: 36rpx;
+  display: block;
+  margin-bottom: 8rpx;
+}
+.privacy-title {
+  font-size: 28rpx;
+  font-weight: 700;
+  display: block;
+  margin-bottom: 8rpx;
+}
+.privacy-text {
+  font-size: 24rpx;
+  opacity: 0.9;
+  line-height: 1.6;
+  display: block;
+}
 
 /* 提交按钮 */
 .submit-btn {
@@ -138,7 +183,9 @@ page {
   text-align: center;
 }
 
-.submit-btn::after { border: none; }
+.submit-btn::after {
+  border: none;
+}
 
 .btn-primary {
   width: calc(100% - 64rpx);
@@ -153,7 +200,9 @@ page {
   font-weight: 600;
 }
 
-.btn-primary::after { border: none; }
+.btn-primary::after {
+  border: none;
+}
 
 .btn-ghost {
   width: calc(100% - 64rpx);
@@ -168,6 +217,10 @@ page {
   text-align: center;
 }
 
-.btn-ghost::after { border: none; }
+.btn-ghost::after {
+  border: none;
+}
 
-.safe-bottom { height: 40rpx; }
+.safe-bottom {
+  height: 40rpx;
+}

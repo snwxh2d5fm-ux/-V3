@@ -23,15 +23,15 @@
 
 ## verify.sh 检查项速查
 
-| ID | 检查项 | 违规后果 |
-|----|--------|----------|
-| A1 | startsWith 替代 includes 做前缀匹配 | P1 |
-| A2 | 无双重 wx:for 同元素 | P1 |
-| A3 | guidebook-data.js 无敏感词 | P0 |
-| A4 | prompts.js 含 K2_SAFETY_RULES | P0 |
-| A6 | app.json 页面注册与文件一致 | P1 |
-| A8 | 核心代码无硬编码 PII | P0 |
-| A9 | PATH_TAGS 覆盖 ≥12 条路径 | P0 |
+| ID  | 检查项                              | 违规后果 |
+| --- | ----------------------------------- | -------- |
+| A1  | startsWith 替代 includes 做前缀匹配 | P1       |
+| A2  | 无双重 wx:for 同元素                | P1       |
+| A3  | guidebook-data.js 无敏感词          | P0       |
+| A4  | prompts.js 含 K2_SAFETY_RULES       | P0       |
+| A6  | app.json 页面注册与文件一致         | P1       |
+| A8  | 核心代码无硬编码 PII                | P0       |
+| A9  | PATH_TAGS 覆盖 ≥12 条路径           | P0       |
 
 ## Gate 4 麒麟 Code Review 重点
 

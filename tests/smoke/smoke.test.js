@@ -12,8 +12,12 @@
 const mockStorage = {};
 global.wx = {
   getStorageSync: jest.fn((key) => mockStorage[key] || null),
-  setStorageSync: jest.fn((key, value) => { mockStorage[key] = value; }),
-  removeStorageSync: jest.fn((key) => { delete mockStorage[key]; }),
+  setStorageSync: jest.fn((key, value) => {
+    mockStorage[key] = value;
+  }),
+  removeStorageSync: jest.fn((key) => {
+    delete mockStorage[key];
+  }),
   getStorageInfoSync: jest.fn(() => ({ currentSize: 128, keys: Object.keys(mockStorage) })),
   showToast: jest.fn(),
   showModal: jest.fn(),
@@ -26,7 +30,7 @@ global.Page = jest.fn();
 global.App = jest.fn();
 
 beforeEach(() => {
-  Object.keys(mockStorage).forEach(k => delete mockStorage[k]);
+  Object.keys(mockStorage).forEach((k) => delete mockStorage[k]);
   jest.clearAllMocks();
 });
 
@@ -34,7 +38,6 @@ beforeEach(() => {
 // 1. 数据文件完整性检查
 // ============================================================
 describe('数据层 — 文件完整性与结构', () => {
-
   test('constants.js 加载成功且导出路径常量', () => {
     const c = require('../../data/constants.js');
     expect(c).toBeDefined();
@@ -87,7 +90,7 @@ describe('合规检查 — 敏感词扫描', () => {
   function scanFile(filePath) {
     const content = fs.readFileSync(filePath, 'utf-8');
     const found = [];
-    FORBIDDEN.forEach(word => {
+    FORBIDDEN.forEach((word) => {
       if (content.includes(word)) found.push(word);
     });
     return found;
@@ -114,8 +117,8 @@ describe('合规检查 — 敏感词扫描', () => {
     const dataDir = path.join(projectRoot, 'data');
     if (!fs.existsSync(dataDir)) return; // skip if no data dir
     const files = findFiles(dataDir, /\.js$/);
-    let allViolations = [];
-    files.forEach(f => {
+    const allViolations = [];
+    files.forEach((f) => {
       const violations = scanFile(f);
       if (violations.length > 0) {
         allViolations.push({ file: path.relative(projectRoot, f), violations });
@@ -128,8 +131,8 @@ describe('合规检查 — 敏感词扫描', () => {
     const utilsDir = path.join(projectRoot, 'utils');
     if (!fs.existsSync(utilsDir)) return;
     const files = findFiles(utilsDir, /\.js$/);
-    let allViolations = [];
-    files.forEach(f => {
+    const allViolations = [];
+    files.forEach((f) => {
       const violations = scanFile(f);
       if (violations.length > 0) {
         allViolations.push({ file: path.relative(projectRoot, f), violations });
@@ -143,7 +146,6 @@ describe('合规检查 — 敏感词扫描', () => {
 // 3. 关键数据文件内容验证
 // ============================================================
 describe('数据层 — 内容验证', () => {
-
   test('constants.js 路径列表非空', () => {
     const c = require('../../data/constants.js');
     // PATHS or paths should exist
@@ -169,7 +171,7 @@ describe('数据层 — 内容验证', () => {
       const content = fs.readFileSync(filePath, 'utf-8');
       // Should not use includes for HK$ parsing
       const lines = content.split('\n');
-      const violations = lines.filter(l => l.includes('includes') && l.includes('HK$'));
+      const violations = lines.filter((l) => l.includes('includes') && l.includes('HK$'));
       expect(violations).toEqual([]);
     }
   });
@@ -186,7 +188,7 @@ describe('知识库 — JSONL 格式采样', () => {
   test('处理数据目录存在且非空', () => {
     const dataDir = path.join(projectRoot, '..', '处理数据');
     if (fs.existsSync(dataDir)) {
-      const files = fs.readdirSync(dataDir).filter(f => f.endsWith('.json'));
+      const files = fs.readdirSync(dataDir).filter((f) => f.endsWith('.json'));
       // At minimum we should have some processed data files
       expect(files.length).toBeGreaterThan(0);
     }
@@ -202,11 +204,15 @@ describe('云函数 — 入口文件存在性', () => {
   const cfDir = path.resolve(__dirname, '..', '..', 'cloudfunctions');
 
   const REQUIRED_FUNCTIONS = [
-    'rag-search', 'ai-chat', 'preaudit-engine',
-    'user-auth', 'reminder-engine', 'match-engine'
+    'rag-search',
+    'ai-chat',
+    'preaudit-engine',
+    'user-auth',
+    'reminder-engine',
+    'match-engine',
   ];
 
-  REQUIRED_FUNCTIONS.forEach(fn => {
+  REQUIRED_FUNCTIONS.forEach((fn) => {
     test(`${fn} 入口文件存在`, () => {
       const indexPath = path.join(cfDir, fn, 'index.js');
       if (fs.existsSync(cfDir)) {

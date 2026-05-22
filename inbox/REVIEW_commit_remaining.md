@@ -9,6 +9,7 @@
 ## 未提交文件
 
 ### Modified (5)
+
 - `app.json` — 页面注册变更
 - `ledger.jsonl` — 操作日志
 - `pages/mine/index/index.js` — 我的页面
@@ -16,6 +17,7 @@
 - `pages/mine/notify-settings/notify-settings.wxss` — 通知设置样式
 
 ### Untracked (6)
+
 - `cloudfunctions/wecom-bot/` — 企业微信机器人云函数
 - `subpkg-feedback/pages/list/` — 反馈列表子包
 - `subpkg-feedback/pages/wecom-qr/` — 企业微信群二维码

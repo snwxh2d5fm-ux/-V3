@@ -32,11 +32,11 @@ function getDb() {
 
 // ========== 画像缓存 ==========
 const PROFILE_CACHE_TTL = 300 * 1000; // 5 minutes
-let profileCache = {};
+const profileCache = {};
 
 function getCachedProfile(openid) {
-  var entry = profileCache[openid];
-  if (entry && (Date.now() - entry.ts) < PROFILE_CACHE_TTL) {
+  const entry = profileCache[openid];
+  if (entry && Date.now() - entry.ts < PROFILE_CACHE_TTL) {
     return entry.data;
   }
   return null;
@@ -49,12 +49,12 @@ function setCachedProfile(openid, data) {
   profileCache[openid] = { ts: Date.now(), data: data };
 
   // 限制缓存大小，淘汰最早1/4条目
-  var keys = Object.keys(profileCache);
+  const keys = Object.keys(profileCache);
   if (keys.length > 200) {
-    var sorted = keys.slice().sort(function (a, b) {
+    const sorted = keys.slice().sort(function (a, b) {
       return profileCache[a].ts - profileCache[b].ts;
     });
-    for (var i = 0; i < 50; i++) {
+    for (let i = 0; i < 50; i++) {
       delete profileCache[sorted[i]];
     }
   }
@@ -67,20 +67,17 @@ function setCachedProfile(openid, data) {
  * 字段: persona, personaLabel, selectedPath, pathLabel, switchCount
  */
 async function queryIdentityProfile(openid) {
-  var ddb = getDb();
-  var res = await ddb.collection('user_profiles')
-    .where({ _openid: openid })
-    .limit(1)
-    .get();
+  const ddb = getDb();
+  const res = await ddb.collection('user_profiles').where({ _openid: openid }).limit(1).get();
   if (!res.data || res.data.length === 0) return null;
-  var p = res.data[0];
+  const p = res.data[0];
   // 只提取关键字段
   return {
     persona: p.persona,
     personaLabel: p.personaLabel,
     selectedPath: p.selectedPath,
     pathLabel: p.pathLabel,
-    switchCount: p.switchCount
+    switchCount: p.switchCount,
   };
 }
 
@@ -89,24 +86,25 @@ async function queryIdentityProfile(openid) {
  * 字段: currentStageId, stageName (from stages[]), overallProgress, milestones
  */
 async function queryStageProfile(openid) {
-  var ddb = getDb();
+  const ddb = getDb();
   // 只查活跃进程
-  var res = await ddb.collection('user_processes')
+  const res = await ddb
+    .collection('user_processes')
     .where({ _openid: openid, status: 'active' })
     .orderBy('updatedAt', 'desc')
     .limit(1)
     .get();
   if (!res.data || res.data.length === 0) return null;
-  var p = res.data[0];
+  const p = res.data[0];
   // 提取关键字段
-  var stage = {
+  const stage = {
     currentStageId: p.currentStageId,
     overallProgress: p.overallProgress,
-    milestones: null
+    milestones: null,
   };
   // 从 stages[] 中查找当前 stageName
   if (p.stages && Array.isArray(p.stages)) {
-    for (var i = 0; i < p.stages.length; i++) {
+    for (let i = 0; i < p.stages.length; i++) {
       if (p.stages[i].id === p.currentStageId) {
         stage.stageName = p.stages[i].name;
         break;
@@ -127,11 +125,12 @@ async function queryStageProfile(openid) {
  * 查询最近 assessment_completed 事件的 topMatches
  */
 async function queryBehaviorProfile(openid) {
-  var ddb = getDb();
-  var res = await ddb.collection('user_events')
+  const ddb = getDb();
+  let res = await ddb
+    .collection('user_events')
     .where({
       _openid: openid,
-      type: 'assessment_completed'
+      type: 'assessment_completed',
     })
     .orderBy('timestamp', 'desc')
     .limit(1)
@@ -140,10 +139,11 @@ async function queryBehaviorProfile(openid) {
   // 兼容 createdAt 字段
   if (!res.data || res.data.length === 0) {
     // 重试用 createdAt 排序
-    res = await ddb.collection('user_events')
+    res = await ddb
+      .collection('user_events')
       .where({
         _openid: openid,
-        type: 'assessment_completed'
+        type: 'assessment_completed',
       })
       .orderBy('createdAt', 'desc')
       .limit(1)
@@ -151,10 +151,10 @@ async function queryBehaviorProfile(openid) {
   }
 
   if (!res.data || res.data.length === 0) return null;
-  var ev = res.data[0];
+  const ev = res.data[0];
   return {
     assessmentCompleted: true,
-    topMatches: ev.topMatches || ev.payload || null
+    topMatches: ev.topMatches || ev.payload || null,
   };
 }
 
@@ -164,8 +164,9 @@ async function queryBehaviorProfile(openid) {
  * 注意: 现有日志没有 _openid 字段，新写入后有效
  */
 async function queryConversationProfile(openid) {
-  var ddb = getDb();
-  var res = await ddb.collection('conversation_logs')
+  const ddb = getDb();
+  const res = await ddb
+    .collection('conversation_logs')
     .where({ _openid: openid })
     .orderBy('timestamp', 'desc')
     .limit(5)
@@ -176,7 +177,7 @@ async function queryConversationProfile(openid) {
       query: log.query,
       response_preview: log.response_preview,
       mode: log.mode,
-      timestamp: log.timestamp
+      timestamp: log.timestamp,
     };
   });
 }
@@ -195,45 +196,43 @@ async function buildProfile(openid) {
   }
 
   // 缓存优先
-  var cached = getCachedProfile(openid);
+  const cached = getCachedProfile(openid);
   if (cached) {
-    console.log('[profile-builder] cache hit for', openid);
+    console.debug('[profile-builder] cache hit for', openid);
     return cached;
   }
 
-  console.log('[profile-builder] building profile for', openid);
+  console.debug('[profile-builder] building profile for', openid);
 
   // 四路并行查询
-  var results = await Promise.allSettled([
+  const results = await Promise.allSettled([
     queryIdentityProfile(openid),
     queryStageProfile(openid),
     queryBehaviorProfile(openid),
-    queryConversationProfile(openid)
+    queryConversationProfile(openid),
   ]);
 
-  var profile = {
+  const profile = {
     identity: results[0].status === 'fulfilled' ? results[0].value : null,
     stage: results[1].status === 'fulfilled' ? results[1].value : null,
     behavior: results[2].status === 'fulfilled' ? results[2].value : null,
     conversation: results[3].status === 'fulfilled' ? results[3].value : null,
-    hasData: false
+    hasData: false,
   };
 
   // 记录各维查询异常
-  var queryNames = ['identity', 'stage', 'behavior', 'conversation'];
-  for (var i = 0; i < results.length; i++) {
+  const queryNames = ['identity', 'stage', 'behavior', 'conversation'];
+  for (let i = 0; i < results.length; i++) {
     if (results[i].status === 'rejected') {
-      console.warn('[profile-builder] ' + queryNames[i] + ' query rejected:', results[i].reason && results[i].reason.message);
+      console.warn(
+        '[profile-builder] ' + queryNames[i] + ' query rejected:',
+        results[i].reason && results[i].reason.message,
+      );
     }
   }
 
   // 判定是否有有效数据
-  profile.hasData = !!(
-    profile.identity ||
-    profile.stage ||
-    profile.behavior ||
-    profile.conversation
-  );
+  profile.hasData = !!(profile.identity || profile.stage || profile.behavior || profile.conversation);
 
   // 写入缓存
   setCachedProfile(openid, profile);

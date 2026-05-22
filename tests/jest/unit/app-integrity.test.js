@@ -12,12 +12,11 @@ const PROJECT_ROOT = path.resolve(__dirname, '../../..');
 const appJson = require('../../../app.json');
 
 describe('app.json 完整性 (§10 降级)', () => {
-
   test('所有注册页面文件存在', () => {
     const pages = appJson.pages || [];
     const missing = [];
 
-    pages.forEach(function(pagePath) {
+    pages.forEach(function (pagePath) {
       const jsFile = path.join(PROJECT_ROOT, pagePath + '.js');
       const wxmlFile = path.join(PROJECT_ROOT, pagePath + '.wxml');
       const hasFile = fs.existsSync(jsFile) || fs.existsSync(wxmlFile);
@@ -34,7 +33,7 @@ describe('app.json 完整性 (§10 降级)', () => {
     const tabList = (appJson.tabBar && appJson.tabBar.list) || [];
     const pages = appJson.pages || [];
 
-    tabList.forEach(function(tab) {
+    tabList.forEach(function (tab) {
       expect(pages).toContain(tab.pagePath);
     });
   });
@@ -42,7 +41,7 @@ describe('app.json 完整性 (§10 降级)', () => {
   test('TabBar 页面文件存在', () => {
     const tabList = (appJson.tabBar && appJson.tabBar.list) || [];
 
-    tabList.forEach(function(tab) {
+    tabList.forEach(function (tab) {
       const jsFile = path.join(PROJECT_ROOT, tab.pagePath + '.js');
       expect(fs.existsSync(jsFile)).toBe(true);
     });
@@ -59,18 +58,16 @@ describe('app.json 完整性 (§10 降级)', () => {
     const seen = {};
     const dupes = [];
 
-    pages.forEach(function(p) {
+    pages.forEach(function (p) {
       if (seen[p]) dupes.push(p);
       seen[p] = true;
     });
 
     expect(dupes).toEqual([]);
   });
-
 });
 
 describe('关键文件存在性 (§11 降级)', () => {
-
   const keyFiles = [
     'data/constants.js',
     'data/guidebook-cards.js',
@@ -92,11 +89,9 @@ describe('关键文件存在性 (§11 降级)', () => {
     'CLAUDE.md',
   ];
 
-  keyFiles.forEach(function(file) {
-    test(file + ' 存在', function() {
+  keyFiles.forEach(function (file) {
+    test(file + ' 存在', function () {
       expect(fs.existsSync(path.join(PROJECT_ROOT, file))).toBe(true);
     });
   });
-
 });
-

@@ -1,7 +1,7 @@
 /* 我的订单列表样式 */
 
 page {
-background: var(--gray-100);
+  background: var(--gray-100);
 }
 
 .page {
@@ -50,7 +50,9 @@ background: var(--gray-100);
   font-size: 28rpx;
   font-weight: 600;
 }
-.btn-primary::after { border: none; }
+.btn-primary::after {
+  border: none;
+}
 
 /* 订单列表 */
 .orders-list {
@@ -62,7 +64,7 @@ background: var(--gray-100);
   border-radius: 16rpx;
   padding: 28rpx;
   margin-bottom: 20rpx;
-  box-shadow: 0 2rpx 12rpx rgba(0,0,0,0.04);
+  box-shadow: 0 2rpx 12rpx rgba(0, 0, 0, 0.04);
 }
 
 .order-header {
@@ -86,10 +88,22 @@ background: var(--gray-100);
   border-radius: 8rpx;
   font-weight: 500;
 }
-.status-pending { background: var(--color-warning-bg); color: #92400E; }
-.status-completed { background: #D1FAE5; color: var(--color-success); }
-.status-failed { background: #FEE2E2; color: var(--color-error); }
-.status-cancelled { background: var(--gray-100); color: var(--gray-500); }
+.status-pending {
+  background: var(--color-warning-bg);
+  color: #92400e;
+}
+.status-completed {
+  background: #d1fae5;
+  color: var(--color-success);
+}
+.status-failed {
+  background: #fee2e2;
+  color: var(--color-error);
+}
+.status-cancelled {
+  background: var(--gray-100);
+  color: var(--gray-500);
+}
 
 /* 订单详情行 */
 .order-body {

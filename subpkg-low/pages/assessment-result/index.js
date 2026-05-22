@@ -20,7 +20,7 @@ Page({
     expandedPath: null,
     // 兼容性警告
     compatWarning: null,
-    compatWarningOk: true
+    compatWarningOk: true,
   },
 
   onLoad(options) {
@@ -31,8 +31,8 @@ Page({
     }
     const personaName = getPersonaName(persona);
 
-    const recommendation = app.globalData.solutionRecommendation ||
-      wx.getStorageSync('__solution_recommendation__') || [];
+    const recommendation =
+      app.globalData.solutionRecommendation || wx.getStorageSync('__solution_recommendation__') || [];
 
     if (!recommendation || recommendation.length === 0) {
       this.setData({ loading: false, persona, personaName, matches: [] });
@@ -65,7 +65,7 @@ Page({
         compatLevel: compat.level,
         compatLabel: compat.label,
         compatColor: compat.color,
-        compatBg: compat.bg
+        compatBg: compat.bg,
       };
     });
 
@@ -76,9 +76,9 @@ Page({
       try {
         wx.setStorageSync('__assess_prefill__', {
           recommendedPath: bestMatch.path || '',
-          updatedAt: Date.now()
+          updatedAt: Date.now(),
         });
-      } catch(e) {}
+      } catch (e) {}
     }
 
     // 校验最佳匹配 vs 当前画像
@@ -99,7 +99,7 @@ Page({
       bestMatch,
       loading: false,
       compatWarning,
-      compatWarningOk
+      compatWarningOk,
     });
 
     // 追踪：评估完成
@@ -107,9 +107,9 @@ Page({
       tracker.track('assessment_completed', {
         persona: persona,
         personaName: personaName,
-        topMatches: enriched.slice(0, 3).map(function(m) {
+        topMatches: enriched.slice(0, 3).map(function (m) {
           return { path: m.path, name: m.name, score: m.matchScore, confidence: m.confidence };
-        })
+        }),
       });
     }
   },
@@ -117,7 +117,7 @@ Page({
   toggleExpand(e) {
     const path = e.currentTarget.dataset.path;
     this.setData({
-      expandedPath: this.data.expandedPath === path ? null : path
+      expandedPath: this.data.expandedPath === path ? null : path,
     });
   },
 
@@ -126,11 +126,15 @@ Page({
    */
   selectPath(e) {
     const path = e.currentTarget.dataset.path;
-    const match = this.data.matches.find(m => m.path === path);
+    const match = this.data.matches.find((m) => m.path === path);
 
-    var gate = require('../../../utils/decision-gate').canMakeDecision();
+    const gate = require('../../../utils/decision-gate').canMakeDecision();
     if (!gate.ok) {
-      wx.showToast({ title: gate.reason === 'login' ? '请先登录后再选择路径' : '请先确认身份状态后再选择路径', icon: 'none', duration: 2000 });
+      wx.showToast({
+        title: gate.reason === 'login' ? '请先登录后再选择路径' : '请先确认身份状态后再选择路径',
+        icon: 'none',
+        duration: 2000,
+      });
       return;
     }
     app.globalData.selectedPath = path;
@@ -146,10 +150,10 @@ Page({
       personaLabel: this.data.personaName,
       matchScore: match ? match.matchScore : 0,
       matchConfidence: match ? match.confidence : '',
-      rank: match ? match.rank : 0
+      rank: match ? match.rank : 0,
     });
 
-    const template = templates.processTemplates.find(t => t.id === path);
+    const template = templates.processTemplates.find((t) => t.id === path);
     if (!template) {
       wx.showToast({ title: '已选择路径，前往首页', icon: 'success', duration: 800 });
       wx.switchTab({ url: '/pages/process/index/index' });
@@ -170,7 +174,7 @@ Page({
             phaseName: phase.name,
             phaseOrder: pi,
             confidence: step.confidence || phase.confidence || 'B',
-            steps: [step.name]
+            steps: [step.name],
           });
         });
       });
@@ -191,7 +195,7 @@ Page({
         unlocked: i === 0,
         completedSteps: [],
         progress: 0,
-        startedAt: i === 0 ? new Date().toISOString() : null
+        startedAt: i === 0 ? new Date().toISOString() : null,
       })),
       status: 'active',
       progress: 0,
@@ -201,7 +205,7 @@ Page({
       createdAt: new Date().toISOString(),
       source: 'assessment',
       matchScore: match?.matchScore || 0,
-      confidence: match?.confidence || 'medium'
+      confidence: match?.confidence || 'medium',
     };
 
     saveProcessLine(processLine);
@@ -212,8 +216,8 @@ Page({
     // 清理旧的 assessment 来源流程（保留仅最新）
     const { getAllProcessLines } = require('../../../utils/storage');
     const allLines = getAllProcessLines();
-    const oldAssess = allLines.filter(l => l.source === 'assessment' && l.id !== processLine.id);
-    oldAssess.forEach(l => {
+    const oldAssess = allLines.filter((l) => l.source === 'assessment' && l.id !== processLine.id);
+    oldAssess.forEach((l) => {
       // 标记为非活跃
       l.status = 'archived';
       saveProcessLine(l);
@@ -225,5 +229,5 @@ Page({
 
   retake() {
     wx.redirectTo({ url: '/subpkg-low/pages/assessment-index/index' });
-  }
+  },
 });

@@ -8,19 +8,24 @@
  *   t.event('guidebook_task_complete', { taskId: 'T001' });
  *   t.setReferrer('pages/home/home'); // 在 onHide 中调用
  */
-var CONFIG = { SAMPLE_RATE: 0.1, BATCH_SIZE: 10, FLUSH_MS: 30000, MAX_CACHE: 200 };
-var _cache = [];
-var _timer = null;
-var _sessionId = '';
-var _lastPage = '';
-var _lastPageTime = 0;
+const CONFIG = { SAMPLE_RATE: 0.1, BATCH_SIZE: 10, FLUSH_MS: 30000, MAX_CACHE: 200 };
+let _cache = [];
+let _timer = null;
+let _sessionId = '';
+let _lastPage = '';
+let _lastPageTime = 0;
 
 // 恢复离线缓存
 function _restore() {
-  try { var r = wx.getStorageSync('_zgb_tracker'); if (r) _cache = r; } catch (_) {}
+  try {
+    const r = wx.getStorageSync('_zgb_tracker');
+    if (r) _cache = r;
+  } catch (_) {}
 }
 function _save() {
-  try { wx.setStorageSync('_zgb_tracker', _cache.slice(-CONFIG.MAX_CACHE)); } catch (_) {}
+  try {
+    wx.setStorageSync('_zgb_tracker', _cache.slice(-CONFIG.MAX_CACHE));
+  } catch (_) {}
 }
 function _schedule() {
   if (_timer) clearTimeout(_timer);
@@ -29,7 +34,7 @@ function _schedule() {
 
 function _flush() {
   if (!_cache.length) return;
-  var batch = _cache.splice(0, CONFIG.BATCH_SIZE);
+  const batch = _cache.splice(0, CONFIG.BATCH_SIZE);
   _save();
   try {
     wx.cloud.callFunction({ name: 'usage-tracker', data: { action: 'trackBatch', events: batch } });
@@ -40,10 +45,17 @@ function _flush() {
   if (_cache.length) _schedule();
 }
 
-function _enq(evt) { _cache.push(evt); _save(); _cache.length >= CONFIG.BATCH_SIZE ? _flush() : _schedule(); }
+function _enq(evt) {
+  _cache.push(evt);
+  _save();
+  _cache.length >= CONFIG.BATCH_SIZE ? _flush() : _schedule();
+}
 
 function _sid() {
-  if (!_sessionId) { _sessionId = 's_' + Date.now(); wx.setStorageSync('__sid__', _sessionId); }
+  if (!_sessionId) {
+    _sessionId = 's_' + Date.now();
+    wx.setStorageSync('__sid__', _sessionId);
+  }
   return _sessionId;
 }
 
@@ -52,7 +64,18 @@ function _sid() {
 function pageView(opts) {
   if (Math.random() >= CONFIG.SAMPLE_RATE) return;
   _sid();
-  _enq({ eventType: 'page_view', payload: { page: opts.page, from: opts.from || '', referrer: opts.referrer || '', sessionId: _sessionId, timeOnPrevious: _lastPageTime ? Math.round((Date.now() - _lastPageTime) / 1000) : 0, tabActive: opts.tabActive || '' }, createdAt: Date.now() });
+  _enq({
+    eventType: 'page_view',
+    payload: {
+      page: opts.page,
+      from: opts.from || '',
+      referrer: opts.referrer || '',
+      sessionId: _sessionId,
+      timeOnPrevious: _lastPageTime ? Math.round((Date.now() - _lastPageTime) / 1000) : 0,
+      tabActive: opts.tabActive || '',
+    },
+    createdAt: Date.now(),
+  });
 }
 
 function event(type, payload) {
@@ -60,7 +83,10 @@ function event(type, payload) {
   _enq({ eventType: type, payload: payload || {}, sessionId: _sessionId, createdAt: Date.now() });
 }
 
-function setReferrer(page) { _lastPage = page; _lastPageTime = Date.now(); }
+function setReferrer(page) {
+  _lastPage = page;
+  _lastPageTime = Date.now();
+}
 
 _restore();
 module.exports = { pageView: pageView, event: event, setReferrer: setReferrer };

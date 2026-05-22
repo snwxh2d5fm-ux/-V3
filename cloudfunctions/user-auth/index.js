@@ -58,7 +58,7 @@ async function handleLogin(openid, { code, phoneHash }) {
       return { code: 403, msg: '账号已被锁定' };
     }
     await users.doc(user._id).update({
-      data: { lastLoginAt: db.serverDate() }
+      data: { lastLoginAt: db.serverDate() },
     });
     return {
       code: 0,
@@ -66,7 +66,7 @@ async function handleLogin(openid, { code, phoneHash }) {
       userInfo: { nickName: user.nickName || '住港伴用户' },
       userStatus: user.currentPhase || 'unapplied',
       membershipLevel: user.membershipLevel || 'free',
-      data: sanitizeUser(user)
+      data: sanitizeUser(user),
     };
   }
 
@@ -86,7 +86,7 @@ async function handleLogin(openid, { code, phoneHash }) {
     privacySettings: { mode: 'L1', encryptionEnabled: true },
     phoneHash: phoneHash || '',
     createdAt: db.serverDate(),
-    lastLoginAt: db.serverDate()
+    lastLoginAt: db.serverDate(),
   };
 
   const { _id } = await users.add({ data: userDoc });
@@ -99,7 +99,7 @@ async function handleLogin(openid, { code, phoneHash }) {
     userStatus: 'unapplied',
     membershipLevel: 'free',
     isNew: true,
-    data: sanitizeUser(userDoc)
+    data: sanitizeUser(userDoc),
   };
 }
 
@@ -120,22 +120,25 @@ async function handlePhoneLogin(openid, { phoneCode, loginType }) {
     }
     try {
       const result = await cloud.openapi.phonenumber.getPhoneNumber({
-        code: phoneCode
+        code: phoneCode,
       });
       if (result.errCode !== 0) {
         console.error('[phoneLogin] getPhoneNumber errCode:', result.errCode, result.errMsg);
         // 真机常见错误码映射
-        var errMap = {
+        const errMap = {
           '-80076': '小程序未开通手机号快速验证能力，请在微信公众平台开通',
           '-1': '当前环境不支持手机号验证',
-          '-80001': '网络异常，请检查网络后重试'
+          '-80001': '网络异常，请检查网络后重试',
         };
-        var errMsg = errMap[String(result.errCode)] || ('手机号服务异常(errCode:' + result.errCode + ')');
+        const errMsg = errMap[String(result.errCode)] || '手机号服务异常(errCode:' + result.errCode + ')';
         return { code: 500, msg: errMsg };
       }
       phoneNumber = result.phoneInfo.purePhoneNumber;
     } catch (e) {
-      console.error('[phoneLogin] 异常:', JSON.stringify({errCode: e.errCode, errMsg: e.errMsg, message: e.message, err: String(e)}));
+      console.error(
+        '[phoneLogin] 异常:',
+        JSON.stringify({ errCode: e.errCode, errMsg: e.errMsg, message: e.message, err: String(e) }),
+      );
       // DevTools/模拟器降级
       if (e.errCode === -1 || (e.message && /not support|not available/i.test(e.message))) {
         console.warn('[phoneLogin] 使用模拟模式');
@@ -175,8 +178,8 @@ async function handlePhoneLogin(openid, { phoneCode, loginType }) {
       data: {
         phoneHash,
         phoneSalt: salt,
-        lastLoginAt: db.serverDate()
-      }
+        lastLoginAt: db.serverDate(),
+      },
     });
     return {
       code: 0,
@@ -185,7 +188,7 @@ async function handlePhoneLogin(openid, { phoneCode, loginType }) {
       userStatus: user.currentPhase || 'unapplied',
       membershipLevel: user.membershipLevel || 'free',
       phoneBound: true,
-      data: sanitizeUser({ ...user, phoneHash })
+      data: sanitizeUser({ ...user, phoneHash }),
     };
   }
 
@@ -206,7 +209,7 @@ async function handlePhoneLogin(openid, { phoneCode, loginType }) {
     authorizedLabels: [],
     privacySettings: { mode: 'L1', encryptionEnabled: true },
     createdAt: db.serverDate(),
-    lastLoginAt: db.serverDate()
+    lastLoginAt: db.serverDate(),
   };
 
   const { _id } = await users.add({ data: userDoc });
@@ -220,7 +223,7 @@ async function handlePhoneLogin(openid, { phoneCode, loginType }) {
     membershipLevel: 'free',
     phoneBound: true,
     isNew: true,
-    data: sanitizeUser(userDoc)
+    data: sanitizeUser(userDoc),
   };
 }
 
@@ -229,26 +232,25 @@ async function handleValidate(openid, { token }) {
   if (!token) return { code: 400, valid: false };
   // 新旧 token 格式兼容：新格式含HMAC签名，旧格式为base64.header.payload.cloudbase
   try {
-    var payloadStr;
+    let payloadStr;
     // 尝试新格式验证
-    var verified = verifyToken(token);
+    const verified = verifyToken(token);
     if (verified) {
       if (verified.openid !== openid) return { code: 401, valid: false };
       payloadStr = verified.openid;
     } else {
       // 旧格式向下兼容——拆分后解析payload
-      var parts = token.split('.');
+      const parts = token.split('.');
       if (parts.length >= 2) {
-        payloadStr = JSON.parse(
-          Buffer.from(parts[1], 'base64').toString()
-        ).openid;
+        payloadStr = JSON.parse(Buffer.from(parts[1], 'base64').toString()).openid;
         if (payloadStr !== openid) return { code: 401, valid: false };
       } else {
         return { code: 401, valid: false };
       }
     }
     // 检查用户存在性
-    const { data } = await db.collection(COLLECTION)
+    const { data } = await db
+      .collection(COLLECTION)
       .where({ _openid: openid, status: _.neq('locked') })
       .get();
     return { code: 0, valid: data.length > 0 };
@@ -261,18 +263,17 @@ async function handleValidate(openid, { token }) {
 async function updateStatus(openid, { userStatus, subStatus }) {
   const updateData = {
     currentPhase: userStatus,
-    updatedAt: db.serverDate()
+    updatedAt: db.serverDate(),
   };
   if (subStatus) updateData.subStatus = subStatus;
 
-  await db.collection(COLLECTION)
-    .where({ _openid: openid })
-    .update({ data: updateData });
+  await db.collection(COLLECTION).where({ _openid: openid }).update({ data: updateData });
   return { code: 0 };
 }
 
 async function updatePath(openid, { selectedPath }) {
-  await db.collection(COLLECTION)
+  await db
+    .collection(COLLECTION)
     .where({ _openid: openid })
     .update({ data: { selectedPath, updatedAt: db.serverDate() } });
   return { code: 0 };
@@ -283,15 +284,12 @@ async function checkMembership(openid) {
   if (!data.length) return { code: 404, msg: '用户不存在' };
   const user = data[0];
   const now = new Date();
-  const isLocked =
-    user.membershipLevel === 'free' &&
-    user.freeTrialEndAt &&
-    new Date(user.freeTrialEndAt) < now;
+  const isLocked = user.membershipLevel === 'free' && user.freeTrialEndAt && new Date(user.freeTrialEndAt) < now;
   return {
     code: 0,
     level: user.membershipLevel,
     isLocked,
-    expireAt: user.membershipExpireAt || user.freeTrialEndAt
+    expireAt: user.membershipExpireAt || user.freeTrialEndAt,
   };
 }
 
@@ -299,25 +297,20 @@ async function getProfile(openid) {
   const { data } = await db.collection(COLLECTION).where({ _openid: openid }).get();
   return {
     code: 0,
-    userInfo: data.length ? sanitizeUser(data[0]) : null
+    userInfo: data.length ? sanitizeUser(data[0]) : null,
   };
 }
 
 async function syncProfile(openid, { profile }) {
   if (!profile) return { code: 400, msg: 'profile 为空' };
   const safeProfile = {};
-  const allowed = [
-    'userStatus', 'userSubStatus', 'membershipLevel',
-    'activeProcessId', 'selectedPath', 'currentPhase'
-  ];
+  const allowed = ['userStatus', 'userSubStatus', 'membershipLevel', 'activeProcessId', 'selectedPath', 'currentPhase'];
   for (const key of allowed) {
     if (profile[key] !== undefined) safeProfile[key] = profile[key];
   }
   safeProfile.updatedAt = db.serverDate();
 
-  await db.collection(COLLECTION)
-    .where({ _openid: openid })
-    .update({ data: safeProfile });
+  await db.collection(COLLECTION).where({ _openid: openid }).update({ data: safeProfile });
   return { code: 0 };
 }
 
@@ -338,16 +331,16 @@ function makeToken(openid, userId) {
 
 function verifyToken(token) {
   try {
-    var decoded = Buffer.from(token, 'base64').toString('utf8');
-    var parts = decoded.split(':');
+    const decoded = Buffer.from(token, 'base64').toString('utf8');
+    const parts = decoded.split(':');
     if (parts.length < 5) return null;
-    var payload = parts.slice(0, 4).join(':');
-    var sig = parts[4];
-    var hmac = require('crypto').createHmac('sha256', process.env.TOKEN_SECRET);
-    var expected = hmac.update(payload).digest('hex');
+    const payload = parts.slice(0, 4).join(':');
+    const sig = parts[4];
+    const hmac = require('crypto').createHmac('sha256', process.env.TOKEN_SECRET);
+    const expected = hmac.update(payload).digest('hex');
     if (sig !== expected) return null;
     return { openid: parts[0], uid: parts[1], iat: parseInt(parts[2]) };
-  } catch(e) {
+  } catch (e) {
     return null;
   }
 }

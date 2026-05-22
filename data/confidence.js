@@ -22,7 +22,7 @@ const CONFIDENCE = {
     icon: '📜',
     showBanner: false,
     isAuthoritative: true,
-    canAutoApply: true
+    canAutoApply: true,
   },
   B: {
     level: 'B',
@@ -36,7 +36,7 @@ const CONFIDENCE = {
     icon: '📋',
     showBanner: false,
     isAuthoritative: true,
-    canAutoApply: true
+    canAutoApply: true,
   },
   C: {
     level: 'C',
@@ -51,7 +51,7 @@ const CONFIDENCE = {
     showBanner: false,
     isAuthoritative: false,
     canAutoApply: false,
-    needsConfirmation: true
+    needsConfirmation: true,
   },
   D: {
     level: 'D',
@@ -66,7 +66,7 @@ const CONFIDENCE = {
     showBanner: true,
     bannerText: '⚠️ 以下内容基于合理推断，入境处有酌情权，建议个案咨询',
     isAuthoritative: false,
-    canAutoApply: false
+    canAutoApply: false,
   },
   E: {
     level: 'E',
@@ -82,19 +82,19 @@ const CONFIDENCE = {
     bannerText: '此问题建议直接咨询入境处或持证律师',
     isAuthoritative: false,
     canAutoApply: false,
-    hideContent: true
-  }
+    hideContent: true,
+  },
 };
 
 /**
  * 法源强度标注
  */
 const LEGAL_SOURCE = {
-  STATUTE:    { type: 'statute',    label: '法典', icon: '📜', weight: 5, description: '成文法条文' },
-  POLICY:     { type: 'policy',     label: '政策', icon: '📋', weight: 4, description: '入境处公开政策' },
-  PRECEDENT:  { type: 'precedent',  label: '判例', icon: '⚖️',  weight: 3, description: '司法判例' },
-  PRACTICE:   { type: 'practice',   label: '惯例', icon: '📊', weight: 2, description: '行政惯例' },
-  INFERENCE:  { type: 'inference',  label: '推断', icon: '💡', weight: 1, description: '合理推断' }
+  STATUTE: { type: 'statute', label: '法典', icon: '📜', weight: 5, description: '成文法条文' },
+  POLICY: { type: 'policy', label: '政策', icon: '📋', weight: 4, description: '入境处公开政策' },
+  PRECEDENT: { type: 'precedent', label: '判例', icon: '⚖️', weight: 3, description: '司法判例' },
+  PRACTICE: { type: 'practice', label: '惯例', icon: '📊', weight: 2, description: '行政惯例' },
+  INFERENCE: { type: 'inference', label: '推断', icon: '💡', weight: 1, description: '合理推断' },
 };
 
 /**
@@ -104,9 +104,9 @@ const LEGAL_SOURCE = {
  * 入境处指引 → 入境处指引(ID XXX)
  */
 const LEGAL_CITATION_FORMAT = {
-  cap115:  { prefix: '《入境条例》(Cap.115)', separator: 's.' },
-  basicLaw: { prefix: '《基本法》',            separator: '第' },
-  immdGuide: { prefix: '入境处指引',            separator: '(ID ' }
+  cap115: { prefix: '《入境条例》(Cap.115)', separator: 's.' },
+  basicLaw: { prefix: '《基本法》', separator: '第' },
+  immdGuide: { prefix: '入境处指引', separator: '(ID ' },
 };
 
 /**
@@ -125,7 +125,7 @@ function getConfidenceDisplay(level) {
     showBanner: c.showBanner || false,
     bannerText: c.bannerText || '',
     hideContent: c.hideContent || false,
-    isAuthoritative: c.isAuthoritative || false
+    isAuthoritative: c.isAuthoritative || false,
   };
 }
 
@@ -161,15 +161,15 @@ const P0_LEGAL_FIXES = {
     wrong: 's.2A (居留权定义)',
     correct: 's.11(8) (入境处处长酌情权)',
     reason: 's.2A定义「居留权」(right of abode)，非「视为合法逗留」机制',
-    confidence: 'B'
+    confidence: 'B',
   },
   // s.42 → s.38A: 虚假陈述
   's.42': {
     wrong: 's.42 (船长/机长未提交船员/乘客名单)',
     correct: 's.38A (向入境事务主任或入境事务助理员作出虚假陈述)',
     reason: '虚假陈述条文为s.38A，非s.42',
-    confidence: 'A'
-  }
+    confidence: 'A',
+  },
 };
 
 /**
@@ -184,7 +184,7 @@ const P0_POLICY_FIXES = {
     exception: 'VPAS高级文凭学生(2025年10月起)不可携带受养人',
     effectiveDate: '持续有效',
     confidence: 'A',
-    source: '入境处受养人签证政策；Study in Hong Kong官方指引'
+    source: '入境处受养人签证政策；Study in Hong Kong官方指引',
   },
   student_work: {
     title: '学生签证工作限制',
@@ -194,8 +194,8 @@ const P0_POLICY_FIXES = {
     caveat: '此安排属临时措施(2025年检讨中，可能调整)',
     effectiveDate: '2023-11(研究生) / 2024-11(本科生)',
     confidence: 'A',
-    source: '政府新闻公报2024年10月18日；2023年施政报告'
-  }
+    source: '政府新闻公报2024年10月18日；2023年施政报告',
+  },
 };
 
 module.exports = {
@@ -206,5 +206,5 @@ module.exports = {
   getRuleAutoApply,
   formatLegalCitation,
   P0_LEGAL_FIXES,
-  P0_POLICY_FIXES
+  P0_POLICY_FIXES,
 };

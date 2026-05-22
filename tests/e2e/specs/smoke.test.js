@@ -7,10 +7,7 @@
  * 运行: npm run test:e2e:smoke
  */
 
-const {
-  goToTab, findElement, findElements,
-  TABS,
-} = require('../helpers');
+const { goToTab, findElement, findElements, TABS } = require('../helpers');
 
 let mp;
 
@@ -23,7 +20,6 @@ beforeAll(() => {
 // §1 启动验证
 // ============================================================
 describe('§1 启动验证', () => {
-
   test('1.1 小程序已连接 → currentPage 可用', async () => {
     const page = await mp.currentPage();
     expect(page).toBeTruthy();
@@ -35,14 +31,12 @@ describe('§1 启动验证', () => {
     const el = await findElement(mp, 'page');
     expect(el).toBeTruthy();
   });
-
 });
 
 // ============================================================
 // §2 TabBar 导航
 // ============================================================
 describe('§2 TabBar 导航', () => {
-
   test('2.1 攻略书Tab → 可切换', async () => {
     await goToTab(mp, 'guidebooks');
     const page = await mp.currentPage();
@@ -74,5 +68,4 @@ describe('§2 TabBar 导航', () => {
     const page = await mp.currentPage();
     expect(page.path).toContain('mine');
   });
-
 });

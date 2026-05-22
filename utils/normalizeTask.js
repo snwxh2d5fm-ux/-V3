@@ -27,7 +27,7 @@ function normalizeTask(raw, opts) {
   if (!raw || typeof raw !== 'object') return raw;
 
   // 深拷贝
-  var t = JSON.parse(JSON.stringify(raw));
+  const t = JSON.parse(JSON.stringify(raw));
   opts = opts || {};
 
   // ── ID 归一化：_id 为权威标识 ──
@@ -35,62 +35,65 @@ function normalizeTask(raw, opts) {
   if (!t.id && t._id) t.id = t._id;
 
   // ── 字段名 camelCase → snake_case (WXML 兼容) ──
-  var FIELD_MAP = {
-    timeEstimate:       'time_estimate',
-    renewalEvidence:    'renewal_evidence',
-    requiredItems:      'required_items',
-    officialLinks:      'official_links',
-    sceneTags:          'scene_tags',
-    applicableTo:       'applicable_to',
-    skipIfExisting:     'skip_if_existing',
-    docType:            'doc_type',
-    docCategory:        'doc_category',
+  const FIELD_MAP = {
+    timeEstimate: 'time_estimate',
+    renewalEvidence: 'renewal_evidence',
+    requiredItems: 'required_items',
+    officialLinks: 'official_links',
+    sceneTags: 'scene_tags',
+    applicableTo: 'applicable_to',
+    skipIfExisting: 'skip_if_existing',
+    docType: 'doc_type',
+    docCategory: 'doc_category',
     isRequiredForRenewal: 'is_required_for_renewal',
-    expiryCheck:        'expiry_check',
-    renewalTip:         'renewal_tip',
-    arrivalScenario:    'arrival_scenarios',
-    visaTypes:          'visa_types',
-    familyStatus:       'family_status',
-    childAgeTrack:      'child_age_track',
-    autoSkipped:        'auto_skipped',
-    skipReason:         'skip_reason',
-    timeEstimate:       'time_estimate'  // duplicate, safe
+    expiryCheck: 'expiry_check',
+    renewalTip: 'renewal_tip',
+    arrivalScenario: 'arrival_scenarios',
+    visaTypes: 'visa_types',
+    familyStatus: 'family_status',
+    childAgeTrack: 'child_age_track',
+    autoSkipped: 'auto_skipped',
+    skipReason: 'skip_reason',
+    timeEstimate: 'time_estimate', // duplicate, safe
   };
 
-  Object.keys(FIELD_MAP).forEach(function(camel) {
-    var snake = FIELD_MAP[camel];
+  Object.keys(FIELD_MAP).forEach(function (camel) {
+    const snake = FIELD_MAP[camel];
     if (t[camel] !== undefined && t[snake] === undefined) {
       t[snake] = t[camel];
     }
   });
 
   // ── 嵌套字段：renewal_evidence 子字段 ──
-  var ev = t.renewal_evidence || t.renewalEvidence;
+  const ev = t.renewal_evidence || t.renewalEvidence;
   if (ev && typeof ev === 'object') {
     t.renewal_evidence = t.renewal_evidence || {};
     if (ev.docType && !t.renewal_evidence.doc_type) t.renewal_evidence.doc_type = ev.docType;
     if (ev.docCategory && !t.renewal_evidence.doc_category) t.renewal_evidence.doc_category = ev.docCategory;
-    if (ev.isRequiredForRenewal !== undefined && t.renewal_evidence.is_required_for_renewal === undefined) t.renewal_evidence.is_required_for_renewal = ev.isRequiredForRenewal;
+    if (ev.isRequiredForRenewal !== undefined && t.renewal_evidence.is_required_for_renewal === undefined)
+      t.renewal_evidence.is_required_for_renewal = ev.isRequiredForRenewal;
     if (ev.collectMethod && !t.renewal_evidence.collect_method) t.renewal_evidence.collect_method = ev.collectMethod;
-    if (ev.produces !== undefined && t.renewal_evidence.produces === undefined) t.renewal_evidence.produces = ev.produces;
+    if (ev.produces !== undefined && t.renewal_evidence.produces === undefined)
+      t.renewal_evidence.produces = ev.produces;
   }
 
   // ── applicable_to 子字段 ──
-  var at = t.applicable_to || t.applicableTo;
+  const at = t.applicable_to || t.applicableTo;
   if (at && typeof at === 'object') {
     t.applicable_to = t.applicable_to || {};
     if (at.visaTypes && !t.applicable_to.visa_types) t.applicable_to.visa_types = at.visaTypes;
     if (at.familyStatus && !t.applicable_to.family_status) t.applicable_to.family_status = at.familyStatus;
-    if (at.arrivalScenario && !t.applicable_to.arrival_scenarios) t.applicable_to.arrival_scenarios = at.arrivalScenario;
+    if (at.arrivalScenario && !t.applicable_to.arrival_scenarios)
+      t.applicable_to.arrival_scenarios = at.arrivalScenario;
     if (at.skipIfExisting && !t.applicable_to.skip_if_existing) t.applicable_to.skip_if_existing = at.skipIfExisting;
     if (at.childAgeTrack && !t.applicable_to.child_age_track) t.applicable_to.child_age_track = at.childAgeTrack;
   }
 
   // ── 渲染标记 ──
-  t._urgencyClass = t.urgency === '必修' ? 'required' : (t.urgency === '建议' ? 'suggest' : 'optional');
+  t._urgencyClass = t.urgency === '必修' ? 'required' : t.urgency === '建议' ? 'suggest' : 'optional';
 
   // ── 进度状态 (来自 storage) ──
-  var pe = opts.progressEntry;
+  const pe = opts.progressEntry;
   if (pe) {
     t._completed = pe.status === 'completed' || pe.status === 'skipped';
     t._materialCollected = !!pe.materialCollected;
@@ -112,8 +115,8 @@ function normalizeTask(raw, opts) {
   t.scene_tags = t.scene_tags || [];
   // 本地任务无 scene_tags 时从映射表注入
   if (t.scene_tags.length === 0 && (t._id || t.id)) {
-    var SCENE_TAGS_MAP = require('../data/scene-tags');
-    var tags = SCENE_TAGS_MAP[t._id] || SCENE_TAGS_MAP[t.id] || [];
+    const SCENE_TAGS_MAP = require('../data/scene-tags');
+    const tags = SCENE_TAGS_MAP[t._id] || SCENE_TAGS_MAP[t.id] || [];
     if (tags.length) t.scene_tags = tags;
   }
 

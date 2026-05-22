@@ -1,19 +1,48 @@
 {
   "version": 1,
-  "lines": [{
-    "id": "case-qmas-process",
-    "name": "优才计划",
-    "templateId": "qmas",
-    "pathType": "qmas",
-    "riskLevel": "low",
-    "totalCycle": "7-8年",
-    "status": "active",
-    "source": "manual",
-    "stages": [
-      {"id":"s1","name":"资格评估","phaseId":"phase1","order":0,"status":"completed","unlocked":true,"steps":[{"name":"自评12项准则"},{"name":"确认满足≥6项"}],"completedSteps":[0,1]},
-      {"id":"s2","name":"材料准备","phaseId":"phase2","order":1,"status":"current","unlocked":true,"steps":[{"name":"学历认证"},{"name":"工作证明"},{"name":"收入证明"}],"completedSteps":[0]},
-      {"id":"s3","name":"递交申请","phaseId":"phase3","order":2,"status":"pending","unlocked":false,"steps":[{"name":"在线填表"},{"name":"缴费"}],"completedSteps":[]}
-    ],
-    "currentStage": "材料准备"
-  }]
+  "lines": [
+    {
+      "id": "case-qmas-process",
+      "name": "优才计划",
+      "templateId": "qmas",
+      "pathType": "qmas",
+      "riskLevel": "low",
+      "totalCycle": "7-8年",
+      "status": "active",
+      "source": "manual",
+      "stages": [
+        {
+          "id": "s1",
+          "name": "资格评估",
+          "phaseId": "phase1",
+          "order": 0,
+          "status": "completed",
+          "unlocked": true,
+          "steps": [{ "name": "自评12项准则" }, { "name": "确认满足≥6项" }],
+          "completedSteps": [0, 1]
+        },
+        {
+          "id": "s2",
+          "name": "材料准备",
+          "phaseId": "phase2",
+          "order": 1,
+          "status": "current",
+          "unlocked": true,
+          "steps": [{ "name": "学历认证" }, { "name": "工作证明" }, { "name": "收入证明" }],
+          "completedSteps": [0]
+        },
+        {
+          "id": "s3",
+          "name": "递交申请",
+          "phaseId": "phase3",
+          "order": 2,
+          "status": "pending",
+          "unlocked": false,
+          "steps": [{ "name": "在线填表" }, { "name": "缴费" }],
+          "completedSteps": []
+        }
+      ],
+      "currentStage": "材料准备"
+    }
+  ]
 }

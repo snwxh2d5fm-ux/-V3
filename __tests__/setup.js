@@ -20,13 +20,19 @@ global.wx = {
     if (key === '__mockStorage__') return mockStorage;
     return mockStorage[key] !== undefined ? mockStorage[key] : null;
   }),
-  setStorageSync: jest.fn((key, value) => { mockStorage[key] = value; }),
-  removeStorageSync: jest.fn((key) => { delete mockStorage[key]; }),
-  clearStorageSync: jest.fn(() => { Object.keys(mockStorage).forEach(k => delete mockStorage[k]); }),
+  setStorageSync: jest.fn((key, value) => {
+    mockStorage[key] = value;
+  }),
+  removeStorageSync: jest.fn((key) => {
+    delete mockStorage[key];
+  }),
+  clearStorageSync: jest.fn(() => {
+    Object.keys(mockStorage).forEach((k) => delete mockStorage[k]);
+  }),
   getStorageInfoSync: jest.fn(() => ({
     currentSize: 128,
     limitSize: 10240,
-    keys: Object.keys(mockStorage)
+    keys: Object.keys(mockStorage),
   })),
 
   // -- 交互 --
@@ -49,7 +55,9 @@ global.wx = {
   switchTab: jest.fn(),
 
   // -- 媒体 --
-  previewImage: jest.fn((opts) => { if (opts && opts.success) opts.success(); }),
+  previewImage: jest.fn((opts) => {
+    if (opts && opts.success) opts.success();
+  }),
   chooseImage: jest.fn((opts) => {
     if (opts && opts.success) opts.success({ tempFilePaths: ['/tmp/mock_photo.jpg'] });
   }),
@@ -58,8 +66,12 @@ global.wx = {
   }),
 
   // -- 文档 --
-  openDocument: jest.fn((opts) => { if (opts && opts.success) opts.success(); }),
-  setClipboardData: jest.fn((opts) => { if (opts && opts.success) opts.success(); }),
+  openDocument: jest.fn((opts) => {
+    if (opts && opts.success) opts.success();
+  }),
+  setClipboardData: jest.fn((opts) => {
+    if (opts && opts.success) opts.success();
+  }),
 
   // -- 下拉刷新 --
   stopPullDownRefresh: jest.fn(),
@@ -86,7 +98,7 @@ global.wx = {
     screenHeight: 844,
     windowWidth: 390,
     windowHeight: 844,
-    statusBarHeight: 54
+    statusBarHeight: 54,
   })),
   getNetworkType: jest.fn((opts) => {
     if (opts && opts.success) opts.success({ networkType: 'wifi' });
@@ -94,18 +106,20 @@ global.wx = {
 
   // -- 环境 --
   env: {
-    USER_DATA_PATH: '/tmp/wx_user_data'
+    USER_DATA_PATH: '/tmp/wx_user_data',
   },
 
   // -- 文件系统 --
   getFileSystemManager: jest.fn(() => ({
-    accessSync: jest.fn(() => { throw new Error('not exist'); }),
+    accessSync: jest.fn(() => {
+      throw new Error('not exist');
+    }),
     mkdirSync: jest.fn(),
     readFileSync: jest.fn(() => ''),
     writeFileSync: jest.fn(),
     unlinkSync: jest.fn(),
     readdirSync: jest.fn(() => []),
-    statSync: jest.fn(() => ({ size: 0 }))
+    statSync: jest.fn(() => ({ size: 0 })),
   })),
 
   // -- 云开发 (wx.cloud.*) --
@@ -122,34 +136,36 @@ global.wx = {
         doc: jest.fn(() => ({
           get: jest.fn(() => Promise.resolve({ data: {} })),
           update: jest.fn(() => Promise.resolve({ stats: { updated: 1 } })),
-          set: jest.fn(() => Promise.resolve({}))
+          set: jest.fn(() => Promise.resolve({})),
         })),
         where: jest.fn(() => ({
           get: jest.fn(() => Promise.resolve({ data: [] })),
-          count: jest.fn(() => Promise.resolve({ total: 0 }))
+          count: jest.fn(() => Promise.resolve({ total: 0 })),
         })),
         add: jest.fn(() => Promise.resolve({ _id: 'test-id' })),
         get: jest.fn(() => Promise.resolve({ data: [] })),
-        count: jest.fn(() => Promise.resolve({ total: 0 }))
-      }))
+        count: jest.fn(() => Promise.resolve({ total: 0 })),
+      })),
     })),
     uploadFile: jest.fn(() => Promise.resolve({ fileID: 'cloud://mock-file-id', statusCode: 200 })),
     downloadFile: jest.fn(() => Promise.resolve({ tempFilePath: '/tmp/mock_cloud_download.pdf', statusCode: 200 })),
     deleteFile: jest.fn(() => Promise.resolve({ fileList: [] })),
-    getTempFileURL: jest.fn(() => Promise.resolve({ fileList: [] }))
-  }
+    getTempFileURL: jest.fn(() => Promise.resolve({ fileList: [] })),
+  },
 };
 
 // ============================================================
 // 全局 API (非 wx 命名空间)
 // ============================================================
-global.Page = jest.fn((config) => { global.__lastPageConfig = config; });
+global.Page = jest.fn((config) => {
+  global.__lastPageConfig = config;
+});
 global.App = jest.fn();
 global.getApp = jest.fn(() => ({
   globalData: {
     token: 'test_token',
-    userData: null
-  }
+    userData: null,
+  },
 }));
 global.Component = jest.fn();
 
@@ -170,17 +186,17 @@ global.cloud = {
       doc: jest.fn(() => ({
         get: jest.fn(() => Promise.resolve({ data: {} })),
         update: jest.fn(() => Promise.resolve({ stats: { updated: 1 } })),
-        set: jest.fn(() => Promise.resolve({}))
+        set: jest.fn(() => Promise.resolve({})),
       })),
       where: jest.fn(() => ({
         get: jest.fn(() => Promise.resolve({ data: [] })),
-        count: jest.fn(() => Promise.resolve({ total: 0 }))
+        count: jest.fn(() => Promise.resolve({ total: 0 })),
       })),
       add: jest.fn(() => Promise.resolve({ _id: 'test-id' })),
       get: jest.fn(() => Promise.resolve({ data: [] })),
-      count: jest.fn(() => Promise.resolve({ total: 0 }))
-    }))
-  }))
+      count: jest.fn(() => Promise.resolve({ total: 0 })),
+    })),
+  })),
 };
 
 // ============================================================

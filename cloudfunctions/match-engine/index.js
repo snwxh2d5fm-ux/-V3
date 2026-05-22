@@ -24,11 +24,16 @@ exports.main = async (event, context) => {
 
   try {
     switch (action) {
-      case 'match':           return await matchMaterials(templateId, userDocs);
-      case 'getChecklist':    return await getChecklist(templateId);
-      case 'getDocTypeMap':   return await getDocTypeMap();
-      case 'refreshCache':    return await refreshCache();
-      default:                return { code: 400, msg: '无效操作' };
+      case 'match':
+        return await matchMaterials(templateId, userDocs);
+      case 'getChecklist':
+        return await getChecklist(templateId);
+      case 'getDocTypeMap':
+        return await getDocTypeMap();
+      case 'refreshCache':
+        return await refreshCache();
+      default:
+        return { code: 400, msg: '无效操作' };
     }
   } catch (err) {
     console.error('[match-engine]', err);
@@ -43,8 +48,7 @@ async function _loadTemplateMaterials() {
   const now = Date.now();
   if (_templateCache && now < _cacheExpiry) return _templateCache;
 
-  const result = await db.collection('process_templates')
-    .where({ isActive: true }).limit(100).get();
+  const result = await db.collection('process_templates').where({ isActive: true }).limit(100).get();
 
   const map = {};
   for (const t of result.data) {
@@ -58,7 +62,7 @@ async function _loadTemplateMaterials() {
           } else if (mat.condition) {
             materials.conditional.push({
               type: mat.materialType,
-              condition: mat.condition
+              condition: mat.condition,
             });
           } else {
             materials.required.push(mat.materialType);
@@ -72,7 +76,7 @@ async function _loadTemplateMaterials() {
       templateName: t.templateName,
       required: [...new Set(materials.required)],
       optional: [...new Set(materials.optional)],
-      conditional: materials.conditional
+      conditional: materials.conditional,
     };
   }
 
@@ -88,8 +92,7 @@ async function _loadDocTypeMap() {
   const now = Date.now();
   if (_docTypeMapCache && now < _cacheExpiry) return _docTypeMapCache;
 
-  const result = await db.collection('material_standards')
-    .where({ status: 'active' }).limit(200).get();
+  const result = await db.collection('material_standards').where({ status: 'active' }).limit(200).get();
 
   const map = {};
   for (const m of result.data) {
@@ -134,32 +137,29 @@ async function matchMaterials(templateId, userDocs) {
       type: materialType,
       status: isCovered ? 'matched' : 'missing',
       matchedDocTypes: isCovered
-        ? (userDocs || []).filter(d =>
-            (docTypeMap[d.docType] || []).includes(materialType)
-          ).map(d => d.docType)
-        : []
+        ? (userDocs || []).filter((d) => (docTypeMap[d.docType] || []).includes(materialType)).map((d) => d.docType)
+        : [],
     };
   };
 
   const required = template.required.map(matchItem);
   const optional = template.optional.map(matchItem);
-  const conditional = template.conditional.map(c => ({
+  const conditional = template.conditional.map((c) => ({
     type: c.type,
     condition: c.condition,
     status: covered.has(c.type) ? 'matched' : 'conditional',
     matchedDocTypes: covered.has(c.type)
-      ? (userDocs || []).filter(d =>
-          (docTypeMap[d.docType] || []).includes(c.type)
-        ).map(d => d.docType)
-      : []
+      ? (userDocs || []).filter((d) => (docTypeMap[d.docType] || []).includes(c.type)).map((d) => d.docType)
+      : [],
   }));
 
   const totalRequired = required.length;
-  const matchedRequired = required.filter(r => r.status === 'matched').length;
+  const matchedRequired = required.filter((r) => r.status === 'matched').length;
   const totalAll = totalRequired + optional.length + conditional.length;
-  const matchedAll = matchedRequired
-    + optional.filter(o => o.status === 'matched').length
-    + conditional.filter(c => c.status === 'matched').length;
+  const matchedAll =
+    matchedRequired +
+    optional.filter((o) => o.status === 'matched').length +
+    conditional.filter((c) => c.status === 'matched').length;
 
   return {
     code: 0,
@@ -176,9 +176,9 @@ async function matchMaterials(templateId, userDocs) {
         overallTotal: totalAll,
         overallMatched: matchedAll,
         completionRate: totalAll > 0 ? Math.round((matchedAll / totalAll) * 100) : 0,
-        isReady: matchedRequired === totalRequired
-      }
-    }
+        isReady: matchedRequired === totalRequired,
+      },
+    },
   };
 }
 
@@ -195,8 +195,7 @@ async function getChecklist(templateId) {
   }
 
   // 从 material_standards 获取材料标签
-  const standardsResult = await db.collection('material_standards')
-    .where({ status: "active" }).limit(200).get();
+  const standardsResult = await db.collection('material_standards').where({ status: 'active' }).limit(200).get();
   const labelMap = {};
   for (const m of standardsResult.data) {
     labelMap[m.materialType] = m.materialName || m.materialType;
@@ -209,14 +208,14 @@ async function getChecklist(templateId) {
     data: {
       templateId,
       templateName: template.templateName,
-      required: template.required.map(t => ({ type: t, label: label(t) })),
-      optional: template.optional.map(t => ({ type: t, label: label(t) })),
-      conditional: template.conditional.map(c => ({
+      required: template.required.map((t) => ({ type: t, label: label(t) })),
+      optional: template.optional.map((t) => ({ type: t, label: label(t) })),
+      conditional: template.conditional.map((c) => ({
         type: c.type,
         condition: c.condition,
-        label: label(c.type)
-      }))
-    }
+        label: label(c.type),
+      })),
+    },
   };
 }
 
@@ -228,8 +227,7 @@ async function getDocTypeMap() {
   const docTypeMap = await _loadDocTypeMap();
 
   // 从 material_standards 获取中文名
-  const standardsResult = await db.collection('material_standards')
-    .where({ status: "active" }).limit(200).get();
+  const standardsResult = await db.collection('material_standards').where({ status: 'active' }).limit(200).get();
 
   const labelMap = {};
   for (const m of standardsResult.data) {
@@ -238,9 +236,9 @@ async function getDocTypeMap() {
 
   const map = {};
   for (const [docType, materialTypes] of Object.entries(docTypeMap)) {
-    map[docType] = materialTypes.map(mt => ({
+    map[docType] = materialTypes.map((mt) => ({
       type: mt,
-      label: labelMap[mt] || mt
+      label: labelMap[mt] || mt,
     }));
   }
 

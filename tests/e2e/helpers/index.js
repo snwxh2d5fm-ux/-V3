@@ -3,7 +3,7 @@
  *
  * 提供页面导航、元素查询、断言、截图等常用操作的封装。
  * 基于 miniprogram-automator v0.12 API。
- * 
+ *
  * 关键 API 约定 (v0.12 vs 旧版):
  *   - MiniProgram 没有 .page 属性 → 必须 currentPage() 获取 Page 实例
  *   - Page: waitFor(), $(), $$(), data(), setData(), callMethod(), size()
@@ -30,7 +30,7 @@ async function safeWait(mp, ms) {
   if (page) {
     await page.waitFor(ms);
   } else {
-    await new Promise(r => setTimeout(r, ms));
+    await new Promise((r) => setTimeout(r, ms));
   }
 }
 
@@ -62,7 +62,7 @@ async function switchTab(mp, url, retries = 3) {
         });
       }, url);
       // 等待页面稳定后验证 currentPage 可用
-      await new Promise(r => setTimeout(r, 2000 + Math.random() * 1000));
+      await new Promise((r) => setTimeout(r, 2000 + Math.random() * 1000));
       const page = await mp.currentPage();
       if (page) return page;
     } catch (e) {
@@ -70,14 +70,16 @@ async function switchTab(mp, url, retries = 3) {
         // 最后一次失败：回退到 mp.switchTab() 做最终尝试
         try {
           await mp.switchTab(url);
-          await new Promise(r => setTimeout(r, 1500));
+          await new Promise((r) => setTimeout(r, 1500));
           return await mp.currentPage();
         } catch (fallbackErr) {
-          throw new Error(`switchTab failed after ${retries} evaluate retries + fallback: ${fallbackErr.message} (last evaluate: ${e.message})`);
+          throw new Error(
+            `switchTab failed after ${retries} evaluate retries + fallback: ${fallbackErr.message} (last evaluate: ${e.message})`,
+          );
         }
       }
       // 非最后一次：等 2-3s 再重试
-      await new Promise(r => setTimeout(r, 2000 + Math.random() * 1000));
+      await new Promise((r) => setTimeout(r, 2000 + Math.random() * 1000));
     }
   }
 }
@@ -194,7 +196,7 @@ async function expectVisible(mp, selector, timeout = 5000) {
       expect(el).toBeTruthy();
       return el;
     }
-    await new Promise(r => setTimeout(r, 300));
+    await new Promise((r) => setTimeout(r, 300));
   }
   throw new Error(`expectVisible timeout: ${selector}`);
 }
@@ -213,7 +215,7 @@ async function expectNotVisible(mp, selector, timeout = 3000) {
     if (el) {
       throw new Error(`Element ${selector} should not be visible`);
     }
-    await new Promise(r => setTimeout(r, 300));
+    await new Promise((r) => setTimeout(r, 300));
   }
   expect(true).toBe(true);
 }
@@ -262,8 +264,15 @@ async function clearStorage(mp) {
 
 /** Mock 登录状态 — 小 evaluate 分批写入，每 key 几十字节不触发断连 */
 async function mockLogin(mp) {
-  await mp.evaluate(function (token) { wx.setStorageSync('auth_token', token); }, 'e2e-test-token-c53f7a91');
-  await mp.evaluate(function (profile) { wx.setStorageSync('user_profile', profile); }, { openid: 'e2e-test-openid', nickname: 'E2E测试用户', avatarUrl: '' });
+  await mp.evaluate(function (token) {
+    wx.setStorageSync('auth_token', token);
+  }, 'e2e-test-token-c53f7a91');
+  await mp.evaluate(
+    function (profile) {
+      wx.setStorageSync('user_profile', profile);
+    },
+    { openid: 'e2e-test-openid', nickname: 'E2E测试用户', avatarUrl: '' },
+  );
 }
 
 /**
@@ -272,13 +281,13 @@ async function mockLogin(mp) {
  * 若无 auth_token 缓存 (新机器/清缓存后)，自动兜底调用 mockLogin 而非抛错。
  */
 async function initTestState(mp) {
-  var hasToken = await mp.evaluate(function() {
+  let hasToken = await mp.evaluate(function () {
     return wx.getStorageSync('auth_token');
   });
   if (!hasToken) {
     // 新机器无缓存 → 先 mock 登录再继续 (麒麟/玄武兜底)
     await mockLogin(mp);
-    hasToken = await mp.evaluate(function() {
+    hasToken = await mp.evaluate(function () {
       return wx.getStorageSync('auth_token');
     });
     if (!hasToken) {
@@ -289,17 +298,20 @@ async function initTestState(mp) {
 
 /** 轻量清空 storage + 恢复 token (用于空数据/异常场景测试) */
 async function lightClearStorage(mp) {
-  await mp.evaluate(function() {
+  await mp.evaluate(function () {
     wx.clearStorageSync();
   });
 }
 
 /** 调用云函数 (通过 evaluate 调用 wx.cloud.callFunction) */
 async function callFunction(mp, name, data = {}) {
-  return await mp.evaluate(({ name, data }) => {
-    // @ts-ignore
-    return wx.cloud.callFunction({ name, data });
-  }, { name, data });
+  return await mp.evaluate(
+    ({ name, data }) => {
+      // @ts-ignore
+      return wx.cloud.callFunction({ name, data });
+    },
+    { name, data },
+  );
 }
 
 /** 获取当前页面 data */
@@ -353,7 +365,7 @@ async function verifyAllTabs(mp) {
  */
 async function verifyAllPages(mp, appJson) {
   const results = { passed: [], failed: [], skipped: [] };
-  const tabPages = (appJson.tabBar?.list || []).map(t => t.pagePath);
+  const tabPages = (appJson.tabBar?.list || []).map((t) => t.pagePath);
   const pages = appJson.pages || [];
 
   for (const pagePath of pages) {
@@ -380,7 +392,7 @@ module.exports = {
   switchTab,
   navigateBack,
   reLaunch,
-  waitFor: safeWait,    // 等待 ms
+  waitFor: safeWait, // 等待 ms
 
   // 元素
   findElement,

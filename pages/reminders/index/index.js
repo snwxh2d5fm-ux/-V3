@@ -21,29 +21,29 @@ Page({
     stageEvents: [],
 
     // 提醒数据
-    allReminders: [],        // 全部提醒
-    activeReminders: [],     // 活跃提醒(未完成)
-    completedReminders: [],  // 已完成
-    chainGroups: [],         // 规则链分组(时间线用)
-    allChainGroups: [],      // 含已完成项
-    displayChainGroups: [],  // 当前显示用(受筛选影响)
-    collapsedChains: {},     // 折叠的规则链id
+    allReminders: [], // 全部提醒
+    activeReminders: [], // 活跃提醒(未完成)
+    completedReminders: [], // 已完成
+    chainGroups: [], // 规则链分组(时间线用)
+    allChainGroups: [], // 含已完成项
+    displayChainGroups: [], // 当前显示用(受筛选影响)
+    collapsedChains: {}, // 折叠的规则链id
 
     // 筛选
-    filterStatus: 'all',     // 'all' | 'active' | 'completed'
-    filterType: 'all',       // 'all' | 'rule_engine' | 'ocr' | 'manual'
+    filterStatus: 'all', // 'all' | 'active' | 'completed'
+    filterType: 'all', // 'all' | 'rule_engine' | 'ocr' | 'manual'
 
     // 统计数据
     stats: {
       total: 0,
       active: 0,
       completed: 0,
-      urgent: 0               // 紧急(3天内)
+      urgent: 0, // 紧急(3天内)
     },
 
     // 会员
     membershipLevel: 'free',
-    isPro: false,             // 付费会员标识
+    isPro: false, // 付费会员标识
     freeLimitReached: false,
 
     // 封存提醒
@@ -55,8 +55,8 @@ Page({
     showArchivedEmptyGuide: false,
 
     loading: true,
-    showAddMenu: false,       // 底部添加菜单
-    generatingPrep: false     // 逆向时间轴生成中
+    showAddMenu: false, // 底部添加菜单
+    generatingPrep: false, // 逆向时间轴生成中
   },
 
   onLoad() {
@@ -64,157 +64,260 @@ Page({
   },
 
   onShow() {
-    try { this.setData({ stageSteps: getGlobalStages(), stageProgress: Math.min(((getActiveStageIndex() + 1) / 7) * 100, 100) }); } catch(e) { this.setData({ stageProgress: 14 }); }
-    this.loadReminders().then((function() {
-      this.checkAutoGenerate();
-      this.checkMilestoneReminders();
-    }).bind(this));
+    try {
+      this.setData({
+        stageSteps: getGlobalStages(),
+        stageProgress: Math.min(((getActiveStageIndex() + 1) / 7) * 100, 100),
+      });
+    } catch (e) {
+      this.setData({ stageProgress: 14 });
+    }
+    this.loadReminders().then(
+      function () {
+        this.checkAutoGenerate();
+        this.checkMilestoneReminders();
+      }.bind(this),
+    );
     this.refreshMembership();
   },
 
   // ★ 里程碑事件触发对应提醒链
-  checkMilestoneReminders: function() {
-    var events = wx.getStorageSync('__milestone_events__') || [];
-    var lastHandled = wx.getStorageSync('__milestone_handled__') || 0;
-    var app = getApp();
-    var selectedPath = (app && app.globalData && app.globalData.selectedPath) || wx.getStorageSync('__selected_path__') || '';
+  checkMilestoneReminders: function () {
+    const events = wx.getStorageSync('__milestone_events__') || [];
+    const lastHandled = wx.getStorageSync('__milestone_handled__') || 0;
+    const app = getApp();
+    const selectedPath =
+      (app && app.globalData && app.globalData.selectedPath) || wx.getStorageSync('__selected_path__') || '';
 
-    var newEvents = events.filter(function(e) { return e.ts > lastHandled; });
+    const newEvents = events.filter(function (e) {
+      return e.ts > lastHandled;
+    });
     if (!newEvents.length || !selectedPath) return;
 
-    var STAGE_CHAINS = {
+    const STAGE_CHAINS = {
       preparation_done: [
-        { title: '路径确认凭证妥善保存', desc: '将资格评估结果截图/确认邮件存档至证件夹', deadlineOffset: 1, type: 'rule_engine' },
-        { title: '开始收集申请材料', desc: '按材料清单逐项准备：身份证明、学历证明、工作证明、资产证明、推荐信', deadlineOffset: 7, type: 'rule_engine' },
-        { title: '办理港澳通行证签注', desc: '确保护照有效期>2年，办理逗留D签注', deadlineOffset: 14, type: 'rule_engine' }
+        {
+          title: '路径确认凭证妥善保存',
+          desc: '将资格评估结果截图/确认邮件存档至证件夹',
+          deadlineOffset: 1,
+          type: 'rule_engine',
+        },
+        {
+          title: '开始收集申请材料',
+          desc: '按材料清单逐项准备：身份证明、学历证明、工作证明、资产证明、推荐信',
+          deadlineOffset: 7,
+          type: 'rule_engine',
+        },
+        {
+          title: '办理港澳通行证签注',
+          desc: '确保护照有效期>2年，办理逗留D签注',
+          deadlineOffset: 14,
+          type: 'rule_engine',
+        },
       ],
       application_submitted: [
-        { title: '确认递交回执已存档', desc: '将入境处确认邮件/递交回执保存至证件夹', deadlineOffset: 1, type: 'rule_engine' },
-        { title: '定期查看申请状态', desc: '登录入境处官网查询申请进度，关注补件通知', deadlineOffset: 7, type: 'rule_engine' },
-        { title: '准备入境处可能要求的补件', desc: '整理补充材料：最新银行流水、在职证明更新、无犯罪记录', deadlineOffset: 30, type: 'rule_engine' }
+        {
+          title: '确认递交回执已存档',
+          desc: '将入境处确认邮件/递交回执保存至证件夹',
+          deadlineOffset: 1,
+          type: 'rule_engine',
+        },
+        {
+          title: '定期查看申请状态',
+          desc: '登录入境处官网查询申请进度，关注补件通知',
+          deadlineOffset: 7,
+          type: 'rule_engine',
+        },
+        {
+          title: '准备入境处可能要求的补件',
+          desc: '整理补充材料：最新银行流水、在职证明更新、无犯罪记录',
+          deadlineOffset: 30,
+          type: 'rule_engine',
+        },
       ],
       awaiting_approval: [
         { title: '保存受理回执', desc: '将入境处受理回执存档至证件夹', deadlineOffset: 1, type: 'rule_engine' },
-        { title: '关注甄选/审批结果', desc: '优才每季度公布甄选结果，高才通1-4周出结果', deadlineOffset: 14, type: 'rule_engine' },
-        { title: '准备赴港安排', desc: '开始了解香港租房市场、学校和银行开户流程', deadlineOffset: 30, type: 'rule_engine' }
+        {
+          title: '关注甄选/审批结果',
+          desc: '优才每季度公布甄选结果，高才通1-4周出结果',
+          deadlineOffset: 14,
+          type: 'rule_engine',
+        },
+        {
+          title: '准备赴港安排',
+          desc: '开始了解香港租房市场、学校和银行开户流程',
+          deadlineOffset: 30,
+          type: 'rule_engine',
+        },
       ],
       approval_activated: [
-        { title: '签证/进入许可已存档', desc: '将批准信/签证/进入许可保存至证件夹', deadlineOffset: 1, type: 'rule_engine' },
-        { title: '预约办理香港身份证', desc: '入境后30天内预约人事登记处办理香港身份证', deadlineOffset: 3, type: 'rule_engine' },
+        {
+          title: '签证/进入许可已存档',
+          desc: '将批准信/签证/进入许可保存至证件夹',
+          deadlineOffset: 1,
+          type: 'rule_engine',
+        },
+        {
+          title: '预约办理香港身份证',
+          desc: '入境后30天内预约人事登记处办理香港身份证',
+          deadlineOffset: 3,
+          type: 'rule_engine',
+        },
         { title: '激活e-Visa', desc: '在批准信规定期限内入境激活电子签证', deadlineOffset: 7, type: 'rule_engine' },
-        { title: '办理银行户口及MPF', desc: '开立香港银行户口，雇主登记强积金', deadlineOffset: 14, type: 'rule_engine' }
-      ]
+        {
+          title: '办理银行户口及MPF',
+          desc: '开立香港银行户口，雇主登记强积金',
+          deadlineOffset: 14,
+          type: 'rule_engine',
+        },
+      ],
     };
 
-    var today = new Date(); today.setHours(0,0,0,0);
-    var that = this;
+    const today = new Date();
+    today.setHours(0, 0, 0, 0);
+    const that = this;
 
-    newEvents.forEach(function(evt) {
-      var chain = STAGE_CHAINS[evt.event];
+    newEvents.forEach(function (evt) {
+      const chain = STAGE_CHAINS[evt.event];
       if (!chain) return;
-      chain.forEach(function(r, idx) {
-        var dd = new Date(today); dd.setDate(dd.getDate() + r.deadlineOffset);
-        var ds = dd.getFullYear() + '-' + String(dd.getMonth()+1).padStart(2,'0') + '-' + String(dd.getDate()).padStart(2,'0');
-        var id = 'MS_' + evt.event + '_' + idx + '_' + Date.now();
+      chain.forEach(function (r, idx) {
+        const dd = new Date(today);
+        dd.setDate(dd.getDate() + r.deadlineOffset);
+        const ds =
+          dd.getFullYear() +
+          '-' +
+          String(dd.getMonth() + 1).padStart(2, '0') +
+          '-' +
+          String(dd.getDate()).padStart(2, '0');
+        const id = 'MS_' + evt.event + '_' + idx + '_' + Date.now();
         // 防重复
-        var existing = getAllReminders();
-        if (existing.some(function(x) { return x.id === id; })) return;
+        const existing = getAllReminders();
+        if (
+          existing.some(function (x) {
+            return x.id === id;
+          })
+        )
+          return;
         saveReminder({
-          id: id, title: r.title, deadline: ds, description: selectedPath + ' · ' + r.desc,
-          type: r.type, confidence: 'A', status: 'active', offsetDays: r.deadlineOffset,
-          pathway: selectedPath, chainId: evt.event, chainOrder: idx,
-          chainLabel: evt.event === 'preparation_done' ? '材料准备链' :
-                     evt.event === 'application_submitted' ? '申请递交链' :
-                     evt.event === 'awaiting_approval' ? '审批等待链' : '获批激活链',
-          createdAt: new Date().toISOString()
+          id: id,
+          title: r.title,
+          deadline: ds,
+          description: selectedPath + ' · ' + r.desc,
+          type: r.type,
+          confidence: 'A',
+          status: 'active',
+          offsetDays: r.deadlineOffset,
+          pathway: selectedPath,
+          chainId: evt.event,
+          chainOrder: idx,
+          chainLabel:
+            evt.event === 'preparation_done'
+              ? '材料准备链'
+              : evt.event === 'application_submitted'
+                ? '申请递交链'
+                : evt.event === 'awaiting_approval'
+                  ? '审批等待链'
+                  : '获批激活链',
+          createdAt: new Date().toISOString(),
         });
       });
     });
 
     // 记录已处理
-    wx.setStorageSync('__milestone_handled__', newEvents[newEvents.length-1].ts);
+    wx.setStorageSync('__milestone_handled__', newEvents[newEvents.length - 1].ts);
     that.loadReminders();
   },
 
   // Bug #9: 选择路径后自动检测是否需要生成提醒
   checkAutoGenerate() {
-    var that = this;
-    var app = getApp();
-    var session = wx.getStorageSync('__session__') || {};
-    var selectedPath = (app && app.globalData && app.globalData.selectedPath) || session.selectedPath || '';
+    const that = this;
+    const app = getApp();
+    const session = wx.getStorageSync('__session__') || {};
+    const selectedPath = (app && app.globalData && app.globalData.selectedPath) || session.selectedPath || '';
 
     this.setData({ hasPath: !!selectedPath });
     if (!selectedPath) return; // 未选路径
 
     // 检查是否已有提醒
-    var allReminders = getAllReminders();
+    const allReminders = getAllReminders();
     if (allReminders.length > 0) return; // 已有提醒，不打扰
 
     // 检查是否已询问过（避免重复弹窗）
-    var askedKey = '__auto_reminder_asked_' + selectedPath;
+    const askedKey = '__auto_reminder_asked_' + selectedPath;
     if (wx.getStorageSync(askedKey)) return;
 
-    var pathNames = {
-      'qmas': '优才计划', 'ttps_a': '高才通A类', 'ttps_b': '高才通B类', 'ttps_c': '高才通C类',
-      'asmpt': '专才计划', 'student_iang': '学生→IANG', 'dependent': '受养人',
-      'cies': 'CIES投资类身份规划', 'permanent': '永居申请'
+    const pathNames = {
+      qmas: '优才计划',
+      ttps_a: '高才通A类',
+      ttps_b: '高才通B类',
+      ttps_c: '高才通C类',
+      asmpt: '专才计划',
+      student_iang: '学生→IANG',
+      dependent: '受养人',
+      cies: 'CIES投资类身份规划',
+      permanent: '永居申请',
     };
-    var pathName = pathNames[selectedPath] || selectedPath;
+    const pathName = pathNames[selectedPath] || selectedPath;
 
     wx.showModal({
       title: '检测到路径选择',
-      content: '你已选择「' + pathName + '」路径。是否基于该路径自动生成关键日期提醒？\n\n包含：准备材料、12项准则自评、递交申请等关键节点。',
+      content:
+        '你已选择「' +
+        pathName +
+        '」路径。是否基于该路径自动生成关键日期提醒？\n\n包含：准备材料、12项准则自评、递交申请等关键节点。',
       confirmText: '立即生成',
       cancelText: '稍后再说',
-      success: function(res) {
+      success: function (res) {
         if (res.confirm) {
           that.doAutoGenerate(selectedPath, pathName);
         }
         wx.setStorageSync(askedKey, true);
-      }
+      },
     });
   },
 
   // Bug #9: 执行自动生成 — 未申请用户基于详细材料清单生成全套项目管理节点
-  doAutoGenerate: function(path, pathName) {
-    var that = this;
+  doAutoGenerate: function (path, pathName) {
+    const that = this;
     if (this._generating) return;
-    var existing = getAllReminders();
-    var hasTimeline = existing.some(function(r) { return r.pathway === path; });
+    const existing = getAllReminders();
+    const hasTimeline = existing.some(function (r) {
+      return r.pathway === path;
+    });
     if (hasTimeline) {
       wx.showToast({ title: '该路径提醒已存在', icon: 'none' });
       return;
     }
     this._generating = true;
 
-    var app = getApp();
-    var session = wx.getStorageSync('__session__') || {};
-    var userStatus = (app && app.globalData && app.globalData.userStatus) || session.userStatus || '';
+    const app = getApp();
+    const session = wx.getStorageSync('__session__') || {};
+    const userStatus = (app && app.globalData && app.globalData.userStatus) || session.userStatus || '';
 
-    var today = new Date();
+    const today = new Date();
     today.setHours(0, 0, 0, 0);
-    var count = 0;
+    let count = 0;
 
     // 未申请用户：从详细模板生成全套材料准备节点
     if (userStatus === 'unapplied' || !userStatus) {
-      var detailTmpl = require('../../../data/rules/timeline-templates');
+      const detailTmpl = require('../../../data/rules/timeline-templates');
 
       // 累计偏移天数基值：Phase1=0天, Phase2=7天(自评完成后), Phase3=60天(材料准备完成后)
-      var phaseDetailMap = [
-        { nodes: detailTmpl.QMAS_PHASE1 || [], baseOffset: 0,  label: '自评阶段' },
-        { nodes: detailTmpl.QMAS_PHASE2 || [], baseOffset: 7,  label: '材料准备' },
-        { nodes: detailTmpl.QMAS_PHASE3 || [], baseOffset: 55, label: '线上申请' }
+      const phaseDetailMap = [
+        { nodes: detailTmpl.QMAS_PHASE1 || [], baseOffset: 0, label: '自评阶段' },
+        { nodes: detailTmpl.QMAS_PHASE2 || [], baseOffset: 7, label: '材料准备' },
+        { nodes: detailTmpl.QMAS_PHASE3 || [], baseOffset: 55, label: '线上申请' },
       ];
 
-      phaseDetailMap.forEach(function(phase) {
-        phase.nodes.forEach(function(n) {
-          var offsetDays = phase.baseOffset + (typeof n.timeLogic === 'object' ? (n.timeLogic.offsetDays || 0) : 0);
-          var date = new Date(today);
+      phaseDetailMap.forEach(function (phase) {
+        phase.nodes.forEach(function (n) {
+          const offsetDays = phase.baseOffset + (typeof n.timeLogic === 'object' ? n.timeLogic.offsetDays || 0 : 0);
+          const date = new Date(today);
           date.setDate(date.getDate() + Math.max(0, offsetDays));
-          var y = date.getFullYear();
-          var m = date.getMonth() + 1;
-          var d = date.getDate();
-          var ds = y + '-' + (m < 10 ? '0' + m : m) + '-' + (d < 10 ? '0' + d : d);
+          const y = date.getFullYear();
+          const m = date.getMonth() + 1;
+          const d = date.getDate();
+          const ds = y + '-' + (m < 10 ? '0' + m : m) + '-' + (d < 10 ? '0' + d : d);
 
           saveReminder({
             id: 'DETAIL_' + path + '_' + n.nodeId + '_' + Date.now(),
@@ -223,37 +326,41 @@ Page({
             description: (pathName || '') + ' · ' + phase.label + '\n' + (n.actionDescription || ''),
             type: 'rule_engine',
             confidence: 'A',
-            linkedDocIds: (n.triggerMaterials || []).map(function(m) { return m.materialType; }),
+            linkedDocIds: (n.triggerMaterials || []).map(function (m) {
+              return m.materialType;
+            }),
             status: 'active',
             offsetDays: offsetDays,
             pathway: path,
-            createdAt: new Date().toISOString()
+            createdAt: new Date().toISOString(),
           });
           count++;
         });
       });
     } else {
       // 已申请用户：使用宏观时间线
-      var MACRO = require('../../../data/timeline-templates').TIMELINE_TEMPLATES;
-      var template = MACRO[path];
+      const MACRO = require('../../../data/timeline-templates').TIMELINE_TEMPLATES;
+      const template = MACRO[path];
       if (!template) {
         this._generating = false;
         wx.showToast({ title: '暂无该路径的时间线模板', icon: 'none' });
         return;
       }
-      var minOffset = 0;
-      template.nodes.forEach(function(n) { if (n.offsetDays < minOffset) minOffset = n.offsetDays; });
-      var shiftDays = minOffset < 0 ? Math.abs(minOffset) : 0;
+      let minOffset = 0;
+      template.nodes.forEach(function (n) {
+        if (n.offsetDays < minOffset) minOffset = n.offsetDays;
+      });
+      const shiftDays = minOffset < 0 ? Math.abs(minOffset) : 0;
 
-      var iconMap = { milestone: '✅', deadline: '📅', renewal: '🔄', pr: '🏁', material: '📋' };
-      template.nodes.forEach(function(node) {
+      const iconMap = { milestone: '✅', deadline: '📅', renewal: '🔄', pr: '🏁', material: '📋' };
+      template.nodes.forEach(function (node) {
         if (node.type === 'renewal' || node.type === 'pr') return;
-        var date = new Date(today);
+        const date = new Date(today);
         date.setDate(date.getDate() + (node.offsetDays || 0) + shiftDays);
-        var y = date.getFullYear();
-        var m = date.getMonth() + 1;
-        var d = date.getDate();
-        var ds = y + '-' + (m < 10 ? '0' + m : m) + '-' + (d < 10 ? '0' + d : d);
+        const y = date.getFullYear();
+        const m = date.getMonth() + 1;
+        const d = date.getDate();
+        const ds = y + '-' + (m < 10 ? '0' + m : m) + '-' + (d < 10 ? '0' + d : d);
         saveReminder({
           id: 'TL_' + path + '_' + node.id + '_' + Date.now(),
           title: node.label,
@@ -261,11 +368,11 @@ Page({
           description: (pathName || '') + ' · ' + (node.type || 'milestone') + '\n' + (node.desc || ''),
           type: 'rule_engine',
           confidence: 'B',
-          linkedDocIds: (node.materials || []),
+          linkedDocIds: node.materials || [],
           status: 'active',
           offsetDays: (node.offsetDays || 0) + shiftDays,
           pathway: path,
-          createdAt: new Date().toISOString()
+          createdAt: new Date().toISOString(),
         });
         count++;
       });
@@ -292,19 +399,26 @@ Page({
     this.setData({ loading: true });
 
     // ★ 读取当前流程阶段，过滤提醒链
-    var processStage = parseInt(wx.getStorageSync('__process_stage__')) || 0;
-    var stageEvents = wx.getStorageSync('__milestone_events__') || [];
-    var stageLabels = ['资格评估', '材料准备', '线上申请', '等待获批', '获批激活', '抵港生活', '永居'];
-    this.setData({ currentStage: processStage, currentStageLabel: stageLabels[processStage] || '', stageEvents: stageEvents });
+    const processStage = parseInt(wx.getStorageSync('__process_stage__')) || 0;
+    const stageEvents = wx.getStorageSync('__milestone_events__') || [];
+    const stageLabels = ['资格评估', '材料准备', '线上申请', '等待获批', '获批激活', '抵港生活', '永居'];
+    this.setData({
+      currentStage: processStage,
+      currentStageLabel: stageLabels[processStage] || '',
+      stageEvents: stageEvents,
+    });
 
-    var session = wx.getStorageSync('__session__') || {};
+    const session = wx.getStorageSync('__session__') || {};
     let reminders = getAllReminders();
     // 去重：按pathway+title去重(修复双击生成导致重复)
-    var deduped = [];
-    var seenRem = {};
-    reminders.forEach(function(r) {
-      var key = (r.pathway || '') + '||' + (r.title || '');
-      if (!seenRem[key]) { seenRem[key] = true; deduped.push(r); }
+    const deduped = [];
+    const seenRem = {};
+    reminders.forEach(function (r) {
+      const key = (r.pathway || '') + '||' + (r.title || '');
+      if (!seenRem[key]) {
+        seenRem[key] = true;
+        deduped.push(r);
+      }
     });
     if (deduped.length < reminders.length) {
       reminders = deduped;
@@ -316,13 +430,13 @@ Page({
       try {
         const res = await wx.cloud.callFunction({
           name: 'reminder-engine',
-          data: { action: 'list' }
+          data: { action: 'list' },
         });
         if (res.result && res.result.reminders) {
           const map = new Map();
-          reminders.forEach(r => map.set(r.id, r));
-          res.result.reminders.forEach(r => {
-            if (!map.has(r.id) || (r.updatedAt > (map.get(r.id).updatedAt || 0))) {
+          reminders.forEach((r) => map.set(r.id, r));
+          res.result.reminders.forEach((r) => {
+            if (!map.has(r.id) || r.updatedAt > (map.get(r.id).updatedAt || 0)) {
               map.set(r.id, r);
             }
           });
@@ -330,30 +444,32 @@ Page({
           saveReminders(reminders);
         }
       } catch (e) {
-        console.log('[提醒器] 云端同步失败，使用本地数据');
+        console.debug('[提醒器] 云端同步失败，使用本地数据');
       }
     }
 
     // 动态时间线：未完成节点的日期随今天漂移，直到前一个节点完成为止
-    var todayDate = new Date();
+    const todayDate = new Date();
     todayDate.setHours(0, 0, 0, 0);
-    var tlReminders = reminders.filter(function(r) { return r.offsetDays !== undefined; });
+    const tlReminders = reminders.filter(function (r) {
+      return r.offsetDays !== undefined;
+    });
     if (tlReminders.length > 0) {
       // 找到第一个已完成的节点（最低offsetDays中status为completed的）
-      var firstDoneOffset = Infinity;
-      tlReminders.forEach(function(r) {
+      let firstDoneOffset = Infinity;
+      tlReminders.forEach(function (r) {
         if (r.status === 'completed' && r.offsetDays < firstDoneOffset) {
           firstDoneOffset = r.offsetDays;
         }
       });
       // 未完成的节点：如果其offsetDays < firstDoneOffset，重新计算deadline
-      tlReminders.forEach(function(r) {
+      tlReminders.forEach(function (r) {
         if (r.status !== 'completed' && r.offsetDays < firstDoneOffset) {
-          var newDate = new Date(todayDate);
+          const newDate = new Date(todayDate);
           newDate.setDate(newDate.getDate() + r.offsetDays);
-          var y = newDate.getFullYear();
-          var m = newDate.getMonth() + 1;
-          var d = newDate.getDate();
+          const y = newDate.getFullYear();
+          const m = newDate.getMonth() + 1;
+          const d = newDate.getDate();
           r.deadline = y + '-' + (m < 10 ? '0' + m : m) + '-' + (d < 10 ? '0' + d : d);
           r.updatedAt = new Date().toISOString();
         }
@@ -362,35 +478,41 @@ Page({
 
     // 格式化
     const now = Date.now();
-    var formatted = reminders.map(r => this.formatReminder(r));
+    let formatted = reminders.map((r) => this.formatReminder(r));
 
     // 按当前路径过滤: 有pathway的提醒只显示当前路径的
-    var currentPath = app.globalData.selectedPath || session.selectedPath || '';
+    const currentPath = app.globalData.selectedPath || session.selectedPath || '';
     if (currentPath) {
-      formatted = formatted.filter(function(r) {
+      formatted = formatted.filter(function (r) {
         return !r.pathway || r.pathway === currentPath || r.status === 'archived' || r.status === 'soft_archived';
       });
     }
 
     // 提取封存提醒到独立列表
-    var archivedReminders = formatted.filter(function(r) { return r.status === 'archived'; });
-    var softArchivedReminders = formatted.filter(function(r) { return r.status === 'soft_archived'; });
-    formatted = formatted.filter(function(r) { return r.status !== 'archived' && r.status !== 'soft_archived'; });
+    const archivedReminders = formatted.filter(function (r) {
+      return r.status === 'archived';
+    });
+    const softArchivedReminders = formatted.filter(function (r) {
+      return r.status === 'soft_archived';
+    });
+    formatted = formatted.filter(function (r) {
+      return r.status !== 'archived' && r.status !== 'soft_archived';
+    });
     this.setData({ archivedCount: archivedReminders.length, softArchivedCount: softArchivedReminders.length });
 
     // 空状态引导：当所有提醒都被封存时
-    var showArchivedEmptyGuide = false;
+    let showArchivedEmptyGuide = false;
     if (formatted.length === 0 && (archivedReminders.length > 0 || softArchivedReminders.length > 0)) {
       showArchivedEmptyGuide = true;
     }
 
     // 分类
     const activeReminders = formatted
-      .filter(r => r.status !== 'completed' && r.status !== 'ignored')
+      .filter((r) => r.status !== 'completed' && r.status !== 'ignored')
       .sort((a, b) => new Date(a.deadline) - new Date(b.deadline));
 
     const completedReminders = formatted
-      .filter(r => r.status === 'completed')
+      .filter((r) => r.status === 'completed')
       .sort((a, b) => new Date(b.completedAt || 0) - new Date(a.completedAt || 0));
 
     // 时间线: 按规则链分组（含已完成项，用于"全部"视图）
@@ -402,7 +524,7 @@ Page({
       total: formatted.length,
       active: activeReminders.length,
       completed: completedReminders.length,
-      urgent: activeReminders.filter(r => r.countdownDays > 0 && r.countdownDays <= 3).length
+      urgent: activeReminders.filter((r) => r.countdownDays > 0 && r.countdownDays <= 3).length,
     };
 
     // 免费用户限制
@@ -420,7 +542,7 @@ Page({
       displayChainGroups: this.data.filterStatus === 'all' ? allChainGroups : chainGroups,
       stats,
       freeLimitReached,
-      loading: false
+      loading: false,
     });
   },
 
@@ -434,7 +556,7 @@ Page({
     const typeLabels = {
       rule_engine: { text: '规则引擎', cls: 'tag-info' },
       ocr: { text: 'OCR识别', cls: 'tag-warning' },
-      manual: { text: '手动添加', cls: 'tag-muted' }
+      manual: { text: '手动添加', cls: 'tag-muted' },
     };
     const typeInfo = typeLabels[r.type] || typeLabels.manual;
 
@@ -443,7 +565,7 @@ Page({
       active: priority === 'urgent' ? 'card--urgent' : priority === 'warning' ? 'card--warning' : 'card--success',
       completed: '',
       deferred: 'card--highlight',
-      ignored: ''
+      ignored: '',
     };
 
     return {
@@ -462,7 +584,7 @@ Page({
       typeLabel: typeInfo.text,
       typeCls: typeInfo.cls,
       deadlineFormatted: formatDate(r.deadline, 'CN'),
-      isLinkedToDoc: (r.linkedDocIds && r.linkedDocIds.length > 0)
+      isLinkedToDoc: r.linkedDocIds && r.linkedDocIds.length > 0,
     };
   },
 
@@ -485,14 +607,14 @@ Page({
     const chainMap = new Map();
     const ungrouped = [];
 
-    reminders.forEach(r => {
+    reminders.forEach((r) => {
       if (r.chainId) {
         if (!chainMap.has(r.chainId)) {
           chainMap.set(r.chainId, {
             chainId: r.chainId,
             chainLabel: r.chainLabel || this.getChainLabel(r.chainId),
             items: [],
-            progress: 0
+            progress: 0,
           });
         }
         chainMap.get(r.chainId).items.push(r);
@@ -502,13 +624,15 @@ Page({
     });
 
     // 计算每组进度——已完成项置顶
-    chainMap.forEach(function(group) {
-      group.items.sort(function(a, b) {
+    chainMap.forEach(function (group) {
+      group.items.sort(function (a, b) {
         if (a.status === 'completed' && b.status !== 'completed') return -1;
         if (b.status === 'completed' && a.status !== 'completed') return 1;
         return (a.chainOrder || 0) - (b.chainOrder || 0);
       });
-      const completed = group.items.filter(function(i) { return i.status === 'completed'; }).length;
+      const completed = group.items.filter(function (i) {
+        return i.status === 'completed';
+      }).length;
       group.progress = Math.round((completed / group.items.length) * 100);
     });
 
@@ -523,14 +647,14 @@ Page({
 
   getChainLabel(chainId) {
     const map = {
-      'R_APPROVAL_001': '获批后流程',
-      'R_VISA_ACTIVATE_001': '签证激活流程',
-      'R_HKID_001': '身份证办理',
-      'R_RENEWAL_PREP_001': '续签准备',
-      'R_TAX_001': '税务提醒',
-      'R_PR_001': '永居冲刺',
-      'R_MPF_001': '强积金检查',
-      'R_PERMIT_EXPIRY_001': '通行证到期'
+      R_APPROVAL_001: '获批后流程',
+      R_VISA_ACTIVATE_001: '签证激活流程',
+      R_HKID_001: '身份证办理',
+      R_RENEWAL_PREP_001: '续签准备',
+      R_TAX_001: '税务提醒',
+      R_PR_001: '永居冲刺',
+      R_MPF_001: '强积金检查',
+      R_PERMIT_EXPIRY_001: '通行证到期',
     };
     return map[chainId] || '规则链';
   },
@@ -538,7 +662,7 @@ Page({
   // ========== 筛选 ==========
   onFilterStatus(e) {
     const status = e.currentTarget.dataset.status;
-    var displayGroups;
+    let displayGroups;
     if (status === 'all') {
       displayGroups = this.data.allChainGroups;
     } else if (status === 'completed') {
@@ -548,26 +672,33 @@ Page({
     }
     this.setData({
       filterStatus: status,
-      displayChainGroups: displayGroups
+      displayChainGroups: displayGroups,
     });
   },
 
   onFilterType(e) {
-    var type = e.currentTarget.dataset.type;
+    const type = e.currentTarget.dataset.type;
     this.setData({ filterType: type });
     this.applyTypeFilter(type);
   },
 
-  applyTypeFilter: function(type) {
+  applyTypeFilter: function (type) {
     type = type || this.data.filterType;
-    var baseReminders = this.data.filterStatus === 'completed' ? this.data.completedReminders :
-      (this.data.filterStatus === 'all' ? this.data.activeReminders.concat(this.data.completedReminders) : this.data.activeReminders);
-    if (type !== 'all') baseReminders = baseReminders.filter(function(r) { return r.type === type; });
+    let baseReminders =
+      this.data.filterStatus === 'completed'
+        ? this.data.completedReminders
+        : this.data.filterStatus === 'all'
+          ? this.data.activeReminders.concat(this.data.completedReminders)
+          : this.data.activeReminders;
+    if (type !== 'all')
+      baseReminders = baseReminders.filter(function (r) {
+        return r.type === type;
+      });
     this.setData({ displayChainGroups: this.buildChainGroups(baseReminders) });
   },
 
   // ========== 封存提醒显示切换 ==========
-  toggleArchived: function() {
+  toggleArchived: function () {
     this.setData({ showArchived: !this.data.showArchived });
   },
 
@@ -583,8 +714,8 @@ Page({
   },
 
   toggleChain(e) {
-    var chainId = e.currentTarget.dataset.chainId;
-    var collapsed = JSON.parse(JSON.stringify(this.data.collapsedChains));
+    const chainId = e.currentTarget.dataset.chainId;
+    const collapsed = JSON.parse(JSON.stringify(this.data.collapsedChains));
     if (collapsed[chainId]) delete collapsed[chainId];
     else collapsed[chainId] = true;
     this.setData({ collapsedChains: collapsed });
@@ -598,14 +729,16 @@ Page({
       updateReminder(id, {
         status: 'completed',
         completedAt: new Date().toISOString(),
-        updatedAt: new Date().toISOString()
+        updatedAt: new Date().toISOString(),
       });
       // 同步云端
       if (app.globalData.cloudReady) {
-        await wx.cloud.callFunction({
-          name: 'reminder-engine',
-          data: { action: 'complete', reminderId: id }
-        }).catch(() => {});
+        await wx.cloud
+          .callFunction({
+            name: 'reminder-engine',
+            data: { action: 'complete', reminderId: id },
+          })
+          .catch(() => {});
       }
       wx.hideLoading();
       wx.showToast({ title: '已标记完成', icon: 'success' });
@@ -645,7 +778,7 @@ Page({
         cancelText: '取消',
         success: (res) => {
           if (res.confirm) wx.navigateTo({ url: '/subpkg-chat/pages/membership/index' });
-        }
+        },
       });
       return;
     }
@@ -656,48 +789,114 @@ Page({
   // ========== 详情页入口（原list页已合并至detail） ==========
   // 逆向时间轴：基于今天+资料准备模板，一键生成预估日期
   generatePrepTimeline() {
-    var that = this;
-    var app = getApp();
-    var session = wx.getStorageSync('__session__') || {};
-    var path = (app && app.globalData && app.globalData.selectedPath) || session.selectedPath || '';
+    const that = this;
+    const app = getApp();
+    const session = wx.getStorageSync('__session__') || {};
+    const path = (app && app.globalData && app.globalData.selectedPath) || session.selectedPath || '';
 
-    var pathNames = {
-      'qmas': '优才计划', 'ttps_a': '高才通A类', 'ttps_b': '高才通B类', 'ttps_c': '高才通C类',
-      'asmpt': '专才计划', 'student_iang': '学生→IANG', 'dependent': '受养人',
-      'cies': 'CIES投资类身份规划', 'permanent': '永居申请'
+    const pathNames = {
+      qmas: '优才计划',
+      ttps_a: '高才通A类',
+      ttps_b: '高才通B类',
+      ttps_c: '高才通C类',
+      asmpt: '专才计划',
+      student_iang: '学生→IANG',
+      dependent: '受养人',
+      cies: 'CIES投资类身份规划',
+      permanent: '永居申请',
     };
 
     // 根据路径匹配准备模板（基于实际项目Task Table）
-    var prepNodes;
+    let prepNodes;
     if (path === 'qmas') {
       // 优才计划 — 基于 Task Table_20260505
       prepNodes = [
-        { label: '12项准则自评 (满足≥6项)', offsetDays: 1, type: 'milestone', desc: '对照入境处12项是/否评核准则逐项自评' },
-        { label: '学历学位认证', offsetDays: 20, type: 'material', desc: '学信网/留服认证(15-20工作日)·海外学历需成绩单' },
+        {
+          label: '12项准则自评 (满足≥6项)',
+          offsetDays: 1,
+          type: 'milestone',
+          desc: '对照入境处12项是/否评核准则逐项自评',
+        },
+        {
+          label: '学历学位认证',
+          offsetDays: 20,
+          type: 'material',
+          desc: '学信网/留服认证(15-20工作日)·海外学历需成绩单',
+        },
         { label: '工作经验证明', offsetDays: 25, type: 'material', desc: '每段工作需公司名+时间+职位一致·组织架构图' },
-        { label: '雇主推荐信 (每段工作一份)', offsetDays: 30, type: 'material', desc: '公司抬头纸+盖章+授权人签署·职责成就详述' },
-        { label: '赴港计划书 (500字)', offsetDays: 35, type: 'material', desc: '规划为主·成就为辅·学业/事业/计划三段式' },
-        { label: 'A-个人资料文件 (5个自然日)', offsetDays: 40, type: 'deadline', desc: '简历+通行证+ID981表+身份证+户口本+结婚证+55×45mm白底照' },
-        { label: 'B-家属资料文件', offsetDays: 42, type: 'material', desc: '配偶证件照+身份证/通行证+ID997+学历认证+结婚证+子女出生证' },
-        { label: 'C-资产证明文件 (2个自然日)', offsetDays: 44, type: 'material', desc: '个人≥20万/家庭30-60万·银行存款/房产/股票/股权均可' },
-        { label: 'D-学历及语言证明 (1个自然日)', offsetDays: 45, type: 'material', desc: '学位证+学位认证报告+语言成绩(雅思6/托福80·2年内有效)' },
-        { label: 'E-工作证明文件 (15个自然日)', offsetDays: 60, type: 'deadline', desc: '工作经历+管理经历(架构图)+雇主推荐信(每份雇主一份)' }
+        {
+          label: '雇主推荐信 (每段工作一份)',
+          offsetDays: 30,
+          type: 'material',
+          desc: '公司抬头纸+盖章+授权人签署·职责成就详述',
+        },
+        {
+          label: '赴港计划书 (500字)',
+          offsetDays: 35,
+          type: 'material',
+          desc: '规划为主·成就为辅·学业/事业/计划三段式',
+        },
+        {
+          label: 'A-个人资料文件 (5个自然日)',
+          offsetDays: 40,
+          type: 'deadline',
+          desc: '简历+通行证+ID981表+身份证+户口本+结婚证+55×45mm白底照',
+        },
+        {
+          label: 'B-家属资料文件',
+          offsetDays: 42,
+          type: 'material',
+          desc: '配偶证件照+身份证/通行证+ID997+学历认证+结婚证+子女出生证',
+        },
+        {
+          label: 'C-资产证明文件 (2个自然日)',
+          offsetDays: 44,
+          type: 'material',
+          desc: '个人≥20万/家庭30-60万·银行存款/房产/股票/股权均可',
+        },
+        {
+          label: 'D-学历及语言证明 (1个自然日)',
+          offsetDays: 45,
+          type: 'material',
+          desc: '学位证+学位认证报告+语言成绩(雅思6/托福80·2年内有效)',
+        },
+        {
+          label: 'E-工作证明文件 (15个自然日)',
+          offsetDays: 60,
+          type: 'deadline',
+          desc: '工作经历+管理经历(架构图)+雇主推荐信(每份雇主一份)',
+        },
       ];
     } else if (path === 'ttps_a' || path === 'ttps_b' || path === 'ttps_c') {
       prepNodes = [
-        { label: '确认高才通资格', offsetDays: 3, type: 'milestone', desc: 'A类:年收入≥250万HKD·B/C类:百强大学名单核查' },
+        {
+          label: '确认高才通资格',
+          offsetDays: 3,
+          type: 'milestone',
+          desc: 'A类:年收入≥250万HKD·B/C类:百强大学名单核查',
+        },
         { label: '学历认证', offsetDays: 18, type: 'material', desc: '百强大学毕业证+成绩单+认证(如需)' },
-        { label: '收入/工作证明', offsetDays: 25, type: 'material', desc: 'A类:完税证明+银行流水+雇主证明·B/C类:工作证明' },
-        { label: '个人资料文件', offsetDays: 30, type: 'deadline', desc: '通行证+身份证+户口本+证件照+申请表' }
+        {
+          label: '收入/工作证明',
+          offsetDays: 25,
+          type: 'material',
+          desc: 'A类:完税证明+银行流水+雇主证明·B/C类:工作证明',
+        },
+        { label: '个人资料文件', offsetDays: 30, type: 'deadline', desc: '通行证+身份证+户口本+证件照+申请表' },
       ];
     } else if (path) {
       prepNodes = [
-        { label: '确认路径条件与资格', offsetDays: 3, type: 'milestone', desc: '核实' + (pathNames[path] || path) + '申请条件' },
+        {
+          label: '确认路径条件与资格',
+          offsetDays: 3,
+          type: 'milestone',
+          desc: '核实' + (pathNames[path] || path) + '申请条件',
+        },
         { label: '个人基础证件收集', offsetDays: 10, type: 'material', desc: '身份证+户口本+通行证+证件照' },
         { label: '学历与资格认证', offsetDays: 22, type: 'material', desc: '学位证+成绩单+专业资格+认证报告' },
         { label: '工作/经历证明', offsetDays: 30, type: 'material', desc: '工作证明+推荐信+组织架构图(如需)' },
         { label: '财务/资产证明', offsetDays: 35, type: 'material', desc: '银行流水+存款证明+税单(按路径要求)' },
-        { label: '申请文书与材料复核', offsetDays: 42, type: 'material', desc: '计划书/申请表·逐项核对' }
+        { label: '申请文书与材料复核', offsetDays: 42, type: 'material', desc: '计划书/申请表·逐项核对' },
       ];
     }
 
@@ -709,24 +908,27 @@ Page({
     this._doGeneratePrepTimeline(prepNodes, pathNames[path] || '资料准备');
   },
 
-  _doGeneratePrepTimeline: function(nodes, pathName) {
-    var that = this;
+  _doGeneratePrepTimeline: function (nodes, pathName) {
+    const that = this;
     this.setData({ generatingPrep: true });
 
-    var today = new Date();
+    const today = new Date();
     today.setHours(0, 0, 0, 0);
 
-    var count = 0;
-    nodes.forEach(function(node) {
-      var date = new Date(today);
+    let count = 0;
+    nodes.forEach(function (node) {
+      const date = new Date(today);
       date.setDate(date.getDate() + Math.abs(node.offsetDays || 7));
-      var ds = date.getFullYear() + '-' +
-        String(date.getMonth() + 1).padStart(2, '0') + '-' +
+      const ds =
+        date.getFullYear() +
+        '-' +
+        String(date.getMonth() + 1).padStart(2, '0') +
+        '-' +
         String(date.getDate()).padStart(2, '0');
 
-      var iconMap = { milestone: '✅', deadline: '📅', renewal: '🔄', pr: '🏁', material: '📋' };
+      const iconMap = { milestone: '✅', deadline: '📅', renewal: '🔄', pr: '🏁', material: '📋' };
       saveReminder({
-        id: 'PREP_' + Date.now() + '_' + (count++),
+        id: 'PREP_' + Date.now() + '_' + count++,
         title: node.label,
         deadline: ds,
         description: (pathName || '资料准备') + ' · ' + (node.type || 'milestone'),
@@ -734,7 +936,7 @@ Page({
         confidence: 'B',
         linkedDocIds: [],
         status: 'active',
-        createdAt: new Date().toISOString()
+        createdAt: new Date().toISOString(),
       });
     });
 
@@ -745,10 +947,13 @@ Page({
 
   // 手动触发生成路径时间线提醒
   manualGenerateTimeline() {
-    var app = getApp();
-    var session = wx.getStorageSync('__session__') || {};
-    var path = (app && app.globalData && app.globalData.selectedPath) || session.selectedPath || '';
-    if (!path) { wx.showToast({ title: '请先选择身份路径', icon: 'none' }); return; }
+    const app = getApp();
+    const session = wx.getStorageSync('__session__') || {};
+    const path = (app && app.globalData && app.globalData.selectedPath) || session.selectedPath || '';
+    if (!path) {
+      wx.showToast({ title: '请先选择身份路径', icon: 'none' });
+      return;
+    }
     wx.navigateTo({ url: '/pages/reminders/detail/detail?action=timeline&path=' + path });
   },
 
@@ -763,5 +968,5 @@ Page({
 
   onShareAppMessage() {
     return { title: '我正在使用住港伴，你也来看看', path: '/pages/reminders/index/index' };
-  }
+  },
 });

@@ -1,20 +1,22 @@
 {
-  "items": [{
-    "id": "e2e-test",
-    "title": "E2E测试提醒",
-    "label": "E2E测试提醒",
-    "deadline": "2026-12-31",
-    "description": "E2E测试用提醒",
-    "type": "manual",
-    "confidence": "B",
-    "status": "active",
-    "priority": "normal",
-    "linkedDocIds": [],
-    "dependsOn": null,
-    "alerts": [],
-    "source": {"type": "manual"},
-    "createdAt": "2026-05-13T00:00:00.000Z",
-    "updatedAt": "2026-05-13T00:00:00.000Z"
-  }],
+  "items": [
+    {
+      "id": "e2e-test",
+      "title": "E2E测试提醒",
+      "label": "E2E测试提醒",
+      "deadline": "2026-12-31",
+      "description": "E2E测试用提醒",
+      "type": "manual",
+      "confidence": "B",
+      "status": "active",
+      "priority": "normal",
+      "linkedDocIds": [],
+      "dependsOn": null,
+      "alerts": [],
+      "source": { "type": "manual" },
+      "createdAt": "2026-05-13T00:00:00.000Z",
+      "updatedAt": "2026-05-13T00:00:00.000Z"
+    }
+  ],
   "version": 1
 }

@@ -1,6 +1,6 @@
 ---
 name: cloudbase-agent
-description: "Build and deploy AI agents with Cloudbase Agent (TypeScript), a TypeScript SDK implementing the AG-UI protocol. Use when: (1) deploying agent servers with @cloudbase/agent-server, (2) using LangGraph adapter with ClientStateAnnotation, (3) using LangChain adapter with clientTools(), (4) building custom adapters that implement AbstractAgent, (5) understanding AG-UI protocol events, (6) building web UI clients with @ag-ui/client, (7) building WeChat Mini Program UIs with @cloudbase/agent-ui-miniprogram."
+description: 'Build and deploy AI agents with Cloudbase Agent (TypeScript), a TypeScript SDK implementing the AG-UI protocol. Use when: (1) deploying agent servers with @cloudbase/agent-server, (2) using LangGraph adapter with ClientStateAnnotation, (3) using LangChain adapter with clientTools(), (4) building custom adapters that implement AbstractAgent, (5) understanding AG-UI protocol events, (6) building web UI clients with @ag-ui/client, (7) building WeChat Mini Program UIs with @cloudbase/agent-ui-miniprogram.'
 alwaysApply: true
 ---
 
@@ -22,6 +22,7 @@ Use this skill for **AI agent development** when you need to:
 - Build WeChat Mini Program UIs for AI agent interactions
 
 **Do NOT use for:**
+
 - Simple AI model calling without agent capabilities (use `ai-model-*` skills)
 - CloudBase cloud functions (use `cloud-functions` skill)
 - CloudRun backend services without agent features (use `cloudrun-development` skill)
@@ -48,16 +49,16 @@ Use this skill for **AI agent development** when you need to:
 
 ## Routing
 
-| Task | Read |
-|------|------|
-| Deploy agent to CloudBase (**read this first**) | [agent-deployment](agent-deployment.md) |
-| Deploy agent server (@cloudbase/agent-server) | [server-quickstart](server-quickstart.md) |
-| Use LangGraph adapter | [adapter-langgraph](adapter-langgraph.md) |
-| Use LangChain adapter | [adapter-langchain](adapter-langchain.md) |
-| Build custom adapter | [adapter-development](adapter-development.md) |
-| Understand AG-UI protocol | [agui-protocol](agui-protocol.md) |
-| Build UI client (Web or Mini Program) | [ui-clients](ui-clients.md) |
-| Deep-dive @cloudbase/agent-ui-miniprogram | [ui-miniprogram](ui-miniprogram.md) |
+| Task                                            | Read                                          |
+| ----------------------------------------------- | --------------------------------------------- |
+| Deploy agent to CloudBase (**read this first**) | [agent-deployment](agent-deployment.md)       |
+| Deploy agent server (@cloudbase/agent-server)   | [server-quickstart](server-quickstart.md)     |
+| Use LangGraph adapter                           | [adapter-langgraph](adapter-langgraph.md)     |
+| Use LangChain adapter                           | [adapter-langchain](adapter-langchain.md)     |
+| Build custom adapter                            | [adapter-development](adapter-development.md) |
+| Understand AG-UI protocol                       | [agui-protocol](agui-protocol.md)             |
+| Build UI client (Web or Mini Program)           | [ui-clients](ui-clients.md)                   |
+| Deep-dive @cloudbase/agent-ui-miniprogram       | [ui-miniprogram](ui-miniprogram.md)           |
 
 ## Quick Start
 
@@ -74,13 +75,11 @@ npm install @cloudbase/agent-server@latest @cloudbase/agent-adapter-langgraph@la
 **2. Create and run your agent:**
 
 ```typescript
-import { run } from "@cloudbase/agent-server";
-import { LanggraphAgent } from "@cloudbase/agent-adapter-langgraph";
+import { run } from '@cloudbase/agent-server';
+import { LanggraphAgent } from '@cloudbase/agent-adapter-langgraph';
 
 run({
   createAgent: () => ({ agent: new LanggraphAgent({ workflow }) }),
   port: 9000,
 });
 ```
-
-

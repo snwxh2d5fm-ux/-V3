@@ -10,14 +10,14 @@
  * @param {object} db - CloudBase database instance
  */
 async function createInvoice(openid, event, db) {
-  var orderId = (event.orderId || '').trim();
-  var invoiceType = (event.invoiceType || 'personal').trim();
-  var title = (event.title || '').trim();
-  var taxNumber = (event.taxNumber || '').trim();
-  var email = (event.email || '').trim();
-  var address = (event.address || '').trim();
-  var phone = (event.phone || '').trim();
-  var bankInfo = (event.bankInfo || '').trim();
+  const orderId = (event.orderId || '').trim();
+  const invoiceType = (event.invoiceType || 'personal').trim();
+  let title = (event.title || '').trim();
+  const taxNumber = (event.taxNumber || '').trim();
+  const email = (event.email || '').trim();
+  const address = (event.address || '').trim();
+  const phone = (event.phone || '').trim();
+  const bankInfo = (event.bankInfo || '').trim();
 
   if (!orderId) return { code: 400, msg: '缺少 orderId' };
   if (!['personal', 'company'].includes(invoiceType)) return { code: 400, msg: '无效的发票类型' };
@@ -27,39 +27,62 @@ async function createInvoice(openid, event, db) {
   if (phone.length > 20) return { code: 400, msg: '电话不超过20位' };
   if (bankInfo.length > 200) return { code: 400, msg: '银行信息不超过200字' };
 
-  var emailRe = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+  const emailRe = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
   if (email && !emailRe.test(email)) return { code: 400, msg: '邮箱格式不正确' };
 
-  var orderResult = await db.collection('orders').where({ _id: orderId, _openid: openid }).get();
+  const orderResult = await db.collection('orders').where({ _id: orderId, _openid: openid }).get();
   if (orderResult.data.length === 0) return { code: 404, msg: '订单不存在' };
-  var order = orderResult.data[0];
+  const order = orderResult.data[0];
   if (order.status !== 'completed') return { code: 400, msg: '仅已支付订单可申请发票' };
 
-  var existing = await db.collection('invoices').where({ orderId: orderId, _openid: openid }).get();
-  if (existing.data.length > 0) return { code: 400, msg: '该订单已申请过发票', data: { invoiceId: existing.data[0]._id } };
+  const existing = await db.collection('invoices').where({ orderId: orderId, _openid: openid }).get();
+  if (existing.data.length > 0)
+    return { code: 400, msg: '该订单已申请过发票', data: { invoiceId: existing.data[0]._id } };
 
   if (invoiceType === 'company') {
     if (!title) return { code: 400, msg: '企业发票必须填写公司名称' };
     if (!taxNumber) return { code: 400, msg: '企业发票必须填写税号' };
-  } else { title = title || '个人'; }
+  } else {
+    title = title || '个人';
+  }
 
-  var invoiceData = {
-    _openid: openid, orderId: orderId, orderAmount: order.amount, orderAmountYuan: order.amountYuan,
-    productName: order.productName, invoiceType: invoiceType, title: title, taxNumber: taxNumber,
-    email: email, address: address, phone: phone, bankInfo: bankInfo,
-    status: 'pending', createdAt: db.serverDate(), updatedAt: db.serverDate()
+  const invoiceData = {
+    _openid: openid,
+    orderId: orderId,
+    orderAmount: order.amount,
+    orderAmountYuan: order.amountYuan,
+    productName: order.productName,
+    invoiceType: invoiceType,
+    title: title,
+    taxNumber: taxNumber,
+    email: email,
+    address: address,
+    phone: phone,
+    bankInfo: bankInfo,
+    status: 'pending',
+    createdAt: db.serverDate(),
+    updatedAt: db.serverDate(),
   };
-  var addResult = await db.collection('invoices').add({ data: invoiceData });
-  var invoiceId = addResult._id;
+  const addResult = await db.collection('invoices').add({ data: invoiceData });
+  const invoiceId = addResult._id;
 
   try {
     await db.collection('audit_logs').add({
-      data: { _openid: openid, action: 'invoice_requested',
-        detail: { invoiceId: invoiceId, orderId: orderId, invoiceType: invoiceType }, createdAt: db.serverDate() }
+      data: {
+        _openid: openid,
+        action: 'invoice_requested',
+        detail: { invoiceId: invoiceId, orderId: orderId, invoiceType: invoiceType },
+        createdAt: db.serverDate(),
+      },
     });
-  } catch (auditErr) { console.error('[payment] audit_logs写入失败:', auditErr.message); }
+  } catch (auditErr) {
+    console.error('[payment] audit_logs写入失败:', auditErr.message);
+  }
 
-  return { code: 0, data: { invoiceId: invoiceId, status: 'pending', msg: '发票申请已提交，3个工作日内发送至您的邮箱' } };
+  return {
+    code: 0,
+    data: { invoiceId: invoiceId, status: 'pending', msg: '发票申请已提交，3个工作日内发送至您的邮箱' },
+  };
 }
 
 /**
@@ -69,18 +92,31 @@ async function createInvoice(openid, event, db) {
  * @param {object} db
  */
 async function getInvoices(openid, event, db) {
-  var limit = Math.min((event && event.limit) || 10, 50);
-  var offset = Math.max(0, (event && event.offset) || 0);
-  var countResult = await db.collection('invoices').where({ _openid: openid }).count();
-  var result = await db.collection('invoices').where({ _openid: openid })
-    .orderBy('createdAt', 'desc').skip(offset).limit(limit + 1).get();
-  var items = result.data;
-  var hasMore = items.length > limit;
+  const limit = Math.min((event && event.limit) || 10, 50);
+  const offset = Math.max(0, (event && event.offset) || 0);
+  const countResult = await db.collection('invoices').where({ _openid: openid }).count();
+  const result = await db
+    .collection('invoices')
+    .where({ _openid: openid })
+    .orderBy('createdAt', 'desc')
+    .skip(offset)
+    .limit(limit + 1)
+    .get();
+  let items = result.data;
+  const hasMore = items.length > limit;
   if (hasMore) items = items.slice(0, limit);
-  var list = items.map(function(inv) {
-    return { invoiceId: inv._id, orderId: inv.orderId, productName: inv.productName,
-      orderAmountYuan: inv.orderAmountYuan, invoiceType: inv.invoiceType, title: inv.title,
-      status: inv.status, createdAt: inv.createdAt, issuedAt: inv.issuedAt != null ? inv.issuedAt : null };
+  const list = items.map(function (inv) {
+    return {
+      invoiceId: inv._id,
+      orderId: inv.orderId,
+      productName: inv.productName,
+      orderAmountYuan: inv.orderAmountYuan,
+      invoiceType: inv.invoiceType,
+      title: inv.title,
+      status: inv.status,
+      createdAt: inv.createdAt,
+      issuedAt: inv.issuedAt != null ? inv.issuedAt : null,
+    };
   });
   return { code: 0, data: { list: list, total: countResult.total, hasMore: hasMore, offset: offset, limit: limit } };
 }
@@ -92,15 +128,30 @@ async function getInvoices(openid, event, db) {
  * @param {object} db
  */
 async function getInvoiceDetail(openid, event, db) {
-  var invoiceId = event.invoiceId;
+  const invoiceId = event.invoiceId;
   if (!invoiceId) return { code: 400, msg: '缺少 invoiceId' };
-  var result = await db.collection('invoices').where({ _id: invoiceId, _openid: openid }).get();
+  const result = await db.collection('invoices').where({ _id: invoiceId, _openid: openid }).get();
   if (result.data.length === 0) return { code: 404, msg: '发票记录不存在' };
-  var inv = result.data[0];
-  return { code: 0, data: { invoiceId: inv._id, orderId: inv.orderId, productName: inv.productName,
-    orderAmountYuan: inv.orderAmountYuan, invoiceType: inv.invoiceType, title: inv.title,
-    taxNumber: inv.taxNumber, email: inv.email, address: inv.address, phone: inv.phone,
-    bankInfo: inv.bankInfo, status: inv.status, createdAt: inv.createdAt, issuedAt: inv.issuedAt != null ? inv.issuedAt : null } };
+  const inv = result.data[0];
+  return {
+    code: 0,
+    data: {
+      invoiceId: inv._id,
+      orderId: inv.orderId,
+      productName: inv.productName,
+      orderAmountYuan: inv.orderAmountYuan,
+      invoiceType: inv.invoiceType,
+      title: inv.title,
+      taxNumber: inv.taxNumber,
+      email: inv.email,
+      address: inv.address,
+      phone: inv.phone,
+      bankInfo: inv.bankInfo,
+      status: inv.status,
+      createdAt: inv.createdAt,
+      issuedAt: inv.issuedAt != null ? inv.issuedAt : null,
+    },
+  };
 }
 
 module.exports = { createInvoice, getInvoices, getInvoiceDetail };

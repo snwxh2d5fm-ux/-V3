@@ -78,7 +78,7 @@ To target a specific environment:
 
 ```javascript
 const db = wx.cloud.database({
-  env: "test"
+  env: 'test',
 });
 ```
 
@@ -119,14 +119,14 @@ Important notes:
 ### Basic collection access
 
 ```javascript
-const todos = db.collection("todos");
+const todos = db.collection('todos');
 const result = await todos.where({ completed: false }).get();
 ```
 
 ### Document reference
 
 ```javascript
-const todo = db.collection("todos").doc("todo-id");
+const todo = db.collection('todos').doc('todo-id');
 const result = await todo.get();
 ```
 

@@ -13,15 +13,18 @@ exports.main = async (event, context) => {
   try {
     // 1. 清理 30 天前的 page_view_logs
     const thirtyDaysAgo = new Date(Date.now() - 30 * 86400000).toISOString();
-    const oldPV = await db.collection('page_view_logs')
+    const oldPV = await db
+      .collection('page_view_logs')
       .where({ createdAt: db.RegExp({ $lt: thirtyDaysAgo }) })
       .count();
     results.cleanPV = oldPV.total;
     // CloudBase 不支持批量删除, 跳过大数量清理(P0-06: 生产环境需批量迭代)
     if (oldPV.total > 0 && oldPV.total < 1000) {
-      const batch = await db.collection('page_view_logs')
+      const batch = await db
+        .collection('page_view_logs')
         .where({ createdAt: db.RegExp({ $lt: thirtyDaysAgo }) })
-        .limit(500).get();
+        .limit(500)
+        .get();
       for (const doc of batch.data) {
         await db.collection('page_view_logs').doc(doc._id).remove();
       }
@@ -35,29 +38,48 @@ exports.main = async (event, context) => {
       db.collection('user_events').count(),
       db.collection('orders').where({ status: 'completed' }).get(),
       db.collection('invite_codes').get(),
-      db.collection('conversation_logs').count()
+      db.collection('conversation_logs').count(),
     ]);
 
-    const usersByPath = {}, usersByMembership = {};
-    (profiles.data || []).forEach(p => {
+    const usersByPath = {},
+      usersByMembership = {};
+    (profiles.data || []).forEach((p) => {
       const k = p.selectedPath || 'unknown';
       usersByPath[k] = (usersByPath[k] || 0) + 1;
       const m = p.membershipTier || 'free_trial';
       usersByMembership[m] = (usersByMembership[m] || 0) + 1;
     });
 
-    let actCodes = 0, genCodes = 0;
-    (codes.data || []).forEach(c => { genCodes++; if (c.activationCount > 0) actCodes++; });
+    let actCodes = 0,
+      genCodes = 0;
+    (codes.data || []).forEach((c) => {
+      genCodes++;
+      if (c.activationCount > 0) actCodes++;
+    });
 
     const snap = {
-      date: today, totalUsers: users.total, newUsers: 0, activeUsers: users.total,
-      usersByPath, usersByMembership,
-      dailyRevenue: 0, revenueByPlan: {}, orderCount: orders.data.length, completedOrderCount: 0,
-      aiConversations: convLogs.total, aiAccuracyAvg: 0, aiModes: {}, safetyEvents: 0,
-      codesGenerated: genCodes, codesActivated: actCodes,
-      invoicesRequested: 0, invoicesIssued: 0, feedbackSubmitted: 0, feedbackResolved: 0,
+      date: today,
+      totalUsers: users.total,
+      newUsers: 0,
+      activeUsers: users.total,
+      usersByPath,
+      usersByMembership,
+      dailyRevenue: 0,
+      revenueByPlan: {},
+      orderCount: orders.data.length,
+      completedOrderCount: 0,
+      aiConversations: convLogs.total,
+      aiAccuracyAvg: 0,
+      aiModes: {},
+      safetyEvents: 0,
+      codesGenerated: genCodes,
+      codesActivated: actCodes,
+      invoicesRequested: 0,
+      invoicesIssued: 0,
+      feedbackSubmitted: 0,
+      feedbackResolved: 0,
       pageViews: [{ module: 'guidebook', pv: 0, uv: 0 }],
-      createdAt: new Date()
+      createdAt: new Date(),
     };
 
     await db.collection('daily_stats_snapshots').add(snap);

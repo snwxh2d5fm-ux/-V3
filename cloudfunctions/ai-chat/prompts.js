@@ -14,7 +14,7 @@ const CONFIDENCE = {
   B: { level: 'B', label: '政策明确', description: '入境处政策明确，有公开指引' },
   C: { level: 'C', label: '多数实践', description: '多数实践一致，入境处有酌情权' },
   D: { level: 'D', label: '合理推断', description: '法律/政策未明确，合理推断' },
-  E: { level: 'E', label: '无法确认', description: '无法确认，须个案咨询' }
+  E: { level: 'E', label: '无法确认', description: '无法确认，须个案咨询' },
 };
 
 // V6: 全局反旧计分护栏 — 注入到所有模式的 prompt 中
@@ -53,26 +53,11 @@ const V8_TERM_COMPLIANCE =
   '- 使用"入境计划"描述各类入境路径';
 
 // V4.1: 快捷回复 action 指南 — 注入到 qa/general 模式
-const QUICK_REPLY_ACTION_GUIDE =
-  '\n\n【快捷回复按钮生成规则 — 在回答末尾提供JSON格式的快捷选项】\n' +
-  '你可以在回复末尾附加一段 JSON 来生成可点击的快捷按钮，格式：\n' +
-  '```quick_replies\n' +
+const QUICK_REPLY_ACTION_GUIDE = '' +
+  '在回答末尾，生成JSON快捷按钮。格式：\n' +
   '[{"id":"qr_1","text":"按钮文字","action":"action_name"}]\n' +
-  '```\n\n' +
-  '支持的 action：\n' +
-  '- start_assessment → 跳转自评页面（用户表达"想评估/测评/自评"时使用）\n' +
-  '- select_path:qmas → 选择优才QMAS路径（推荐此路径时使用）\n' +
-  '- select_path:ttps → 选择高才通TTPS路径\n' +
-  '- select_path:asmpt → 选择专才ASMTP路径\n' +
-  '- select_path:iang → 选择IANG路径\n' +
-  '- select_path:cies → 选择投资类身份规划CIES路径\n' +
-  '- navigate:pages/guidebooks/index/index → 跳转攻略书\n' +
-  '- navigate:pages/documents/index/index → 跳转证件夹\n\n' +
-  '使用场景：\n' +
-  '1. 用户说"我想评估""测一下""我适合哪个"→ 第一个按钮必须是 start_assessment\n' +
-  '2. 路径推荐后 → 为每个推荐路径生成 select_path:xxx 按钮\n' +
-  '3. 回答完政策问题 → 可附加"开始自评"按钮引导用户\n\n' +
-  '注意：quick_replies JSON 必须紧跟在回复正文之后，不要包裹在markdown代码块中，直接放在 ```quick_replies 标记后。';
+  '支持 action: start_assessment, select_path:qmas|ttps|asmpt|iang|cies, navigate:pages/...' +
+  '不要用markdown代码块包裹，直接输出JSON数组。';
 
 // [V4.1-PHASE2] ZGB-AI-203: 置信度语气指令模板
 // 由后端 computeConfidence 动态注入到 enhancedContextText
@@ -81,7 +66,7 @@ const QUICK_REPLY_ACTION_GUIDE =
 const CONFIDENCE_DIRECTIVES = {
   high: '\n\n【当前回答置信度: 高】你本次回答基于多项可靠来源，可以直接断言语气，并标注具体来源名称。',
   medium: '\n\n【当前回答置信度: 中】你本次回答基于有限来源，建议在适当位置添加"建议核实"的提示。',
-  low: '\n\n【当前回答置信度: 低】你本次回答缺乏直接支撑来源，必须在末尾明确声明"以上信息仅供参考，请以入境处最新公告为准"。'
+  low: '\n\n【当前回答置信度: 低】你本次回答缺乏直接支撑来源，必须在末尾明确声明"以上信息仅供参考，请以入境处最新公告为准"。',
 };
 
 // [V4.1-PHASE2] REQ-011: 置信度A-E五级自我标注指令
@@ -102,28 +87,16 @@ const CONFIDENCE_A_E =
   '- D/E级：必须声明"以上仅供参考，请以入境处最新公告为准"\n' +
   '- 如果回答中包含多个不同置信度的部分，取最低等级';
 
-// [V4.1-PHASE2] ZGB-AI-204: 动态 Quick Reply 生成指令
-// 注入到 system prompt 中，指示 LLM 在回答末尾生成相关追问 JSON
-const DYNAMIC_QUICK_REPLY_GUIDE =
-  '\n\n【Phase 2·动态 Quick Reply 生成 — 为每轮回答生成2-3个相关追问】\n' +
-  '在回答的末尾，生成一个 JSON 数组表示针对当前回答的追问按钮：\n' +
-  '\n' +
-  '生成规则：\n' +
-  '1. 基于当前回答内容，推断用户可能想继续问的2-3个方向\n' +
-  '2. 追问必须与刚才的回答直接相关（例如回答了续签材料，追问可以是"需要哪些表格"或"提交时间窗口"）\n' +
-  '3. 追问不涉及用户隐私或非公开信息\n' +
-  '4. 不要重复用户已经问过的问题\n' +
-  '5. 不要生成"开始自评""选择路径"等操作类按钮（这些由后端自动生成）\n' +
-  '\n' +
-  '输出格式（在回答末尾，另起一行）：\n' +
-  '```quick_replies\n' +
-  '[{"id":"qr_1","text":"追问按钮文字","action":"navigate"},{"id":"qr_2","text":"另一个追问","action":"navigate"},{"id":"qr_3","text":"第三个追问","action":"navigate"}]\n' +
-  '```\n' +
-  '\n' +
-  '注意：如果当前回答不适合生成追问（如用户表达感谢、告别、模糊表达），不输出 quick_replies 块。';
+// [V4.1-PHASE2] ZGB-AI-204: 动态 Quick Reply 生成指令 — 简化版
+// 不要求markdown代码块包裹，直接输出JSON数组即可
+const DYNAMIC_QUICK_REPLY_GUIDE = '' +
+  '基于当前回答推断2-3个用户可能追问的方向，在回答末尾输出JSON数组：\n' +
+  '[{"id":"qr_1","text":"追问1","action":"navigate"},{"id":"qr_2","text":"追问2","action":"navigate"}]\n' +
+  '追问必须与回答直接相关，不涉及隐私。不适合追问时不输出。';
 
 function buildAssessmentSystemPrompt() {
-  return '你是一位专业的香港入境信息助手，正在进行对话式条件对照。\n\n' +
+  return (
+    '你是一位专业的香港入境信息助手，正在进行对话式条件对照。\n\n' +
     '评估流程：\n' +
     '1. 逐步收集用户信息：年龄、学历、学校、专业、行业、工作年限、职位、年收入、雇主类型、语言能力、家庭情况\n' +
     '2. 每次只询问一个维度，用友好的语气引导用户回答\n' +
@@ -142,11 +115,13 @@ function buildAssessmentSystemPrompt() {
     '示例: {"status":"asking","dim":"school","question":"你的硕士毕业院校属于哪一类呢？QS世界百强 / 985/211高校 / 香港高校 / 海外知名大学 / 其他院校？"}' +
     V8_TERM_COMPLIANCE +
     K2_SAFETY_RULES +
-    ANTI_OLD_SCORING_GUARD;
+    ANTI_OLD_SCORING_GUARD
+  );
 }
 
 function buildQASystemPrompt() {
-  return '你是一位香港入境事务政策专家，提供基于官方政策的准确回答。\n\n' +
+  return (
+    '你是一位香港入境事务政策专家，提供基于官方政策的准确回答。\n\n' +
     '回答原则：\n' +
     '1. 只引用香港入境事务处、劳工及福利局等官方来源的信息\n' +
     '2. 不确定的信息需明确说明"建议查阅官方最新公告"\n' +
@@ -176,11 +151,13 @@ function buildQASystemPrompt() {
     ANTI_OLD_SCORING_GUARD +
     K2_SAFETY_RULES +
     QUICK_REPLY_ACTION_GUIDE +
-    DYNAMIC_QUICK_REPLY_GUIDE;
+    DYNAMIC_QUICK_REPLY_GUIDE
+  );
 }
 
 function buildGeneralSystemPrompt() {
-  return '你是一位亲切友好的 AI 助手"住港伴 v2.1"，专门帮助用户了解香港入境政策信息。\n\n' +
+  return (
+    '你是一位亲切友好的 AI 助手"住港伴 v2.1"，专门帮助用户了解香港入境政策信息。\n\n' +
     '你可以：\n' +
     '- 回答关于香港生活、工作、教育的信息查询\n' +
     '- 提供入境政策的公开信息对照\n' +
@@ -200,11 +177,13 @@ function buildGeneralSystemPrompt() {
     ANTI_OLD_SCORING_GUARD +
     K2_SAFETY_RULES +
     QUICK_REPLY_ACTION_GUIDE +
-    DYNAMIC_QUICK_REPLY_GUIDE;
+    DYNAMIC_QUICK_REPLY_GUIDE
+  );
 }
 
 function buildSolutionRecommendPrompt() {
-  return '你是一位专业的香港身份规划顾问，基于方案库v1.0为用户推荐最优路径。\n\n' +
+  return (
+    '你是一位专业的香港身份规划顾问，基于方案库v1.0为用户推荐最优路径。\n\n' +
     '推荐框架(12条目推荐路径)：\n' +
     '1. 全日制学生→IANG→永居 (7-8年, 低风险)\n' +
     '2. 兼读制→优才/专才→永居 (7-9年, 中高风险)\n' +
@@ -230,13 +209,14 @@ function buildSolutionRecommendPrompt() {
     K2_SAFETY_RULES +
     ANTI_OLD_SCORING_GUARD +
     QUICK_REPLY_ACTION_GUIDE +
-    DYNAMIC_QUICK_REPLY_GUIDE;
+    DYNAMIC_QUICK_REPLY_GUIDE
+  );
 }
 
 /** 构建用户画像 — 四层权重体系注入系统提示词 */
 function buildUserProfile(context) {
   if (!context || Object.keys(context).length === 0) return '';
-  var profile = '\n\n【👤 用户画像 — 四层权重体系】\n';
+  let profile = '\n\n【👤 用户画像 — 四层权重体系】\n';
   profile += '以下信息仅供内部参考，用于调整回答的针对性和深度。\n';
   profile += '【⚠️ 最高优先级·隐私保护规则】（违反则视为严重错误）：\n';
   profile += '绝对禁止在回答中直接或间接透露用户画像信息。禁止使用以下任何表述：\n';
@@ -247,20 +227,35 @@ function buildUserProfile(context) {
   profile += '✅ 例如：如果用户状态为"已获批"，直接说续签/永居相关内容，而不说"既然你已获批..."。\n\n';
 
   // L1: 用户手工选择的状态 — 三维叠加决定"他是谁"（最高优先级）
-  var l1 = [];
+  const l1 = [];
   if (context.userStatus) {
-    var statusLabels = { unapplied: '未申请', submitted: '已提交申请等待审批', approved: '已获批', permanent: '永居' };
+    const statusLabels = {
+      unapplied: '未申请',
+      submitted: '已提交申请等待审批',
+      approved: '已获批',
+      permanent: '永居',
+    };
     l1.push('身份状态：' + (statusLabels[context.userStatus] || context.userStatus));
   }
   if (context.selectedPath) {
-    var pathLabels = { qmas: '优才计划(QMAS)', ttps_a: '高才通A类', ttps_b: '高才通B类', ttps_c: '高才通C类', asmpt: '专才计划(ASMTP)', student_iang: '学生→IANG', dependent: '受养人', permanent: '永居申请' };
+    const pathLabels = {
+      qmas: '优才计划(QMAS)',
+      ttps_a: '高才通A类',
+      ttps_b: '高才通B类',
+      ttps_c: '高才通C类',
+      asmpt: '专才计划(ASMTP)',
+      student_iang: '学生→IANG',
+      dependent: '受养人',
+      permanent: '永居申请',
+    };
     l1.push('申请路径：' + (pathLabels[context.selectedPath] || context.selectedPath));
   }
   if (context.userSubStatus) l1.push('职业身份：' + context.userSubStatus);
   if (l1.length > 0) {
     profile += '【L1·他是谁 — 三维叠加判定（身份状态×路径选择×职业身份）·最高优先】\n';
     profile += l1.join(' | ') + '\n';
-    profile += '判定逻辑：以上三个维度叠加才能准确定位用户画像。例如"已提交+优才+在职"与"已提交+高才通A+企业家"是完全不同的用户群体，需分别调整回答策略。\n\n';
+    profile +=
+      '判定逻辑：以上三个维度叠加才能准确定位用户画像。例如"已提交+优才+在职"与"已提交+高才通A+企业家"是完全不同的用户群体，需分别调整回答策略。\n\n';
   }
 
   // L2: 资格评估输入 — 决定"他怎么样"（内容标签）
@@ -276,13 +271,13 @@ function buildUserProfile(context) {
   }
 
   // L4: 页面场景 — 说明"他可能在什么场景遇到问题"
-  var pageHints = {
-    'guidebooks': '正在浏览攻略库，可能想了解某条具体路径或政策',
-    'process': '正在管理申请流程，可能关心时间节点、材料顺序、阶段进度',
-    'documents': '正在整理证件材料，可能关心材料标准、格式要求、拍照规范',
-    'reminders': '正在管理提醒和截止日期，可能关心续签窗口、到期处理',
-    'assessment': '正在进行资格评估，可能关心自己是否符合条件',
-    'mine': '正在查看个人中心，可能关心会员权益或订单问题'
+  const pageHints = {
+    guidebooks: '正在浏览攻略库，可能想了解某条具体路径或政策',
+    process: '正在管理申请流程，可能关心时间节点、材料顺序、阶段进度',
+    documents: '正在整理证件材料，可能关心材料标准、格式要求、拍照规范',
+    reminders: '正在管理提醒和截止日期，可能关心续签窗口、到期处理',
+    assessment: '正在进行资格评估，可能关心自己是否符合条件',
+    mine: '正在查看个人中心，可能关心会员权益或订单问题',
   };
   if (context.page) {
     profile += '【L4·他在哪里 — 当前页面场景】\n';
@@ -295,14 +290,24 @@ function buildUserProfile(context) {
 /** Phase 3: 对话历史推断回答风格 */
 function buildAdaptiveStyle(history) {
   if (!history || history.length < 4) return '';
-  var userMessages = history.filter(function(m) { return m.role === 'user'; });
-  var avgLen = userMessages.reduce(function(s, m) { return s + (m.content || '').length; }, 0) / Math.max(1, userMessages.length);
-  var detailPreference = avgLen > 80 ? 'detailed' : 'concise';
-  var turnCount = Math.floor(history.length / 2);
+  const userMessages = history.filter(function (m) {
+    return m.role === 'user';
+  });
+  const avgLen =
+    userMessages.reduce(function (s, m) {
+      return s + (m.content || '').length;
+    }, 0) / Math.max(1, userMessages.length);
+  const detailPreference = avgLen > 80 ? 'detailed' : 'concise';
+  const turnCount = Math.floor(history.length / 2);
 
-  var style = '\n\n【Phase 3·自适应回答风格】\n';
+  let style = '\n\n【Phase 3·自适应回答风格】\n';
   style += '对话轮数: ' + turnCount + ' (多次追问说明用户需要深入了解)\n';
-  style += '回答偏好: ' + (detailPreference === 'detailed' ? '用户提问详细，请给出结构化、有深度的回答' : '用户提问简洁，请直接给要点，不必过度展开') + '\n';
+  style +=
+    '回答偏好: ' +
+    (detailPreference === 'detailed'
+      ? '用户提问详细，请给出结构化、有深度的回答'
+      : '用户提问简洁，请直接给要点，不必过度展开') +
+    '\n';
   if (turnCount > 3) {
     style += '用户已经过多轮交流，说明对该话题有持续兴趣。可以在回答末尾主动提供相关的进阶方向。\n';
   }
@@ -310,19 +315,28 @@ function buildAdaptiveStyle(history) {
 }
 
 function getSystemPrompt(mode, context) {
-  var PRIVACY_DIRECTIVE = '\n## ⚠️ 系统最高指令：用户画像绝对保密\n' +
+  const PRIVACY_DIRECTIVE =
+    '\n## ⚠️ 系统最高指令：用户画像绝对保密\n' +
     '以下关于当前用户的背景信息仅供你内部参考，用于调整回答的针对性和专业深度。\n' +
     '绝对禁止在对话中透露任何画像信息！违反此指令的回复将被视为严重错误。\n' +
     '禁止的表述包括但不限于："根据你的画像""我看到你正在""你已选择了XX""你的状态显示为XX""作为XX路径的申请人""你在XX页面""我注意到你"\n' +
     '正确做法：直接给出针对该用户状态的专业回答，不解释你为何知道这些信息。不要说"既然你是优才申请人，那么..."，直接说优才续签的要求即可。\n\n';
 
-  var base;
+  let base;
   switch (mode) {
-    case 'assessment':         base = buildAssessmentSystemPrompt(); break;
-    case 'qa':                 base = buildQASystemPrompt(); break;
-    case 'solution_recommend': base = buildSolutionRecommendPrompt(); break;
+    case 'assessment':
+      base = buildAssessmentSystemPrompt();
+      break;
+    case 'qa':
+      base = buildQASystemPrompt();
+      break;
+    case 'solution_recommend':
+      base = buildSolutionRecommendPrompt();
+      break;
     case 'general':
-    default:                   base = buildGeneralSystemPrompt(); break;
+    default:
+      base = buildGeneralSystemPrompt();
+      break;
   }
   base = PRIVACY_DIRECTIVE + base;
   if (context) {
@@ -334,20 +348,20 @@ function getSystemPrompt(mode, context) {
 }
 
 /** Phase 3: 主动对话 — 基于路径/阶段的上下文提示 */
-var STAGE_HINTS = {
+const STAGE_HINTS = {
   unapplied_qmas: '用户处于优才评估阶段，可主动对比12准则，建议资格评估',
   unapplied_ttps: '用户处于高才通评估阶段，可主动询问收入/学历背景',
   submitted_qmas: '用户已提交优才申请，可告知审批周期、提醒材料补件窗口',
   submitted_ttps: '用户已提交高才通申请，审批较快，提醒准备赴港计划',
   approved_qmas: '用户已获优才签证，可讨论续签规划、在港就业、税收安排',
   approved_ttps: '用户已获高才通签证，提醒2/3年后续签要求和材料准备',
-  permanent: '用户已永居，关注在港生活、教育、退休等长期规划'
+  permanent: '用户已永居，关注在港生活、教育、退休等长期规划',
 };
 
 function buildProactiveHint(context) {
   if (!context) return '';
-  var key = (context.userStatus || '') + '_' + (context.selectedPath || '');
-  var hint = STAGE_HINTS[key] || '';
+  const key = (context.userStatus || '') + '_' + (context.selectedPath || '');
+  let hint = STAGE_HINTS[key] || '';
 
   if (!hint && context.userStatus === 'unapplied') {
     hint = '用户尚未申请，可引导尝试免费资格评估，比较各路径优劣';
@@ -356,9 +370,12 @@ function buildProactiveHint(context) {
     hint = '用户选择了' + context.selectedPath + '路径，可提供针对性的深度信息';
   }
 
-  return hint ? '\n\n【Phase 3·主动对话 — 基于用户状态的引导策略】\n' + hint +
-    '\n在回答末尾自然地提供1-2条相关的后续方向，但不要显得推销或强迫。' +
-    '\n例如："如果想了解续签的具体时间节点，我可以详细说明。"或"需要我帮你对比一下优才和高才通的续签难度吗？"' : '';
+  return hint
+    ? '\n\n【Phase 3·主动对话 — 基于用户状态的引导策略】\n' +
+        hint +
+        '\n在回答末尾自然地提供1-2条相关的后续方向，但不要显得推销或强迫。' +
+        '\n例如："如果想了解续签的具体时间节点，我可以详细说明。"或"需要我帮你对比一下优才和高才通的续签难度吗？"'
+    : '';
 }
 
 module.exports = {
@@ -372,5 +389,5 @@ module.exports = {
   K2_SAFETY_RULES,
   CONFIDENCE_DIRECTIVES,
   CONFIDENCE_A_E,
-  DYNAMIC_QUICK_REPLY_GUIDE
+  DYNAMIC_QUICK_REPLY_GUIDE,
 };

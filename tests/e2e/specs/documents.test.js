@@ -4,10 +4,7 @@
  * 运行: npm run test:e2e:docs
  */
 
-const {
-  goToTab, navigateTo, findElement,
-  initTestState, waitFor,
-} = require('../helpers');
+const { goToTab, navigateTo, findElement, initTestState, waitFor } = require('../helpers');
 
 let mp;
 
@@ -19,7 +16,6 @@ beforeAll(async () => {
 });
 
 describe('§3 证件夹 (documents)', () => {
-
   test('3.1 进入证件夹 → 卡槽分类显示', async () => {
     const page = await mp.currentPage();
     expect(page.path).toContain('documents');
@@ -59,5 +55,4 @@ describe('§3 证件夹 (documents)', () => {
       }
     }
   });
-
 });

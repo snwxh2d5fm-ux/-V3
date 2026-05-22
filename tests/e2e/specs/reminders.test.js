@@ -4,10 +4,7 @@
  * 运行: npm run test:e2e:reminders
  */
 
-const {
-  goToTab, navigateTo, findElement,
-  initTestState, waitFor, reLaunch,
-} = require('../helpers');
+const { goToTab, navigateTo, findElement, initTestState, waitFor, reLaunch } = require('../helpers');
 
 let mp;
 
@@ -19,7 +16,6 @@ beforeAll(async () => {
 });
 
 describe('§4 提醒器 (reminders)', () => {
-
   test('4.1 进入提醒器 → 页面正常渲染', async () => {
     const page = await mp.currentPage();
     expect(page.path).toContain('reminders');
@@ -37,5 +33,4 @@ describe('§4 提醒器 (reminders)', () => {
     const errorText = await findElement(mp, '.error-page, .not-found');
     expect(errorText).toBeNull();
   });
-
 });

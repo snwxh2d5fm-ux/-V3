@@ -32,7 +32,7 @@ function maskIdNumber(num) {
 }
 
 function maskIncome(income) {
-  var n = parseInt(income) || 0;
+  const n = parseInt(income) || 0;
   if (n < 300000) return '30万以下';
   if (n < 1000000) return '30-100万';
   return '100万以上';
@@ -40,7 +40,7 @@ function maskIncome(income) {
 
 function maskAddress(addr) {
   if (!addr) return '';
-  var parts = addr.split('区');
+  const parts = addr.split('区');
   return (parts[0] || addr) + '区';
 }
 
@@ -52,74 +52,96 @@ function maskAddress(addr) {
  * 从多个数据源采集并聚合用户上下文
  */
 async function buildUserContext(userId, sessionData) {
-  var sections = [];
-  var hasData = false;
+  const sections = [];
+  let hasData = false;
 
   // 1. 身份状态 (从 session / globalData)
-  var userStatus = sessionData.userStatus || 'unknown';
-  var statusLabels = {
+  const userStatus = sessionData.userStatus || 'unknown';
+  const statusLabels = {
     unapplied: '未申请·在职人士',
     applied: '已提交申请·等待获批',
     submitted: '已提交·审批中',
     approved: '已获批·未激活',
     active: '已激活·在港生活',
     renewal: '续签维持中',
-    permanent: '永居申请中'
+    permanent: '永居申请中',
   };
   sections.push({
     key: 'identity_status',
     label: '身份状态',
-    content: statusLabels[userStatus] || userStatus
+    content: statusLabels[userStatus] || userStatus,
   });
   hasData = true;
 
   // 2. 路径规划 (从 session)
-  var selectedPath = sessionData.selectedPath || '';
-  var pathLabels = {
+  const selectedPath = sessionData.selectedPath || '';
+  const pathLabels = {
     qmas: '优才计划(QMAS)',
     ttps_a: '高才通A类',
     ttps_b: '高才通B类',
     ttps_c: '高才通C类',
     asmpt: '专才计划(ASMTP)',
     student_iang: '学生→IANG',
-    dependent: '受养人签证'
+    dependent: '受养人签证',
   };
   if (selectedPath) {
     sections.push({
       key: 'path_planning',
       label: '当前路径',
-      content: pathLabels[selectedPath] || selectedPath
+      content: pathLabels[selectedPath] || selectedPath,
     });
   }
 
   // 3. 资格评估结果 (从 assessment persona)
-  var assessment = sessionData.assessment || {};
+  const assessment = sessionData.assessment || {};
   if (assessment.score !== undefined) {
-    var pathName = pathLabels[assessment.pathType] || assessment.pathType || '';
+    const pathName = pathLabels[assessment.pathType] || assessment.pathType || '';
     sections.push({
       key: 'qualification',
       label: '资格评估',
-      content: (pathName + ' · 评分' + assessment.score + '/' + (assessment.maxScore || 12) + ' · ' + (assessment.isQualified ? '合格' : '未达标')).trim()
+      content: (
+        pathName +
+        ' · 评分' +
+        assessment.score +
+        '/' +
+        (assessment.maxScore || 12) +
+        ' · ' +
+        (assessment.isQualified ? '合格' : '未达标')
+      ).trim(),
     });
   }
 
   // 4. 通关进度 (从 onboarding progress)
   try {
-    var progressRes = await db.collection('user_onboarding_progress')
+    const progressRes = await db
+      .collection('user_onboarding_progress')
       .where({ _openid: userId })
       .orderBy('updatedAt', 'desc')
       .limit(1)
       .get();
     if (progressRes.data && progressRes.data.length > 0) {
-      var prog = progressRes.data[0];
-      var phaseNames = { 0:'抵港前',1:'落地生存',2:'行政开户',3:'安居乐业',4:'出行融入',5:'子女教育',6:'财务税务',7:'续签准备' };
-      var currentPhase = phaseNames[prog.currentPhase] || '未知';
-      var total = prog.tasks ? Object.keys(prog.tasks).length : 0;
-      var done = prog.tasks ? Object.values(prog.tasks).filter(function(t) { return t.status === 'completed'; }).length : 0;
+      const prog = progressRes.data[0];
+      const phaseNames = {
+        0: '抵港前',
+        1: '落地生存',
+        2: '行政开户',
+        3: '安居乐业',
+        4: '出行融入',
+        5: '子女教育',
+        6: '财务税务',
+        7: '续签准备',
+      };
+      const currentPhase = phaseNames[prog.currentPhase] || '未知';
+      const total = prog.tasks ? Object.keys(prog.tasks).length : 0;
+      const done = prog.tasks
+        ? Object.values(prog.tasks).filter(function (t) {
+            return t.status === 'completed';
+          }).length
+        : 0;
       sections.push({
         key: 'onboarding',
         label: '通关进度',
-        content: '当前关卡:' + currentPhase + ' · 已完成' + done + '/' + total + '项'
+        content: '当前关卡:' + currentPhase + ' · 已完成' + done + '/' + total + '项',
       });
     }
   } catch (e) {
@@ -128,15 +150,13 @@ async function buildUserContext(userId, sessionData) {
 
   // 5. 证件夹状态
   try {
-    var docsRes = await db.collection('documents')
-      .where({ _openid: userId })
-      .count();
-    var totalDocs = docsRes.total || 0;
+    const docsRes = await db.collection('documents').where({ _openid: userId }).count();
+    const totalDocs = docsRes.total || 0;
     if (totalDocs > 0) {
       sections.push({
         key: 'documents',
         label: '证件夹',
-        content: '已上传' + totalDocs + '份证件'
+        content: '已上传' + totalDocs + '份证件',
       });
     }
   } catch (e) {
@@ -145,14 +165,12 @@ async function buildUserContext(userId, sessionData) {
 
   // 6. 提醒器状态
   try {
-    var remindersRes = await db.collection('reminders')
-      .where({ _openid: userId, status: 'pending' })
-      .count();
+    const remindersRes = await db.collection('reminders').where({ _openid: userId, status: 'pending' }).count();
     if (remindersRes.total > 0) {
       sections.push({
         key: 'reminders',
         label: '待办提醒',
-        content: remindersRes.total + '个待处理提醒'
+        content: remindersRes.total + '个待处理提醒',
       });
     }
   } catch (e) {
@@ -161,20 +179,23 @@ async function buildUserContext(userId, sessionData) {
 
   // 7. 会话记忆 (最近对话主题)
   try {
-    var historyRes = await db.collection('chat_history')
+    const historyRes = await db
+      .collection('chat_history')
       .where({ _openid: userId })
       .orderBy('createdAt', 'desc')
       .limit(3)
       .get();
     if (historyRes.data && historyRes.data.length > 0) {
-      var topics = historyRes.data.map(function(h) {
-        return h.topic || h.title || '';
-      }).filter(Boolean);
+      const topics = historyRes.data
+        .map(function (h) {
+          return h.topic || h.title || '';
+        })
+        .filter(Boolean);
       if (topics.length > 0) {
         sections.push({
           key: 'chat_history',
           label: '最近关注',
-          content: topics.join(' · ')
+          content: topics.join(' · '),
         });
       }
     }
@@ -183,8 +204,8 @@ async function buildUserContext(userId, sessionData) {
   }
 
   // 构建上下文文本 (AI SYSTEM prompt 用)
-  var contextText = '【当前用户信息】(脱敏后)\n';
-  sections.forEach(function(s) {
+  let contextText = '【当前用户信息】(脱敏后)\n';
+  sections.forEach(function (s) {
     contextText += '  ' + s.label + ': ' + s.content + '\n';
   });
   contextText += '\n请基于以上用户信息进行个性化回答。涉及个人信息时使用脱敏后的表述。';
@@ -192,12 +213,11 @@ async function buildUserContext(userId, sessionData) {
   return {
     contextText: contextText,
     sections: sections,
-    hasData: hasData
+    hasData: hasData,
   };
 }
 
 module.exports = { buildUserContext, maskName, maskIdNumber, maskIncome, maskAddress };
-
 
 // ═══════════════════════════════════════════════════════════════
 // [V4.1-PHASE1] ZGB-AI-107: 四维用户画像 XML 格式化
@@ -219,7 +239,7 @@ function buildUserProfileXml(profileData) {
     return '';
   }
 
-  var xml = '\n\n<user_context>\n';
+  let xml = '\n\n<user_context>\n';
 
   // L1: 身份画像
   if (profileData.identity) {
@@ -256,8 +276,8 @@ function buildUserProfileXml(profileData) {
     }
     if (profileData.stage.milestones && profileData.stage.milestones.length > 0) {
       xml += '    <milestones>\n';
-      for (var i = 0; i < profileData.stage.milestones.length; i++) {
-        var m = profileData.stage.milestones[i];
+      for (let i = 0; i < profileData.stage.milestones.length; i++) {
+        const m = profileData.stage.milestones[i];
         xml += '      <milestone>\n';
         xml += '        <docType>' + escXml(m.docType || '') + '</docType>\n';
         xml += '        <status>' + escXml(m.status || '') + '</status>\n';
@@ -273,9 +293,10 @@ function buildUserProfileXml(profileData) {
     xml += '  <behavior>\n';
     xml += '    <assessmentCompleted>true</assessmentCompleted>\n';
     if (profileData.behavior.topMatches) {
-      var matchStr = typeof profileData.behavior.topMatches === 'string'
-        ? profileData.behavior.topMatches
-        : JSON.stringify(profileData.behavior.topMatches);
+      const matchStr =
+        typeof profileData.behavior.topMatches === 'string'
+          ? profileData.behavior.topMatches
+          : JSON.stringify(profileData.behavior.topMatches);
       xml += '    <topMatches>' + escXml(matchStr) + '</topMatches>\n';
     }
     xml += '  </behavior>\n';
@@ -285,9 +306,11 @@ function buildUserProfileXml(profileData) {
   if (profileData.conversation && profileData.conversation.length > 0) {
     xml += '  <conversation>\n';
     // 生成最近话题摘要
-    var recentTopics = profileData.conversation.map(function (c) {
-      return c.query || '';
-    }).filter(Boolean);
+    const recentTopics = profileData.conversation
+      .map(function (c) {
+        return c.query || '';
+      })
+      .filter(Boolean);
     if (recentTopics.length > 0) {
       xml += '    <recentTopics>' + escXml(recentTopics.join(' | ')) + '</recentTopics>\n';
     }

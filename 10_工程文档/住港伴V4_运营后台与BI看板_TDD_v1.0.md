@@ -8,18 +8,18 @@
 
 ## 一、技术栈
 
-| 层 | 技术 | 版本/说明 |
-|:--|:--|:--|
-| 运营后台前端 | React 18 + TypeScript + Vite | 新建项目，独立于小程序 |
-| UI 组件库 | shadcn/ui + Tailwind CSS | 与网页版设计语言统一 |
-| 图表库 | Recharts | 轻量 React 原生图表 |
-| 认证 | CloudBase Web Auth（修正为方案B） | 管理员独立 API Key + IP 白名单 |
-| 后端 | CloudBase HTTP 云函数 (Node.js 18) | admin-* 系列，8个新函数 |
-| 数据库 | CloudBase NoSQL（复用45个已有集合） | 新增4个集合 + 扩展3个集合 |
-| 定时任务 | CloudBase Timer 触发器 | admin-data-lifecycle + daily_snapshot |
-| 小程序端 | 微信小程序原生（V3基线，不动） | 仅新增埋点 (15页 page_view + 20种事件) |
-| 部署 | CloudBase 静态托管 | 与网页版同一 envId |
-| 测试 | Jest 29 (云函数) + React Testing Library (前端) | 两层测试独立运行 |
+| 层           | 技术                                            | 版本/说明                              |
+| :----------- | :---------------------------------------------- | :------------------------------------- |
+| 运营后台前端 | React 18 + TypeScript + Vite                    | 新建项目，独立于小程序                 |
+| UI 组件库    | shadcn/ui + Tailwind CSS                        | 与网页版设计语言统一                   |
+| 图表库       | Recharts                                        | 轻量 React 原生图表                    |
+| 认证         | CloudBase Web Auth（修正为方案B）               | 管理员独立 API Key + IP 白名单         |
+| 后端         | CloudBase HTTP 云函数 (Node.js 18)              | admin-\* 系列，8个新函数               |
+| 数据库       | CloudBase NoSQL（复用45个已有集合）             | 新增4个集合 + 扩展3个集合              |
+| 定时任务     | CloudBase Timer 触发器                          | admin-data-lifecycle + daily_snapshot  |
+| 小程序端     | 微信小程序原生（V3基线，不动）                  | 仅新增埋点 (15页 page_view + 20种事件) |
+| 部署         | CloudBase 静态托管                              | 与网页版同一 envId                     |
+| 测试         | Jest 29 (云函数) + React Testing Library (前端) | 两层测试独立运行                       |
 
 ## 二、系统架构
 
@@ -236,6 +236,7 @@ API Key 管理:
 ### 3.2 扩展已有集合
 
 **invite_codes 新增字段**:
+
 ```javascript
 {
   codeType: "invite|redemption",         // 新增
@@ -260,6 +261,7 @@ API Key 管理:
 **invoices 新增字段**: (略，见方案 §3.4.6)
 
 **user_profiles 新增字段**:
+
 ```javascript
 {
   membershipTier: "free_trial|annual_399|pro_2999|enterprise_6999",
@@ -270,6 +272,7 @@ API Key 管理:
 ```
 
 **user_events 新增索引** (修正P0-07):
+
 ```javascript
 // 新增索引:
 //   { createdAt: -1 }                    // 时间范围查询
@@ -278,21 +281,21 @@ API Key 管理:
 
 ### 3.3 索引创建优先级 (Phase 1 部署前)
 
-| # | 集合 | 索引 | 原因 |
-|:--:|:--|:--|:--|
-| 1 | user_events | `{createdAt: -1}` | admin-stats 日期范围查询 |
-| 2 | user_events | `{_openid: 1, createdAt: -1}` | 用户时间线 |
-| 3 | invite_codes | `{codeType: 1, status: 1}` | 邀请码/兑换码分类筛选 |
-| 4 | invite_codes | `{batchId: 1, codeType: 1}` | 批次管理 |
-| 5 | invite_codes | `{planId: 1, status: 1}` | 套餐统计 |
-| 6 | invite_codes | `{generatedBy: 1, createdAt: -1}` | 管理员操作记录 |
-| 7 | admin_users | `{uid: 1}` unique | 登录查询 |
-| 8 | admin_users | `{email: 1}` unique | 邮箱查询 |
-| 9 | admin_audit_trail | `{adminUid: 1, createdAt: -1}` | 管理员审计 |
-| 10 | admin_audit_trail | `{action: 1, createdAt: -1}` | 操作类型审计 |
-| 11 | page_view_logs | `{_openid: 1, createdAt: -1}` | 用户路径分析 |
-| 12 | page_view_logs | `{page: 1, createdAt: -1}` | 页面热度统计 |
-| 13 | daily_stats_snapshots | `{date: 1}` unique | 快照查询 |
+|  #  | 集合                  | 索引                              | 原因                     |
+| :-: | :-------------------- | :-------------------------------- | :----------------------- |
+|  1  | user_events           | `{createdAt: -1}`                 | admin-stats 日期范围查询 |
+|  2  | user_events           | `{_openid: 1, createdAt: -1}`     | 用户时间线               |
+|  3  | invite_codes          | `{codeType: 1, status: 1}`        | 邀请码/兑换码分类筛选    |
+|  4  | invite_codes          | `{batchId: 1, codeType: 1}`       | 批次管理                 |
+|  5  | invite_codes          | `{planId: 1, status: 1}`          | 套餐统计                 |
+|  6  | invite_codes          | `{generatedBy: 1, createdAt: -1}` | 管理员操作记录           |
+|  7  | admin_users           | `{uid: 1}` unique                 | 登录查询                 |
+|  8  | admin_users           | `{email: 1}` unique               | 邮箱查询                 |
+|  9  | admin_audit_trail     | `{adminUid: 1, createdAt: -1}`    | 管理员审计               |
+| 10  | admin_audit_trail     | `{action: 1, createdAt: -1}`      | 操作类型审计             |
+| 11  | page_view_logs        | `{_openid: 1, createdAt: -1}`     | 用户路径分析             |
+| 12  | page_view_logs        | `{page: 1, createdAt: -1}`        | 页面热度统计             |
+| 13  | daily_stats_snapshots | `{date: 1}` unique                | 快照查询                 |
 
 ---
 
@@ -300,7 +303,7 @@ API Key 管理:
 
 ### 4.1 鉴权机制
 
-所有 admin-* 云函数使用 HTTP 触发器，请求格式：
+所有 admin-\* 云函数使用 HTTP 触发器，请求格式：
 
 ```
 POST /admin-stats HTTP/1.1
@@ -313,6 +316,7 @@ X-API-Key: <管理员API Key>
 ```
 
 响应格式：
+
 ```json
 {
   "code": 0,
@@ -335,22 +339,22 @@ X-API-Key: <管理员API Key>
 
 **用途**: 首页仪表盘聚合数据
 
-| action | 说明 | params | 返回 |
-|:--|:--|:--|:--|
-| getDashboard | 首页6项核心指标 | `{}` | `{ totalUsers, newUsers7d, activeUsers7d, ... }` |
-| getTrend | 30天趋势数据 | `{ metric: "users|revenue|ai" }` | `[{ date, value }, ...]` |
+| action       | 说明            | params            | 返回                                             |
+| :----------- | :-------------- | :---------------- | :----------------------------------------------- | ------ | ------------------------ |
+| getDashboard | 首页6项核心指标 | `{}`              | `{ totalUsers, newUsers7d, activeUsers7d, ... }` |
+| getTrend     | 30天趋势数据    | `{ metric: "users | revenue                                          | ai" }` | `[{ date, value }, ...]` |
 
 ### 4.3 admin-users 云函数
 
 **用途**: 用户管理
 
-| action | 说明 | params | 返回 |
-|:--|:--|:--|:--|
-| listUsers | 用户列表(分页) | `{ page, pageSize, filter: { visaType, membershipTier, status } }` | `{ total, list: [...] }` |
-| getUserDetail | 单用户详情 | `{ openid }` | `{ profile, events, orders }` |
-| lockUser | 锁定用户 | `{ openid, reason }` | `{ ok }` |
-| unlockUser | 解锁用户 | `{ openid, reason }` | `{ ok }` |
-| extendTrial | 延长试用 | `{ openid, days }` | `{ ok }` |
+| action        | 说明           | params                                                             | 返回                          |
+| :------------ | :------------- | :----------------------------------------------------------------- | :---------------------------- |
+| listUsers     | 用户列表(分页) | `{ page, pageSize, filter: { visaType, membershipTier, status } }` | `{ total, list: [...] }`      |
+| getUserDetail | 单用户详情     | `{ openid }`                                                       | `{ profile, events, orders }` |
+| lockUser      | 锁定用户       | `{ openid, reason }`                                               | `{ ok }`                      |
+| unlockUser    | 解锁用户       | `{ openid, reason }`                                               | `{ ok }`                      |
+| extendTrial   | 延长试用       | `{ openid, days }`                                                 | `{ ok }`                      |
 
 **权限**: ops+ 角色。lockUser/extendTrial 需 pm+ 角色。
 
@@ -358,16 +362,17 @@ X-API-Key: <管理员API Key>
 
 **用途**: 邀请码 + 兑换码管理
 
-| action | 说明 | params | 返回 |
-|:--|:--|:--|:--|
-| listCodes | 码列表(分页+筛选) | `{ page, pageSize, filter: { codeType, batchId, planId, status } }` | `{ total, list: [...] }` |
-| generateCodes | 批量生成 | `{ codeType, planId, count, expiresInDays, batchName }` | `{ batchId, count, csvData }` |
-| revokeCode | 单张作废 | `{ code }` | `{ ok }` |
-| revokeBatch | 整批作废 | `{ batchId }` | `{ ok }` |
-| getCodeStats | 统计 | `{ codeType }` | `{ generated, activated, activationRate }` |
-| exportCodes | 导出CSV (需二次确认) | `{ batchId, confirmPassword }` | `{ csvData (AES加密) }` |
+| action        | 说明                 | params                                                              | 返回                                       |
+| :------------ | :------------------- | :------------------------------------------------------------------ | :----------------------------------------- |
+| listCodes     | 码列表(分页+筛选)    | `{ page, pageSize, filter: { codeType, batchId, planId, status } }` | `{ total, list: [...] }`                   |
+| generateCodes | 批量生成             | `{ codeType, planId, count, expiresInDays, batchName }`             | `{ batchId, count, csvData }`              |
+| revokeCode    | 单张作废             | `{ code }`                                                          | `{ ok }`                                   |
+| revokeBatch   | 整批作废             | `{ batchId }`                                                       | `{ ok }`                                   |
+| getCodeStats  | 统计                 | `{ codeType }`                                                      | `{ generated, activated, activationRate }` |
+| exportCodes   | 导出CSV (需二次确认) | `{ batchId, confirmPassword }`                                      | `{ csvData (AES加密) }`                    |
 
 **安全控制**:
+
 - generateCodes: 单IP单日上限500张，需二次密码确认
 - exportCodes: 需管理员密码二次确认，CSV加密压缩，写入审计日志 (P1-06)
 - revokeCode/revokeBatch: 不可逆操作，需二次确认
@@ -376,28 +381,29 @@ X-API-Key: <管理员API Key>
 
 **用途**: 财务看板
 
-| action | 说明 | params | 返回 |
-|:--|:--|:--|:--|
-| getRevenueSummary | 收入概览 | `{ period: "today|week|month" }` | `{ totalRevenue, orderCount, avgOrder }` |
-| listOrders | 订单列表 | `{ page, pageSize, filter: { status, planId, dateRange } }` | `{ total, list: [...] }` |
-| getTrialFunnel | 试用转化漏斗 | `{ days: 30 }` | `{ steps: [{ name, count, rate }, ...] }` |
-| listInvoices | 开票列表 | `{ page, pageSize, filter: { status } }` | `{ total, list: [...] }` |
-| issueInvoice | 开具发票 | `{ invoiceId, invoiceNumber, invoiceFile }` | `{ ok }` |
-| rejectInvoice | 驳回开票 | `{ invoiceId, reason }` | `{ ok }` |
+| action            | 说明         | params                                                      | 返回                                      |
+| :---------------- | :----------- | :---------------------------------------------------------- | :---------------------------------------- | --------- | ---------------------------------------- |
+| getRevenueSummary | 收入概览     | `{ period: "today                                           | week                                      | month" }` | `{ totalRevenue, orderCount, avgOrder }` |
+| listOrders        | 订单列表     | `{ page, pageSize, filter: { status, planId, dateRange } }` | `{ total, list: [...] }`                  |
+| getTrialFunnel    | 试用转化漏斗 | `{ days: 30 }`                                              | `{ steps: [{ name, count, rate }, ...] }` |
+| listInvoices      | 开票列表     | `{ page, pageSize, filter: { status } }`                    | `{ total, list: [...] }`                  |
+| issueInvoice      | 开具发票     | `{ invoiceId, invoiceNumber, invoiceFile }`                 | `{ ok }`                                  |
+| rejectInvoice     | 驳回开票     | `{ invoiceId, reason }`                                     | `{ ok }`                                  |
 
 ### 4.6 admin-ai-quality 云函数
 
 **用途**: AI质量监控
 
-| action | 说明 | params | 返回 |
-|:--|:--|:--|:--|
-| getAIDashboard | AI看板 | `{ days: 7 }` | `{ conversations, accuracy, safetyEvents, cost, latency }` |
-| getAccuracyTrend | 准确率趋势 | `{ days: 30 }` | `[{ date, avgAccuracy, evalCount }, ...]` |
-| getTopicDistribution | 咨询主题分布 | `{ days: 30 }` | `[{ topic, count, percentage }, ...]` |
-| getTopQueries | 高频问题Top20 | `{ days: 7 }` | `[{ query (脱敏), count, hasContent }, ...]` |
-| getSafetyEvents | 安全事件列表 | `{ page, pageSize, days: 7 }` | `{ total, list: [{ time, type, query }, ...] }` |
+| action               | 说明          | params                        | 返回                                                       |
+| :------------------- | :------------ | :---------------------------- | :--------------------------------------------------------- |
+| getAIDashboard       | AI看板        | `{ days: 7 }`                 | `{ conversations, accuracy, safetyEvents, cost, latency }` |
+| getAccuracyTrend     | 准确率趋势    | `{ days: 30 }`                | `[{ date, avgAccuracy, evalCount }, ...]`                  |
+| getTopicDistribution | 咨询主题分布  | `{ days: 30 }`                | `[{ topic, count, percentage }, ...]`                      |
+| getTopQueries        | 高频问题Top20 | `{ days: 7 }`                 | `[{ query (脱敏), count, hasContent }, ...]`               |
+| getSafetyEvents      | 安全事件列表  | `{ page, pageSize, days: 7 }` | `{ total, list: [{ time, type, query }, ...] }`            |
 
 **安全约束** (修正P0-05):
+
 - response_preview **绝对禁止**出现在任何返回数据中
 - query 字段展示前必须过 PII 正则脱敏
 - 词云输入前过 K2-leak-scanner 双重过滤
@@ -406,25 +412,26 @@ X-API-Key: <管理员API Key>
 
 **用途**: 合规与安全监控
 
-| action | 说明 | params | 返回 |
-|:--|:--|:--|:--|
-| getComplianceStatus | 合规状态总览 | `{}` | `{ sensitiveTerms, k2Leaks, contentModeration, ocrAudit }` |
-| getContentModerationLogs | 内容审核日志 | `{ page, pageSize, filter: { type, days } }` | `{ total, list: [...] }` |
-| getPiiScanResults | PII扫描结果 | `{ days: 7 }` | `{ scanned, found, sanitized }` |
+| action                   | 说明         | params                                       | 返回                                                       |
+| :----------------------- | :----------- | :------------------------------------------- | :--------------------------------------------------------- |
+| getComplianceStatus      | 合规状态总览 | `{}`                                         | `{ sensitiveTerms, k2Leaks, contentModeration, ocrAudit }` |
+| getContentModerationLogs | 内容审核日志 | `{ page, pageSize, filter: { type, days } }` | `{ total, list: [...] }`                                   |
+| getPiiScanResults        | PII扫描结果  | `{ days: 7 }`                                | `{ scanned, found, sanitized }`                            |
 
 ### 4.8 admin-feedback 云函数
 
 **用途**: 客服工单管理
 
-| action | 说明 | params | 返回 |
-|:--|:--|:--|:--|
-| listFeedback | 反馈列表 | `{ page, pageSize, filter: { status, type, days } }` | `{ total, list: [...] }` |
-| getFeedbackDetail | 反馈详情 | `{ ticketId }` | `{ ...feedback, content: 脱敏后的内容 }` |
-| updateFeedbackStatus | 更新状态 | `{ ticketId, status, reply }` | `{ ok }` |
-| getFeedbackStats | 客服效率统计 | `{ days: 30 }` | `{ total, resolved, avgResponseTime, closureRate }` |
-| getCsQualityReport | 客服质量报告 | `{ days: 30 }` | `{ satisfactionRate, topIssues, ... }` |
+| action               | 说明         | params                                               | 返回                                                |
+| :------------------- | :----------- | :--------------------------------------------------- | :-------------------------------------------------- |
+| listFeedback         | 反馈列表     | `{ page, pageSize, filter: { status, type, days } }` | `{ total, list: [...] }`                            |
+| getFeedbackDetail    | 反馈详情     | `{ ticketId }`                                       | `{ ...feedback, content: 脱敏后的内容 }`            |
+| updateFeedbackStatus | 更新状态     | `{ ticketId, status, reply }`                        | `{ ok }`                                            |
+| getFeedbackStats     | 客服效率统计 | `{ days: 30 }`                                       | `{ total, resolved, avgResponseTime, closureRate }` |
+| getCsQualityReport   | 客服质量报告 | `{ days: 30 }`                                       | `{ satisfactionRate, topIssues, ... }`              |
 
 **安全约束** (修正P0-04):
+
 - feedback.content 入库前经过 PII 自动脱敏
 - getFeedbackDetail 返回前二次过滤 PII 正则
 - 展示时敏感内容标记 `[已脱敏]`
@@ -435,12 +442,12 @@ X-API-Key: <管理员API Key>
 
 执行时间: 每日凌晨 3:00 (cron: `0 0 3 * * * *`)
 
-| action | 说明 |
-|:--|:--|
-| cleanPageViewLogs | 删除 30 天前的 page_view_logs 记录 |
-| archiveUserEvents | 导出 180 天前的 user_events → JSONL → upload to 云存储 → 删除原记录 |
-| generateDailySnapshot | 聚合当日数据 → 写入 daily_stats_snapshots |
-| verifyDataIntegrity | 校验: user_events 计数 vs daily_stats_snapshots 一致性 |
+| action                | 说明                                                                |
+| :-------------------- | :------------------------------------------------------------------ |
+| cleanPageViewLogs     | 删除 30 天前的 page_view_logs 记录                                  |
+| archiveUserEvents     | 导出 180 天前的 user_events → JSONL → upload to 云存储 → 删除原记录 |
+| generateDailySnapshot | 聚合当日数据 → 写入 daily_stats_snapshots                           |
+| verifyDataIntegrity   | 校验: user_events 计数 vs daily_stats_snapshots 一致性              |
 
 ---
 
@@ -522,47 +529,47 @@ App
 
 ### Phase 1: 种子期运营工具 (8天, 22 SP)
 
-| ID | 任务 | SP | 依赖 | 描述 |
-|:--|:--|:--:|:--|:--|
-| **V4-001** | React项目初始化 + CloudBase SDK接入 | 3 | — | Vite + React 18 + TS + shadcn/ui + Tailwind + CloudBase JS SDK；配置静态托管部署；配置 eslint + prettier |
-| **V4-002** | 管理员登录页面 + AuthProvider | 3 | V4-001 | LoginPage UI + API Key 获取/存储/自动携带；AuthProvider 全局鉴权状态管理；会话过期处理 |
-| **V4-003** | admin_users 集合创建 + API Key 种子 | 1 | — | 创建集合 + 索引；创建初始 super_admin 账号；生成首个 API Key |
-| **V4-004** | AppLayout + Sidebar + 路由 | 2 | V4-001 | 后台整体布局（深色主题）；Sidebar导航；React Router 路由配置；响应式基础 |
-| **V4-005** | admin-audit-trail 中间件 | 2 | V4-002 | 所有 admin-* 云函数统一鉴权中间件（X-API-Key校验 + IP白名单 + 速率限制 + 审计日志写入） |
-| **V4-006** | admin-stats 云函数 + DashboardPage | 5 | V4-005 | getDashboard + getTrend；首页6个核心指标卡片 + 30天趋势图 + 路径分布饼图 + 告警横幅 |
-| **V4-007** | admin-codes 云函数 + CodeManagePage (邀请码) | 5 | V4-005 | listCodes/getCodeStats/generateCodes(邀请码)；邀请码Tab: 生成表单 + 列表 + 激活率统计 |
-| **V4-008** | 小程序埋点模块 utils/tracker.js | 3 | — | 15核心页 page_view 埋点(1:10采样)；20种业务事件埋点(批量10条/批上传)；离线缓存+失败重试 |
-| **V4-009** | P0修复合集 | 3 | V4-006,V4-007 | content-safety-check PII自动脱敏；K2过滤集成到admin-ai-quality；user_events/invite_codes 6个新索引；审计日志补齐5类事件；page_view_logs 30天TTL逻辑 |
-| **V4-010** | admin-data-lifecycle 定时云函数 | 2 | — | cleanPageViewLogs + generateDailySnapshot + verifyDataIntegrity；cron配置 |
+| ID         | 任务                                         | SP  | 依赖          | 描述                                                                                                                                                |
+| :--------- | :------------------------------------------- | :-: | :------------ | :-------------------------------------------------------------------------------------------------------------------------------------------------- |
+| **V4-001** | React项目初始化 + CloudBase SDK接入          |  3  | —             | Vite + React 18 + TS + shadcn/ui + Tailwind + CloudBase JS SDK；配置静态托管部署；配置 eslint + prettier                                            |
+| **V4-002** | 管理员登录页面 + AuthProvider                |  3  | V4-001        | LoginPage UI + API Key 获取/存储/自动携带；AuthProvider 全局鉴权状态管理；会话过期处理                                                              |
+| **V4-003** | admin_users 集合创建 + API Key 种子          |  1  | —             | 创建集合 + 索引；创建初始 super_admin 账号；生成首个 API Key                                                                                        |
+| **V4-004** | AppLayout + Sidebar + 路由                   |  2  | V4-001        | 后台整体布局（深色主题）；Sidebar导航；React Router 路由配置；响应式基础                                                                            |
+| **V4-005** | admin-audit-trail 中间件                     |  2  | V4-002        | 所有 admin-\* 云函数统一鉴权中间件（X-API-Key校验 + IP白名单 + 速率限制 + 审计日志写入）                                                            |
+| **V4-006** | admin-stats 云函数 + DashboardPage           |  5  | V4-005        | getDashboard + getTrend；首页6个核心指标卡片 + 30天趋势图 + 路径分布饼图 + 告警横幅                                                                 |
+| **V4-007** | admin-codes 云函数 + CodeManagePage (邀请码) |  5  | V4-005        | listCodes/getCodeStats/generateCodes(邀请码)；邀请码Tab: 生成表单 + 列表 + 激活率统计                                                               |
+| **V4-008** | 小程序埋点模块 utils/tracker.js              |  3  | —             | 15核心页 page_view 埋点(1:10采样)；20种业务事件埋点(批量10条/批上传)；离线缓存+失败重试                                                             |
+| **V4-009** | P0修复合集                                   |  3  | V4-006,V4-007 | content-safety-check PII自动脱敏；K2过滤集成到admin-ai-quality；user_events/invite_codes 6个新索引；审计日志补齐5类事件；page_view_logs 30天TTL逻辑 |
+| **V4-010** | admin-data-lifecycle 定时云函数              |  2  | —             | cleanPageViewLogs + generateDailySnapshot + verifyDataIntegrity；cron配置                                                                           |
 
 **Phase 1 合计: 22 SP**
 
 ### Phase 2: 核心运营模块 (10天, 30 SP)
 
-| ID | 任务 | SP | 依赖 | 描述 |
-|:--|:--|:--:|:--|:--|
-| **V4-011** | admin-users 云函数 + UserListPage | 5 | V4-005 | listUsers(分页+多条件筛选)；getUserDetail(完整画像)；UserListPage + UserDetailPage |
-| **V4-012** | 路径分析页面 + 桑基图 | 5 | V4-008 | 基于 user_profiles + user_events 的路径分布饼图 + 路径切换桑基图；评估准确率；阶段进度分布 |
-| **V4-013** | admin-revenue 云函数 + RevenuePage | 5 | V4-005 | getRevenueSummary + listOrders + getTrialFunnel；收入概览卡片 + 订单列表 + 试用漏斗图 |
-| **V4-014** | admin-codes 扩展 (兑换码) | 3 | V4-007 | generateCodes(兑换码) + exportCodes(AES加密CSV) + revokeCode/revokeBatch；兑换码Tab |
-| **V4-015** | admin-ai-quality 云函数 + AIQualityPage | 5 | V4-005 | getAIDashboard + getAccuracyTrend + getTopicDistribution + getTopQueries；AI质量看板(含P0-05修复) |
-| **V4-016** | 续签准备就绪度 MVP | 3 | V4-011 | renewalReadinessScore 计算逻辑云函数；Admin用户详情页显示评分 + 高风险标记 |
-| **V4-017** | admin-compliance 云函数 + CompliancePage | 4 | V4-005 | getComplianceStatus + getContentModerationLogs；合规看板 + 审核日志 |
+| ID         | 任务                                     | SP  | 依赖   | 描述                                                                                              |
+| :--------- | :--------------------------------------- | :-: | :----- | :------------------------------------------------------------------------------------------------ |
+| **V4-011** | admin-users 云函数 + UserListPage        |  5  | V4-005 | listUsers(分页+多条件筛选)；getUserDetail(完整画像)；UserListPage + UserDetailPage                |
+| **V4-012** | 路径分析页面 + 桑基图                    |  5  | V4-008 | 基于 user_profiles + user_events 的路径分布饼图 + 路径切换桑基图；评估准确率；阶段进度分布        |
+| **V4-013** | admin-revenue 云函数 + RevenuePage       |  5  | V4-005 | getRevenueSummary + listOrders + getTrialFunnel；收入概览卡片 + 订单列表 + 试用漏斗图             |
+| **V4-014** | admin-codes 扩展 (兑换码)                |  3  | V4-007 | generateCodes(兑换码) + exportCodes(AES加密CSV) + revokeCode/revokeBatch；兑换码Tab               |
+| **V4-015** | admin-ai-quality 云函数 + AIQualityPage  |  5  | V4-005 | getAIDashboard + getAccuracyTrend + getTopicDistribution + getTopQueries；AI质量看板(含P0-05修复) |
+| **V4-016** | 续签准备就绪度 MVP                       |  3  | V4-011 | renewalReadinessScore 计算逻辑云函数；Admin用户详情页显示评分 + 高风险标记                        |
+| **V4-017** | admin-compliance 云函数 + CompliancePage |  4  | V4-005 | getComplianceStatus + getContentModerationLogs；合规看板 + 审核日志                               |
 
 **Phase 2 合计: 30 SP**
 
 ### Phase 3: 精细运营 (10天, 26 SP)
 
-| ID | 任务 | SP | 依赖 | 描述 |
-|:--|:--|:--:|:--|:--|
-| **V4-018** | admin-content 云函数 + ContentPage | 4 | V4-008 | 攻略书阅读排行 + 任务完成率 + 政策更新追踪 + 搜索热词 + 页面热度热力图 |
-| **V4-019** | admin-feedback 云函数 + FeedbackPage | 5 | V4-005 | listFeedback(含P0-04 PII脱敏) + updateFeedbackStatus + getFeedbackStats；客服工单管理 + 效率统计 |
-| **V4-020** | 开票管理模块 | 3 | V4-013 | listInvoices + issueInvoice + rejectInvoice；开票列表 + 开具/驳回 + 统计 |
-| **V4-021** | 系统健康监控页 | 3 | V4-005 | 云函数调用量/错误率图表 + 数据库容量监控 + API延迟P50/P95 |
-| **V4-022** | admin-data-lifecycle 增强 (archiveUserEvents) | 2 | V4-010 | user_events 180天归档到云存储 JSONL + 清理原记录 |
-| **V4-023** | 数据导出 + 定时报表 | 3 | V4-006 | CSV/Excel导出功能；定时报表（周报/月报）通过Resend邮件发送 |
-| **V4-024** | 日志清理TTL全面上线 | 2 | V4-022 | page_view_logs 30天 / user_events 180天 / conversation_logs 365天 / audit_trail 365天 TTL全量启用 |
-| **V4-025** | P1/P2收尾 | 4 | — | P1-01~P1-06 收尾修复；Safari/iPad兼容性测试；响应式微调 |
+| ID         | 任务                                          | SP  | 依赖   | 描述                                                                                              |
+| :--------- | :-------------------------------------------- | :-: | :----- | :------------------------------------------------------------------------------------------------ |
+| **V4-018** | admin-content 云函数 + ContentPage            |  4  | V4-008 | 攻略书阅读排行 + 任务完成率 + 政策更新追踪 + 搜索热词 + 页面热度热力图                            |
+| **V4-019** | admin-feedback 云函数 + FeedbackPage          |  5  | V4-005 | listFeedback(含P0-04 PII脱敏) + updateFeedbackStatus + getFeedbackStats；客服工单管理 + 效率统计  |
+| **V4-020** | 开票管理模块                                  |  3  | V4-013 | listInvoices + issueInvoice + rejectInvoice；开票列表 + 开具/驳回 + 统计                          |
+| **V4-021** | 系统健康监控页                                |  3  | V4-005 | 云函数调用量/错误率图表 + 数据库容量监控 + API延迟P50/P95                                         |
+| **V4-022** | admin-data-lifecycle 增强 (archiveUserEvents) |  2  | V4-010 | user_events 180天归档到云存储 JSONL + 清理原记录                                                  |
+| **V4-023** | 数据导出 + 定时报表                           |  3  | V4-006 | CSV/Excel导出功能；定时报表（周报/月报）通过Resend邮件发送                                        |
+| **V4-024** | 日志清理TTL全面上线                           |  2  | V4-022 | page_view_logs 30天 / user_events 180天 / conversation_logs 365天 / audit_trail 365天 TTL全量启用 |
+| **V4-025** | P1/P2收尾                                     |  4  | —      | P1-01~P1-06 收尾修复；Safari/iPad兼容性测试；响应式微调                                           |
 
 **Phase 3 合计: 26 SP**
 
@@ -576,35 +583,35 @@ App
 
 ### 7.1 阻断性标准 (P0 — 任一项不通过则禁止上线)
 
-| # | 标准 | 验证方式 |
-|:--|:--|:--|
-| TF-01 | admin-* 云函数未经鉴权不可调用（401返回） | 自动化测试：无API Key请求 → 期望 401 |
-| TF-02 | admin_audit_trail 审计日志不可被 update/delete | 自动化测试：尝试update audit_trail → 期望拒绝 |
-| TF-03 | AI Quality 页面不包含 response_preview 字段 | 自动化测试：解析所有API返回 → 断言无 response_preview 键 |
-| TF-04 | feedback content 入库前已完成 PII 脱敏 | 自动化测试：含手机号的 feedback → 期望 `[已脱敏的手机号]` |
-| TF-05 | 兑换码 CSV 导出需二次密码确认 | E2E测试：导出操作 → 期望弹出密码输入框 |
-| TF-06 | page_view_logs 写入采样率 ≤ 10% | 自动化测试：批量生成100条 → 期望写入 ≤ 10 条 |
-| TF-07 | admin-data-lifecycle 清理逻辑正确执行 | 自动化测试：插入31天前数据 → 触发lifecycle → 期望已删除 |
-| TF-08 | 运营后台无敏感词（"移民""移民顾问"等） | 静态扫描：grep 运营后台源码 → 期望 0 匹配 |
+| #     | 标准                                           | 验证方式                                                  |
+| :---- | :--------------------------------------------- | :-------------------------------------------------------- |
+| TF-01 | admin-\* 云函数未经鉴权不可调用（401返回）     | 自动化测试：无API Key请求 → 期望 401                      |
+| TF-02 | admin_audit_trail 审计日志不可被 update/delete | 自动化测试：尝试update audit_trail → 期望拒绝             |
+| TF-03 | AI Quality 页面不包含 response_preview 字段    | 自动化测试：解析所有API返回 → 断言无 response_preview 键  |
+| TF-04 | feedback content 入库前已完成 PII 脱敏         | 自动化测试：含手机号的 feedback → 期望 `[已脱敏的手机号]` |
+| TF-05 | 兑换码 CSV 导出需二次密码确认                  | E2E测试：导出操作 → 期望弹出密码输入框                    |
+| TF-06 | page_view_logs 写入采样率 ≤ 10%                | 自动化测试：批量生成100条 → 期望写入 ≤ 10 条              |
+| TF-07 | admin-data-lifecycle 清理逻辑正确执行          | 自动化测试：插入31天前数据 → 触发lifecycle → 期望已删除   |
+| TF-08 | 运营后台无敏感词（"移民""移民顾问"等）         | 静态扫描：grep 运营后台源码 → 期望 0 匹配                 |
 
 ### 7.2 功能完整性标准 (P1 — 任一项不通过则延期上线)
 
-| # | 标准 | 验证方式 |
-|:--|:--|:--|
-| TF-09 | 首页6项核心指标卡片数据正确展示 | E2E测试：对比admin-stats返回值与页面渲染数据 |
-| TF-10 | 邀请码批量生成 → CSV下载 → 码面加密 | E2E测试：完整流程 |
-| TF-11 | 邀请码筛选（按状态/批次）返回正确结果 | 自动化测试：插入不同状态的码 → 筛选 → 断言结果 |
-| TF-12 | 30天趋势图数据点不少于25天 | 自动化测试：调用getTrend → 断言data.length ≥ 25 |
+| #     | 标准                                     | 验证方式                                        |
+| :---- | :--------------------------------------- | :---------------------------------------------- |
+| TF-09 | 首页6项核心指标卡片数据正确展示          | E2E测试：对比admin-stats返回值与页面渲染数据    |
+| TF-10 | 邀请码批量生成 → CSV下载 → 码面加密      | E2E测试：完整流程                               |
+| TF-11 | 邀请码筛选（按状态/批次）返回正确结果    | 自动化测试：插入不同状态的码 → 筛选 → 断言结果  |
+| TF-12 | 30天趋势图数据点不少于25天               | 自动化测试：调用getTrend → 断言data.length ≥ 25 |
 | TF-13 | API速率限制生效（单IP 100次/分钟 = 429） | 自动化测试：101次连续调用 → 期望第101次返回 429 |
-| TF-14 | 管理员登录失败5次后临时锁定15分钟 | 自动化测试：连续错误密码 → 断言第6次被拒绝 |
+| TF-14 | 管理员登录失败5次后临时锁定15分钟        | 自动化测试：连续错误密码 → 断言第6次被拒绝      |
 
 ### 7.3 性能标准 (P2)
 
-| # | 标准 | 验证方式 |
-|:--|:--|:--|
-| TF-15 | 首页仪表盘加载时间 < 3秒 (P95) | 性能测试：Lighthouse 或 Chrome DevTools |
-| TF-16 | admin-stats 云函数响应时间 < 2秒 (P95) | 云函数日志分析 |
-| TF-17 | 小程序埋点不影响页面切换性能 (+<50ms) | 性能测试：埋点前后 onShow 耗时对比 |
+| #     | 标准                                   | 验证方式                                |
+| :---- | :------------------------------------- | :-------------------------------------- |
+| TF-15 | 首页仪表盘加载时间 < 3秒 (P95)         | 性能测试：Lighthouse 或 Chrome DevTools |
+| TF-16 | admin-stats 云函数响应时间 < 2秒 (P95) | 云函数日志分析                          |
+| TF-17 | 小程序埋点不影响页面切换性能 (+<50ms)  | 性能测试：埋点前后 onShow 耗时对比      |
 
 ## 八、测试用例
 
@@ -629,9 +636,15 @@ describe('admin-stats getDashboard', () => {
     expect(res.data).toHaveProperty('safetyEvents');
   });
 
-  it('rejects expired API key (403)', async () => { /* ... */ });
-  it('writes audit log on every call', async () => { /* ... */ });
-  it('returns 429 on rate limit exceeded', async () => { /* ... */ });
+  it('rejects expired API key (403)', async () => {
+    /* ... */
+  });
+  it('writes audit log on every call', async () => {
+    /* ... */
+  });
+  it('returns 429 on rate limit exceeded', async () => {
+    /* ... */
+  });
 });
 
 describe('admin-stats getTrend', () => {
@@ -639,14 +652,18 @@ describe('admin-stats getTrend', () => {
     const res = await callFunction('admin-stats', { action: 'getTrend', params: { metric: 'users', days: 30 } });
     expect(res.code).toBe(0);
     expect(res.data.length).toBeLessThanOrEqual(30);
-    res.data.forEach(d => {
+    res.data.forEach((d) => {
       expect(d).toHaveProperty('date');
       expect(d).toHaveProperty('value');
     });
   });
 
-  it('defaults to 30 days when days not specified', async () => { /* ... */ });
-  it('rejects invalid metric type (400)', async () => { /* ... */ });
+  it('defaults to 30 days when days not specified', async () => {
+    /* ... */
+  });
+  it('rejects invalid metric type (400)', async () => {
+    /* ... */
+  });
 });
 ```
 
@@ -657,31 +674,39 @@ describe('admin-codes generateCodes', () => {
   it('generates specified number of invite codes', async () => {
     const res = await callFunction('admin-codes', {
       action: 'generateCodes',
-      params: { codeType: 'invite', count: 10, expiresInDays: 30 }
+      params: { codeType: 'invite', count: 10, expiresInDays: 30 },
     });
     expect(res.code).toBe(0);
     expect(res.data.codes.length).toBe(10);
     expect(res.data.batchId).toBeDefined();
   });
 
-  it('rejects count > 500 (400)', async () => { /* ... */ });
-  it('requires password confirmation for count > 10', async () => { /* ... */ });
+  it('rejects count > 500 (400)', async () => {
+    /* ... */
+  });
+  it('requires password confirmation for count > 10', async () => {
+    /* ... */
+  });
   it('generated codes have ZGB- prefix', async () => {
     const res = await callFunction('admin-codes', {
       action: 'generateCodes',
-      params: { codeType: 'invite', count: 1 }
+      params: { codeType: 'invite', count: 1 },
     });
     expect(res.data.codes[0]).toMatch(/^ZGB-/);
   });
-  it('redemption codes include planId', async () => { /* ... */ });
-  it('writes audit log on generate', async () => { /* ... */ });
+  it('redemption codes include planId', async () => {
+    /* ... */
+  });
+  it('writes audit log on generate', async () => {
+    /* ... */
+  });
 });
 
 describe('admin-codes exportCodes', () => {
   it('requires password confirmation', async () => {
     const res = await callFunction('admin-codes', {
       action: 'exportCodes',
-      params: { batchId: 'test' }
+      params: { batchId: 'test' },
     });
     expect(res.code).toBe(400); // missing password
   });
@@ -689,7 +714,7 @@ describe('admin-codes exportCodes', () => {
   it('returns AES-encrypted CSV data', async () => {
     const res = await callFunction('admin-codes', {
       action: 'exportCodes',
-      params: { batchId: 'test', confirmPassword: CORRECT_PW }
+      params: { batchId: 'test', confirmPassword: CORRECT_PW },
     });
     expect(res.data.csvData).toBeDefined();
     // 验证 AES-256 加密格式
@@ -885,7 +910,7 @@ LOGIN_LOCK_MINUTES=15
 {
   "websiteConfig": {
     "indexDocument": "index.html",
-    "errorDocument": "index.html"    // SPA fallback
+    "errorDocument": "index.html" // SPA fallback
   }
 }
 ```
@@ -903,14 +928,14 @@ admin.zgb.funway.hk  # 生产域名 (待DNS配置)
 
 ## 十、技术风险缓解表
 
-| 风险 | 等级 | 缓解措施 | 验证方式 |
-|:--|:--:|:--|:--|
-| API Key 泄露 | 🔴 | bcrypt 哈希存储 + 定期轮换 + IP 白名单 | 渗透测试 |
-| NoSQL 写入超免费额度 | 🔴 | 1:10 采样 + 批量上传 + TTL 自动清理 | 监控 dashboard |
-| 云函数冷启动导致慢响应 | 🟡 | admin-stats 单次聚合首页数据；其他页按需加载 | 性能测试 |
-| 桑基图大数据量前端渲染卡顿 | 🟡 | page_view_logs 采样后限制查询窗口7天 | 性能测试 |
-| 小程序埋点影响页面切换 | 🟡 | 异步非阻塞 + 批量延迟上传 | 真机测试 |
+| 风险                       | 等级 | 缓解措施                                     | 验证方式       |
+| :------------------------- | :--: | :------------------------------------------- | :------------- |
+| API Key 泄露               |  🔴  | bcrypt 哈希存储 + 定期轮换 + IP 白名单       | 渗透测试       |
+| NoSQL 写入超免费额度       |  🔴  | 1:10 采样 + 批量上传 + TTL 自动清理          | 监控 dashboard |
+| 云函数冷启动导致慢响应     |  🟡  | admin-stats 单次聚合首页数据；其他页按需加载 | 性能测试       |
+| 桑基图大数据量前端渲染卡顿 |  🟡  | page_view_logs 采样后限制查询窗口7天         | 性能测试       |
+| 小程序埋点影响页面切换     |  🟡  | 异步非阻塞 + 批量延迟上传                    | 真机测试       |
 
 ---
 
-*文档结束。本 TDD 为 V4 Phase 1 开发基线，对齐需求评审报告 v1.0 的 8 项 P0 修复和修正路线图。*
+_文档结束。本 TDD 为 V4 Phase 1 开发基线，对齐需求评审报告 v1.0 的 8 项 P0 修复和修正路线图。_

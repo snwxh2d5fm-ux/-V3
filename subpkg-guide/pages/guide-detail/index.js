@@ -5,7 +5,7 @@ Page({
     relatedGuides: [],
     isCollected: false,
     showFullContent: true,
-    allOpen: false
+    allOpen: false,
   },
 
   onLoad(options) {
@@ -14,14 +14,16 @@ Page({
   },
 
   loadGuide(id) {
-    var that = this;
+    const that = this;
     // 从缓存获取攻略数据
-    var cache = wx.getStorageSync('__guides_cache__') || [];
-    var guide = cache.find(function(g) { return g.id === id; });
+    const cache = wx.getStorageSync('__guides_cache__') || [];
+    const guide = cache.find(function (g) {
+      return g.id === id;
+    });
 
     if (guide) {
       // 延迟渲染避免框架首次渲染时序问题
-      setTimeout(function() {
+      setTimeout(function () {
         that.setData({ guide: guide });
         that.loadRelated(guide);
         that.checkCollection(id);
@@ -32,24 +34,28 @@ Page({
   },
 
   loadRelated(guide) {
-    var cache = wx.getStorageSync('__guides_cache__') || [];
-    var related = cache
-      .filter(function(g) { return g.id !== guide.id && g.knowledge_domain === guide.knowledge_domain; })
+    const cache = wx.getStorageSync('__guides_cache__') || [];
+    const related = cache
+      .filter(function (g) {
+        return g.id !== guide.id && g.knowledge_domain === guide.knowledge_domain;
+      })
       .slice(0, 3);
     this.setData({ relatedGuides: related });
   },
 
   checkCollection(id) {
-    var collected = wx.getStorageSync('__guide_collections__') || [];
+    const collected = wx.getStorageSync('__guide_collections__') || [];
     this.setData({ isCollected: collected.indexOf(id) >= 0 });
   },
 
   toggleCollect() {
-    var guide = this.data.guide;
-    var isCollected = this.data.isCollected;
-    var collected = wx.getStorageSync('__guide_collections__') || [];
+    const guide = this.data.guide;
+    const isCollected = this.data.isCollected;
+    let collected = wx.getStorageSync('__guide_collections__') || [];
     if (isCollected) {
-      collected = collected.filter(function(id) { return id !== guide.id; });
+      collected = collected.filter(function (id) {
+        return id !== guide.id;
+      });
     } else {
       collected.push(guide.id);
     }
@@ -59,11 +65,13 @@ Page({
   },
 
   onUsefulTap() {
-    var guide = this.data.guide;
+    const guide = this.data.guide;
     guide.usefulCount = (guide.usefulCount || 0) + 1;
     // 回写缓存
-    var cache = wx.getStorageSync('__guides_cache__') || [];
-    var idx = cache.findIndex(function(g) { return g.id === guide.id; });
+    const cache = wx.getStorageSync('__guides_cache__') || [];
+    const idx = cache.findIndex(function (g) {
+      return g.id === guide.id;
+    });
     if (idx > -1) cache[idx].usefulCount = guide.usefulCount;
     wx.setStorageSync('__guides_cache__', cache);
     this.setData({ guide: guide });
@@ -83,8 +91,10 @@ Page({
     const { id } = e.currentTarget.dataset;
     const guide = this.data.guide;
     if (!guide || !guide.layers) return;
-    const layers = guide.layers.map(function(l) {
-      if (l.id === id) { l.open = !l.open; }
+    const layers = guide.layers.map(function (l) {
+      if (l.id === id) {
+        l.open = !l.open;
+      }
       return l;
     });
     guide.layers = layers;
@@ -95,7 +105,7 @@ Page({
     const guide = this.data.guide;
     if (!guide || !guide.layers) return;
     const allOpen = !this.data.allOpen;
-    const layers = guide.layers.map(function(l) {
+    const layers = guide.layers.map(function (l) {
       l.open = allOpen;
       return l;
     });
@@ -106,7 +116,7 @@ Page({
   onShareAppMessage() {
     return {
       title: this.data.guide ? this.data.guide.title : '住港伴攻略',
-      path: `/subpkg-guide/pages/guide-detail/index?id=${this.data.guide.id}`
+      path: `/subpkg-guide/pages/guide-detail/index?id=${this.data.guide.id}`,
     };
-  }
+  },
 });

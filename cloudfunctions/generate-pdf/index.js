@@ -21,7 +21,7 @@ exports.main = async (event) => {
   try {
     // 收集所有需要合成的图片 fileID
     let allFileIDs = [];
-    
+
     if (action === 'append' && pdfFileID) {
       // 追加模式：旧PDF的图片 + 新图片（简化：全部重合成）
       // 实际场景中，storage 存了所有 fileIDs，前端传入全部即可
@@ -68,7 +68,7 @@ exports.main = async (event) => {
 
     for (let i = 0; i < images.length; i++) {
       if (i > 0) pdf.addPage();
-      
+
       try {
         pdf.addImage(images[i], 'JPEG', margin, margin, imgW, imgH, undefined, 'FAST');
         // 页码
@@ -98,10 +98,9 @@ exports.main = async (event) => {
       data: {
         pdfFileID: uploadRes.fileID,
         pageCount: images.length,
-        cloudPath: '_pdf_output/' + pdfName
-      }
+        cloudPath: '_pdf_output/' + pdfName,
+      },
     };
-
   } catch (e) {
     console.error('generate-pdf error:', e);
     return { code: 500, error: e.message };

@@ -27,7 +27,7 @@
   display: flex;
   flex-direction: column;
   align-items: center;
-  box-shadow: var(--shadow-lg, 0 8rpx 32rpx rgba(0,0,0,0.12));
+  box-shadow: var(--shadow-lg, 0 8rpx 32rpx rgba(0, 0, 0, 0.12));
 }
 
 .risk-dialog__icon {
@@ -62,7 +62,7 @@
 .risk-dialog__checkbox-box {
   width: 36rpx;
   height: 36rpx;
-  border: 2rpx solid var(--gray-300, #D1D5DB);
+  border: 2rpx solid var(--gray-300, #d1d5db);
   border-radius: 6rpx;
   display: flex;
   align-items: center;
@@ -109,7 +109,7 @@
 }
 
 .risk-dialog__btn--cancel {
-  background-color: var(--gray-100, #F3F4F6);
+  background-color: var(--gray-100, #f3f4f6);
   color: var(--color-text-secondary, #5f6368);
 }
 
@@ -119,6 +119,6 @@
 }
 
 .risk-dialog__btn--disabled {
-  background-color: var(--gray-200, #E5E7EB);
-  color: var(--gray-400, #757F8C);
+  background-color: var(--gray-200, #e5e7eb);
+  color: var(--gray-400, #757f8c);
 }

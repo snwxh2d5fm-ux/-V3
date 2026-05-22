@@ -27,11 +27,7 @@
     {
       "root": "subpkg-docs",
       "name": "docs",
-      "pages": [
-        "pages/documents-add/index",
-        "pages/documents-detail/index",
-        "pages/documents-combine/index"
-      ]
+      "pages": ["pages/documents-add/index", "pages/documents-detail/index", "pages/documents-combine/index"]
     },
     {
       "root": "subpkg-process",
@@ -74,20 +70,12 @@
     {
       "root": "subpkg-feedback",
       "name": "feedback",
-      "pages": [
-        "pages/submit/index",
-        "pages/list/index",
-        "pages/wecom-qr/index"
-      ]
+      "pages": ["pages/submit/index", "pages/list/index", "pages/wecom-qr/index"]
     },
     {
       "root": "subpkg-share",
       "name": "share",
-      "pages": [
-        "pages/share-preview/index",
-        "pages/share-records/index",
-        "pages/family-invite/index"
-      ]
+      "pages": ["pages/share-preview/index", "pages/share-records/index", "pages/family-invite/index"]
     }
   ],
   "preloadRule": {

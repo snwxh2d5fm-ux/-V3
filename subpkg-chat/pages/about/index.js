@@ -12,7 +12,7 @@ Page({
     currentYear: new Date().getFullYear(),
     companyName: '',
     contactEmail: 'gangban@funway.hk',
-    icpNumber: ''
+    icpNumber: '',
   },
 
   onLoad() {
@@ -29,7 +29,7 @@ Page({
         updateDate: meta.updateDate || '2026-05-19',
         companyName: meta.companyName || '',
         contactEmail: meta.contactEmail || '',
-        icpNumber: meta.icpNumber || ''
+        icpNumber: meta.icpNumber || '',
       });
     } catch (e) {
       // 降级使用默认值
@@ -41,24 +41,27 @@ Page({
 
   fetchCloudMeta() {
     const that = this;
-    wx.cloud.callFunction({
-      name: 'meta',
-      data: { action: 'getAppMeta' }
-    }).then(function (res) {
-      const data = (res.result && res.result.data) || {};
-      if (data.version) {
-        that.setData({
-          appVersion: data.version,
-          buildNumber: data.buildNumber || that.data.buildNumber,
-          updateDate: data.updateDate || that.data.updateDate,
-          companyName: data.companyName || that.data.companyName,
-          contactEmail: data.contactEmail || that.data.contactEmail,
-          icpNumber: data.icpNumber || that.data.icpNumber
-        });
-      }
-    }).catch(function () {
-      // 降级使用本地默认值
-    });
+    wx.cloud
+      .callFunction({
+        name: 'meta',
+        data: { action: 'getAppMeta' },
+      })
+      .then(function (res) {
+        const data = (res.result && res.result.data) || {};
+        if (data.version) {
+          that.setData({
+            appVersion: data.version,
+            buildNumber: data.buildNumber || that.data.buildNumber,
+            updateDate: data.updateDate || that.data.updateDate,
+            companyName: data.companyName || that.data.companyName,
+            contactEmail: data.contactEmail || that.data.contactEmail,
+            icpNumber: data.icpNumber || that.data.icpNumber,
+          });
+        }
+      })
+      .catch(function () {
+        // 降级使用本地默认值
+      });
   },
 
   /** 打开隐私政策 */
@@ -73,7 +76,7 @@ Page({
       title: '用户服务协议',
       content: '用户服务协议详细页面建设中。核心条款已在"服务范围与免责声明"中概要展示。如有疑问请联系客服。',
       showCancel: false,
-      confirmText: '我知道了'
+      confirmText: '我知道了',
     });
   },
 
@@ -87,7 +90,7 @@ Page({
     return {
       title: '住港伴 — 香港身份全流程陪伴工具',
       path: '/pages/home/home',
-      imageUrl: ''
+      imageUrl: '',
     };
-  }
+  },
 });

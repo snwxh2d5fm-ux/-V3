@@ -26,8 +26,8 @@ async function loadRecentMemory(sessionId, openid, db) {
   if (!db) return [];
 
   try {
-    var _ = db.command;
-    var query = {};
+    const _ = db.command;
+    const query = {};
 
     // 优先按 session_id 查询，回退按 openid
     if (sessionId) {
@@ -36,10 +36,10 @@ async function loadRecentMemory(sessionId, openid, db) {
       query._openid = openid;
     }
 
-    var res = await db
-      .collection("conversation_logs")
+    const res = await db
+      .collection('conversation_logs')
       .where(query)
-      .orderBy("timestamp", "desc")
+      .orderBy('timestamp', 'desc')
       .limit(12) // 12条消息 = 6轮，取5轮有冗余
       .field({
         query: true,
@@ -52,34 +52,34 @@ async function loadRecentMemory(sessionId, openid, db) {
     if (!res.data || res.data.length === 0) return [];
 
     // 转为 [{role, content, timestamp}] 格式，按时间升序
-    var messages = [];
-    var seen = new Set();
+    const messages = [];
+    const seen = new Set();
 
-    for (var i = res.data.length - 1; i >= 0; i--) {
-      var log = res.data[i];
-      var userContent = log.query || "";
-      var assistantContent = log.response_preview || "";
+    for (let i = res.data.length - 1; i >= 0; i--) {
+      const log = res.data[i];
+      const userContent = log.query || '';
+      const assistantContent = log.response_preview || '';
 
       // content_hash 用于去重（取前80字符做指纹）
       if (userContent) {
-        var userHash = userContent.substring(0, 80).trim().toLowerCase();
-        if (!seen.has("u_" + userHash)) {
-          seen.add("u_" + userHash);
-          messages.push({ role: "user", content: userContent });
+        const userHash = userContent.substring(0, 80).trim().toLowerCase();
+        if (!seen.has('u_' + userHash)) {
+          seen.add('u_' + userHash);
+          messages.push({ role: 'user', content: userContent });
         }
       }
       if (assistantContent) {
-        var assistantHash = assistantContent.substring(0, 80).trim().toLowerCase();
-        if (!seen.has("a_" + assistantHash)) {
-          seen.add("a_" + assistantHash);
-          messages.push({ role: "assistant", content: assistantContent });
+        const assistantHash = assistantContent.substring(0, 80).trim().toLowerCase();
+        if (!seen.has('a_' + assistantHash)) {
+          seen.add('a_' + assistantHash);
+          messages.push({ role: 'assistant', content: assistantContent });
         }
       }
     }
 
     return messages;
   } catch (e) {
-    console.warn("[memory] loadRecentMemory failed:", e.message);
+    console.warn('[memory] loadRecentMemory failed:', e.message);
     return [];
   }
 }
@@ -102,20 +102,20 @@ function mergeHistory(clientHistory, serverMemory) {
   }
 
   // 提取客户端消息的 content_hash 集合
-  var clientHashes = new Set();
-  for (var i = 0; i < clientHistory.length; i++) {
-    var c = clientHistory[i];
+  const clientHashes = new Set();
+  for (let i = 0; i < clientHistory.length; i++) {
+    const c = clientHistory[i];
     if (c && c.content) {
       clientHashes.add(c.content.substring(0, 80).trim().toLowerCase());
     }
   }
 
   // 服务端消息中，不在客户端已有时才补充
-  var merged = [];
-  for (var j = 0; j < serverMemory.length; j++) {
-    var s = serverMemory[j];
+  const merged = [];
+  for (let j = 0; j < serverMemory.length; j++) {
+    const s = serverMemory[j];
     if (!s || !s.content) continue;
-    var hash = s.content.substring(0, 80).trim().toLowerCase();
+    const hash = s.content.substring(0, 80).trim().toLowerCase();
     if (!clientHashes.has(hash)) {
       merged.push(s);
     }

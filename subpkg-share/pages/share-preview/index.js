@@ -1,4 +1,4 @@
-var app = getApp();
+const app = getApp();
 
 Page({
   data: {
@@ -8,11 +8,11 @@ Page({
     shareId: '',
     isCreating: false,
     imagePath: '',
-    loading: true
+    loading: true,
   },
 
   onLoad: function (options) {
-    var that = this;
+    const that = this;
 
     if (options.shareId) {
       that.setData({ shareId: options.shareId });
@@ -21,7 +21,7 @@ Page({
       that.setData({
         contentType: options.contentType || '',
         contentTitle: options.contentTitle || '',
-        contentDigest: options.contentDigest || ''
+        contentDigest: options.contentDigest || '',
       });
       that.createShare(options);
     } else {
@@ -30,29 +30,28 @@ Page({
     }
   },
 
-  onShow: function () {
-  },
+  onShow: function () {},
 
   resolveShare: function (shareId) {
-    var that = this;
+    const that = this;
 
     wx.cloud.callFunction({
       name: 'share-resolve',
       data: {
         action: 'resolve',
-        shareId: shareId
+        shareId: shareId,
       },
       success: function (res) {
-        var result = res.result;
+        const result = res.result;
         if (result && result.code === 0) {
-          var data = result.data || {};
-          var digest = data.contentDigest || {};
+          const data = result.data || {};
+          const digest = data.contentDigest || {};
           that.setData({
             contentTitle: digest.title || '',
             contentDigest: digest.summary || '',
             contentType: data.contentType || '',
             imagePath: data.imagePath || '',
-            loading: false
+            loading: false,
           });
         } else {
           wx.showToast({ title: result.message || '分享内容获取失败', icon: 'none' });
@@ -62,12 +61,12 @@ Page({
       fail: function () {
         wx.showToast({ title: '网络错误', icon: 'none' });
         that.setData({ loading: false });
-      }
+      },
     });
   },
 
   createShare: function (options) {
-    var that = this;
+    const that = this;
     that.setData({ isCreating: true });
 
     wx.cloud.callFunction({
@@ -77,15 +76,15 @@ Page({
         contentType: options.contentType,
         contentId: options.contentId,
         contentTitle: options.contentTitle,
-        contentDigest: options.contentDigest
+        contentDigest: options.contentDigest,
       },
       success: function (res) {
-        var result = res.result;
+        const result = res.result;
         if (result && result.code === 0) {
           that.setData({
             shareId: result.data.shareId || '',
             imagePath: result.data.imagePath || '',
-            isCreating: false
+            isCreating: false,
           });
         } else {
           wx.showToast({ title: result.message || '分享创建失败', icon: 'none' });
@@ -95,15 +94,15 @@ Page({
       fail: function () {
         wx.showToast({ title: '网络错误', icon: 'none' });
         that.setData({ isCreating: false });
-      }
+      },
     });
   },
 
   onShareAppMessage: function () {
-    var that = this;
-    var shareData = {
+    const that = this;
+    const shareData = {
       title: that.data.contentTitle || '来自住港伴的分享',
-      path: '/subpkg-share/pages/share-preview/index?shareId=' + that.data.shareId
+      path: '/subpkg-share/pages/share-preview/index?shareId=' + that.data.shareId,
     };
     if (that.data.imagePath) {
       shareData.imageUrl = that.data.imagePath;
@@ -112,8 +111,8 @@ Page({
   },
 
   onSaveImage: function () {
-    var that = this;
-    var imagePath = that.data.imagePath;
+    const that = this;
+    const imagePath = that.data.imagePath;
 
     if (!imagePath) {
       wx.showToast({ title: '暂无分享图片', icon: 'none' });
@@ -140,7 +139,7 @@ Page({
                     if (modalRes.confirm) {
                       wx.openSetting();
                     }
-                  }
+                  },
                 });
               } else {
                 wx.showToast({ title: '保存失败', icon: 'none' });
@@ -148,7 +147,7 @@ Page({
             },
             complete: function () {
               wx.hideLoading();
-            }
+            },
           });
         } else {
           wx.hideLoading();
@@ -158,13 +157,13 @@ Page({
       fail: function () {
         wx.hideLoading();
         wx.showToast({ title: '图片下载失败', icon: 'none' });
-      }
+      },
     });
   },
 
   onCopyLink: function () {
-    var that = this;
-    var sharePath = '/subpkg-share/pages/share-preview/index?shareId=' + that.data.shareId;
+    const that = this;
+    const sharePath = '/subpkg-share/pages/share-preview/index?shareId=' + that.data.shareId;
 
     wx.setClipboardData({
       data: sharePath,
@@ -173,7 +172,7 @@ Page({
       },
       fail: function () {
         wx.showToast({ title: '复制失败', icon: 'none' });
-      }
+      },
     });
-  }
+  },
 });

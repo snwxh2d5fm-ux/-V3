@@ -1,13 +1,64 @@
-.update-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 8rpx; }
-.update-date { font-size: var(--font-xs); color: var(--color-text-muted); }
-.update-title { font-size: var(--font-md); font-weight: 600; display: block; margin-bottom: 8rpx; }
-.update-summary { font-size: var(--font-sm); color: var(--color-text-secondary); display: block; margin-bottom: 12rpx; line-height: 1.6; }
-.update-footer { display: flex; justify-content: space-between; align-items: center; }
-.update-source { font-size: var(--font-xs); color: var(--color-text-muted); }
-.update-affected { font-size: var(--font-xs); color: var(--color-primary); }
-.disclaimer-text { font-size: var(--font-xs); color: var(--color-warning); display: block; margin-top: 4rpx; }
-.interp-header { margin-bottom: 8rpx; }
-.interp-user { font-size: var(--font-xs); color: var(--color-primary); font-weight: 500; }
-.interp-text { font-size: var(--font-sm); line-height: 1.6; display: block; margin-bottom: 12rpx; }
-.interp-actions { display: flex; gap: 24rpx; }
-.interp-action { font-size: var(--font-xs); color: var(--color-text-muted); }
+.update-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 8rpx;
+}
+.update-date {
+  font-size: var(--font-xs);
+  color: var(--color-text-muted);
+}
+.update-title {
+  font-size: var(--font-md);
+  font-weight: 600;
+  display: block;
+  margin-bottom: 8rpx;
+}
+.update-summary {
+  font-size: var(--font-sm);
+  color: var(--color-text-secondary);
+  display: block;
+  margin-bottom: 12rpx;
+  line-height: 1.6;
+}
+.update-footer {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+.update-source {
+  font-size: var(--font-xs);
+  color: var(--color-text-muted);
+}
+.update-affected {
+  font-size: var(--font-xs);
+  color: var(--color-primary);
+}
+.disclaimer-text {
+  font-size: var(--font-xs);
+  color: var(--color-warning);
+  display: block;
+  margin-top: 4rpx;
+}
+.interp-header {
+  margin-bottom: 8rpx;
+}
+.interp-user {
+  font-size: var(--font-xs);
+  color: var(--color-primary);
+  font-weight: 500;
+}
+.interp-text {
+  font-size: var(--font-sm);
+  line-height: 1.6;
+  display: block;
+  margin-bottom: 12rpx;
+}
+.interp-actions {
+  display: flex;
+  gap: 24rpx;
+}
+.interp-action {
+  font-size: var(--font-xs);
+  color: var(--color-text-muted);
+}

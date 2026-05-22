@@ -1,3 +1,17 @@
-.pb-point { font-size: var(--font-sm); line-height: 1.8; display: block; margin-bottom: 8rpx; }
-.pb-step { font-size: var(--font-sm); display: block; margin-bottom: 8rpx; }
-.pb-pitfall { font-size: var(--font-sm); color: var(--color-warning); display: block; margin-bottom: 6rpx; }
+.pb-point {
+  font-size: var(--font-sm);
+  line-height: 1.8;
+  display: block;
+  margin-bottom: 8rpx;
+}
+.pb-step {
+  font-size: var(--font-sm);
+  display: block;
+  margin-bottom: 8rpx;
+}
+.pb-pitfall {
+  font-size: var(--font-sm);
+  color: var(--color-warning);
+  display: block;
+  margin-bottom: 6rpx;
+}

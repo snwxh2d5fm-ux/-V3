@@ -22,6 +22,7 @@ try {
 ## 修复
 
 二选一：
+
 1. 加 `async`: `completeAllSteps: async function(e) {` — 同时确认调用方支持异步
 2. 改 `.then()` 链: `wx.cloud.callFunction({...}).then(function(res) { ... })`
 

@@ -2,51 +2,88 @@
   "version": 1,
   "documents": {
     "case-self-idcard": {
-      "id": "case-self-idcard", "docId": "case-self-idcard",
-      "docType": "id_card", "docName": "本人身份证", "ownerType": "self",
-      "category": "身份文件", "ocrData": {"name":"李明","idNumber":"330102199001011234","birthDate":"1990-01-01","address":"浙江省杭州市西湖区"},
+      "id": "case-self-idcard",
+      "docId": "case-self-idcard",
+      "docType": "id_card",
+      "docName": "本人身份证",
+      "ownerType": "self",
+      "category": "身份文件",
+      "ocrData": {
+        "name": "李明",
+        "idNumber": "330102199001011234",
+        "birthDate": "1990-01-01",
+        "address": "浙江省杭州市西湖区"
+      },
       "createdAt": "2026-01-15T00:00:00.000Z"
     },
     "case-self-passport": {
-      "id": "case-self-passport", "docId": "case-self-passport",
-      "docType": "passport", "docName": "本人护照", "ownerType": "self",
-      "category": "身份文件", "ocrData": {"name":"LI MING","passportNumber":"E12345678","nationality":"CHN","birthDate":"1990-01-01"},
+      "id": "case-self-passport",
+      "docId": "case-self-passport",
+      "docType": "passport",
+      "docName": "本人护照",
+      "ownerType": "self",
+      "category": "身份文件",
+      "ocrData": { "name": "LI MING", "passportNumber": "E12345678", "nationality": "CHN", "birthDate": "1990-01-01" },
       "createdAt": "2026-01-15T00:00:00.000Z"
     },
     "case-self-degree": {
-      "id": "case-self-degree", "docId": "case-self-degree",
-      "docType": "degree", "docName": "硕士学位证书", "ownerType": "self",
-      "category": "学历证明", "ocrData": {"name":"李明","school":"香港理工大学","degree":"理学硕士","major":"计算机科学"},
+      "id": "case-self-degree",
+      "docId": "case-self-degree",
+      "docType": "degree",
+      "docName": "硕士学位证书",
+      "ownerType": "self",
+      "category": "学历证明",
+      "ocrData": { "name": "李明", "school": "香港理工大学", "degree": "理学硕士", "major": "计算机科学" },
       "createdAt": "2026-02-01T00:00:00.000Z"
     },
     "case-spouse-idcard": {
-      "id": "case-spouse-idcard", "docId": "case-spouse-idcard",
-      "docType": "id_card", "docName": "配偶身份证", "ownerType": "spouse",
-      "category": "身份文件", "ocrData": {"name":"王芳","idNumber":"330102199203154321"},
+      "id": "case-spouse-idcard",
+      "docId": "case-spouse-idcard",
+      "docType": "id_card",
+      "docName": "配偶身份证",
+      "ownerType": "spouse",
+      "category": "身份文件",
+      "ocrData": { "name": "王芳", "idNumber": "330102199203154321" },
       "createdAt": "2026-02-10T00:00:00.000Z"
     },
     "case-spouse-marriage": {
-      "id": "case-spouse-marriage", "docId": "case-spouse-marriage",
-      "docType": "marriage", "docName": "结婚证书", "ownerType": "spouse",
-      "category": "关系证明", "ocrData": {"name":"李明","spouseName":"王芳","certNumber":"ZJ-2020-088888"},
+      "id": "case-spouse-marriage",
+      "docId": "case-spouse-marriage",
+      "docType": "marriage",
+      "docName": "结婚证书",
+      "ownerType": "spouse",
+      "category": "关系证明",
+      "ocrData": { "name": "李明", "spouseName": "王芳", "certNumber": "ZJ-2020-088888" },
       "createdAt": "2026-02-10T00:00:00.000Z"
     },
     "case-child-birth": {
-      "id": "case-child-birth", "docId": "case-child-birth",
-      "docType": "birth_cert", "docName": "子女出生证明", "ownerType": "child",
-      "category": "关系证明", "ocrData": {"name":"李小宝","birthDate":"2022-06-15","parentName":"李明"},
+      "id": "case-child-birth",
+      "docId": "case-child-birth",
+      "docType": "birth_cert",
+      "docName": "子女出生证明",
+      "ownerType": "child",
+      "category": "关系证明",
+      "ocrData": { "name": "李小宝", "birthDate": "2022-06-15", "parentName": "李明" },
       "createdAt": "2026-03-01T00:00:00.000Z"
     },
     "case-self-bank": {
-      "id": "case-self-bank", "docId": "case-self-bank",
-      "docType": "bank_statement", "docName": "银行流水", "ownerType": "self",
-      "category": "财务证明", "ocrData": {"name":"李明","accountNumber":"6217001234567890","bankName":"中国银行"},
+      "id": "case-self-bank",
+      "docId": "case-self-bank",
+      "docType": "bank_statement",
+      "docName": "银行流水",
+      "ownerType": "self",
+      "category": "财务证明",
+      "ocrData": { "name": "李明", "accountNumber": "6217001234567890", "bankName": "中国银行" },
       "createdAt": "2026-03-15T00:00:00.000Z"
     },
     "case-self-work": {
-      "id": "case-self-work", "docId": "case-self-work",
-      "docType": "work_proof", "docName": "工作证明", "ownerType": "self",
-      "category": "工作证明", "ocrData": {"name":"李明","company":"阿里巴巴","position":"高级工程师","salary":"50万/年"},
+      "id": "case-self-work",
+      "docId": "case-self-work",
+      "docType": "work_proof",
+      "docName": "工作证明",
+      "ownerType": "self",
+      "category": "工作证明",
+      "ocrData": { "name": "李明", "company": "阿里巴巴", "position": "高级工程师", "salary": "50万/年" },
       "createdAt": "2026-04-01T00:00:00.000Z"
     }
   }

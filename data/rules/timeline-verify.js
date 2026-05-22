@@ -8,11 +8,14 @@ const engine = require('./timeline-engine');
 const PATHS = ['qmas', 'ttps_a', 'ttps_b', 'ttps_c', 'asmtp', 'iang', 'dependent'];
 const results = { passed: [], warnings: [], errors: [] };
 
-function log(level, msg) { results[level].push(msg); console.log(`[${level.toUpperCase()}] ${msg}`); }
+function log(level, msg) {
+  results[level].push(msg);
+  console.log(`[${level.toUpperCase()}] ${msg}`);
+}
 
 // ═══ 1. 节点完整性检查 ═══
 console.log('\n=== 1. Node Completeness ===');
-PATHS.forEach(pathType => {
+PATHS.forEach((pathType) => {
   const t = templates.getTemplate(pathType);
   for (let phase = 1; phase <= 7; phase++) {
     const nodes = t.phases[`phase${phase}`] || [];
@@ -20,17 +23,17 @@ PATHS.forEach(pathType => {
       log('errors', `${pathType}: Phase ${phase} has ZERO nodes`);
     }
     // Check each node has required fields
-    nodes.forEach(node => {
+    nodes.forEach((node) => {
       if (!node.nodeId) log('errors', `${pathType}: Node in phase${phase} missing nodeId`);
       if (!node.nodeName) log('errors', `${pathType}: ${node.nodeId} missing nodeName`);
       if (!node.timeLogic) log('errors', `${pathType}: ${node.nodeId} missing timeLogic`);
-      if (node.riskLevel && !['low','medium','high','critical'].includes(node.riskLevel)) {
+      if (node.riskLevel && !['low', 'medium', 'high', 'critical'].includes(node.riskLevel)) {
         log('errors', `${pathType}: ${node.nodeId} invalid riskLevel: ${node.riskLevel}`);
       }
     });
   }
 });
-if (!results.errors.filter(e => e.includes('ZERO nodes')).length) {
+if (!results.errors.filter((e) => e.includes('ZERO nodes')).length) {
   log('passed', 'All paths have nodes in all 7 phases');
 }
 
@@ -39,7 +42,7 @@ console.log('\n=== 2. Path Differentiation ===');
 
 // 优才独有赴港计划书
 const qmas = templates.getTemplate('qmas');
-const qmasNodeIds = qmas.phases.phase2.map(n => n.nodeId);
+const qmasNodeIds = qmas.phases.phase2.map((n) => n.nodeId);
 if (qmasNodeIds.includes('QM-01') && qmasNodeIds.includes('QM-02')) {
   log('passed', 'QMAS: 赴港计划书节点(QM-01, QM-02)存在');
 } else {
@@ -56,7 +59,7 @@ if (ttpsA.visaInfo.initialValidityMonths === 36) {
 
 // 高才C独有配额提醒
 const ttpsC = templates.getTemplate('ttps_c');
-const ttcPhase1Ids = ttpsC.phases.phase1.map(n => n.nodeId);
+const ttcPhase1Ids = ttpsC.phases.phase1.map((n) => n.nodeId);
 if (ttcPhase1Ids.includes('TC-04')) {
   log('passed', 'TTPS-C: 配额检查节点(TC-04)存在');
 } else {
@@ -65,7 +68,7 @@ if (ttcPhase1Ids.includes('TC-04')) {
 
 // 专才独有ID990B
 const asmtp = templates.getTemplate('asmtp');
-const asmtpPhase2Ids = asmtp.phases.phase2.map(n => n.nodeId);
+const asmtpPhase2Ids = asmtp.phases.phase2.map((n) => n.nodeId);
 if (asmtpPhase2Ids.includes('AP-M04')) {
   log('passed', 'ASMTP: ID990B担保表格节点(AP-M04)存在');
 } else {
@@ -118,7 +121,7 @@ try {
   const testState = {
     currentPath: 'qmas',
     currentPhase: 2,
-    anchorDates: {}
+    anchorDates: {},
   };
   const timeline = engine.generateTimeline(testState);
   if (timeline.pathInfo && timeline.phases && timeline.summary) {
@@ -140,11 +143,11 @@ try {
     currentPath: 'ttps_b',
     currentPhase: 4,
     anchorDates: { submissionDate: '2026-05-01' },
-    nodeStates: {}
+    nodeStates: {},
   };
   const recalibrated = engine.recalibrateTimeline(baseState, {
     eventType: 'approval_received',
-    eventDate: '2026-06-01'
+    eventDate: '2026-06-01',
   });
   if (recalibrated.anchorDates.approvalDate === '2026-06-01') {
     log('passed', '重新校准: 获批日期正确设置');
@@ -160,17 +163,17 @@ try {
 
 // ═══ 7. 永居7年计算验证 ═══
 console.log('\n=== 7. PR 7-Year Calculation ===');
-PATHS.forEach(pathType => {
+PATHS.forEach((pathType) => {
   try {
     const state = {
       currentPath: pathType,
       currentPhase: 7,
       anchorDates: { firstEntryDate: '2026-05-14' },
-      nodeStates: {}
+      nodeStates: {},
     };
     const tl = engine.generateTimeline(state);
     // PR-04 (7年期满) 应从 firstEntryDate + 7年计算
-    const pr04 = tl.phases.phase7.nodes.find(n => n.nodeId === 'PR-04');
+    const pr04 = tl.phases.phase7.nodes.find((n) => n.nodeId === 'PR-04');
     if (pr04 && pr04.targetDate) {
       const expected = new Date('2026-05-14');
       expected.setFullYear(expected.getFullYear() + 7);
@@ -194,15 +197,15 @@ try {
     anchorDates: {
       approvalDate: '2025-01-01',
       firstEntryDate: '2025-03-01',
-      ved: '2027-01-01'
+      ved: '2027-01-01',
     },
-    nodeStates: {}
+    nodeStates: {},
   };
   const tl = engine.generateTimeline(state);
   const phase6 = tl.phases.phase6.nodes;
-  const rv01 = phase6.find(n => n.nodeId === 'RV-01');
-  const rv08 = phase6.find(n => n.nodeId === 'RV-08');
-  const rv10 = phase6.find(n => n.nodeId === 'RV-10');
+  const rv01 = phase6.find((n) => n.nodeId === 'RV-01');
+  const rv08 = phase6.find((n) => n.nodeId === 'RV-08');
+  const rv10 = phase6.find((n) => n.nodeId === 'RV-10');
 
   if (rv01 && rv01.targetDate) {
     // RV-01应该在VED-180天
@@ -241,11 +244,11 @@ console.log(`❌ Errors:   ${results.errors.length}`);
 
 if (results.errors.length > 0) {
   console.log('\n--- ERRORS ---');
-  results.errors.forEach(e => console.log(`  ❌ ${e}`));
+  results.errors.forEach((e) => console.log(`  ❌ ${e}`));
 }
 if (results.warnings.length > 0) {
   console.log('\n--- WARNINGS ---');
-  results.warnings.forEach(w => console.log(`  ⚠️  ${w}`));
+  results.warnings.forEach((w) => console.log(`  ⚠️  ${w}`));
 }
 
 process.exit(results.errors.length > 0 ? 1 : 0);

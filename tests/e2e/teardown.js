@@ -23,7 +23,7 @@ module.exports = async function globalTeardown() {
   const reportsDir = path.resolve(__dirname, 'reports');
   if (fs.existsSync(reportsDir)) {
     console.log(`\n📊 测试报告目录: ${reportsDir}`);
-    const files = fs.readdirSync(reportsDir).filter(f => f.endsWith('.html'));
+    const files = fs.readdirSync(reportsDir).filter((f) => f.endsWith('.html'));
     if (files.length > 0) {
       console.log(`   报告文件: ${files.join(', ')}`);
     }

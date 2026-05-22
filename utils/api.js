@@ -10,8 +10,8 @@ const BASE = 'https://api.zhugangban.com/v1';
 
 /** 构建查询字符串——替代微信不支持的 URLSearchParams */
 function buildQuery(params) {
-  var parts = [];
-  for (var key in params) {
+  const parts = [];
+  for (const key in params) {
     if (params.hasOwnProperty(key) && params[key] !== undefined && params[key] !== null) {
       parts.push(encodeURIComponent(key) + '=' + encodeURIComponent(params[key]));
     }
@@ -27,16 +27,16 @@ function request(url, options = {}) {
       data: options.data || {},
       header: {
         'Content-Type': 'application/json',
-        'Authorization': `Bearer ${wx.getStorageSync('__token__') || ''}`,
+        Authorization: `Bearer ${wx.getStorageSync('__token__') || ''}`,
         'X-Privacy-Mode': 'desensitized',
-        'X-Engine-Version': '4.1.0'
+        'X-Engine-Version': '4.1.0',
       },
       timeout: options.timeout || 15000,
       success: (res) => {
         if (res.statusCode === 200) resolve(res.data);
         else reject({ code: res.statusCode, message: res.data });
       },
-      fail: reject
+      fail: reject,
     });
   });
 }
@@ -59,19 +59,19 @@ async function reportUserStatus(userStatus, subStatus, milestoneData) {
   const safe = desensitizeFields(milestoneData, MODES.FEATURE);
   return await request('/user/status', {
     method: 'PUT',
-    data: { userStatus, subStatus, milestone: safe }
+    data: { userStatus, subStatus, milestone: safe },
   });
 }
 
 // 获取指引数据 (V5: 含置信度标注)
 async function fetchGuides(nodeId, options = {}) {
-  var qs = buildQuery({ confidence: options.confidenceLevel, path: options.pathType });
+  const qs = buildQuery({ confidence: options.confidenceLevel, path: options.pathType });
   return await request('/guides/' + nodeId + qs);
 }
 
 // 获取政策更新 (V5: 含影响范围分析)
 async function fetchPolicyUpdates(options = {}) {
-  var qs = buildQuery({ path: options.pathType, persona: options.personaId });
+  const qs = buildQuery({ path: options.pathType, persona: options.personaId });
   return await request('/policies/updates' + qs);
 }
 
@@ -111,7 +111,7 @@ async function matchSolutionPath(profile) {
     const safe = desensitizeFields(profile, MODES.FEATURE);
     const res = await wx.cloud.callFunction({
       name: 'solution-engine',
-      data: { action: 'match', profile: safe }
+      data: { action: 'match', profile: safe },
     });
     return res.result;
   } catch (e) {
@@ -119,7 +119,7 @@ async function matchSolutionPath(profile) {
     try {
       const res = await wx.cloud.callFunction({
         name: 'match-engine',
-        data: { action: 'matchSolution', profile: desensitizeFields(profile, MODES.FEATURE) }
+        data: { action: 'matchSolution', profile: desensitizeFields(profile, MODES.FEATURE) },
       });
       return res.result;
     } catch (e2) {
@@ -137,7 +137,7 @@ async function compareSolutionPaths(pathIds) {
   try {
     const res = await wx.cloud.callFunction({
       name: 'solution-engine',
-      data: { action: 'compare', pathIds }
+      data: { action: 'compare', pathIds },
     });
     return res.result;
   } catch (e) {
@@ -151,7 +151,7 @@ async function compareSolutionPaths(pathIds) {
 function isStreamSupported() {
   try {
     return !!(wx.canIUse && wx.canIUse('request.enableChunked'));
-  } catch(e) {
+  } catch (e) {
     return false;
   }
 }
@@ -169,18 +169,22 @@ function isStreamSupported() {
 async function sendChatMessageV5(sessionId, message, mode, context, history) {
   if (!wx.cloud) {
     console.warn('[API] wx.cloud 不可用，返回离线模式');
-    return { code: 503, message: '云服务未初始化', data: { content: '抱歉，AI服务需要云环境支持，当前不可用。', sources: [] } };
+    return {
+      code: 503,
+      message: '云服务未初始化',
+      data: { content: '抱歉，AI服务需要云环境支持，当前不可用。', sources: [] },
+    };
   }
   try {
     const res = await wx.cloud.callFunction({
       name: 'ai-chat',
       data: {
-        sessionId: sessionId || ('sess_' + Date.now()),
+        sessionId: sessionId || 'sess_' + Date.now(),
         message,
         mode: mode || 'general',
         context: context || {},
-        history: history || []
-      }
+        history: history || [],
+      },
     });
     return res.result;
   } catch (e) {
@@ -198,53 +202,55 @@ async function sendChatMessage(sessionId, message, mode, context) {
  * v5 流式接口 — HTTP SSE streaming
  * 首字延迟<1.5s，实时渲染
  */
-var AI_CHAT_HTTP = 'https://cloudbase-d1g17tgt7cc199a60.service.tcloudbase.com/ai-chat';
+const AI_CHAT_HTTP = 'https://cloudbase-d1g17tgt7cc199a60.service.tcloudbase.com/ai-chat';
 
 function sendChatMessageStream(sessionId, message, mode, context, history, callbacks) {
-  var token = wx.getStorageSync('__token__') || '';
-  return new Promise(function(resolve, reject) {
-    var requestTask = wx.request({
+  const token = wx.getStorageSync('__token__') || '';
+  return new Promise(function (resolve, reject) {
+    const requestTask = wx.request({
       url: AI_CHAT_HTTP,
       method: 'POST',
       enableChunked: true,
       header: {
         'Content-Type': 'application/json',
-        'Authorization': 'Bearer ' + token
+        Authorization: 'Bearer ' + token,
       },
       data: {
-        sessionId: sessionId || ('sess_' + Date.now()),
+        sessionId: sessionId || 'sess_' + Date.now(),
         message: message,
         mode: mode || 'general',
         context: context || {},
         history: history || [],
-        stream: true
+        stream: true,
       },
-      success: function() { /* 流式通过onChunkReceived处理 */ },
-      fail: function(err) {
+      success: function () {
+        /* 流式通过onChunkReceived处理 */
+      },
+      fail: function (err) {
         console.error('[API] Stream request failed:', err);
         // 降级到非流式
         resolve(null);
-      }
+      },
     });
 
-    var fullContent = '';
-    var meta = null;
-    var lineBuffer = '';  // S-02 fix: 跨chunk行缓冲，防止JSON被截断
+    let fullContent = '';
+    let meta = null;
+    let lineBuffer = ''; // S-02 fix: 跨chunk行缓冲，防止JSON被截断
 
-    requestTask.onChunkReceived(function(res) {
+    requestTask.onChunkReceived(function (res) {
       try {
-        var text = (res.data || '').toString();
+        const text = (res.data || '').toString();
         if (!text) return;
         // 拼接上一次未完整的行
-        var raw = lineBuffer + text;
-        var lines = raw.split('\n');
+        const raw = lineBuffer + text;
+        const lines = raw.split('\n');
         // 最后一行可能不完整，保留到下次
         lineBuffer = lines.pop();
-        for (var i = 0; i < lines.length; i++) {
-          var line = lines[i].trim();
+        for (let i = 0; i < lines.length; i++) {
+          const line = lines[i].trim();
           if (line.startsWith('data: ')) {
             try {
-              var data = JSON.parse(line.substring(6));
+              const data = JSON.parse(line.substring(6));
               if (data.type === 'meta') {
                 meta = data;
                 if (callbacks && callbacks.onMeta) callbacks.onMeta(data);
@@ -259,21 +265,21 @@ function sendChatMessageStream(sessionId, message, mode, context, history, callb
                 resolve({
                   code: 200,
                   data: {
-                    messageId: data.trace_id || ('msg_' + Date.now()),
+                    messageId: data.trace_id || 'msg_' + Date.now(),
                     content: data.content || fullContent,
-                    sources: data.sources || (meta ? (meta.sources || []) : []),
-                    quickReplies: data.quick_replies || []
-                  }
+                    sources: data.sources || (meta ? meta.sources || [] : []),
+                    quickReplies: data.quick_replies || [],
+                  },
                 });
               } else if (data.type === 'error') {
                 reject(new Error(data.message || 'Stream error'));
               }
-            } catch(parseErr) {
+            } catch (parseErr) {
               console.warn('[API] SSE line parse error:', parseErr.message, 'line:', line.substring(0, 80));
             }
           }
         }
-      } catch(e) {
+      } catch (e) {
         console.warn('[API] Chunk parse error:', e);
       }
     });
@@ -287,7 +293,7 @@ async function submitAssessment(answers) {
   try {
     const res = await wx.cloud.callFunction({
       name: 'ai-assess',
-      data: { answers, version: 'v5' }
+      data: { answers, version: 'v5' },
     });
     return res.result;
   } catch (e) {
@@ -300,7 +306,7 @@ async function askPolicyQuestion(question) {
   try {
     const res = await wx.cloud.callFunction({
       name: 'ai-chat',
-      data: { sessionId: 'qa_' + Date.now(), message: question, mode: 'qa', context: { confidenceCheck: true } }
+      data: { sessionId: 'qa_' + Date.now(), message: question, mode: 'qa', context: { confidenceCheck: true } },
     });
     return res.result;
   } catch (e) {
@@ -313,7 +319,7 @@ async function generateDocument(docType, userLabels, extraInfo) {
   try {
     const res = await wx.cloud.callFunction({
       name: 'ai-doc-gen',
-      data: { docType, userLabels: userLabels || [], extraInfo: extraInfo || {} }
+      data: { docType, userLabels: userLabels || [], extraInfo: extraInfo || {} },
     });
     return res.result;
   } catch (e) {
@@ -336,7 +342,7 @@ async function getApprovedCases() {
 async function uploadAnonymizedText(encryptedText, metadata) {
   return await request('/upload/anonymized', {
     method: 'POST',
-    data: { encryptedText, metadata }
+    data: { encryptedText, metadata },
   });
 }
 
@@ -348,7 +354,7 @@ async function fetchMembershipPlans() {
   try {
     const res = await wx.cloud.callFunction({
       name: 'payment',
-      data: { action: 'getPlans' }
+      data: { action: 'getPlans' },
     });
     return res.result;
   } catch (e) {
@@ -367,7 +373,7 @@ async function createPaymentOrder(planId, period) {
   try {
     const res = await wx.cloud.callFunction({
       name: 'payment',
-      data: { action: 'createOrder', planId, period: period || 'yearly' }
+      data: { action: 'createOrder', planId, period: period || 'yearly' },
     });
     return res.result;
   } catch (e) {
@@ -383,7 +389,7 @@ async function queryOrderStatus(orderId) {
   try {
     const res = await wx.cloud.callFunction({
       name: 'payment',
-      data: { action: 'getOrderStatus', orderId }
+      data: { action: 'getOrderStatus', orderId },
     });
     return res.result;
   } catch (e) {
@@ -398,7 +404,7 @@ async function checkMembershipStatus() {
   try {
     const res = await wx.cloud.callFunction({
       name: 'payment',
-      data: { action: 'checkSubscription' }
+      data: { action: 'checkSubscription' },
     });
     return res.result;
   } catch (e) {
@@ -413,7 +419,7 @@ async function getUserOrders(limit) {
   try {
     const res = await wx.cloud.callFunction({
       name: 'payment',
-      data: { action: 'getUserOrders', limit: limit || 10 }
+      data: { action: 'getUserOrders', limit: limit || 10 },
     });
     return res.result;
   } catch (e) {
@@ -428,7 +434,7 @@ async function getUserSubscriptions() {
   try {
     const res = await wx.cloud.callFunction({
       name: 'payment',
-      data: { action: 'getSubscriptions' }
+      data: { action: 'getSubscriptions' },
     });
     return res.result;
   } catch (e) {
@@ -445,7 +451,7 @@ async function createPayment(planId, amount) {
 async function subscribeTemplateMessage(tmplIds) {
   try {
     const res = await wx.requestSubscribeMessage({ tmplIds });
-    return Object.values(res).some(v => v === 'accept');
+    return Object.values(res).some((v) => v === 'accept');
   } catch (e) {
     return false;
   }
@@ -456,7 +462,7 @@ async function syncUserProfile(profileData) {
   try {
     return await wx.cloud.callFunction({
       name: 'user-auth',
-      data: { action: 'syncProfile', profile: profileData }
+      data: { action: 'syncProfile', profile: profileData },
     });
   } catch (e) {
     console.error('[API] syncProfile failed:', e);
@@ -465,16 +471,36 @@ async function syncUserProfile(profileData) {
 }
 
 module.exports = {
-  request, wechatLogin, getPhoneNumber, reportUserStatus,
-  fetchGuides, fetchPolicyUpdates, fetchPlaybook,
-  interact, searchPlaybook, runPreCheck,
-  sendChatMessage, sendChatMessageV5, sendChatMessageStream, submitAssessment, askPolicyQuestion,
-  generateDocument, getDashboardData, getApprovedCases,
-  uploadAnonymizedText, createPayment, createPaymentOrder, queryOrderStatus,
-  checkMembershipStatus, getUserOrders, getUserSubscriptions,
-  fetchMembershipPlans, subscribeTemplateMessage,
+  request,
+  wechatLogin,
+  getPhoneNumber,
+  reportUserStatus,
+  fetchGuides,
+  fetchPolicyUpdates,
+  fetchPlaybook,
+  interact,
+  searchPlaybook,
+  runPreCheck,
+  sendChatMessage,
+  sendChatMessageV5,
+  sendChatMessageStream,
+  submitAssessment,
+  askPolicyQuestion,
+  generateDocument,
+  getDashboardData,
+  getApprovedCases,
+  uploadAnonymizedText,
+  createPayment,
+  createPaymentOrder,
+  queryOrderStatus,
+  checkMembershipStatus,
+  getUserOrders,
+  getUserSubscriptions,
+  fetchMembershipPlans,
+  subscribeTemplateMessage,
   syncUserProfile,
-  matchSolutionPath, compareSolutionPaths,
+  matchSolutionPath,
+  compareSolutionPaths,
   // [V4.1-PHASE1] Task 1: 流式能力检测
-  isStreamSupported
+  isStreamSupported,
 };

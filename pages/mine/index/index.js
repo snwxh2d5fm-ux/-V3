@@ -19,8 +19,8 @@ Page({
     membershipName: '免费会员',
     isPayingUser: false,
     documentCount: 0,
-    documentLimit: 10,          // 免费用户10，付费用户∞
-    documentLimitDisplay: '10',  // 展示用（免费=10，付费=∞）
+    documentLimit: 10, // 免费用户10，付费用户∞
+    documentLimitDisplay: '10', // 展示用（免费=10，付费=∞）
     usagePercent: 0,
     reminderCount: 0,
     authorizedFields: 0,
@@ -30,18 +30,25 @@ Page({
       { id: 'process', icon: '📊', title: '我的流程', desc: '', url: '/pages/process/index/index', tab: true },
       { id: 'privacy', icon: '🛡', title: '隐私中心', desc: '', url: 'privacy-center' },
       { id: 'membership', icon: '💳', title: '会员中心', desc: '', url: 'membership' },
-      { id: 'family', icon: '👨‍👩‍👧', title: '家庭空间', desc: '', url: 'family-space' }
+      { id: 'family', icon: '👨‍👩‍👧', title: '家庭空间', desc: '', url: 'family-space' },
     ],
     settingsItems: [
       { id: 'notify', icon: '🔔', title: '通知设置', url: 'notify-settings' },
       { id: 'feedback', icon: '💬', title: '意见反馈', url: 'feedback' },
       { id: 'share-records', icon: '📤', title: '分享记录', url: 'share-records' },
       // admin-db 入口仅内部使用，C端不暴露
-    ]
+    ],
   },
 
   onShow() {
-    try { this.setData({ stageSteps: getGlobalStages(), stageProgress: Math.min(((getActiveStageIndex() + 1) / 7) * 100, 100) }); } catch(e) { this.setData({ stageProgress: 14 }); }
+    try {
+      this.setData({
+        stageSteps: getGlobalStages(),
+        stageProgress: Math.min(((getActiveStageIndex() + 1) / 7) * 100, 100),
+      });
+    } catch (e) {
+      this.setData({ stageProgress: 14 });
+    }
     this.loadProfile();
   },
 
@@ -60,7 +67,10 @@ Page({
     const docLimitDisplay = isPayingUser ? '∞' : String(maxDocs);
 
     const statusMap = {
-      unapplied: '未申请', submitted: '申请处理中', approved: '在港进行中', permanent: '已获永居'
+      unapplied: '未申请',
+      submitted: '申请处理中',
+      approved: '在港进行中',
+      permanent: '已获永居',
     };
 
     this.setData({
@@ -74,10 +84,10 @@ Page({
       documentCount: documents.length,
       documentLimit: maxDocs,
       documentLimitDisplay: docLimitDisplay,
-      usagePercent: isPayingUser ? 0 : Math.min(100, Math.round(documents.length / maxDocs * 100)),
-      reminderCount: reminders.filter(r => r.status === 'active').length,
+      usagePercent: isPayingUser ? 0 : Math.min(100, Math.round((documents.length / maxDocs) * 100)),
+      reminderCount: reminders.filter((r) => r.status === 'active').length,
       authorizedFields: fields ? fields.length : 0,
-      privacyDays: Math.floor((Date.now() - new Date('2025-12-30').getTime()) / 86400000)
+      privacyDays: Math.floor((Date.now() - new Date('2025-12-30').getTime()) / 86400000),
     });
 
     // 异步拉取云端会员状态（不阻塞渲染）
@@ -85,34 +95,37 @@ Page({
   },
 
   /** 从云函数获取最新会员状态 */
-  syncMembershipFromCloud: function() {
-    var that = this;
-    wx.cloud.callFunction({
-      name: 'payment',
-      data: { action: 'checkSubscription' }
-    }).then(function(res) {
-      var data = (res.result && res.result.data) || {};
-      if (data.level) {
-        var level = data.level === 'free_trial' ? 'free' : data.level;
-        var isPayingUser = constants.isPayingMember(level);
-        var maxDocs = constants.getEffectiveLimit(level, 'maxDocuments');
-        that.setData({
-          membershipLevel: level,
-          membershipName: constants.MEMBERSHIP_NAMES[level] || '免费会员',
-          isPayingUser: isPayingUser,
-          documentLimit: maxDocs,
-          documentLimitDisplay: isPayingUser ? '∞' : String(maxDocs),
-          usagePercent: isPayingUser ? 0 : Math.min(100, Math.round(documents.length / maxDocs * 100)),
-          membershipDays: data.daysRemaining || 0,
-          isLocked: data.isLocked || false
-        });
-        // 同步到全局
-        app.globalData.membershipLevel = level;
-        app.globalData.isLocked = data.isLocked || false;
-      }
-    }).catch(function() {
-      // 降级使用本地数据
-    });
+  syncMembershipFromCloud: function () {
+    const that = this;
+    wx.cloud
+      .callFunction({
+        name: 'payment',
+        data: { action: 'checkSubscription' },
+      })
+      .then(function (res) {
+        const data = (res.result && res.result.data) || {};
+        if (data.level) {
+          const level = data.level === 'free_trial' ? 'free' : data.level;
+          const isPayingUser = constants.isPayingMember(level);
+          const maxDocs = constants.getEffectiveLimit(level, 'maxDocuments');
+          that.setData({
+            membershipLevel: level,
+            membershipName: constants.MEMBERSHIP_NAMES[level] || '免费会员',
+            isPayingUser: isPayingUser,
+            documentLimit: maxDocs,
+            documentLimitDisplay: isPayingUser ? '∞' : String(maxDocs),
+            usagePercent: isPayingUser ? 0 : Math.min(100, Math.round((documents.length / maxDocs) * 100)),
+            membershipDays: data.daysRemaining || 0,
+            isLocked: data.isLocked || false,
+          });
+          // 同步到全局
+          app.globalData.membershipLevel = level;
+          app.globalData.isLocked = data.isLocked || false;
+        }
+      })
+      .catch(function () {
+        // 降级使用本地数据
+      });
   },
 
   // 导航
@@ -158,11 +171,11 @@ Page({
         title: '会员功能',
         content: '家庭空间为基础会员及以上专属功能，升级后即可添加家属共享证件与提醒。',
         confirmText: '去升级',
-        success: function(res) {
+        success: function (res) {
           if (res.confirm) {
             wx.navigateTo({ url: '/subpkg-chat/pages/membership/index' });
           }
-        }
+        },
       });
       return;
     }
@@ -174,7 +187,7 @@ Page({
     return {
       title: '我正在使用住港伴，你也来看看',
       path: '/pages/index/index',
-      imageUrl: '/images/share-cover.png'
+      imageUrl: '/images/share-cover.png',
     };
   },
 
@@ -190,7 +203,7 @@ Page({
           app.globalData.userInfo = null;
           wx.reLaunch({ url: '/pages/login/login' });
         }
-      }
+      },
     });
-  }
+  },
 });

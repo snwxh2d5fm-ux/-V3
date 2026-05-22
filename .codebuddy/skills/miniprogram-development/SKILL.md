@@ -52,6 +52,7 @@ Use this skill for **WeChat Mini Program development** when you need to:
 - Integrate CloudBase in a mini program project when explicitly needed
 
 **Do NOT use for:**
+
 - Web frontend development (use `web-development`)
 - Pure backend service development (use `cloudrun-development` or `cloud-functions` as appropriate)
 - UI design-only tasks without mini program development context (use `ui-design`)
@@ -144,7 +145,7 @@ Keep the custom `tabBar` layout text-only, and use flex centering or matching `h
 ```js
 App({
   onLaunch() {
-    console.log("Mini Program launched");
+    console.log('Mini Program launched');
   },
 });
 ```
@@ -154,7 +155,7 @@ App({
 ```js
 Page({
   data: {
-    message: "Hello CloudBase Mini Program",
+    message: 'Hello CloudBase Mini Program',
   },
 });
 ```

@@ -18,14 +18,14 @@
 /**
  * 里程碑文档 → UI 阶段映射表
  */
-var MILESTONE_STAGE_MAP = {
+const MILESTONE_STAGE_MAP = {
   'DOC-0601': { stage_ui: 5, name: '获批激活', trigger: '获批函上传+预审通过' },
   'DOC-0602': { stage_ui: 3, name: '线上申请', trigger: '递交回执上传+预审通过' },
   'DOC-0605': { stage_ui: 5, name: '获批激活', trigger: '电子签证上传+预审通过' },
   'DOC-0701': { stage_ui: 5, name: '获批激活', trigger: '小白条上传+预审通过' },
   'DOC-0609': { stage_ui: 3, name: '续签递交', trigger: '续签回执上传+预审通过' },
   'DOC-0611': { stage_ui: 7, name: '永居申请', trigger: '永居申请回执上传+预审通过' },
-  'DOC-0612': { stage_ui: 7, name: '永居获批', trigger: '永居核实结果上传+预审通过' }
+  'DOC-0612': { stage_ui: 7, name: '永居获批', trigger: '永居核实结果上传+预审通过' },
 };
 
 /**
@@ -35,11 +35,11 @@ var MILESTONE_STAGE_MAP = {
  * @returns {object|null} 里程碑信息或 null
  */
 function checkMilestone(docId, auditReport) {
-  var mapping = MILESTONE_STAGE_MAP[docId];
+  const mapping = MILESTONE_STAGE_MAP[docId];
   if (!mapping) return null;
 
-  var overall = auditReport.status;
-  var triggered = (overall === 'pass' || overall === 'warning' || overall === 'info');
+  const overall = auditReport.status;
+  const triggered = overall === 'pass' || overall === 'warning' || overall === 'info';
 
   return {
     doc_id: docId,
@@ -49,7 +49,7 @@ function checkMilestone(docId, auditReport) {
     triggered: triggered,
     message: triggered
       ? '✓ 里程碑已达成：' + mapping.trigger + ' → 解锁「' + mapping.name + '」阶段'
-      : '✗ 里程碑未达成：P0 阻断问题需先解决'
+      : '✗ 里程碑未达成：P0 阻断问题需先解决',
   };
 }
 
@@ -59,19 +59,21 @@ function checkMilestone(docId, auditReport) {
  * @returns {object} 各阶段解锁状态
  */
 function getStageUnlockStatus(completedDocs) {
-  var stages = {
-    3: { name: '线上申请',     locked: true, milestone_doc_ids: ['DOC-0602'] },
-    5: { name: '获批激活',     locked: true, milestone_doc_ids: ['DOC-0601', 'DOC-0605', 'DOC-0701'] },
-    7: { name: '永居',         locked: true, milestone_doc_ids: ['DOC-0611', 'DOC-0612'] }
+  const stages = {
+    3: { name: '线上申请', locked: true, milestone_doc_ids: ['DOC-0602'] },
+    5: { name: '获批激活', locked: true, milestone_doc_ids: ['DOC-0601', 'DOC-0605', 'DOC-0701'] },
+    7: { name: '永居', locked: true, milestone_doc_ids: ['DOC-0611', 'DOC-0612'] },
   };
 
-  var docIds = completedDocs.map(function(d) { return d.doc_id; });
+  const docIds = completedDocs.map(function (d) {
+    return d.doc_id;
+  });
 
-  for (var stage in stages) {
-    var info = stages[stage];
-    var requiredDocs = info.milestone_doc_ids;
-    var hasMilestone = false;
-    for (var i = 0; i < requiredDocs.length; i++) {
+  for (const stage in stages) {
+    const info = stages[stage];
+    const requiredDocs = info.milestone_doc_ids;
+    let hasMilestone = false;
+    for (let i = 0; i < requiredDocs.length; i++) {
       if (docIds.indexOf(requiredDocs[i]) !== -1) {
         hasMilestone = true;
         break;
@@ -83,12 +85,12 @@ function getStageUnlockStatus(completedDocs) {
   return {
     stages: stages,
     // 当前应显示的最高解锁阶段
-    current_stage: findCurrentStage(stages)
+    current_stage: findCurrentStage(stages),
   };
 }
 
 function findCurrentStage(stages) {
-  for (var s = 3; s <= 7; s++) {
+  for (let s = 3; s <= 7; s++) {
     if (stages[s] && stages[s].locked) {
       return parseInt(s, 10);
     }
@@ -99,5 +101,5 @@ function findCurrentStage(stages) {
 module.exports = {
   checkMilestone: checkMilestone,
   getStageUnlockStatus: getStageUnlockStatus,
-  MILESTONE_STAGE_MAP: MILESTONE_STAGE_MAP
+  MILESTONE_STAGE_MAP: MILESTONE_STAGE_MAP,
 };

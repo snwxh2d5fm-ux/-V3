@@ -1,12 +1,12 @@
 /**
  * 住港伴 v3 — 核心云函数 Smoke Test
- * 
+ *
  * 分两层验证:
  *   Layer 1 (本地): 语法、安全规则、依赖声明 — 无需 CloudBase 环境
  *   Layer 2 (云上): 函数调用、RAG检索、AI响应 — 需 invokeFunction MCP
  *
  * 运行: npx jest tests/smoke/cloud-functions.test.js --verbose
- * 
+ *
  * 注意: 云函数依赖 wx-server-sdk, 本地 node 无法加载.
  *       模块可加载性由 verify.sh A7 (node -c 语法检查) 保证.
  */
@@ -37,7 +37,6 @@ function hasCFDir(name) {
 // ============================================================
 
 describe('LAYER 1 — 本地静态验证', () => {
-
   describe('rag-search', () => {
     test('源码文件存在', () => {
       const src = readCFSource('rag-search');
@@ -76,8 +75,7 @@ describe('LAYER 1 — 本地静态验证', () => {
     test('prompts.js 四模式安全规则', () => {
       const prompts = fs.readFileSync(path.join(CF_DIR, 'ai-chat', 'prompts.js'), 'utf-8');
       // assessment / solution_recommend / chat / guidebook 四种模式至少含两种
-      const modeCount = ['assessment', 'solution', 'chat', 'guidebook']
-        .filter(m => prompts.includes(m)).length;
+      const modeCount = ['assessment', 'solution', 'chat', 'guidebook'].filter((m) => prompts.includes(m)).length;
       expect(modeCount).toBeGreaterThanOrEqual(2);
     });
 
@@ -135,12 +133,11 @@ describe('LAYER 1 — 本地静态验证', () => {
 // ============================================================
 
 describe('LAYER 2 — 需云端执行 (记录为 TODO)', () => {
-
   const CLOUD_TESTS = [
-    { fn: 'rag-search',       test: 'v2_gram 检索返回非空结果',    params: { query: '优才计划申请条件', mode: 'v2_gram' } },
-    { fn: 'ai-chat',          test: 'K2 安全规则拦截违规问题',     params: { query: '我能通过优才吗', _smoke: true } },
-    { fn: 'preaudit-engine',  test: 'OCR 结果校验返回结构化报告',   params: { _smoke: true } },
-    { fn: 'k2-leak-scanner',  test: '全量扫描无异常',             params: { action: 'scan', dryRun: true } },
+    { fn: 'rag-search', test: 'v2_gram 检索返回非空结果', params: { query: '优才计划申请条件', mode: 'v2_gram' } },
+    { fn: 'ai-chat', test: 'K2 安全规则拦截违规问题', params: { query: '我能通过优才吗', _smoke: true } },
+    { fn: 'preaudit-engine', test: 'OCR 结果校验返回结构化报告', params: { _smoke: true } },
+    { fn: 'k2-leak-scanner', test: '全量扫描无异常', params: { action: 'scan', dryRun: true } },
   ];
 
   CLOUD_TESTS.forEach(({ fn, test: testName, params }) => {

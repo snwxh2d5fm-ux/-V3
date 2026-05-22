@@ -23,13 +23,20 @@ exports.main = async (event, context) => {
 
   try {
     switch (action) {
-      case 'check':          return await runPolicyCheck();
-      case 'getUpdates':     return await getRecentUpdates(event?.limit || 20);
-      case 'getByCategory':  return await getByCategory(event?.category);
-      case 'getSources':     return await getSources(event?.category);
-      case 'addSource':      return await addSource(event);
-      case 'addUpdate':      return await addPolicyUpdate(event);
-      default:               return await runPolicyCheck();
+      case 'check':
+        return await runPolicyCheck();
+      case 'getUpdates':
+        return await getRecentUpdates(event?.limit || 20);
+      case 'getByCategory':
+        return await getByCategory(event?.category);
+      case 'getSources':
+        return await getSources(event?.category);
+      case 'addSource':
+        return await addSource(event);
+      case 'addUpdate':
+        return await addPolicyUpdate(event);
+      default:
+        return await runPolicyCheck();
     }
   } catch (err) {
     console.error('[policy-monitor]', err);
@@ -44,8 +51,7 @@ async function _loadSources() {
   const now = Date.now();
   if (_sourcesCache && now < _cacheExpiry) return _sourcesCache;
 
-  const result = await db.collection('policy_sources')
-    .where({ isActive: true }).get();
+  const result = await db.collection('policy_sources').where({ isActive: true }).get();
 
   _sourcesCache = result.data;
   return result.data;
@@ -58,8 +64,7 @@ async function _loadKeywords() {
   const now = Date.now();
   if (_keywordsCache && now < _cacheExpiry) return _keywordsCache;
 
-  const result = await db.collection('content_rules')
-    .where({ ruleType: 'policy_keyword', isActive: true }).get();
+  const result = await db.collection('content_rules').where({ ruleType: 'policy_keyword', isActive: true }).get();
 
   // 构建关键词分类映射
   const categories = {};
@@ -87,24 +92,22 @@ async function runPolicyCheck() {
   for (const source of sources) {
     try {
       // 对比上次抓取
-      const prevSnapshot = await db.collection('policy_snapshots')
+      const prevSnapshot = await db
+        .collection('policy_snapshots')
         .where({ source: source.name })
         .orderBy('checkedAt', 'desc')
         .limit(1)
         .get();
 
-      const prevContent = prevSnapshot.data.length > 0
-        ? prevSnapshot.data[0].contentHash
-        : '';
+      const prevContent = prevSnapshot.data.length > 0 ? prevSnapshot.data[0].contentHash : '';
 
       // 实际HTTP抓取 + SHA-256 hash变更检测
-      var contentHash = '';
-      var hasChanges = false;
+      let contentHash = '';
+      let hasChanges = false;
       try {
-        var httpResult = await _fetchUrl(source.url);
+        const httpResult = await _fetchUrl(source.url);
         if (httpResult && httpResult.body && httpResult.statusCode >= 200 && httpResult.statusCode < 300) {
-          contentHash = require('crypto').createHash('sha256')
-            .update(httpResult.body.slice(0, 50000)).digest('hex');
+          contentHash = require('crypto').createHash('sha256').update(httpResult.body.slice(0, 50000)).digest('hex');
           hasChanges = prevContent && prevContent !== contentHash;
         }
       } catch (fetchErr) {
@@ -117,7 +120,7 @@ async function runPolicyCheck() {
         checkedAt: now,
         contentHash: contentHash,
         hasChanges: hasChanges,
-        changes: []
+        changes: [],
       };
 
       await db.collection('policy_snapshots').add({ data: snapshot });
@@ -132,8 +135,8 @@ async function runPolicyCheck() {
     data: {
       checkedAt: now.toISOString(),
       sourcesChecked: updates.length,
-      updates
-    }
+      updates,
+    },
   };
 }
 
@@ -142,14 +145,11 @@ async function runPolicyCheck() {
  * PL-02: 从 policy_updates 集合查询
  */
 async function getRecentUpdates(limit) {
-  const result = await db.collection('policy_updates')
-    .orderBy('publishedAt', 'desc')
-    .limit(Math.min(limit, 50))
-    .get();
+  const result = await db.collection('policy_updates').orderBy('publishedAt', 'desc').limit(Math.min(limit, 50)).get();
 
   return {
     code: 0,
-    data: result.data.map(u => ({
+    data: result.data.map((u) => ({
       id: u._id,
       title: u.title,
       summary: u.summary,
@@ -157,8 +157,8 @@ async function getRecentUpdates(limit) {
       impact: u.impact,
       publishedAt: u.publishedAt,
       source: u.source,
-      relevantTo: u.relevantTo || []
-    }))
+      relevantTo: u.relevantTo || [],
+    })),
   };
 }
 
@@ -166,7 +166,8 @@ async function getRecentUpdates(limit) {
  * 按类别获取更新
  */
 async function getByCategory(category) {
-  const result = await db.collection('policy_updates')
+  const result = await db
+    .collection('policy_updates')
     .where({ category })
     .orderBy('publishedAt', 'desc')
     .limit(20)
@@ -182,12 +183,11 @@ async function getSources(category) {
   const query = { isActive: true };
   if (category) query.category = category;
 
-  const result = await db.collection('policy_sources')
-    .where(query).orderBy('priority', 'desc').get();
+  const result = await db.collection('policy_sources').where(query).orderBy('priority', 'desc').get();
 
   return {
     code: 0,
-    data: result.data.map(s => ({
+    data: result.data.map((s) => ({
       id: s._id,
       name: s.name,
       url: s.url,
@@ -195,8 +195,8 @@ async function getSources(category) {
       description: s.description,
       checkInterval: s.checkInterval,
       priority: s.priority,
-      lastCheckedAt: s.lastCheckedAt
-    }))
+      lastCheckedAt: s.lastCheckedAt,
+    })),
   };
 }
 
@@ -208,21 +208,21 @@ async function addSource(event) {
   if (!name || !url) return { code: 400, msg: '名称和URL不能为空' };
 
   // 去重
-  const existing = await db.collection('policy_sources')
-    .where({ name }).count();
+  const existing = await db.collection('policy_sources').where({ name }).count();
   if (existing.total > 0) return { code: 409, msg: '来源已存在' };
 
   await db.collection('policy_sources').add({
     data: {
-      name, url,
+      name,
+      url,
       category: category || 'general',
       description: description || '',
       checkInterval: checkInterval || 'daily',
       priority: priority || 5,
       isActive: true,
       createdAt: db.serverDate(),
-      updatedAt: db.serverDate()
-    }
+      updatedAt: db.serverDate(),
+    },
   });
 
   // 刷新缓存
@@ -254,8 +254,8 @@ async function addPolicyUpdate(event) {
       relevantTo: relevantTo || [],
       publishedAt: publishedAt || new Date().toISOString(),
       autoCategories,
-      createdAt: db.serverDate()
-    }
+      createdAt: db.serverDate(),
+    },
   });
 
   // PL-04: 检查是否有指引受此政策影响
@@ -264,8 +264,8 @@ async function addPolicyUpdate(event) {
       name: 'guide-service',
       data: {
         action: 'checkPolicyImpact',
-        policySnapshotId: result._id
-      }
+        policySnapshotId: result._id,
+      },
     });
   }
 
@@ -292,17 +292,22 @@ function _categorizeContent(text, keywords) {
 
 // HTTP抓取辅助函数
 async function _fetchUrl(url) {
-  var https = require('https');
-  return new Promise(function(resolve, reject) {
-    var req = https.get(url, { timeout: 15000 }, function(res) {
-      var chunks = [];
-      res.on('data', function(chunk) { chunks.push(chunk); });
-      res.on('end', function() {
-        var body = Buffer.concat(chunks).toString('utf8');
+  const https = require('https');
+  return new Promise(function (resolve, reject) {
+    const req = https.get(url, { timeout: 15000 }, function (res) {
+      const chunks = [];
+      res.on('data', function (chunk) {
+        chunks.push(chunk);
+      });
+      res.on('end', function () {
+        const body = Buffer.concat(chunks).toString('utf8');
         resolve({ statusCode: res.statusCode, body: body });
       });
     });
     req.on('error', reject);
-    req.on('timeout', function() { req.destroy(); reject(new Error('timeout')); });
+    req.on('timeout', function () {
+      req.destroy();
+      reject(new Error('timeout'));
+    });
   });
 }

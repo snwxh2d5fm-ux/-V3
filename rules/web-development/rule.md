@@ -101,6 +101,7 @@ Use this skill for Web engineering work such as:
 - Integrating CloudBase Web SDK and static hosting when the project needs CloudBase capabilities
 
 **Do NOT use for:**
+
 - UI direction or visual system design only; use `ui-design`
 - Mini program development; use `miniprogram-development`
 - Backend service implementation; use `cloudrun-development` or `cloud-functions`
@@ -177,10 +178,10 @@ Use this section only when the Web project needs CloudBase platform features.
 
 ```js
 // npm install @cloudbase/js-sdk
-import cloudbase from "@cloudbase/js-sdk";
+import cloudbase from '@cloudbase/js-sdk';
 
 const app = cloudbase.init({
-  env: "your-full-env-id", // Canonical full CloudBase environment ID resolved from envQuery or the console
+  env: 'your-full-env-id', // Canonical full CloudBase environment ID resolved from envQuery or the console
 });
 
 const auth = app.auth();

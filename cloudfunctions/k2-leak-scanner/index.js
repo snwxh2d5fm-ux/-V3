@@ -10,42 +10,51 @@
  *
  * 触发器: 每日 0 0 3 * * * * (CloudBase 7段cron)
  */
-var cloud = require('wx-server-sdk');
+const cloud = require('wx-server-sdk');
 cloud.init({ env: cloud.DYNAMIC_CURRENT_ENV });
-var db = cloud.database();
-var _ = db.command;
+const db = cloud.database();
+const _ = db.command;
 
 // K2 检测模式
-var K2_STRUCTURED_FIELDS = ['visual_features', 'validation_rules', 'vault_mode', 'privacy_level'];
+const K2_STRUCTURED_FIELDS = ['visual_features', 'validation_rules', 'vault_mode', 'privacy_level'];
 
-var K2_CONTENT_PATTERNS = [
+const K2_CONTENT_PATTERNS = [
   { regex: /圆角边框|全息防伪|光变油墨|微缩文字|安全线|防伪底纹/g, category: 'forgery_feature' },
   { regex: /防伪特征|安全特征|anti-counterfeiting/g, category: 'forgery_feature' },
   { regex: /AES-256|PBKDF2|WASM沙箱|客户端加密/g, category: 'privacy_tech' },
   { regex: /Canny|边缘检测|轮廓近似|OCR模型|校验位算法/g, category: 'ocr_tech' },
-  { regex: /validation_rule|vault_mode|privacy_level/g, category: 'internal_field' }
+  { regex: /validation_rule|vault_mode|privacy_level/g, category: 'internal_field' },
 ];
 
-exports.main = async function(event, context) {
-  var now = new Date().toISOString();
-  var alerts = [];
-  var scanStats = { knowledge_chunks: 0, ai_chat_logs: 0 };
+exports.main = async function (event, context) {
+  const now = new Date().toISOString();
+  const alerts = [];
+  const scanStats = { knowledge_chunks: 0, ai_chat_logs: 0 };
 
   // ====== 扫描1: knowledge_chunks K2 结构化字段残留 ======
   try {
-    var fieldCheck = buildFieldScanQuery();
-    var fieldRes = await db.collection('knowledge_chunks')
+    const fieldCheck = buildFieldScanQuery();
+    const fieldRes = await db
+      .collection('knowledge_chunks')
       .where(fieldCheck)
-      .field({ _id: true, doc_id: true, name_zh: true, visual_features: true, validation_rules: true, vault_mode: true, privacy_level: true })
+      .field({
+        _id: true,
+        doc_id: true,
+        name_zh: true,
+        visual_features: true,
+        validation_rules: true,
+        vault_mode: true,
+        privacy_level: true,
+      })
       .limit(50)
       .get();
 
     scanStats.knowledge_chunks = fieldRes.data.length;
 
-    for (var i = 0; i < fieldRes.data.length; i++) {
-      var doc = fieldRes.data[i];
-      var leakedFields = [];
-      for (var j = 0; j < K2_STRUCTURED_FIELDS.length; j++) {
+    for (let i = 0; i < fieldRes.data.length; i++) {
+      const doc = fieldRes.data[i];
+      const leakedFields = [];
+      for (let j = 0; j < K2_STRUCTURED_FIELDS.length; j++) {
         if (doc[K2_STRUCTURED_FIELDS[j]] !== undefined) {
           leakedFields.push(K2_STRUCTURED_FIELDS[j]);
         }
@@ -58,7 +67,7 @@ exports.main = async function(event, context) {
         leaked_fields: leakedFields,
         detected_at: now,
         severity: 'P0',
-        status: 'open'
+        status: 'open',
       });
     }
   } catch (e) {
@@ -67,8 +76,9 @@ exports.main = async function(event, context) {
 
   // ====== 扫描2: ai_chat_logs K2 内容关键词 (如集合存在) ======
   try {
-    var oneDayAgo = Date.now() - 24 * 60 * 60 * 1000;
-    var chatRes = await db.collection('ai_chat_logs')
+    const oneDayAgo = Date.now() - 24 * 60 * 60 * 1000;
+    const chatRes = await db
+      .collection('ai_chat_logs')
       .where({ timestamp: _.gte(oneDayAgo) })
       .field({ ai_response: true, message_id: true, _id: true, user_query: true })
       .limit(200)
@@ -76,17 +86,17 @@ exports.main = async function(event, context) {
 
     scanStats.ai_chat_logs = chatRes.data.length;
 
-    for (var k = 0; k < chatRes.data.length; k++) {
-      var chat = chatRes.data[k];
-      var content = chat.ai_response || '';
-      var matchedPatterns = [];
+    for (let k = 0; k < chatRes.data.length; k++) {
+      const chat = chatRes.data[k];
+      const content = chat.ai_response || '';
+      const matchedPatterns = [];
 
-      for (var p = 0; p < K2_CONTENT_PATTERNS.length; p++) {
-        var match = content.match(K2_CONTENT_PATTERNS[p].regex);
+      for (let p = 0; p < K2_CONTENT_PATTERNS.length; p++) {
+        const match = content.match(K2_CONTENT_PATTERNS[p].regex);
         if (match) {
           matchedPatterns.push({
             category: K2_CONTENT_PATTERNS[p].category,
-            snippet: match[0]
+            snippet: match[0],
           });
         }
       }
@@ -101,8 +111,12 @@ exports.main = async function(event, context) {
           leak_type: 'content_pattern',
           matched_patterns: matchedPatterns,
           detected_at: now,
-          severity: matchedPatterns.some(function(m) { return m.category === 'forgery_feature'; }) ? 'P0' : 'P1',
-          status: 'open'
+          severity: matchedPatterns.some(function (m) {
+            return m.category === 'forgery_feature';
+          })
+            ? 'P0'
+            : 'P1',
+          status: 'open',
         });
       }
     }
@@ -114,9 +128,9 @@ exports.main = async function(event, context) {
   }
 
   // ====== 写入告警 ======
-  var savedAlerts = 0;
+  let savedAlerts = 0;
   if (alerts.length > 0) {
-    for (var a = 0; a < alerts.length; a++) {
+    for (let a = 0; a < alerts.length; a++) {
       try {
         await db.collection('k2_leak_alerts').add({ data: alerts[a] });
         savedAlerts++;
@@ -133,8 +147,8 @@ exports.main = async function(event, context) {
       scanned: scanStats,
       alerts_found: alerts.length,
       alerts_saved: savedAlerts,
-      timestamp: now
-    }
+      timestamp: now,
+    },
   };
 };
 
@@ -145,9 +159,9 @@ exports.main = async function(event, context) {
 function buildFieldScanQuery() {
   // 使用正则匹配 content 中的 K2 关键词作为后备
   // 因为 CloudBase where 不支持字段存在性检查
-  var pattern = db.RegExp({
+  const pattern = db.RegExp({
     regexp: 'visual_features|privacy_level|vault_mode|圆角边框|光变油墨',
-    options: 'i'
+    options: 'i',
   });
   return { content: pattern };
 }

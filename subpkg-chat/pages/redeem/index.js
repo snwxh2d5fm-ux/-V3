@@ -19,7 +19,7 @@ Page({
     redeemFailed: false,
     membershipLabel: '',
     membershipExpiresAt: '',
-    feedback: ''
+    feedback: '',
   },
 
   /** 码输入处理：去空格→大写→自动插入短横线→截断 */
@@ -44,7 +44,7 @@ Page({
       codeValid: valid,
       previewed: false,
       preview: { valid: false, hint: '', msg: '' },
-      redeemFailed: false
+      redeemFailed: false,
     });
   },
 
@@ -58,7 +58,7 @@ Page({
     try {
       const res = await wx.cloud.callFunction({
         name: 'invite-code',
-        data: { action: 'query-code-status', code }
+        data: { action: 'query-code-status', code },
       });
 
       const result = res.result || {};
@@ -69,15 +69,15 @@ Page({
           valid: result.code === 0,
           hint: result.hint || '',
           msg: result.msg || '',
-          status: result.status || ''
-        }
+          status: result.status || '',
+        },
       });
     } catch (e) {
       console.error('[redeem] queryCode error:', e);
       this.setData({
         querying: false,
         previewed: true,
-        preview: { valid: false, msg: '网络异常，请重试' }
+        preview: { valid: false, msg: '网络异常，请重试' },
       });
     }
   },
@@ -99,8 +99,8 @@ Page({
         data: {
           action: 'redeem-code',
           code,
-          deviceId
-        }
+          deviceId,
+        },
       });
 
       const result = res.result || {};
@@ -113,7 +113,7 @@ Page({
           membershipLabel: '基础年卡会员',
           membershipExpiresAt: result.membershipExpireAt
             ? formatDate(result.membershipExpireAt)
-            : this.data.membershipExpiresAt
+            : this.data.membershipExpiresAt,
         });
         wx.showToast({ title: '你已兑换过该码', icon: 'none' });
         return;
@@ -131,7 +131,7 @@ Page({
           redeemed: true,
           redeemFailed: false,
           membershipLabel: result.membershipLabel || '基础年卡会员',
-          membershipExpiresAt: formatDate(result.membershipExpireAt)
+          membershipExpiresAt: formatDate(result.membershipExpireAt),
         });
 
         wx.showToast({ title: '年卡已激活', icon: 'success' });
@@ -140,7 +140,7 @@ Page({
           redeeming: false,
           redeemFailed: true,
           previewed: true,
-          preview: { valid: false, msg: result.msg || '兑换失败' }
+          preview: { valid: false, msg: result.msg || '兑换失败' },
         });
 
         wx.showToast({ title: result.msg || '兑换失败', icon: 'none', duration: 3000 });
@@ -149,7 +149,7 @@ Page({
       console.error('[redeem] redeemCode error:', e);
       this.setData({
         redeeming: false,
-        redeemFailed: true
+        redeemFailed: true,
       });
       wx.showToast({ title: '网络异常，请重试', icon: 'none' });
     }
@@ -171,8 +171,8 @@ Page({
         data: {
           action: 'submit-feedback',
           feedback,
-          stage: 't0'
-        }
+          stage: 't0',
+        },
       });
       wx.showToast({ title: '感谢反馈！', icon: 'success' });
       this.setData({ feedback: '' });
@@ -184,9 +184,13 @@ Page({
   /** 重置兑换状态（失败后重新输入） */
   resetRedeem() {
     this.setData({
-      code: '', codeValid: false, querying: false,
-      previewed: false, preview: { valid: false, hint: '', msg: '' },
-      redeeming: false, redeemFailed: false
+      code: '',
+      codeValid: false,
+      querying: false,
+      previewed: false,
+      preview: { valid: false, hint: '', msg: '' },
+      redeeming: false,
+      redeemFailed: false,
     });
   },
 
@@ -198,7 +202,7 @@ Page({
   /** 返回首页 */
   goHome() {
     wx.switchTab({ url: '/pages/guidebooks/index/index' });
-  }
+  },
 });
 
 /** 日期格式化 */

@@ -20,13 +20,13 @@ const SCENE_TAGS = {
   'onboard-004': ['证件'],
   'onboard-005': ['证件'],
   // 关卡1 (落地生存)
-  'onboard-101': ['交通','支付'],
+  'onboard-101': ['交通', '支付'],
   'onboard-102': ['通讯'],
   'onboard-103': ['支付'],
   'onboard-104': ['证件'],
   'onboard-105': ['交通'],
   // 关卡2 (行政开户)
-  'onboard-201': ['银行','证件'],
+  'onboard-201': ['银行', '证件'],
   'onboard-202': ['住房'],
   'onboard-203': ['医疗'],
   'onboard-204': ['运动'],
@@ -37,7 +37,7 @@ const SCENE_TAGS = {
   'onboard-300': ['住房'],
   'onboard-301': ['住房'],
   'onboard-302': ['住房'],
-  'onboard-303': ['保险','住房'],
+  'onboard-303': ['保险', '住房'],
   'onboard-304': ['通讯'],
   'onboard-305': ['搬家'],
   'onboard-306': ['社区'],
@@ -48,7 +48,7 @@ const SCENE_TAGS = {
   'onboard-311': ['住房'],
   'onboard-312': ['住房'],
   // 关卡4 (出行融入)
-  'onboard-401': ['交通','证件'],
+  'onboard-401': ['交通', '证件'],
   'onboard-402': ['交通'],
   'onboard-403': ['运动'],
   'onboard-404': ['医疗'],
@@ -99,7 +99,36 @@ function makeQuickAnswer(task) {
 
 function makeSearchKeywords(task) {
   const combined = `${task.title} ${task.subtitle || ''}`;
-  const skip = new Set(['的', '了', '在', '是', '不', '一', '就', '有', '和', '与', '都', '要', '能', '可以', '会', '也', '到', '这', '那', '被', '让', '把', '从', '对', '比', '最', '更', '很']);
+  const skip = new Set([
+    '的',
+    '了',
+    '在',
+    '是',
+    '不',
+    '一',
+    '就',
+    '有',
+    '和',
+    '与',
+    '都',
+    '要',
+    '能',
+    '可以',
+    '会',
+    '也',
+    '到',
+    '这',
+    '那',
+    '被',
+    '让',
+    '把',
+    '从',
+    '对',
+    '比',
+    '最',
+    '更',
+    '很',
+  ]);
   const words = [];
   // Split by common delimiters
   const parts = combined.split(/[———\-—,，。\s\/]+/);
@@ -110,7 +139,10 @@ function makeSearchKeywords(task) {
     }
   }
   if (words.length < 2) {
-    const titleWords = task.title.replace(/[——\-—,，。\s\/]/g, ' ').split(' ').filter(w => w.length >= 2 && !skip.has(w));
+    const titleWords = task.title
+      .replace(/[——\-—,，。\s\/]/g, ' ')
+      .split(' ')
+      .filter((w) => w.length >= 2 && !skip.has(w));
     return titleWords.slice(0, 4);
   }
   return [...new Set(words)].slice(0, 4);
@@ -163,14 +195,14 @@ for (const t of tasks) {
   const searchKeywords = makeSearchKeywords(t);
   const applicableTo = transformApplicableTo(t.applicableTo);
 
-  const officialLinks = (t.officialLinks || []).map(link => ({
+  const officialLinks = (t.officialLinks || []).map((link) => ({
     label: link.label,
     url: link.url,
   }));
 
   const requiredItems = t.requiredItems || [];
 
-  const steps = (t.steps || []).map(s => ({
+  const steps = (t.steps || []).map((s) => ({
     seq: s.seq,
     title: s.title,
     content: s.content,

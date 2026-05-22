@@ -3,5 +3,7 @@
   "version": "1.0.0",
   "description": "住港伴 — 数据库种子脚本：Phase 1 初始数据入库",
   "main": "index.js",
-  "dependencies": { "wx-server-sdk": "~2.6.0" }
+  "dependencies": {
+    "wx-server-sdk": "~2.6.0"
+  }
 }

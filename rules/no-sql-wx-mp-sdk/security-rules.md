@@ -33,18 +33,18 @@ This means:
 Correct:
 
 ```javascript
-await db.collection("todos").add({
-  title: "Buy milk",
-  completed: false
+await db.collection('todos').add({
+  title: 'Buy milk',
+  completed: false,
 });
 ```
 
 Wrong:
 
 ```javascript
-await db.collection("todos").add({
-  title: "Buy milk",
-  _openid: "manual-value"
+await db.collection('todos').add({
+  title: 'Buy milk',
+  _openid: 'manual-value',
 });
 ```
 

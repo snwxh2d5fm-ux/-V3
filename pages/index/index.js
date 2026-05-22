@@ -16,5 +16,5 @@ Page({
   onShow() {
     // v5: 直接跳转流程控 (原中枢功能已迁移)
     wx.switchTab({ url: '/pages/process/index/index' });
-  }
+  },
 });

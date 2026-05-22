@@ -11,7 +11,8 @@
  */
 
 /** 所有AI生成文档统一添加的免责声明 */
-var AI_DISCLAIMER = '\n\n' +
+const AI_DISCLAIMER =
+  '\n\n' +
   '═══════════════════════════════════════\n' +
   '【AI辅助生成声明】\n' +
   '本文档由住港伴AI助手辅助生成，仅供参考。\n' +
@@ -25,27 +26,41 @@ var AI_DISCLAIMER = '\n\n' +
  * 赴港计划书模板
  */
 function generateStatementPlan(userLabels, extraInfo) {
-  var position = extraInfo.position || '（请补充职位）';
-  var achievements = extraInfo.coreAchievements || '';
-  var additionalInfo = extraInfo.additionalInfo || '';
-  var today = new Date().toISOString().split('T')[0];
+  const position = extraInfo.position || '（请补充职位）';
+  const achievements = extraInfo.coreAchievements || '';
+  const additionalInfo = extraInfo.additionalInfo || '';
+  const today = new Date().toISOString().split('T')[0];
 
-  var labelSummary = userLabels.length > 0
-    ? userLabels.map(function (l) { return l.label; }).join('、')
-    : '（请授权个人信息标签以自动填充）';
+  const labelSummary =
+    userLabels.length > 0
+      ? userLabels
+          .map(function (l) {
+            return l.label;
+          })
+          .join('、')
+      : '（请授权个人信息标签以自动填充）';
 
   return {
-    content: '赴港计划书\n\n' +
-      '日期：' + today + '\n\n' +
+    content:
+      '赴港计划书\n\n' +
+      '日期：' +
+      today +
+      '\n\n' +
       '一、申请人基本信息\n' +
       '姓名：____________\n' +
-      '当前职位：' + position + '\n' +
-      '个人标签：' + labelSummary + '\n\n' +
+      '当前职位：' +
+      position +
+      '\n' +
+      '个人标签：' +
+      labelSummary +
+      '\n\n' +
       '二、赴港计划\n' +
       '本人计划前往香港发展，基于以下考虑：\n\n' +
       '1. 职业发展\n' +
       '香港作为国际金融中心，拥有完善的法律制度和开放的市场环境。' +
-      '本人拟在香港寻找与' + position + '相关的发展机会，' +
+      '本人拟在香港寻找与' +
+      position +
+      '相关的发展机会，' +
       '发挥在现有领域积累的专业经验和技术能力，为香港的经济发展贡献力量。\n\n' +
       '2. 专业背景\n' +
       '（请在此处描述您的工作经历、核心能力和专业成就）\n' +
@@ -62,7 +77,8 @@ function generateStatementPlan(userLabels, extraInfo) {
       (additionalInfo ? '四、补充说明\n' + additionalInfo + '\n\n' : '') +
       '本人声明以上信息真实准确。\n\n' +
       '申请人签名：____________\n' +
-      '日期：' + today +
+      '日期：' +
+      today +
       AI_DISCLAIMER,
 
     format: 'text',
@@ -82,25 +98,37 @@ function generateStatementPlan(userLabels, extraInfo) {
  * 推荐信模板
  */
 function generateRecommendation(userLabels, extraInfo) {
-  var position = extraInfo.position || '（请补充职位）';
-  var achievements = extraInfo.coreAchievements || '';
-  var additionalInfo = extraInfo.additionalInfo || '';
-  var today = new Date().toISOString().split('T')[0];
+  const position = extraInfo.position || '（请补充职位）';
+  const achievements = extraInfo.coreAchievements || '';
+  const additionalInfo = extraInfo.additionalInfo || '';
+  const today = new Date().toISOString().split('T')[0];
 
   return {
-    content: '推荐信\n\n' +
-      '日期：' + today + '\n\n' +
+    content:
+      '推荐信\n\n' +
+      '日期：' +
+      today +
+      '\n\n' +
       '致相关人士：\n\n' +
       '本人____________，现任____________（推荐人职务），' +
       '很荣幸推荐____________（申请人姓名）申请香港相关签证/入境计划。\n\n' +
       '本人与申请人相识于____________（相识时间/场合），' +
       '在____________（共事/合作过程中），对申请人的专业能力和个人品质有深入了解。\n\n' +
       '一、申请人基本情况\n' +
-      '当前职位：' + position + '\n' +
-      '专业领域：' + (userLabels.map(function (l) { return l.label; }).join('、') || '（待补充）') + '\n' +
+      '当前职位：' +
+      position +
+      '\n' +
+      '专业领域：' +
+      (userLabels
+        .map(function (l) {
+          return l.label;
+        })
+        .join('、') || '（待补充）') +
+      '\n' +
       '与推荐人关系：____________\n\n' +
       '二、专业能力评价\n' +
-      (achievements || '（请补充核心成就和具体事例）') + '\n\n' +
+      (achievements || '（请补充核心成就和具体事例）') +
+      '\n\n' +
       '三、个人品质评价\n' +
       '（请在此处描述申请人的人际交往能力、团队协作精神、职业道德等）\n\n' +
       '四、推荐理由\n' +
@@ -114,7 +142,8 @@ function generateRecommendation(userLabels, extraInfo) {
       '推荐人单位：____________\n' +
       '联系电话：____________\n' +
       '邮箱：____________\n' +
-      '日期：' + today +
+      '日期：' +
+      today +
       AI_DISCLAIMER,
 
     format: 'text',
@@ -134,21 +163,29 @@ function generateRecommendation(userLabels, extraInfo) {
  * 工作证明模板
  */
 function generateWorkProof(userLabels, extraInfo) {
-  var position = extraInfo.position || '（请补充职位）';
-  var achievements = extraInfo.coreAchievements || '';
-  var dateStart = extraInfo.startDate || 'YYYY-MM-DD';
-  var dateEnd = extraInfo.endDate || '至今';
-  var today = new Date().toISOString().split('T')[0];
+  const position = extraInfo.position || '（请补充职位）';
+  const achievements = extraInfo.coreAchievements || '';
+  const dateStart = extraInfo.startDate || 'YYYY-MM-DD';
+  const dateEnd = extraInfo.endDate || '至今';
+  const today = new Date().toISOString().split('T')[0];
 
   return {
-    content: '工作证明\n\n' +
+    content:
+      '工作证明\n\n' +
       '兹证明\n\n' +
       '姓名：____________\n' +
       '身份证/护照号：____________\n\n' +
-      '该员工自' + dateStart + '至' + dateEnd + '在本公司任职，' +
-      '担任' + position + '一职。\n\n' +
+      '该员工自' +
+      dateStart +
+      '至' +
+      dateEnd +
+      '在本公司任职，' +
+      '担任' +
+      position +
+      '一职。\n\n' +
       '工作期间的主要职责包括：\n' +
-      (achievements || '1. ____________\n2. ____________\n3. ____________\n') + '\n' +
+      (achievements || '1. ____________\n2. ____________\n3. ____________\n') +
+      '\n' +
       '月薪/年薪：____________\n' +
       '工作性质：全职/兼职\n\n' +
       '该员工工作表现良好，无违法违规记录。\n\n' +
@@ -157,7 +194,9 @@ function generateWorkProof(userLabels, extraInfo) {
       '证明单位（盖章）：____________\n' +
       '人事负责人签名：____________\n' +
       '联系电话：____________\n' +
-      '日期：' + today + '\n\n' +
+      '日期：' +
+      today +
+      '\n\n' +
       '（本证明仅用于香港入境事务处相关申请）' +
       AI_DISCLAIMER,
 

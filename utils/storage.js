@@ -7,33 +7,33 @@
  */
 
 /** @const {string} 证件文件存储根目录 */
-var FILE_BASE = wx.env.USER_DATA_PATH + '/vault/';
+const FILE_BASE = wx.env.USER_DATA_PATH + '/vault/';
 /** @const {string} 证件元数据storage key */
-var META_KEY = '__vault_meta__';
+const META_KEY = '__vault_meta__';
 /** @const {string} 提醒数据storage key */
-var REMINDER_KEY = '__reminders__';
+const REMINDER_KEY = '__reminders__';
 /** @const {string} 流程数据storage key */
-var PROCESS_KEY = '__processes__';
+const PROCESS_KEY = '__processes__';
 /** @const {string} 用户数据storage key */
-var USER_KEY = '__user_data__';
+const USER_KEY = '__user_data__';
 /** @const {string} 配置storage key */
-var CONFIG_KEY = '__config__';
+const CONFIG_KEY = '__config__';
 
 // ============================================================
 // 存储版本管理 (V4.1 — 2026-05-22)
 // ============================================================
 /** @const {number} 当前写入格式版本 */
-var STORAGE_VERSION = 2;
+const STORAGE_VERSION = 2;
 /** @const {number} 最低可读格式版本（低于此版本 → 备份后重置） */
-var MIN_READABLE_VERSION = 1;
+const MIN_READABLE_VERSION = 1;
 /** @const {string} 存储版本号 key */
-var VERSION_KEY = '__storage_version__';
+const VERSION_KEY = '__storage_version__';
 /** @const {string} 存储健康状态 key */
-var HEALTH_KEY = '__storage_health__';
+const HEALTH_KEY = '__storage_health__';
 /** @const {string} 坏数据备份键后缀 */
-var CORRUPTED_SUFFIX = '__corrupted__';
+const CORRUPTED_SUFFIX = '__corrupted__';
 /** @const {Array<string>} 流程线必需字段（缺一视为坏数据） */
-var PROCESS_REQUIRED_FIELDS = ['id', 'name', 'templateId', 'status', 'stages'];
+const PROCESS_REQUIRED_FIELDS = ['id', 'name', 'templateId', 'status', 'stages'];
 
 /**
  * 获取存储版本号
@@ -57,11 +57,13 @@ function setStorageVersion(v) {
  */
 function _backupKey(key) {
   try {
-    var val = wx.getStorageSync(key);
+    const val = wx.getStorageSync(key);
     if (val !== undefined && val !== null && val !== '') {
       wx.setStorageSync(key + CORRUPTED_SUFFIX + Date.now(), val);
     }
-  } catch (e) { /* 备份失败不阻塞主流程 */ }
+  } catch (e) {
+    /* 备份失败不阻塞主流程 */
+  }
 }
 
 /**
@@ -71,10 +73,12 @@ function _backupKey(key) {
  */
 function _reportHealth(event, detail) {
   try {
-    var health = wx.getStorageSync(HEALTH_KEY) || {};
+    const health = wx.getStorageSync(HEALTH_KEY) || {};
     health[event] = { at: new Date().toISOString(), detail: detail || {} };
     wx.setStorageSync(HEALTH_KEY, health);
-  } catch (e) { /* 健康上报失败不阻塞启动流程 */ }
+  } catch (e) {
+    /* 健康上报失败不阻塞启动流程 */
+  }
 }
 
 // ============================================================
@@ -89,8 +93,8 @@ function _reportHealth(event, detail) {
  */
 function validateProcessLine(line) {
   if (!line || typeof line !== 'object') return { valid: false, reason: 'not_object' };
-  for (var i = 0; i < PROCESS_REQUIRED_FIELDS.length; i++) {
-    var f = PROCESS_REQUIRED_FIELDS[i];
+  for (let i = 0; i < PROCESS_REQUIRED_FIELDS.length; i++) {
+    const f = PROCESS_REQUIRED_FIELDS[i];
     if (line[f] === undefined || line[f] === null) return { valid: false, reason: 'missing_' + f };
   }
   if (!Array.isArray(line.stages)) return { valid: false, reason: 'stages_not_array' };
@@ -104,7 +108,7 @@ function validateProcessLine(line) {
  * @returns {{ repaired: boolean, corrupted: number, kept: number }}
  */
 function validateAndRepairProcesses() {
-  var raw = wx.getStorageSync(PROCESS_KEY);
+  const raw = wx.getStorageSync(PROCESS_KEY);
   // null/undefined → 首次启动，无数据，正常
   if (raw === null || raw === undefined) {
     return { repaired: false, corrupted: 0, kept: 0 };
@@ -117,16 +121,20 @@ function validateAndRepairProcesses() {
     return { repaired: true, corrupted: -1, kept: 0 };
   }
 
-  var lines = raw;
-  var validLines = [];
-  var corruptedCount = 0;
-  for (var i = 0; i < lines.length; i++) {
-    var result = validateProcessLine(lines[i]);
+  const lines = raw;
+  const validLines = [];
+  let corruptedCount = 0;
+  for (let i = 0; i < lines.length; i++) {
+    const result = validateProcessLine(lines[i]);
     if (result.valid) {
       validLines.push(lines[i]);
     } else {
-      var backupKey = PROCESS_KEY + CORRUPTED_SUFFIX + Date.now() + '_' + i;
-      try { wx.setStorageSync(backupKey, lines[i]); } catch (e) { /* 备份失败不阻塞修复流程 */ }
+      const backupKey = PROCESS_KEY + CORRUPTED_SUFFIX + Date.now() + '_' + i;
+      try {
+        wx.setStorageSync(backupKey, lines[i]);
+      } catch (e) {
+        /* 备份失败不阻塞修复流程 */
+      }
       corruptedCount++;
       console.warn('[storage] 检测到损坏流程线(' + result.reason + ')，已自动修复并备份');
     }
@@ -146,7 +154,7 @@ function validateAndRepairProcesses() {
  * @returns {{ repaired: boolean, corrupted: number }}
  */
 function validateAndRepairReminders() {
-  var reminders = wx.getStorageSync(REMINDER_KEY) || [];
+  const reminders = wx.getStorageSync(REMINDER_KEY) || [];
   if (!Array.isArray(reminders)) {
     _backupKey(REMINDER_KEY);
     wx.setStorageSync(REMINDER_KEY, []);
@@ -167,7 +175,7 @@ function validateAndRepairReminders() {
  * - 版本高于当前 → 标记 _future_data，保留原样不删除
  */
 function ensureStorageVersion() {
-  var v = getStorageVersion();
+  const v = getStorageVersion();
 
   if (v < MIN_READABLE_VERSION) {
     // 过于陈旧的格式 → 备份后重置
@@ -189,7 +197,7 @@ function ensureStorageVersion() {
 
   if (v > STORAGE_VERSION) {
     // 未来格式 → 保留原样，标记风险
-    var health = wx.getStorageSync(HEALTH_KEY) || {};
+    const health = wx.getStorageSync(HEALTH_KEY) || {};
     health._future_data = true;
     health._future_version = v;
     wx.setStorageSync(HEALTH_KEY, health);
@@ -207,13 +215,13 @@ function ensureStorageVersion() {
  */
 function runStorageStartupCheck() {
   ensureStorageVersion();
-  var pResult = validateAndRepairProcesses();
-  var rResult = validateAndRepairReminders();
+  const pResult = validateAndRepairProcesses();
+  const rResult = validateAndRepairReminders();
   setStorageVersion(STORAGE_VERSION);
   return {
     version: STORAGE_VERSION,
     processes: pResult,
-    reminders: rResult
+    reminders: rResult,
   };
 }
 
@@ -222,26 +230,39 @@ function runStorageStartupCheck() {
  * @returns {Promise<boolean>}
  */
 function initStorage() {
-  return new Promise(function(resolve) {
+  return new Promise(function (resolve) {
     try {
-      var fs = wx.getFileSystemManager();
-      try { fs.accessSync(FILE_BASE); } catch(e) { fs.mkdirSync(FILE_BASE, true); }
-      var dirs = ['identities', 'education', 'employment', 'assets', 'visas', 'renewal', 'family', 'custom'];
-      dirs.forEach(function(dir) {
-        try { fs.accessSync(FILE_BASE + dir); } catch(e) { fs.mkdirSync(FILE_BASE + dir, true); }
+      const fs = wx.getFileSystemManager();
+      try {
+        fs.accessSync(FILE_BASE);
+      } catch (e) {
+        fs.mkdirSync(FILE_BASE, true);
+      }
+      const dirs = ['identities', 'education', 'employment', 'assets', 'visas', 'renewal', 'family', 'custom'];
+      dirs.forEach(function (dir) {
+        try {
+          fs.accessSync(FILE_BASE + dir);
+        } catch (e) {
+          fs.mkdirSync(FILE_BASE + dir, true);
+        }
       });
       if (!wx.getStorageSync(META_KEY)) wx.setStorageSync(META_KEY, { documents: {}, version: 1 });
       if (!wx.getStorageSync(REMINDER_KEY)) wx.setStorageSync(REMINDER_KEY, []);
       if (!wx.getStorageSync(PROCESS_KEY)) wx.setStorageSync(PROCESS_KEY, []);
       resolve(true);
-    } catch(e) { console.error('[storage] initVault 失败:', e); resolve(false); }
+    } catch (e) {
+      console.error('[storage] initVault 失败:', e);
+      resolve(false);
+    }
   });
 }
 
 /** @param {object} doc @returns {object} */
 function saveDocumentMeta(doc) {
-  var meta = wx.getStorageSync(META_KEY) || { documents: {}, version: 1 };
-  meta.documents[doc.id] = Object.assign({}, meta.documents[doc.id] || {}, doc, { updatedAt: new Date().toISOString() });
+  const meta = wx.getStorageSync(META_KEY) || { documents: {}, version: 1 };
+  meta.documents[doc.id] = Object.assign({}, meta.documents[doc.id] || {}, doc, {
+    updatedAt: new Date().toISOString(),
+  });
   if (!doc.createdAt) meta.documents[doc.id].createdAt = new Date().toISOString();
   meta.version = (meta.version || 0) + 1;
   wx.setStorageSync(META_KEY, meta);
@@ -250,31 +271,41 @@ function saveDocumentMeta(doc) {
 
 /** @param {string} docId @returns {object|null} */
 function getDocumentMeta(docId) {
-  var meta = wx.getStorageSync(META_KEY);
-  return (meta && meta.documents && meta.documents[docId]) ? meta.documents[docId] : null;
+  const meta = wx.getStorageSync(META_KEY);
+  return meta && meta.documents && meta.documents[docId] ? meta.documents[docId] : null;
 }
 
 /** @returns {Array<object>} */
 function getAllDocuments() {
-  var meta = wx.getStorageSync(META_KEY);
+  const meta = wx.getStorageSync(META_KEY);
   if (!meta || !meta.documents) return [];
-  return Object.keys(meta.documents).map(function(k) { return meta.documents[k]; });
+  return Object.keys(meta.documents).map(function (k) {
+    return meta.documents[k];
+  });
 }
 
 /** @param {string} type @returns {Array<object>} */
 function getDocumentsByType(type) {
-  return getAllDocuments().filter(function(d) { return d.category === type || d.type === type; });
+  return getAllDocuments().filter(function (d) {
+    return d.category === type || d.type === type;
+  });
 }
 
 /** @param {string} tempPath @param {string} docId @param {string} category @returns {string} */
 function saveFile(tempPath, docId, category) {
-  var fs = wx.getFileSystemManager();
-  var ext = (tempPath.split('.').pop() || 'jpg').replace(/[^a-z0-9]/gi, '');
-  var dir = FILE_BASE + (category || 'custom') + '/';
-  try { fs.accessSync(dir); } catch(e) { fs.mkdirSync(dir, true); }
-  var persistPath = dir + docId + '.' + ext;
-  try { fs.copyFileSync(tempPath, persistPath); } catch(ce) {
-    var data = fs.readFileSync(tempPath);
+  const fs = wx.getFileSystemManager();
+  const ext = (tempPath.split('.').pop() || 'jpg').replace(/[^a-z0-9]/gi, '');
+  const dir = FILE_BASE + (category || 'custom') + '/';
+  try {
+    fs.accessSync(dir);
+  } catch (e) {
+    fs.mkdirSync(dir, true);
+  }
+  const persistPath = dir + docId + '.' + ext;
+  try {
+    fs.copyFileSync(tempPath, persistPath);
+  } catch (ce) {
+    const data = fs.readFileSync(tempPath);
     fs.writeFileSync(persistPath, data, 'binary');
   }
   return persistPath;
@@ -283,53 +314,83 @@ function saveFile(tempPath, docId, category) {
 /** @param {string} filePath @returns {string} */
 function readFile(filePath) {
   try {
-    var fs = wx.getFileSystemManager();
-    var data = fs.readFileSync(filePath, 'base64');
-    var ext = (filePath.split('.').pop() || 'jpeg').toLowerCase();
-    var mimeMap = { png: 'image/png', jpg: 'image/jpeg', jpeg: 'image/jpeg', gif: 'image/gif', webp: 'image/webp', pdf: 'application/pdf' };
-    var mime = mimeMap[ext] || 'image/jpeg';
+    const fs = wx.getFileSystemManager();
+    const data = fs.readFileSync(filePath, 'base64');
+    const ext = (filePath.split('.').pop() || 'jpeg').toLowerCase();
+    const mimeMap = {
+      png: 'image/png',
+      jpg: 'image/jpeg',
+      jpeg: 'image/jpeg',
+      gif: 'image/gif',
+      webp: 'image/webp',
+      pdf: 'application/pdf',
+    };
+    const mime = mimeMap[ext] || 'image/jpeg';
     return 'data:' + mime + ';base64,' + data;
-  } catch(e) { return ''; }
+  } catch (e) {
+    return '';
+  }
 }
 
 /** @param {string} docId @returns {boolean} */
 function deleteDocument(docId) {
-  var doc = getDocumentMeta(docId);
+  const doc = getDocumentMeta(docId);
   if (!doc) return false;
   if (doc.filePath) {
-    try { var fs = wx.getFileSystemManager(); fs.unlinkSync(doc.filePath); } catch(e) { console.warn('[storage] deleteDocument 文件删除失败:', e.message); }
+    try {
+      const fs = wx.getFileSystemManager();
+      fs.unlinkSync(doc.filePath);
+    } catch (e) {
+      console.warn('[storage] deleteDocument 文件删除失败:', e.message);
+    }
   }
-  var meta = wx.getStorageSync(META_KEY);
-  if (meta && meta.documents) { delete meta.documents[docId]; wx.setStorageSync(META_KEY, meta); }
+  const meta = wx.getStorageSync(META_KEY);
+  if (meta && meta.documents) {
+    delete meta.documents[docId];
+    wx.setStorageSync(META_KEY, meta);
+  }
   return true;
 }
 
 /** @param {string} query @returns {Array<object>} */
 function searchDocuments(query) {
-  var q = query.toLowerCase();
-  return getAllDocuments().filter(function(d) {
-    return (d.name && d.name.toLowerCase().indexOf(q) >= 0) || (d.category && d.category.indexOf(q) >= 0) || (d.docNumber && d.docNumber.indexOf(q) >= 0);
+  const q = query.toLowerCase();
+  return getAllDocuments().filter(function (d) {
+    return (
+      (d.name && d.name.toLowerCase().indexOf(q) >= 0) ||
+      (d.category && d.category.indexOf(q) >= 0) ||
+      (d.docNumber && d.docNumber.indexOf(q) >= 0)
+    );
   });
 }
 
 /** @param {object} reminder @returns {object} */
 function saveReminder(reminder) {
-  var reminders = getAllReminders();
+  const reminders = getAllReminders();
   if (!reminder.id) reminder.id = 'rem_' + Date.now() + '_' + Math.random().toString(36).slice(2, 8);
-  var idx = reminders.findIndex(function(r) { return r.id === reminder.id; });
+  const idx = reminders.findIndex(function (r) {
+    return r.id === reminder.id;
+  });
   if (idx >= 0) reminders[idx] = Object.assign({}, reminders[idx], reminder, { updatedAt: new Date().toISOString() });
-  else reminders.push(Object.assign({}, reminder, { createdAt: new Date().toISOString(), updatedAt: new Date().toISOString() }));
+  else
+    reminders.push(
+      Object.assign({}, reminder, { createdAt: new Date().toISOString(), updatedAt: new Date().toISOString() }),
+    );
   wx.setStorageSync(REMINDER_KEY, reminders);
   return reminder;
 }
 
 /** @returns {Array<object>} */
-function getAllReminders() { return wx.getStorageSync(REMINDER_KEY) || []; }
+function getAllReminders() {
+  return wx.getStorageSync(REMINDER_KEY) || [];
+}
 
 /** @param {string} reminderId @param {object} updates @returns {object|null} */
 function updateReminder(reminderId, updates) {
-  var reminders = getAllReminders();
-  var idx = reminders.findIndex(function(r) { return r.id === reminderId; });
+  const reminders = getAllReminders();
+  const idx = reminders.findIndex(function (r) {
+    return r.id === reminderId;
+  });
   if (idx < 0) return null;
   reminders[idx] = Object.assign({}, reminders[idx], updates, { updatedAt: new Date().toISOString() });
   wx.setStorageSync(REMINDER_KEY, reminders);
@@ -338,8 +399,10 @@ function updateReminder(reminderId, updates) {
 
 /** @param {string} reminderId @returns {boolean} */
 function deleteReminder(reminderId) {
-  var reminders = getAllReminders();
-  var filtered = reminders.filter(function(r) { return r.id !== reminderId; });
+  const reminders = getAllReminders();
+  const filtered = reminders.filter(function (r) {
+    return r.id !== reminderId;
+  });
   wx.setStorageSync(REMINDER_KEY, filtered);
   return true;
 }
@@ -351,17 +414,21 @@ function deleteReminder(reminderId) {
 function archiveRemindersByPath(pathId) {
   if (!pathId) return;
   try {
-    var reminders = getAllReminders();
-    var hasChange = false;
-    var updated = reminders.map(function(r) {
+    const reminders = getAllReminders();
+    let hasChange = false;
+    const updated = reminders.map(function (r) {
       if (r.path === pathId && r.status === 'active') {
         hasChange = true;
         return Object.assign({}, r, { status: 'archived', archivedAt: new Date().toISOString() });
       }
       return r;
     });
-    if (hasChange) { wx.setStorageSync(REMINDER_KEY, updated); }
-  } catch (e) { console.warn('[storage] archiveRemindersByPath error:', e); }
+    if (hasChange) {
+      wx.setStorageSync(REMINDER_KEY, updated);
+    }
+  } catch (e) {
+    console.warn('[storage] archiveRemindersByPath error:', e);
+  }
 }
 
 /**
@@ -371,84 +438,155 @@ function archiveRemindersByPath(pathId) {
 function unarchiveRemindersByPath(pathId) {
   if (!pathId) return;
   try {
-    var reminders = getAllReminders();
-    var hasChange = false;
-    var updated = reminders.map(function(r) {
+    const reminders = getAllReminders();
+    let hasChange = false;
+    const updated = reminders.map(function (r) {
       if (r.path === pathId && r.status === 'archived') {
         hasChange = true;
         return Object.assign({}, r, { status: 'active', unarchivedAt: new Date().toISOString() });
       }
       return r;
     });
-    if (hasChange) { wx.setStorageSync(REMINDER_KEY, updated); }
-  } catch (e) { console.warn('[storage] unarchiveRemindersByPath error:', e); }
+    if (hasChange) {
+      wx.setStorageSync(REMINDER_KEY, updated);
+    }
+  } catch (e) {
+    console.warn('[storage] unarchiveRemindersByPath error:', e);
+  }
 }
 
 /** @param {object} processLine @returns {object} */
 function saveProcessLine(processLine) {
-  var lines = getAllProcessLines();
+  const lines = getAllProcessLines();
   if (!processLine.id) processLine.id = 'proc_' + Date.now() + '_' + Math.random().toString(36).slice(2, 8);
-  var idx = lines.findIndex(function(l) { return l.id === processLine.id; });
+  const idx = lines.findIndex(function (l) {
+    return l.id === processLine.id;
+  });
   if (idx >= 0) lines[idx] = Object.assign({}, lines[idx], processLine, { updatedAt: new Date().toISOString() });
-  else lines.push(Object.assign({}, processLine, { createdAt: new Date().toISOString(), updatedAt: new Date().toISOString() }));
+  else
+    lines.push(
+      Object.assign({}, processLine, { createdAt: new Date().toISOString(), updatedAt: new Date().toISOString() }),
+    );
   wx.setStorageSync(PROCESS_KEY, lines);
   return processLine;
 }
 
 /** @param {string} processId @returns {object|null} */
-function getProcessLine(processId) { return (getAllProcessLines().find(function(l) { return l.id === processId; })) || null; }
+function getProcessLine(processId) {
+  return (
+    getAllProcessLines().find(function (l) {
+      return l.id === processId;
+    }) || null
+  );
+}
 
 /** @returns {Array<object>} */
-function getAllProcessLines() { return wx.getStorageSync(PROCESS_KEY) || []; }
+function getAllProcessLines() {
+  return wx.getStorageSync(PROCESS_KEY) || [];
+}
 
 /** @param {Array<object>} processLines */
-function saveProcessLines(processLines) { wx.setStorageSync(PROCESS_KEY, processLines); }
+function saveProcessLines(processLines) {
+  wx.setStorageSync(PROCESS_KEY, processLines);
+}
 
 /** @param {string} key @returns {*} */
-function getConfig(key) { var c = wx.getStorageSync(CONFIG_KEY) || {}; return c[key]; }
+function getConfig(key) {
+  const c = wx.getStorageSync(CONFIG_KEY) || {};
+  return c[key];
+}
 
 /** @param {string} key @param {*} value */
-function setConfig(key, value) { var c = wx.getStorageSync(CONFIG_KEY) || {}; c[key] = value; wx.setStorageSync(CONFIG_KEY, c); }
+function setConfig(key, value) {
+  const c = wx.getStorageSync(CONFIG_KEY) || {};
+  c[key] = value;
+  wx.setStorageSync(CONFIG_KEY, c);
+}
 
 /** @param {Array<object>} docs */
 function saveDocuments(docs) {
-  var meta = wx.getStorageSync(META_KEY) || { documents: {}, version: 1 };
-  docs.forEach(function(d) { meta.documents[d.id] = Object.assign({}, meta.documents[d.id] || {}, d); });
+  const meta = wx.getStorageSync(META_KEY) || { documents: {}, version: 1 };
+  docs.forEach(function (d) {
+    meta.documents[d.id] = Object.assign({}, meta.documents[d.id] || {}, d);
+  });
   meta.version = (meta.version || 0) + 1;
   wx.setStorageSync(META_KEY, meta);
 }
 
 /** @param {Array<object>} reminders */
-function saveReminders(reminders) { wx.setStorageSync(REMINDER_KEY, reminders); }
+function saveReminders(reminders) {
+  wx.setStorageSync(REMINDER_KEY, reminders);
+}
 
-function initDBSync() { var s = wx.getStorageSync('__db_sync_state__'); return s === 'synced' || s === 'syncing'; }
+function initDBSync() {
+  const s = wx.getStorageSync('__db_sync_state__');
+  return s === 'synced' || s === 'syncing';
+}
 
 function syncAllToCloud() {
-  return new Promise(function(resolve, reject) {
-    var app = getApp();
-    if (!app || !app.globalData.cloudReady) { resolve(false); return; }
-    wx.cloud.callFunction({ name: 'db-admin', data: { action: 'sync', data: { documents: getAllDocuments(), reminders: getAllReminders(), processes: getAllProcessLines() } }, success: function() { wx.setStorageSync('__db_sync_state__', 'synced'); resolve(true); }, fail: reject });
+  return new Promise(function (resolve, reject) {
+    const app = getApp();
+    if (!app || !app.globalData.cloudReady) {
+      resolve(false);
+      return;
+    }
+    wx.cloud.callFunction({
+      name: 'db-admin',
+      data: {
+        action: 'sync',
+        data: { documents: getAllDocuments(), reminders: getAllReminders(), processes: getAllProcessLines() },
+      },
+      success: function () {
+        wx.setStorageSync('__db_sync_state__', 'synced');
+        resolve(true);
+      },
+      fail: reject,
+    });
   });
 }
 
 module.exports = {
-  initStorage: initStorage, saveDocumentMeta: saveDocumentMeta, getDocumentMeta: getDocumentMeta,
-  getAllDocuments: getAllDocuments, getDocumentsByType: getDocumentsByType, saveFile: saveFile,
-  readFile: readFile, deleteDocument: deleteDocument, searchDocuments: searchDocuments,
-  saveReminder: saveReminder, getAllReminders: getAllReminders, updateReminder: updateReminder,
-  deleteReminder: deleteReminder, archiveRemindersByPath: archiveRemindersByPath,
+  initStorage: initStorage,
+  saveDocumentMeta: saveDocumentMeta,
+  getDocumentMeta: getDocumentMeta,
+  getAllDocuments: getAllDocuments,
+  getDocumentsByType: getDocumentsByType,
+  saveFile: saveFile,
+  readFile: readFile,
+  deleteDocument: deleteDocument,
+  searchDocuments: searchDocuments,
+  saveReminder: saveReminder,
+  getAllReminders: getAllReminders,
+  updateReminder: updateReminder,
+  deleteReminder: deleteReminder,
+  archiveRemindersByPath: archiveRemindersByPath,
   unarchiveRemindersByPath: unarchiveRemindersByPath,
-  saveProcessLine: saveProcessLine, getProcessLine: getProcessLine,
-  getAllProcessLines: getAllProcessLines, saveProcessLines: saveProcessLines,
-  getConfig: getConfig, setConfig: setConfig, saveDocuments: saveDocuments, saveReminders: saveReminders,
-  initDBSync: initDBSync, syncAllToCloud: syncAllToCloud,
+  saveProcessLine: saveProcessLine,
+  getProcessLine: getProcessLine,
+  getAllProcessLines: getAllProcessLines,
+  saveProcessLines: saveProcessLines,
+  getConfig: getConfig,
+  setConfig: setConfig,
+  saveDocuments: saveDocuments,
+  saveReminders: saveReminders,
+  initDBSync: initDBSync,
+  syncAllToCloud: syncAllToCloud,
   // V4.1 存储版本管理 + Schema 校验降级
-  getStorageVersion: getStorageVersion, setStorageVersion: setStorageVersion,
-  validateProcessLine: validateProcessLine, validateAndRepairProcesses: validateAndRepairProcesses,
+  getStorageVersion: getStorageVersion,
+  setStorageVersion: setStorageVersion,
+  validateProcessLine: validateProcessLine,
+  validateAndRepairProcesses: validateAndRepairProcesses,
   validateAndRepairReminders: validateAndRepairReminders,
-  ensureStorageVersion: ensureStorageVersion, runStorageStartupCheck: runStorageStartupCheck,
+  ensureStorageVersion: ensureStorageVersion,
+  runStorageStartupCheck: runStorageStartupCheck,
   // 常量导出
-  STORAGE_VERSION: STORAGE_VERSION, MIN_READABLE_VERSION: MIN_READABLE_VERSION,
-  VERSION_KEY: VERSION_KEY, HEALTH_KEY: HEALTH_KEY, CORRUPTED_SUFFIX: CORRUPTED_SUFFIX,
-  FILE_BASE: FILE_BASE, META_KEY: META_KEY, REMINDER_KEY: REMINDER_KEY, PROCESS_KEY: PROCESS_KEY
+  STORAGE_VERSION: STORAGE_VERSION,
+  MIN_READABLE_VERSION: MIN_READABLE_VERSION,
+  VERSION_KEY: VERSION_KEY,
+  HEALTH_KEY: HEALTH_KEY,
+  CORRUPTED_SUFFIX: CORRUPTED_SUFFIX,
+  FILE_BASE: FILE_BASE,
+  META_KEY: META_KEY,
+  REMINDER_KEY: REMINDER_KEY,
+  PROCESS_KEY: PROCESS_KEY,
 };

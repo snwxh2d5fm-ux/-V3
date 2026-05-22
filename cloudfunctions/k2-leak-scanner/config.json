@@ -4,9 +4,11 @@
   },
   "timeout": 120,
   "envVariables": {},
-  "triggers": [{
-    "name": "dailyScan",
-    "type": "timer",
-    "config": "0 0 3 * * * *"
-  }]
+  "triggers": [
+    {
+      "name": "dailyScan",
+      "type": "timer",
+      "config": "0 0 3 * * * *"
+    }
+  ]
 }

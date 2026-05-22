@@ -10,7 +10,5 @@
     "type": "github"
   },
   "license": "MIT",
-  "skills": [
-    "./skills/cloudbase"
-  ]
+  "skills": ["./skills/cloudbase"]
 }

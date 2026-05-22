@@ -16,36 +16,42 @@
 const mockStorage = {};
 global.wx = {
   getStorageSync: (key) => mockStorage[key] || null,
-  setStorageSync: (key, value) => { mockStorage[key] = value; },
+  setStorageSync: (key, value) => {
+    mockStorage[key] = value;
+  },
 };
 global.Page = () => {};
 global.App = () => {};
 global.getApp = () => ({ globalData: {} });
 
 // Mock @cloudbase/node-sdk — CI 环境无腾讯云凭证，且包未安装
-jest.mock('@cloudbase/node-sdk', () => {
-  const mockDb = () => ({
-    collection: () => ({
-      where: () => ({ get: () => Promise.resolve({ data: [] }) }),
-      orderBy: () => ({ get: () => Promise.resolve({ data: [] }) }),
-      get: () => Promise.resolve({ data: [] }),
-      add: () => Promise.resolve({ _id: 'mock-id' }),
-    }),
-    command: { in: () => ({}), and: () => ({}), or: () => ({}) },
-    RegExp: () => ({}),
-  });
-  return {
-    init: () => ({
-      ai: {
-        generateText: () => Promise.resolve({ text: '[mock] AI 响应' }),
-        streamText: () => Promise.resolve({ text: '[mock] AI 流式响应' }),
-      },
+jest.mock(
+  '@cloudbase/node-sdk',
+  () => {
+    const mockDb = () => ({
+      collection: () => ({
+        where: () => ({ get: () => Promise.resolve({ data: [] }) }),
+        orderBy: () => ({ get: () => Promise.resolve({ data: [] }) }),
+        get: () => Promise.resolve({ data: [] }),
+        add: () => Promise.resolve({ _id: 'mock-id' }),
+      }),
+      command: { in: () => ({}), and: () => ({}), or: () => ({}) },
+      RegExp: () => ({}),
+    });
+    return {
+      init: () => ({
+        ai: {
+          generateText: () => Promise.resolve({ text: '[mock] AI 响应' }),
+          streamText: () => Promise.resolve({ text: '[mock] AI 流式响应' }),
+        },
+        database: mockDb,
+      }),
       database: mockDb,
-    }),
-    database: mockDb,
-    callFunction: () => Promise.resolve({ result: {} }),
-  };
-}, { virtual: true });
+      callFunction: () => Promise.resolve({ result: {} }),
+    };
+  },
+  { virtual: true },
+);
 
 // 云函数需要 mock cloud 对象用于 content-moderation 调用
 global.cloud = {
@@ -63,11 +69,10 @@ const aiChat = require('../cloudfunctions/ai-chat/index.js');
 // A. prompts 模块 — 四种模式完整性
 // ============================================================
 describe('A. prompts 模块 — 四种模式系统提示词', () => {
-
   const modes = ['assessment', 'qa', 'general', 'solution_recommend'];
 
   test('A1 getSystemPrompt 四种模式均返回非空字符串', () => {
-    modes.forEach(mode => {
+    modes.forEach((mode) => {
       const prompt = prompts.getSystemPrompt(mode);
       expect(typeof prompt).toBe('string');
       expect(prompt.length).toBeGreaterThan(100);
@@ -75,7 +80,7 @@ describe('A. prompts 模块 — 四种模式系统提示词', () => {
   });
 
   test('A2 四种模式 prompt 互不相同', () => {
-    const results = modes.map(m => prompts.getSystemPrompt(m));
+    const results = modes.map((m) => prompts.getSystemPrompt(m));
     // general vs assessment 应不同
     expect(results[0]).not.toEqual(results[1]);
     expect(results[1]).not.toEqual(results[2]);
@@ -120,14 +125,19 @@ describe('A. prompts 模块 — 四种模式系统提示词', () => {
 // B. K2 安全护栏 — 六条禁止规则注入验证
 // ============================================================
 describe('B. K2安全护栏 — 六条禁止规则注入', () => {
-
   const K2_RULES = [
-    '规则1', '禁止描述文档防伪特征',
-    '规则2', '禁止替代系统做材料合规判断',
-    '规则3', '禁止透露内部技术实现细节',
-    '规则4', '禁止将系统内部校验规则包装为用户指南',
-    '规则5', '禁止主动暴露文档识别能力',
-    '规则6', '禁止输出K2级别的字段提取规格',
+    '规则1',
+    '禁止描述文档防伪特征',
+    '规则2',
+    '禁止替代系统做材料合规判断',
+    '规则3',
+    '禁止透露内部技术实现细节',
+    '规则4',
+    '禁止将系统内部校验规则包装为用户指南',
+    '规则5',
+    '禁止主动暴露文档识别能力',
+    '规则6',
+    '禁止输出K2级别的字段提取规格',
   ];
 
   test('B1 K2_SAFETY_RULES 常量非空且含六条规则', () => {
@@ -171,21 +181,25 @@ describe('B. K2安全护栏 — 六条禁止规则注入', () => {
 // C. 反旧计分护栏验证
 // ============================================================
 describe('C. V6反旧计分护栏', () => {
-
   const FORBIDDEN_OLD_SCORING = [
-    '80分', '100分', '120分', '及格分',
-    '综合计分制', '成就计分制',
-    '打分', '计分', '得分', '加分',
+    '80分',
+    '100分',
+    '120分',
+    '及格分',
+    '综合计分制',
+    '成就计分制',
+    '打分',
+    '计分',
+    '得分',
+    '加分',
   ];
 
-  const ALLOWED_NEW_TERMS = [
-    '评核准则', '是/否判断', '满足', '12项准则',
-  ];
+  const ALLOWED_NEW_TERMS = ['评核准则', '是/否判断', '满足', '12项准则'];
 
   test('C1 所有模式的系统提示词中禁止旧计分术语', () => {
-    ['assessment', 'qa', 'general', 'solution_recommend'].forEach(mode => {
+    ['assessment', 'qa', 'general', 'solution_recommend'].forEach((mode) => {
       const p = prompts.getSystemPrompt(mode);
-      FORBIDDEN_OLD_SCORING.forEach(term => {
+      FORBIDDEN_OLD_SCORING.forEach((term) => {
         // 只在不是"反旧计分护栏"段内出现才是违规
         const guardStart = p.indexOf('V6反旧计分护栏');
         const guardEnd = guardStart > -1 ? p.indexOf('现行12项评核准则速查', guardStart) + 500 : -1;
@@ -214,7 +228,7 @@ describe('C. V6反旧计分护栏', () => {
 
   test('C2 所有模式 prompt 禁止正面使用旧版术语作为指引', () => {
     // 检查: 护栏之外的区域不应以正面语气使用旧术语
-    ['assessment', 'qa', 'general', 'solution_recommend'].forEach(mode => {
+    ['assessment', 'qa', 'general', 'solution_recommend'].forEach((mode) => {
       const p = prompts.getSystemPrompt(mode);
       // 关键词 "严禁提及" 确认护栏存在
       expect(p).toContain('严禁提及');
@@ -222,16 +236,16 @@ describe('C. V6反旧计分护栏', () => {
   });
 
   test('C3 现行术语存在于各模式 prompt 中', () => {
-    ['assessment', 'qa', 'general', 'solution_recommend'].forEach(mode => {
+    ['assessment', 'qa', 'general', 'solution_recommend'].forEach((mode) => {
       const p = prompts.getSystemPrompt(mode);
       // 至少有一些现行术语
-      const found = ALLOWED_NEW_TERMS.filter(t => p.includes(t));
+      const found = ALLOWED_NEW_TERMS.filter((t) => p.includes(t));
       expect(found.length).toBeGreaterThan(0);
     });
   });
 
   test('C4 护栏含12项准则速查表', () => {
-    ['assessment', 'qa', 'general', 'solution_recommend'].forEach(mode => {
+    ['assessment', 'qa', 'general', 'solution_recommend'].forEach((mode) => {
       const p = prompts.getSystemPrompt(mode);
       expect(p).toContain('12项评核准则速查');
     });
@@ -242,7 +256,6 @@ describe('C. V6反旧计分护栏', () => {
 // D. ai-chat 云函数逻辑
 // ============================================================
 describe('D. ai-chat 云函数 — 输入校验', () => {
-
   test('D1 空消息返回 400', async () => {
     const res = await aiChat.main({ message: '' }, {});
     expect(res.code).toBe(400);
@@ -270,7 +283,7 @@ describe('D. ai-chat 云函数 — 输入校验', () => {
     expect(res.code).toBe(200);
     expect(res.data).toBeDefined();
     expect(res.data.content).toBeDefined();
-  }, 15000);  // 含 DeepSeek API 调用，需较长超时
+  }, 15000); // 含 DeepSeek API 调用，需较长超时
 
   test('D6 无 mode 参数默认为 general', async () => {
     const res = await aiChat.main({ message: '你好' }, {});
@@ -283,10 +296,13 @@ describe('D. ai-chat 云函数 — 输入校验', () => {
 // E. 降级响应 (无 API key 时应该返回 mock 响应)
 // ============================================================
 describe('E. 降级响应 — Mock 模式', () => {
-
   let savedKey;
-  beforeAll(() => { savedKey = process.env.DEEPSEEK_API_KEY; });
-  afterAll(() => { process.env.DEEPSEEK_API_KEY = savedKey; });
+  beforeAll(() => {
+    savedKey = process.env.DEEPSEEK_API_KEY;
+  });
+  afterAll(() => {
+    process.env.DEEPSEEK_API_KEY = savedKey;
+  });
 
   test('E1 无 API key 时返回 mock 响应而非报错', async () => {
     delete process.env.DEEPSEEK_API_KEY; // 强制降级
@@ -359,20 +375,23 @@ describe('E. 降级响应 — Mock 模式', () => {
 // F. HTML 清洗 & 内容解析
 // ============================================================
 describe('F. HTML清洗 & 内容解析 (间接验证)', () => {
-
   // cleanHtmlTags 是内部函数无法直接测试，但通过 mock 响应可间接验证
   // 此处验证 mock 生成内容不含 HTML
 
   let savedKey;
-  beforeAll(() => { savedKey = process.env.DEEPSEEK_API_KEY; });
-  afterAll(() => { process.env.DEEPSEEK_API_KEY = savedKey; });
+  beforeAll(() => {
+    savedKey = process.env.DEEPSEEK_API_KEY;
+  });
+  afterAll(() => {
+    process.env.DEEPSEEK_API_KEY = savedKey;
+  });
 
   test('F1 mock 生成的响应不含 HTML 标签', async () => {
     delete process.env.DEEPSEEK_API_KEY;
-    var modes = ['qa', 'general', 'solution_recommend'];
-    for (var i = 0; i < modes.length; i++) {
-      var mode = modes[i];
-      var res = await aiChat.main({ message: 'test', mode }, {});
+    const modes = ['qa', 'general', 'solution_recommend'];
+    for (let i = 0; i < modes.length; i++) {
+      const mode = modes[i];
+      const res = await aiChat.main({ message: 'test', mode }, {});
       if (!res || !res.data || !res.data.content) continue;
       expect(res.data.content).not.toMatch(/<br\s*\/?>/i);
       expect(res.data.content).not.toMatch(/<\/?[a-z][^>]*>/i);
@@ -404,10 +423,13 @@ describe('F. HTML清洗 & 内容解析 (间接验证)', () => {
 // G. 安全内容审核 (content-moderation 调用链路)
 // ============================================================
 describe('G. 安全内容审核 — 调用链路', () => {
-
   let savedKey;
-  beforeAll(() => { savedKey = process.env.DEEPSEEK_API_KEY; });
-  afterAll(() => { process.env.DEEPSEEK_API_KEY = savedKey; });
+  beforeAll(() => {
+    savedKey = process.env.DEEPSEEK_API_KEY;
+  });
+  afterAll(() => {
+    process.env.DEEPSEEK_API_KEY = savedKey;
+  });
 
   test('G1 content-moderation 不可用时降级放行而非崩溃', async () => {
     delete process.env.DEEPSEEK_API_KEY;
@@ -461,10 +483,9 @@ describe('H. 敏感词合规', () => {
 
     // "投资移民" 在 CIES 路径中是合规的 (香港本身有此计划)
     // 排除 CIES 上下文
-    const linesWithoutCIES = content.split('\n')
-      .filter(l => !l.includes('CIES') && !l.includes('投资类'));
+    const linesWithoutCIES = content.split('\n').filter((l) => !l.includes('CIES') && !l.includes('投资类'));
 
-    FORBIDDEN.filter(t => t !== '投资移民').forEach(word => {
+    FORBIDDEN.filter((t) => t !== '投资移民').forEach((word) => {
       expect(linesWithoutCIES.join('\n')).not.toContain(word);
     });
   });
@@ -476,7 +497,7 @@ describe('H. 敏感词合规', () => {
     const content = fs.readFileSync(indexPath, 'utf-8');
 
     const FORBIDDEN_IDX = ['移民顾问', '移民中介', '移民局'];
-    FORBIDDEN_IDX.forEach(word => {
+    FORBIDDEN_IDX.forEach((word) => {
       expect(content).not.toContain(word);
     });
   });
@@ -500,7 +521,6 @@ describe('H. 敏感词合规', () => {
 // I. 边界情况
 // ============================================================
 describe('I. 边界情况', () => {
-
   test('I1 极长消息不 crash (截断层面)', async () => {
     const longMsg = 'A'.repeat(10000);
     const res = await aiChat.main({ message: longMsg, mode: 'general' }, {});
@@ -526,11 +546,14 @@ describe('I. 边界情况', () => {
   });
 
   test('I5 v5Corrections=true 上下文传递不 crash', async () => {
-    const res = await aiChat.main({
-      message: '优才',
-      mode: 'qa',
-      context: { v5Corrections: true },
-    }, {});
+    const res = await aiChat.main(
+      {
+        message: '优才',
+        mode: 'qa',
+        context: { v5Corrections: true },
+      },
+      {},
+    );
     expect(res.code === 200 || res.code === 500).toBe(true);
   });
 });

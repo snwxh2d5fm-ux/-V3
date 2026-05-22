@@ -13,8 +13,8 @@ App({
   globalData: {
     // 用户状态
     userInfo: null,
-    userStatus: null,         // 主状态: unapplied|submitted|approved|permanent
-    userSubStatus: null,      // V5新增: 子状态(细化选项)
+    userStatus: null, // 主状态: unapplied|submitted|approved|permanent
+    userSubStatus: null, // V5新增: 子状态(细化选项)
     isLoggedIn: false,
     token: null,
 
@@ -27,7 +27,7 @@ App({
     // 当前活跃流程
     activeProcessId: null,
     activeProcess: null,
-    selectedPath: null,       // V5新增: 选择的身份规划路径
+    selectedPath: null, // V5新增: 选择的身份规划路径
 
     // V5新增: 方案库推荐
     solutionRecommendation: null,
@@ -35,7 +35,7 @@ App({
     // 会员等级
     membershipLevel: 'free',
     membershipExpiry: null,
-    isLocked: false,           // 试用过期/会员到期锁定
+    isLocked: false, // 试用过期/会员到期锁定
 
     // AI 助手状态
     aiSessionId: null,
@@ -52,19 +52,19 @@ App({
     networkType: 'unknown',
 
     // 流程控中枢配置
-    hubSections: ['process', 'playbook', 'precheck']
+    hubSections: ['process', 'playbook', 'precheck'],
   },
 
   async onLaunch() {
-    console.log(`[住港伴] v${constants.APP_VERSION} 应用启动 — PRD v3.1 对齐`);
+    console.debug(`[住港伴] v${constants.APP_VERSION} 应用启动 — PRD v3.1 对齐`);
 
     if (wx.cloud) {
       wx.cloud.init({
         env: constants.CLOUD_ENV_ID,
-        traceUser: true
+        traceUser: true,
       });
       this.globalData.cloudReady = true;
-      console.log('[住港伴] 云开发初始化完成');
+      console.debug('[住港伴] 云开发初始化完成');
     }
 
     // v5: 网络状态监听 (DSG-1 P0-04)
@@ -72,7 +72,7 @@ App({
       this.globalData.isOnline = res.isConnected;
       this.globalData.networkType = res.networkType;
       if (!res.isConnected) {
-        console.log('[住港伴] 网络断开');
+        console.debug('[住港伴] 网络断开');
       }
     });
     // 初始化时获取当前网络状态
@@ -80,14 +80,10 @@ App({
       success: (res) => {
         this.globalData.isOnline = res.networkType !== 'none';
         this.globalData.networkType = res.networkType;
-      }
+      },
     });
 
-    await Promise.all([
-      initStorage(),
-      initCrypto(),
-      loadRules()
-    ]);
+    await Promise.all([initStorage(), initCrypto(), loadRules()]);
 
     // V4.1: 存储版本管理 + Schema 校验 + 健康上报
     runStorageStartupCheck();
@@ -105,7 +101,7 @@ App({
   async onShow() {
     if (this.globalData.isLoggedIn) {
       this.refreshProcessData();
-      this.syncLockStatus();  // 每次切回前台同步锁定状态
+      this.syncLockStatus(); // 每次切回前台同步锁定状态
     }
   },
 
@@ -132,7 +128,7 @@ App({
         }
       }
     } catch (e) {
-      console.log('[住港伴] 无有效会话');
+      console.debug('[住港伴] 无有效会话');
     }
   },
 
@@ -141,7 +137,7 @@ App({
     try {
       const res = await wx.cloud.callFunction({
         name: 'user-auth',
-        data: { action: 'validate', token }
+        data: { action: 'validate', token },
       });
       return res.result && res.result.valid;
     } catch (e) {
@@ -163,7 +159,7 @@ App({
       activeProcessId: this.globalData.activeProcessId,
       activeProcess: this.globalData.activeProcess,
       selectedPath: this.globalData.selectedPath,
-      solutionRecommendation: this.globalData.solutionRecommendation
+      solutionRecommendation: this.globalData.solutionRecommendation,
     });
     if (this.globalData.cloudReady && this.globalData.token) {
       await api.syncUserProfile({
@@ -171,7 +167,7 @@ App({
         userSubStatus: this.globalData.userSubStatus,
         membershipLevel: this.globalData.membershipLevel,
         activeProcessId: this.globalData.activeProcessId,
-        selectedPath: this.globalData.selectedPath
+        selectedPath: this.globalData.selectedPath,
       });
     }
   },
@@ -190,7 +186,7 @@ App({
         const res = await api.matchSolutionPath(userProfile);
         cloudMatches = res.matches || [];
       } catch (e) {
-        console.log('[住港伴] 云端方案库匹配不可用，使用本地匹配');
+        console.debug('[住港伴] 云端方案库匹配不可用，使用本地匹配');
       }
     }
     const merged = mergeRecommendations(localMatches, cloudMatches);
@@ -206,7 +202,7 @@ App({
     try {
       await syncAllToCloud();
       this.globalData.dbSyncStatus = 'synced';
-      console.log('[住港伴] 数据云端同步完成');
+      console.debug('[住港伴] 数据云端同步完成');
     } catch (e) {
       this.globalData.dbSyncStatus = 'error';
       console.error('[住港伴] 数据同步失败:', e);
@@ -218,13 +214,13 @@ App({
     try {
       const res = await wx.cloud.callFunction({
         name: 'process-manager',
-        data: { action: 'getActive', processId: this.globalData.activeProcessId }
+        data: { action: 'getActive', processId: this.globalData.activeProcessId },
       });
       if (res.result && res.result.data) {
         this.globalData.activeProcess = res.result.data;
       }
     } catch (e) {
-      console.log('[住港伴] 刷新流程数据失败');
+      console.debug('[住港伴] 刷新流程数据失败');
     }
   },
 
@@ -232,10 +228,13 @@ App({
   initAISession() {
     this.globalData.aiSessionId = 'ai_' + Date.now() + '_' + Math.random().toString(36).substr(2, 8);
     this.globalData.aiReady = true;
-    this.globalData.aiConversation = [{
-      role: 'assistant',
-      content: '你好！我是住港伴AI专员 v4.1，基于最新V5知识库。可以帮你：\n• 评估香港身份路径\n• 解答入境政策问题\n• 整理材料清单\n• 规划时间线\n随时问我吧！'
-    }];
+    this.globalData.aiConversation = [
+      {
+        role: 'assistant',
+        content:
+          '你好！我是住港伴AI专员 v4.1，基于最新V5知识库。可以帮你：\n• 评估香港身份路径\n• 解答入境政策问题\n• 整理材料清单\n• 规划时间线\n随时问我吧！',
+      },
+    ];
   },
 
   async sendAIMessage(message) {
@@ -253,9 +252,9 @@ App({
             membershipLevel: this.globalData.membershipLevel,
             activeProcess: this.globalData.activeProcess,
             selectedPath: this.globalData.selectedPath,
-            dataVersion: constants.DATA_VERSION
-          }
-        }
+            dataVersion: constants.DATA_VERSION,
+          },
+        },
       });
       return res.result;
     } catch (e) {
@@ -280,7 +279,7 @@ App({
 
   emitPrivacyChange(mode) {
     const pages = getCurrentPages();
-    pages.forEach(page => {
+    pages.forEach((page) => {
       if (page.onPrivacyModeChange) {
         page.onPrivacyModeChange(mode);
       }
@@ -289,24 +288,34 @@ App({
 
   onError(err) {
     console.error('[住港伴] 全局错误:', err);
-    var safeError = { message: err.message || String(err), timestamp: Date.now(), page: '' };
-    try { var pages = getCurrentPages(); if (pages.length > 0) safeError.page = pages[pages.length-1].route; } catch(e) {}
+    const safeError = { message: err.message || String(err), timestamp: Date.now(), page: '' };
+    try {
+      const pages = getCurrentPages();
+      if (pages.length > 0) safeError.page = pages[pages.length - 1].route;
+    } catch (e) {}
     wx.setStorageSync(constants.STORAGE_KEYS.ERROR_LOG, safeError);
     // 异步上报到云端（静默失败不影响用户体验）
     if (this.globalData.cloudReady) {
-      wx.cloud.callFunction({ name: 'usage-tracker', data: { action: 'track', eventType: 'app_error', payload: safeError } }).catch(function(){});
+      wx.cloud
+        .callFunction({ name: 'usage-tracker', data: { action: 'track', eventType: 'app_error', payload: safeError } })
+        .catch(function () {});
     }
   },
 
   /** 性能打点：记录首屏渲染时间 */
   _perfStartTime: 0,
-  markPerfComplete: function() {
+  markPerfComplete: function () {
     if (!this._perfStartTime) return;
-    var elapsed = Date.now() - this._perfStartTime;
-    console.log('[住港伴] 首屏渲染完成: ' + elapsed + 'ms');
+    const elapsed = Date.now() - this._perfStartTime;
+    console.debug('[住港伴] 首屏渲染完成: ' + elapsed + 'ms');
     if (elapsed > 3000) console.warn('[住港伴] ⚠️ 首屏超过3秒: ' + elapsed + 'ms');
     if (this.globalData.cloudReady) {
-      wx.cloud.callFunction({ name: 'usage-tracker', data: { action: 'track', eventType: 'perf_launch', payload: { elapsedMs: elapsed } } }).catch(function(){});
+      wx.cloud
+        .callFunction({
+          name: 'usage-tracker',
+          data: { action: 'track', eventType: 'perf_launch', payload: { elapsedMs: elapsed } },
+        })
+        .catch(function () {});
     }
   },
 
@@ -315,21 +324,21 @@ App({
    * 从云端同步 isLocked 状态（支付云函数最权威）
    * 在 onShow 和支付后调用
    */
-  syncLockStatus: async function() {
+  syncLockStatus: async function () {
     if (!this.globalData.cloudReady || !this.globalData.isLoggedIn) return;
     try {
-      var res = await wx.cloud.callFunction({
+      const res = await wx.cloud.callFunction({
         name: 'payment',
-        data: { action: 'checkSubscription' }
+        data: { action: 'checkSubscription' },
       });
-      var data = (res.result && res.result.data) || {};
-      var isLocked = data.isLocked || false;
+      const data = (res.result && res.result.data) || {};
+      const isLocked = data.isLocked || false;
       // 本地数据比云端更可靠（已在 payment 激活时写入）
       // 但如果云端说是 locked，以云端为准
       if (isLocked) {
         this.globalData.isLocked = true;
         // 同步到 profile
-        var profile = wx.getStorageSync('__user_profile__') || {};
+        const profile = wx.getStorageSync('__user_profile__') || {};
         profile.isLocked = true;
         wx.setStorageSync('__user_profile__', profile);
       }
@@ -342,11 +351,11 @@ App({
 // 合并本地和云端推荐结果
 function mergeRecommendations(localMatches, cloudMatches) {
   const matchMap = {};
-  localMatches.forEach(m => {
+  localMatches.forEach((m) => {
     const s = m.matchScore || m.score || 0;
     matchMap[m.path] = (matchMap[m.path] || 0) + s;
   });
-  cloudMatches.forEach(m => {
+  cloudMatches.forEach((m) => {
     const s = m.matchScore || (typeof m.score === 'number' ? m.score : 0) || (m.confidence === 'high' ? 90 : 50);
     matchMap[m.path] = (matchMap[m.path] || 0) + s;
   });

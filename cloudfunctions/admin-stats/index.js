@@ -17,7 +17,11 @@ exports.main = async (event) => {
   // HTTP 网关调用时 event.body 是 JSON 字符串
   let body = event;
   if (event.body && typeof event.body === 'string') {
-    try { body = JSON.parse(event.body); } catch (_) { /* keep raw event */ }
+    try {
+      body = JSON.parse(event.body);
+    } catch (_) {
+      /* keep raw event */
+    }
   }
   const { action, params = {}, _apiKey } = body;
 
@@ -33,9 +37,12 @@ exports.main = async (event) => {
 
   try {
     switch (action) {
-      case 'getDashboard': return await getDashboard();
-      case 'getTrend':     return await getTrend(params.metric, params.days || 30);
-      default:             return { code: 400, msg: '无效操作: ' + action };
+      case 'getDashboard':
+        return await getDashboard();
+      case 'getTrend':
+        return await getTrend(params.metric, params.days || 30);
+      default:
+        return { code: 400, msg: '无效操作: ' + action };
     }
   } catch (err) {
     console.error('[admin-stats]', err);
@@ -47,9 +54,7 @@ exports.main = async (event) => {
 
 async function validateApiKey(apiKey) {
   const apiKeyHash = sha256(apiKey);
-  const res = await db.collection('admin_users')
-    .where({ apiKeyHash, status: 'active' })
-    .limit(1).get();
+  const res = await db.collection('admin_users').where({ apiKeyHash, status: 'active' }).limit(1).get();
   return res.data.length > 0 ? res.data[0] : null;
 }
 
@@ -63,9 +68,7 @@ async function handleAdminLogin(params) {
 
   try {
     const pwHash = sha256(password);
-    const res = await db.collection('admin_users')
-      .where({ email, passwordHash: pwHash, status: 'active' })
-      .get();
+    const res = await db.collection('admin_users').where({ email, passwordHash: pwHash, status: 'active' }).get();
 
     if (res.data.length === 0) {
       return { code: 401, msg: '邮箱或密码错误' };
@@ -76,23 +79,29 @@ async function handleAdminLogin(params) {
     if (!apiKey) {
       apiKey = 'zgb-' + generateUUID();
       const keyHash = sha256(apiKey);
-      await db.collection('admin_users').doc(admin._id).update({
-        data: {
-          _apiKey: apiKey,
-          apiKeyHash: keyHash,
-          loginAttempts: 0,
-          lastLoginAt: new Date(),
-          updatedAt: new Date()
-        }
-      });
+      await db
+        .collection('admin_users')
+        .doc(admin._id)
+        .update({
+          data: {
+            _apiKey: apiKey,
+            apiKeyHash: keyHash,
+            loginAttempts: 0,
+            lastLoginAt: new Date(),
+            updatedAt: new Date(),
+          },
+        });
     } else {
-      await db.collection('admin_users').doc(admin._id).update({
-        data: {
-          loginAttempts: 0,
-          lastLoginAt: new Date(),
-          updatedAt: new Date()
-        }
-      });
+      await db
+        .collection('admin_users')
+        .doc(admin._id)
+        .update({
+          data: {
+            loginAttempts: 0,
+            lastLoginAt: new Date(),
+            updatedAt: new Date(),
+          },
+        });
     }
 
     return {
@@ -104,9 +113,9 @@ async function handleAdminLogin(params) {
           uid: admin.uid,
           email: admin.email,
           name: admin.name,
-          role: admin.role
-        }
-      }
+          role: admin.role,
+        },
+      },
     };
   } catch (err) {
     console.error('[adminLogin]', err);
@@ -124,19 +133,19 @@ async function getDashboard() {
     db.collection('orders').where({ status: 'completed' }).get(),
     db.collection('invite_codes').get(),
     db.collection('conversation_logs').count(),
-    db.collection('eval_results').orderBy('createdAt', 'desc').limit(20).get()
+    db.collection('eval_results').orderBy('createdAt', 'desc').limit(20).get(),
   ]);
 
   // Users by path
   const usersByPath = {};
-  (profiles.data || []).forEach(p => {
+  (profiles.data || []).forEach((p) => {
     const key = p.selectedPath || p.lastPath || 'unknown';
     usersByPath[key] = (usersByPath[key] || 0) + 1;
   });
 
   // Users by membership
   const usersByMembership = {};
-  (profiles.data || []).forEach(p => {
+  (profiles.data || []).forEach((p) => {
     const tier = p.membershipTier || 'free_trial';
     usersByMembership[tier] = (usersByMembership[tier] || 0) + 1;
   });
@@ -144,7 +153,7 @@ async function getDashboard() {
   // AI accuracy avg
   let aiAccuracyAvg = null;
   if (evalResults.data && evalResults.data.length > 0) {
-    const scores = evalResults.data.map(e => e.score || 0).filter(s => s > 0);
+    const scores = evalResults.data.map((e) => e.score || 0).filter((s) => s > 0);
     if (scores.length > 0) {
       aiAccuracyAvg = Math.round(scores.reduce((a, b) => a + b, 0) / scores.length);
     }
@@ -155,8 +164,9 @@ async function getDashboard() {
   const newUsers7d = Math.min(totalUsers, 3); // Placeholder until user_events has creation events
 
   // Code stats
-  let codesGenerated = 0, codesActivated = 0;
-  (codes.data || []).forEach(c => {
+  let codesGenerated = 0,
+    codesActivated = 0;
+  (codes.data || []).forEach((c) => {
     codesGenerated++;
     if (c.activationCount > 0) codesActivated++;
   });
@@ -176,8 +186,8 @@ async function getDashboard() {
       codesGenerated,
       codesActivated,
       complianceIssues: false,
-      k2LeakDetected: false
-    }
+      k2LeakDetected: false,
+    },
   };
 }
 
@@ -191,8 +201,8 @@ async function getTrend(metric, days) {
 // ========== Utils ==========
 
 function generateUUID() {
-  return 'xxxxxxxx-xxxx-4xxx-yxxx-xxxxxxxxxxxx'.replace(/[xy]/g, c => {
-    const r = Math.random() * 16 | 0;
-    return (c === 'x' ? r : (r & 0x3 | 0x8)).toString(16);
+  return 'xxxxxxxx-xxxx-4xxx-yxxx-xxxxxxxxxxxx'.replace(/[xy]/g, (c) => {
+    const r = (Math.random() * 16) | 0;
+    return (c === 'x' ? r : (r & 0x3) | 0x8).toString(16);
   });
 }

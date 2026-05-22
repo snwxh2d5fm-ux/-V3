@@ -38,22 +38,22 @@ Page({
 
     // 提交状态
     submitting: false,
-    error: null
+    error: null,
   },
 
   onLoad(options) {
     const persona = parseInt(options.persona) || 0;
     this._persona = persona; // 保存画像ID供提交时传递
-    const questions = this.buildQuestions(persona).map(q => ({
+    const questions = this.buildQuestions(persona).map((q) => ({
       ...q,
-      criteriaLines: (q.criteria || '').split('\n').filter(line => line.trim())
+      criteriaLines: (q.criteria || '').split('\n').filter((line) => line.trim()),
     }));
     this.setData({
       questions,
       totalQuestions: questions.length,
       canGoBack: false,
       canGoForward: false,
-      progress: 0
+      progress: 0,
     });
     // 初始化第一题
     this.updateProgress();
@@ -69,15 +69,11 @@ Page({
     // 根据不同画像调整题目顺序和可见性
     if (persona === 1) {
       // 在校学生：优先学历，跳过工作经验相关
-      return all.filter(q =>
-        !['experience', 'position', 'company', 'income', 'capital', 'hasIP'].includes(q.id)
-      );
+      return all.filter((q) => !['experience', 'position', 'company', 'income', 'capital', 'hasIP'].includes(q.id));
     }
     if (persona === 4) {
       // 企业主：优先资产和公司相关
-      return all.filter(q =>
-        !['major', 'position', 'hasFamousCompany'].includes(q.id)
-      );
+      return all.filter((q) => !['major', 'position', 'hasFamousCompany'].includes(q.id));
     }
     if (persona === 7) {
       // 海外华人：显示全部
@@ -96,7 +92,7 @@ Page({
     this.setData({
       progress: Math.round((answered / questions.length) * 100),
       canGoBack: currentIndex > 0,
-      canGoForward: !!answers[questions[currentIndex]?.id]
+      canGoForward: !!answers[questions[currentIndex]?.id],
     });
   },
 
@@ -111,16 +107,16 @@ Page({
       // 多选：toggle
       const multi = { ...this.data.multiSelected };
       multi[idx] = !multi[idx];
-      const selectedValues = Object.keys(multi).filter(k => multi[k]);
+      const selectedValues = Object.keys(multi).filter((k) => multi[k]);
       this.setData({
         multiSelected: multi,
         selectedOption: selectedValues.length > 0 ? selectedValues : null,
-        canGoForward: selectedValues.length > 0
+        canGoForward: selectedValues.length > 0,
       });
       // 同步到 answers
       if (selectedValues.length > 0) {
         this.setData({
-          ['answers.' + q.id]: selectedValues
+          ['answers.' + q.id]: selectedValues,
         });
       } else {
         const a = { ...this.data.answers };
@@ -132,7 +128,7 @@ Page({
       this.setData({
         selectedOption: idx,
         canGoForward: true,
-        ['answers.' + q.id]: idx
+        ['answers.' + q.id]: idx,
       });
     }
   },
@@ -150,11 +146,9 @@ Page({
     setTimeout(() => {
       this.setData({
         currentIndex: prevIndex,
-        selectedOption: prevQ.type === 'multiSelect' ? prevAnswer : prevAnswer ?? null,
-        multiSelected: prevQ.type === 'multiSelect'
-          ? this.buildMultiMap(prevAnswer)
-          : {},
-        animating: false
+        selectedOption: prevQ.type === 'multiSelect' ? prevAnswer : (prevAnswer ?? null),
+        multiSelected: prevQ.type === 'multiSelect' ? this.buildMultiMap(prevAnswer) : {},
+        animating: false,
       });
       this.updateProgress();
     }, 200);
@@ -181,11 +175,9 @@ Page({
     setTimeout(() => {
       this.setData({
         currentIndex: nextIndex,
-        selectedOption: nextQ.type === 'multiSelect' ? nextAnswer : nextAnswer ?? null,
-        multiSelected: nextQ.type === 'multiSelect'
-          ? this.buildMultiMap(nextAnswer)
-          : {},
-        animating: false
+        selectedOption: nextQ.type === 'multiSelect' ? nextAnswer : (nextAnswer ?? null),
+        multiSelected: nextQ.type === 'multiSelect' ? this.buildMultiMap(nextAnswer) : {},
+        animating: false,
       });
       this.updateProgress();
     }, 200);
@@ -194,7 +186,9 @@ Page({
   buildMultiMap(answer) {
     if (!answer) return {};
     const map = {};
-    (Array.isArray(answer) ? answer : []).forEach(i => { map[i] = true; });
+    (Array.isArray(answer) ? answer : []).forEach((i) => {
+      map[i] = true;
+    });
     return map;
   },
 
@@ -221,16 +215,17 @@ Page({
           this.data.questions.map((q, i) => ({
             id: q.id,
             question: q.question,
-            answer: this.data.answers[q.id] !== undefined
-              ? (q.type === 'multiSelect'
-                  ? (this.data.answers[q.id] || []).map(j => q.options[j])
-                  : q.options[this.data.answers[q.id]])
-              : null
-          }))
+            answer:
+              this.data.answers[q.id] !== undefined
+                ? q.type === 'multiSelect'
+                  ? (this.data.answers[q.id] || []).map((j) => q.options[j])
+                  : q.options[this.data.answers[q.id]]
+                : null,
+          })),
         );
         if (res && res.matches) cloudMatches = res.matches;
       } catch (e) {
-        console.log('[自评] 云端匹配不可用，使用本地结果');
+        console.debug('[自评] 云端匹配不可用，使用本地结果');
       }
 
       // 3. 合并结果
@@ -243,9 +238,8 @@ Page({
       // 5. 跳转报告页（携带画像ID供兼容性校验）
       this.setData({ submitting: false });
       wx.redirectTo({
-        url: `/subpkg-low/pages/assessment-result/index?persona=${this._persona || 0}`
+        url: `/subpkg-low/pages/assessment-result/index?persona=${this._persona || 0}`,
       });
-
     } catch (e) {
       this.setData({ submitting: false, error: '评估服务暂时不可用，请稍后重试' });
       console.error('[自评] 提交失败:', e);
@@ -260,10 +254,10 @@ Page({
     const qs = this.data.questions;
 
     const getAnswer = (id) => {
-      const q = qs.find(q => q.id === id);
+      const q = qs.find((q) => q.id === id);
       if (!q || a[id] === undefined) return null;
       if (q.type === 'multiSelect') {
-        return (a[id] || []).map(i => q.options[i]).join(',');
+        return (a[id] || []).map((i) => q.options[i]).join(',');
       }
       return q.options[a[id]];
     };
@@ -291,7 +285,7 @@ Page({
       isTargetIndustry: this.parseTargetIndustry(getAnswer('industry')),
       educationLevel: this.parseEducationLevel(getAnswer('education')),
       hasParentCompanion: false,
-      hasListedCompany: false
+      hasListedCompany: false,
     };
   },
 
@@ -325,16 +319,16 @@ Page({
     // 选项格式: "HK$250万及以上（约¥233万）" / "HK$100-250万（约¥93-233万）"
     // 注意：必须按 HK$ 前缀精确匹配，避免子串误判（HK$100-250万 含 "HK$250"）
     const clean = ans.trim();
-    if (clean.startsWith('HK$250万'))       return 3000000;
-    if (clean.startsWith('HK$100-250万'))   return 1800000;
-    if (clean.startsWith('HK$50-100万'))    return 750000;
-    if (clean.startsWith('HK$30-50万'))     return 400000;
-    if (clean.startsWith('HK$30万以下'))     return 200000;
+    if (clean.startsWith('HK$250万')) return 3000000;
+    if (clean.startsWith('HK$100-250万')) return 1800000;
+    if (clean.startsWith('HK$50-100万')) return 750000;
+    if (clean.startsWith('HK$30-50万')) return 400000;
+    if (clean.startsWith('HK$30万以下')) return 200000;
     // 兼容旧格式
-    if (clean.includes('250万港币'))        return 3000000;
-    if (clean.includes('100-250万'))        return 1800000;
-    if (clean.includes('50-100万'))         return 750000;
-    if (clean.includes('30-50万'))          return 400000;
+    if (clean.includes('250万港币')) return 3000000;
+    if (clean.includes('100-250万')) return 1800000;
+    if (clean.includes('50-100万')) return 750000;
+    if (clean.includes('30-50万')) return 400000;
     return 200000;
   },
   parseCompanyType(ans) {
@@ -374,54 +368,61 @@ Page({
    * V5: 从自评答案中提取身份画像并写入存储
    */
   saveIdentityProfile() {
-    var a = this.data.answers;
-    var qs = this.data.questions;
-    var getAnswer = function(id) {
-      var q = qs.find(function(q) { return q.id === id; });
+    const a = this.data.answers;
+    const qs = this.data.questions;
+    const getAnswer = function (id) {
+      const q = qs.find(function (q) {
+        return q.id === id;
+      });
       if (!q || a[id] === undefined) return null;
-      if (q.type === 'multiSelect') return (a[id] || []).map(function(i) { return q.options[i]; }).join(',');
+      if (q.type === 'multiSelect')
+        return (a[id] || [])
+          .map(function (i) {
+            return q.options[i];
+          })
+          .join(',');
       return q.options[a[id]];
     };
 
-    var familyAns = getAnswer('family') || '';
-    var subStatus = wx.getStorageSync(constants.STORAGE_KEYS.USER_SUB_STATUS) || '';
-    var persona = this._persona || 0;
-    var personaLabel = '';
+    const familyAns = getAnswer('family') || '';
+    const subStatus = wx.getStorageSync(constants.STORAGE_KEYS.USER_SUB_STATUS) || '';
+    const persona = this._persona || 0;
+    let personaLabel = '';
     if (subStatus.indexOf('student') > -1) personaLabel = '在校学生';
     else if (subStatus.indexOf('employed') > -1) personaLabel = '在职人士';
     else if (subStatus.indexOf('owner') > -1) personaLabel = '企业主';
     else if (subStatus.indexOf('overseas') > -1) personaLabel = '海外华人';
 
-    var profile = {
+    const profile = {
       maritalStatus: this.parseMaritalStatus(familyAns),
       hasChildren: this.parseHasKids(familyAns),
       childCount: this.parseChildCount(familyAns),
       persona: persona,
       personaLabel: personaLabel,
       updatedAt: Date.now(),
-      source: 'assessment'
+      source: 'assessment',
     };
 
     wx.setStorageSync(constants.STORAGE_KEYS.IDENTITY_PROFILE, profile);
-    console.log('[自评] 身份画像已保存:', JSON.stringify(profile));
+    // [V4.2-P1] PII日志已移除: 身份画像已保存(profile含visaType/familyStatus等敏感字段)
   },
   parseCapital(ans) {
     if (!ans) return 0;
     // 选项格式: "HK$3,000万及以上"
     const clean = ans.trim();
-    if (clean.startsWith('HK$3,000万'))         return 35000000;
-    if (clean.startsWith('HK$1,000-3,000万'))   return 20000000;
-    if (clean.startsWith('HK$500-1,000万'))      return 7500000;
-    if (clean.startsWith('HK$500万以下'))         return 2000000;
+    if (clean.startsWith('HK$3,000万')) return 35000000;
+    if (clean.startsWith('HK$1,000-3,000万')) return 20000000;
+    if (clean.startsWith('HK$500-1,000万')) return 7500000;
+    if (clean.startsWith('HK$500万以下')) return 2000000;
     // 兼容旧格式
-    if (clean.includes('3000万港币'))            return 35000000;
-    if (clean.includes('1000-3000万'))           return 20000000;
-    if (clean.includes('500-1000万'))            return 7500000;
+    if (clean.includes('3000万港币')) return 35000000;
+    if (clean.includes('1000-3000万')) return 20000000;
+    if (clean.includes('500-1000万')) return 7500000;
     return 2000000;
   },
   parseTargetIndustry(ans) {
     if (!ans) return false;
-    return ['金融', '资讯科技', '工程', 'STEM'].some(k => ans.includes(k));
+    return ['金融', '资讯科技', '工程', 'STEM'].some((k) => ans.includes(k));
   },
   parseEducationLevel(ans) {
     if (!ans) return 1;
@@ -436,10 +437,10 @@ Page({
    */
   mergeResults(local, cloud) {
     const scoreMap = {};
-    local.forEach(m => {
+    local.forEach((m) => {
       scoreMap[m.path] = (scoreMap[m.path] || 0) + (m.matchScore || 0);
     });
-    cloud.forEach(m => {
+    cloud.forEach((m) => {
       scoreMap[m.path] = (scoreMap[m.path] || 0) + (m.matchScore || m.score || 0);
     });
     return Object.entries(scoreMap)
@@ -449,7 +450,7 @@ Page({
         path,
         matchScore: Math.min(Math.round(score / (cloud.length > 0 ? 2 : 1)), 100),
         confidence: score >= 80 ? 'high' : score >= 50 ? 'medium' : 'low',
-        details: ALL_PATH_DETAILS[path] || null
+        details: ALL_PATH_DETAILS[path] || null,
       }));
-  }
+  },
 });

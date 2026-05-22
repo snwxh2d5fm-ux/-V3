@@ -12,45 +12,42 @@ function maskUserId(originalUserId) {
 
 exports.main = async (event) => {
   try {
-    var wxContext = cloud.getWXContext();
-    var openid = wxContext.OPENID;
+    const wxContext = cloud.getWXContext();
+    const openid = wxContext.OPENID;
     if (!openid) {
       return { code: 401, msg: '请先登录' };
     }
 
-    var { action } = event;
+    const { action } = event;
     if (!action) {
       return { code: 400, msg: '请指定操作类型' };
     }
 
     switch (action) {
-
       case 'get-space': {
         // 查询用户所属的家庭空间（作为所有者或成员）
-        var spaceResult = await db.collection('family_spaces')
-          .where(_.or([
-            { ownerUserId: openid },
-            { 'members.userId': openid }
-          ]))
+        var spaceResult = await db
+          .collection('family_spaces')
+          .where(_.or([{ ownerUserId: openid }, { 'members.userId': openid }]))
           .get();
 
         if (spaceResult.data.length === 0) {
           return {
             code: 0,
             data: {
-              hasSpace: false
-            }
+              hasSpace: false,
+            },
           };
         }
 
         var space = spaceResult.data[0];
 
         // 对成员列表中的非本人 userId 进行脱敏
-        var maskedMembers = [];
+        const maskedMembers = [];
         for (var i = 0; i < space.members.length; i++) {
-          var member = space.members[i];
-          var maskedMember = {};
-          for (var key in member) {
+          const member = space.members[i];
+          const maskedMember = {};
+          for (const key in member) {
             if (member.hasOwnProperty(key)) {
               maskedMember[key] = member[key];
             }
@@ -70,8 +67,8 @@ exports.main = async (event) => {
             isOwner: space.ownerUserId === openid,
             members: maskedMembers,
             createdAt: space.createdAt,
-            updatedAt: space.updatedAt
-          }
+            updatedAt: space.updatedAt,
+          },
         };
       }
 
@@ -86,7 +83,14 @@ exports.main = async (event) => {
           return { code: 400, msg: '请提供有效的权限列表' };
         }
 
-        var allowedPermissions = ['personal_info', 'documents', 'reminders', 'process', 'document_upload', 'financial_info'];
+        const allowedPermissions = [
+          'personal_info',
+          'documents',
+          'reminders',
+          'process',
+          'document_upload',
+          'financial_info',
+        ];
         for (var i = 0; i < permissions.length; i++) {
           if (allowedPermissions.indexOf(permissions[i]) === -1) {
             return { code: 400, msg: '包含无效的权限项：' + permissions[i] };
@@ -94,9 +98,12 @@ exports.main = async (event) => {
         }
 
         // 验证调用者是空间所有者
-        var spaceResult = await db.collection('family_spaces').where({
-          ownerUserId: openid
-        }).get();
+        var spaceResult = await db
+          .collection('family_spaces')
+          .where({
+            ownerUserId: openid,
+          })
+          .get();
 
         if (spaceResult.data.length === 0) {
           return { code: 403, msg: '仅家庭空间所有者可修改成员权限' };
@@ -105,8 +112,8 @@ exports.main = async (event) => {
         var space = spaceResult.data[0];
 
         // 检查目标成员是否存在
-        var memberFound = false;
-        for (var j = 0; j < space.members.length; j++) {
+        let memberFound = false;
+        for (let j = 0; j < space.members.length; j++) {
           if (space.members[j].userId === targetUserId) {
             memberFound = true;
             break;
@@ -118,19 +125,25 @@ exports.main = async (event) => {
         }
 
         // 更新成员权限
-        var updateKey = 'members.' + space.members.findIndex(function(m) {
-          return m.userId === targetUserId;
-        }) + '.permissions';
+        const updateKey =
+          'members.' +
+          space.members.findIndex(function (m) {
+            return m.userId === targetUserId;
+          }) +
+          '.permissions';
 
-        var updateObj = {};
+        const updateObj = {};
         updateObj[updateKey] = permissions;
         updateObj['updatedAt'] = db.serverDate();
 
-        await db.collection('family_spaces').where({
-          spaceId: space.spaceId
-        }).update({
-          data: updateObj
-        });
+        await db
+          .collection('family_spaces')
+          .where({
+            spaceId: space.spaceId,
+          })
+          .update({
+            data: updateObj,
+          });
 
         // 写入审计日志
         await db.collection('audit_logs').add({
@@ -140,10 +153,10 @@ exports.main = async (event) => {
             detail: {
               targetUserId: targetUserId,
               permissions: permissions,
-              spaceId: space.spaceId
+              spaceId: space.spaceId,
             },
-            createdAt: db.serverDate()
-          }
+            createdAt: db.serverDate(),
+          },
         });
 
         return { code: 0, data: { success: true } };
@@ -157,9 +170,12 @@ exports.main = async (event) => {
         }
 
         // 验证调用者是空间所有者
-        var spaceResult = await db.collection('family_spaces').where({
-          ownerUserId: openid
-        }).get();
+        var spaceResult = await db
+          .collection('family_spaces')
+          .where({
+            ownerUserId: openid,
+          })
+          .get();
 
         if (spaceResult.data.length === 0) {
           return { code: 403, msg: '仅家庭空间所有者可移除成员' };
@@ -173,16 +189,19 @@ exports.main = async (event) => {
         }
 
         // 移除成员
-        await db.collection('family_spaces').where({
-          spaceId: space.spaceId
-        }).update({
-          data: {
-            members: _.pull({
-              userId: targetUserId
-            }),
-            updatedAt: db.serverDate()
-          }
-        });
+        await db
+          .collection('family_spaces')
+          .where({
+            spaceId: space.spaceId,
+          })
+          .update({
+            data: {
+              members: _.pull({
+                userId: targetUserId,
+              }),
+              updatedAt: db.serverDate(),
+            },
+          });
 
         // 写入审计日志
         await db.collection('audit_logs').add({
@@ -191,10 +210,10 @@ exports.main = async (event) => {
             action: 'family_member_removed',
             detail: {
               targetUserId: targetUserId,
-              spaceId: space.spaceId
+              spaceId: space.spaceId,
             },
-            createdAt: db.serverDate()
-          }
+            createdAt: db.serverDate(),
+          },
         });
 
         return { code: 0, data: { success: true } };
@@ -202,10 +221,11 @@ exports.main = async (event) => {
 
       case 'leave': {
         // 查找当前用户作为成员（非所有者）的家庭空间
-        var spaceResult = await db.collection('family_spaces')
+        var spaceResult = await db
+          .collection('family_spaces')
           .where({
             ownerUserId: _.neq(openid),
-            'members.userId': openid
+            'members.userId': openid,
           })
           .get();
 
@@ -216,16 +236,19 @@ exports.main = async (event) => {
         var space = spaceResult.data[0];
 
         // 将自己从成员列表中移除
-        await db.collection('family_spaces').where({
-          spaceId: space.spaceId
-        }).update({
-          data: {
-            members: _.pull({
-              userId: openid
-            }),
-            updatedAt: db.serverDate()
-          }
-        });
+        await db
+          .collection('family_spaces')
+          .where({
+            spaceId: space.spaceId,
+          })
+          .update({
+            data: {
+              members: _.pull({
+                userId: openid,
+              }),
+              updatedAt: db.serverDate(),
+            },
+          });
 
         // 写入审计日志
         await db.collection('audit_logs').add({
@@ -233,10 +256,10 @@ exports.main = async (event) => {
             _openid: openid,
             action: 'family_member_left',
             detail: {
-              spaceId: space.spaceId
+              spaceId: space.spaceId,
             },
-            createdAt: db.serverDate()
-          }
+            createdAt: db.serverDate(),
+          },
         });
 
         return { code: 0, data: { success: true } };
@@ -244,11 +267,12 @@ exports.main = async (event) => {
 
       // ===== 家庭空间文档状态（纯布尔，不传文件） =====
       case 'set-doc-status': {
-        var { slotKey, filled } = event;
+        const { slotKey, filled } = event;
         if (!slotKey) return { code: 400, msg: '缺少 slotKey' };
 
         // 查找用户所属的家庭空间
-        var spaceResult = await db.collection('family_spaces')
+        var spaceResult = await db
+          .collection('family_spaces')
           .where(_.or([{ ownerUserId: openid }, { 'members.userId': openid }]))
           .get();
 
@@ -257,22 +281,30 @@ exports.main = async (event) => {
         }
 
         var space = spaceResult.data[0];
-        var spaceId = space.spaceId;
+        const spaceId = space.spaceId;
 
         // 判断角色（owner 或 member）
-        var isOwner = space.ownerUserId === openid;
-        var role = isOwner ? 'owner' : (space.members.find(function(m) { return m.userId === openid; }) || {}).role || 'member';
+        const isOwner = space.ownerUserId === openid;
+        const role = isOwner
+          ? 'owner'
+          : (
+              space.members.find(function (m) {
+                return m.userId === openid;
+              }) || {}
+            ).role || 'member';
 
         // Upsert 文档状态
-        var existing = await db.collection('family_doc_status')
+        const existing = await db
+          .collection('family_doc_status')
           .where({ spaceId: spaceId, userId: openid, slotKey: slotKey })
           .get();
 
         if (existing.data.length > 0) {
-          await db.collection('family_doc_status')
+          await db
+            .collection('family_doc_status')
             .where({ spaceId: spaceId, userId: openid, slotKey: slotKey })
             .update({
-              data: { filled: !!filled, updatedAt: db.serverDate() }
+              data: { filled: !!filled, updatedAt: db.serverDate() },
             });
         } else {
           await db.collection('family_doc_status').add({
@@ -282,8 +314,8 @@ exports.main = async (event) => {
               role: role,
               slotKey: slotKey,
               filled: !!filled,
-              updatedAt: db.serverDate()
-            }
+              updatedAt: db.serverDate(),
+            },
           });
         }
 
@@ -295,35 +327,48 @@ exports.main = async (event) => {
         if (!targetUserId) return { code: 400, msg: '缺少 targetUserId' };
 
         // 验证调用者与目标用户在同一家庭空间
-        var spaceResult = await db.collection('family_spaces')
-          .where(_.or([
-            { ownerUserId: openid, 'members.userId': targetUserId },
-            { ownerUserId: targetUserId, 'members.userId': openid },
-            { ownerUserId: openid, ownerUserId: targetUserId }
-          ]))
+        var spaceResult = await db
+          .collection('family_spaces')
+          .where(
+            _.or([
+              { ownerUserId: openid, 'members.userId': targetUserId },
+              { ownerUserId: targetUserId, 'members.userId': openid },
+              { ownerUserId: openid, ownerUserId: targetUserId },
+            ]),
+          )
           .get();
 
         // 修正：检查空间是否包含双方
-        var validSpace = null;
+        let validSpace = null;
         for (var i = 0; i < spaceResult.data.length; i++) {
-          var sp = spaceResult.data[i];
-          var hasTarget = sp.ownerUserId === targetUserId ||
-            (sp.members || []).some(function(m) { return m.userId === targetUserId; });
-          var hasSelf = sp.ownerUserId === openid ||
-            (sp.members || []).some(function(m) { return m.userId === openid; });
-          if (hasTarget && hasSelf) { validSpace = sp; break; }
+          const sp = spaceResult.data[i];
+          const hasTarget =
+            sp.ownerUserId === targetUserId ||
+            (sp.members || []).some(function (m) {
+              return m.userId === targetUserId;
+            });
+          const hasSelf =
+            sp.ownerUserId === openid ||
+            (sp.members || []).some(function (m) {
+              return m.userId === openid;
+            });
+          if (hasTarget && hasSelf) {
+            validSpace = sp;
+            break;
+          }
         }
 
         if (!validSpace) {
           return { code: 403, msg: '无权查看对方的文档状态' };
         }
 
-        var statusResult = await db.collection('family_doc_status')
+        const statusResult = await db
+          .collection('family_doc_status')
           .where({ spaceId: validSpace.spaceId, userId: targetUserId })
           .get();
 
-        var slots = {};
-        (statusResult.data || []).forEach(function(d) {
+        const slots = {};
+        (statusResult.data || []).forEach(function (d) {
           slots[d.slotKey] = { filled: d.filled, updatedAt: d.updatedAt };
         });
 
@@ -333,7 +378,6 @@ exports.main = async (event) => {
       default:
         return { code: 400, msg: '无效的操作类型' };
     }
-
   } catch (err) {
     console.error('[family-space-manage]', err);
     return { code: 500, msg: '服务异常' };

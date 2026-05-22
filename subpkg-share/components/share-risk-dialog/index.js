@@ -2,42 +2,42 @@ Component({
   properties: {
     visible: {
       type: Boolean,
-      value: false
+      value: false,
     },
     contentType: {
       type: String,
-      value: 'family_invite'
-    }
+      value: 'family_invite',
+    },
   },
 
   data: {
-    checked: false
+    checked: false,
   },
 
   observers: {
     visible: function (val) {
       if (!val) {
-        this.setData({ checked: false })
+        this.setData({ checked: false });
       }
-    }
+    },
   },
 
   methods: {
     onCheck: function () {
       this.setData({
-        checked: !this.data.checked
-      })
+        checked: !this.data.checked,
+      });
     },
 
     onCancel: function () {
-      this.triggerEvent('cancel')
+      this.triggerEvent('cancel');
     },
 
     onConfirm: function () {
       if (!this.data.checked) {
-        return
+        return;
       }
-      this.triggerEvent('confirm')
-    }
-  }
-})
+      this.triggerEvent('confirm');
+    },
+  },
+});

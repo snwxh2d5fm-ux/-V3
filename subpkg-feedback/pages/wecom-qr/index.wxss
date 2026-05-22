@@ -89,7 +89,7 @@
   border-radius: 16rpx;
   width: 100%;
   box-sizing: border-box;
-  box-shadow: 0 2rpx 8rpx rgba(0,0,0,0.03);
+  box-shadow: 0 2rpx 8rpx rgba(0, 0, 0, 0.03);
 }
 
 .info-line {

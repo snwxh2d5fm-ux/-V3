@@ -1,4 +1,4 @@
-const { generateSlotPDF, clearSlotPDF } = require("../../../utils/pdf-generator");
+const { generateSlotPDF, clearSlotPDF } = require('../../../utils/pdf-generator');
 /**
  * 住港伴 — 证件夹主页 (Tab2) · PRD v4.1 深度 UX 优化版
  * ─────────────────────────────────────────────────
@@ -14,7 +14,7 @@ const constants = require('../../../data/constants');
 Page({
   data: {
     // === 页面状态 ===
-    pageState: 'loading',  // loading | no_path | index_loaded | locked
+    pageState: 'loading', // loading | no_path | index_loaded | locked
     loading: true,
     privacyMode: 'local',
     membershipLevel: 'free',
@@ -42,15 +42,15 @@ Page({
 
     // === 身份卡槽切换 ===
     identityOwner: 'self',
-    ownerOptions: [],           // 动态构建（含自定义子女）
-    showAddChild: false,        // 添加子女弹窗
+    ownerOptions: [], // 动态构建（含自定义子女）
+    showAddChild: false, // 添加子女弹窗
     newChildName: '',
-    customChildren: [],         // [{ value: 'child_1', label: '子女1' }]
+    customChildren: [], // [{ value: 'child_1', label: '子女1' }]
 
     // === 家庭空间（证件状态共享，不传文件） ===
     familySpace: { active: false, spouseUserId: null, spaceId: null },
-    spouseDocStatus: null,       // CloudBase 远端文档填充状态
-    isSpouseView: false,         // 当前是否在查看配偶的证件状态
+    spouseDocStatus: null, // CloudBase 远端文档填充状态
+    isSpouseView: false, // 当前是否在查看配偶的证件状态
 
     // === 溢出区（其他文件） ===
     overflowDocs: [],
@@ -72,21 +72,21 @@ Page({
 
     // === 历史列表（兼容旧版证件列表） ===
     categoryTabs: [
-      { key: 'all',       label: '全部', cssIcon: 'all' },
-      { key: 'identity',  label: '身份', cssIcon: 'identity' },
+      { key: 'all', label: '全部', cssIcon: 'all' },
+      { key: 'identity', label: '身份', cssIcon: 'identity' },
       { key: 'education', label: '学历', cssIcon: 'education' },
-      { key: 'work',      label: '工作', cssIcon: 'work' },
-      { key: 'assets',    label: '资产', cssIcon: 'assets' },
-      { key: 'approved',  label: '获批', cssIcon: 'approved' },
-      { key: 'renewal',   label: '续签', cssIcon: 'renewal' },
-      { key: 'permanent', label: '永居', cssIcon: 'permanent' }
+      { key: 'work', label: '工作', cssIcon: 'work' },
+      { key: 'assets', label: '资产', cssIcon: 'assets' },
+      { key: 'approved', label: '获批', cssIcon: 'approved' },
+      { key: 'renewal', label: '续签', cssIcon: 'renewal' },
+      { key: 'permanent', label: '永居', cssIcon: 'permanent' },
     ],
     activeCategory: 'all',
     allDocuments: [],
     filteredDocs: [],
     searchQuery: '',
     documentCount: 0,
-    maxFreeDocs: constants.FREE_LIMITS.MAX_DOCUMENTS,  // @deprecated — 用 effectiveLimit 取代
+    maxFreeDocs: constants.FREE_LIMITS.MAX_DOCUMENTS, // @deprecated — 用 effectiveLimit 取代
     showLimitTip: false,
     showEmptyGuide: false,
 
@@ -97,33 +97,41 @@ Page({
     // === 云存储 ===
     hasCloudStorage: false,
     cloudStorageUsed: 0,
-    cloudStorageTotal: 0
+    cloudStorageTotal: 0,
   },
 
   /* ============================================================
      LIFECYCLE
      ============================================================ */
-  buildOwnerOptions: function() {
-    var opts = [
-      { value: "self",   label: "本人" },
-      { value: "spouse", label: "配偶" },
-      { value: "child",  label: "子女" }
+  buildOwnerOptions: function () {
+    const opts = [
+      { value: 'self', label: '本人' },
+      { value: 'spouse', label: '配偶' },
+      { value: 'child', label: '子女' },
     ];
     try {
-      var custom = wx.getStorageSync("__custom_children__") || [];
+      const custom = wx.getStorageSync('__custom_children__') || [];
       this.setData({ customChildren: custom });
-      custom.forEach(function(c) { opts.push(c); });
-    } catch(e) {}
+      custom.forEach(function (c) {
+        opts.push(c);
+      });
+    } catch (e) {}
     this.setData({ ownerOptions: opts });
   },
 
   onShow() {
-    try { var stages = getGlobalStages(); this.setData({ stageSteps: stages, stageProgress: Math.min(((getActiveStageIndex() + 1) / 7) * 100, 100) }); } catch(e) { this.setData({ stageProgress: 14 }); }
-    const userStatus = app.globalData.userStatus ||
-      wx.getStorageSync(constants.STORAGE_KEYS.USER_STATUS) || '';
-    const selectedPath = app.globalData.selectedPath ||
+    try {
+      const stages = getGlobalStages();
+      this.setData({ stageSteps: stages, stageProgress: Math.min(((getActiveStageIndex() + 1) / 7) * 100, 100) });
+    } catch (e) {
+      this.setData({ stageProgress: 14 });
+    }
+    const userStatus = app.globalData.userStatus || wx.getStorageSync(constants.STORAGE_KEYS.USER_STATUS) || '';
+    const selectedPath =
+      app.globalData.selectedPath ||
       wx.getStorageSync('__selected_path__') ||
-      wx.getStorageSync('__active_process_id__') || '';
+      wx.getStorageSync('__active_process_id__') ||
+      '';
     const isSkipped = userStatus === 'skipped';
     const hasSelectedPath = !!selectedPath;
 
@@ -131,7 +139,7 @@ Page({
     const isPayingUser = constants.isPayingMember(membership);
     const isFreeUser = !isPayingUser;
     const effectiveLimit = {
-      maxDocuments: constants.getEffectiveLimit(membership, 'maxDocuments')
+      maxDocuments: constants.getEffectiveLimit(membership, 'maxDocuments'),
     };
 
     // 检查账户锁定（试用过期或会员到期未续费）
@@ -140,7 +148,7 @@ Page({
       this.setData({
         isLocked: true,
         pageState: 'locked',
-        loading: false
+        loading: false,
       });
       return;
     }
@@ -148,11 +156,13 @@ Page({
     // 获取路径名称 — 优先 activeProcess.name（与流程控hero卡片同源）
     let selectedPathName = '';
     if (selectedPath) {
-      selectedPathName = (app.globalData.activeProcess && app.globalData.activeProcess.name)
-        || constants.PATH_NAMES?.[selectedPath]
-        || (app.globalData.selectedPath && constants.PATH_NAMES?.[app.globalData.selectedPath])
-        || (app.globalData.activeProcess && constants.PATH_NAMES?.[app.globalData.activeProcess.pathType || app.globalData.activeProcess.templateId])
-        || selectedPath;
+      selectedPathName =
+        (app.globalData.activeProcess && app.globalData.activeProcess.name) ||
+        constants.PATH_NAMES?.[selectedPath] ||
+        (app.globalData.selectedPath && constants.PATH_NAMES?.[app.globalData.selectedPath]) ||
+        (app.globalData.activeProcess &&
+          constants.PATH_NAMES?.[app.globalData.activeProcess.pathType || app.globalData.activeProcess.templateId]) ||
+        selectedPath;
     }
 
     this.setData({
@@ -169,18 +179,18 @@ Page({
       pageState: hasSelectedPath ? 'index_loaded' : 'no_path',
       hasCloudStorage: !!app.globalData.hasCloudStorage,
       cloudStorageUsed: app.globalData.cloudStorageUsed || 0,
-      cloudStorageTotal: app.globalData.cloudStorageTotal || 0
+      cloudStorageTotal: app.globalData.cloudStorageTotal || 0,
     });
 
     // Bug #10: 检测路径变更 → 仅在路径变化或首次加载时重载模板
-    var pathChanged = (selectedPath !== this._lastPath);
+    const pathChanged = selectedPath !== this._lastPath;
     this._lastPath = selectedPath;
     if (hasSelectedPath && userStatus !== 'skipped' && pathChanged) {
       this.loadSlotTemplate(userStatus, selectedPath);
     }
 
     this.buildOwnerOptions();
-    this.checkFamilySpace();  // 异步查询家庭空间并扩展身份选项
+    this.checkFamilySpace(); // 异步查询家庭空间并扩展身份选项
     this.loadDocuments();
   },
 
@@ -192,74 +202,87 @@ Page({
    * 加载路径专属卡槽模板 (PRD §3.4.1)
    */
   loadSlotTemplate(userStatus, selectedPath) {
-    var that = this;
+    const that = this;
     try {
       const { matchTemplate, computeSlotStates } = require('../../../data/document-index-templates');
-      var template = matchTemplate(userStatus, selectedPath, 'application');
+      let template = matchTemplate(userStatus, selectedPath, 'application');
       if (!template) {
         this.setData({ slotCategories: [], slotTemplate: null });
         return;
       }
 
       // Bug #10: 检查本地缓存（24h有效）
-      var cacheKey = '__slot_template__' + selectedPath;
+      const cacheKey = '__slot_template__' + selectedPath;
       try {
-        var cached = wx.getStorageSync(cacheKey);
-        if (cached && cached.updatedAt && (Date.now() - cached.updatedAt < 86400000)) {
+        const cached = wx.getStorageSync(cacheKey);
+        if (cached && cached.updatedAt && Date.now() - cached.updatedAt < 86400000) {
           template = cached.template;
         }
-      } catch (e) { /* ignore */ }
+      } catch (e) {
+        /* ignore */
+      }
 
       // Bug #10: 异步云端同步 solution-engine — 云端数据优先，合并+新增槽位
-      wx.cloud.callFunction({
-        name: 'solution-engine',
-        data: { action: 'getDetail', pathId: selectedPath }
-      }).then(function(res) {
-        if (res.result && res.result.code === 0 && res.result.data && res.result.data.requirements) {
-          var cloudReqs = res.result.data.requirements;
-          if (template.categories) {
-            template.categories.forEach(function(cat) {
-              if (cat.slots) {
-                // 标记已有槽位是否在云端确认
-                cat.slots.forEach(function(slot) {
-                  var dn = (slot.docName || '').toLowerCase();
-                  var cloudMatch = cloudReqs.find(function(r) {
-                    var rl = (r || '').toLowerCase();
-                    return dn.indexOf(rl) >= 0 || rl.indexOf(dn) >= 0;
+      wx.cloud
+        .callFunction({
+          name: 'solution-engine',
+          data: { action: 'getDetail', pathId: selectedPath },
+        })
+        .then(function (res) {
+          if (res.result && res.result.code === 0 && res.result.data && res.result.data.requirements) {
+            const cloudReqs = res.result.data.requirements;
+            if (template.categories) {
+              template.categories.forEach(function (cat) {
+                if (cat.slots) {
+                  // 标记已有槽位是否在云端确认
+                  cat.slots.forEach(function (slot) {
+                    const dn = (slot.docName || '').toLowerCase();
+                    const cloudMatch = cloudReqs.find(function (r) {
+                      const rl = (r || '').toLowerCase();
+                      return dn.indexOf(rl) >= 0 || rl.indexOf(dn) >= 0;
+                    });
+                    if (cloudMatch) slot.cloudVerified = true;
                   });
-                  if (cloudMatch) slot.cloudVerified = true;
-                });
-              }
-            });
+                }
+              });
+            }
+            try {
+              wx.setStorageSync(cacheKey, { template: template, updatedAt: Date.now() });
+            } catch (e) {}
+            that._refreshSlotView(template);
           }
-          try { wx.setStorageSync(cacheKey, { template: template, updatedAt: Date.now() }); } catch (e) {}
-          that._refreshSlotView(template);
-        }
-      }).catch(function() { /* 降级为纯本地模板 */ });
+        })
+        .catch(function () {
+          /* 降级为纯本地模板 */
+        });
 
-      var uploadedDocs = getAllDocuments();
-      var slotCategories = computeSlotStates(template, uploadedDocs, this.data.identityOwner);
+      const uploadedDocs = getAllDocuments();
+      const slotCategories = computeSlotStates(template, uploadedDocs, this.data.identityOwner);
 
       // Bug #7修复: 溢出区按ownerType过滤
-      var overflowDocs = uploadedDocs.filter(function(d) {
-        var docOwner = d.ownerType || 'self';
+      const overflowDocs = uploadedDocs.filter(function (d) {
+        const docOwner = d.ownerType || 'self';
         if (docOwner !== (that.data.identityOwner || 'self')) return false;
-        return !slotCategories.some(function(cat) {
-          return cat.slots.some(function(s) {
-            return s.uploadedDocs && s.uploadedDocs.some(function(ud) { return ud.id === d.id; });
-          });
-        }) && !d.archived;
+        return (
+          !slotCategories.some(function (cat) {
+            return cat.slots.some(function (s) {
+              return (
+                s.uploadedDocs &&
+                s.uploadedDocs.some(function (ud) {
+                  return ud.id === d.id;
+                })
+              );
+            });
+          }) && !d.archived
+        );
       });
 
       // 已归档材料
-      const archivedDocs = uploadedDocs.filter(d => d.archived);
+      const archivedDocs = uploadedDocs.filter((d) => d.archived);
 
-      const filledTotal = slotCategories.reduce((sum, cat) =>
-        sum + (cat.categoryProgress?.filled || 0), 0);
-      const requiredTotal = slotCategories.reduce((sum, cat) =>
-        sum + (cat.categoryProgress?.total || 0), 0);
-      const percentage = requiredTotal > 0
-        ? Math.round((filledTotal / requiredTotal) * 100) : 0;
+      const filledTotal = slotCategories.reduce((sum, cat) => sum + (cat.categoryProgress?.filled || 0), 0);
+      const requiredTotal = slotCategories.reduce((sum, cat) => sum + (cat.categoryProgress?.total || 0), 0);
+      const percentage = requiredTotal > 0 ? Math.round((filledTotal / requiredTotal) * 100) : 0;
 
       // 进度环角度计算
       const deg = (percentage / 100) * 360;
@@ -267,13 +290,15 @@ Page({
       const leftDeg = Math.max(0, deg - 180);
 
       // 智能上传建议 — 随机选一个未填的必需槽位
-      var smartUploadSuggestion = '';
-      var allSlots = slotCategories.reduce(function(arr, c) { return arr.concat(c.slots); }, []);
-      var emptyRequired = allSlots.filter(
-        function(s) { return s.requirement === 'required' && s.fillStatus === 'empty'; }
-      );
+      let smartUploadSuggestion = '';
+      const allSlots = slotCategories.reduce(function (arr, c) {
+        return arr.concat(c.slots);
+      }, []);
+      const emptyRequired = allSlots.filter(function (s) {
+        return s.requirement === 'required' && s.fillStatus === 'empty';
+      });
       if (emptyRequired.length > 0) {
-        var pick = emptyRequired[Math.floor(Math.random() * emptyRequired.length)];
+        const pick = emptyRequired[Math.floor(Math.random() * emptyRequired.length)];
         smartUploadSuggestion = pick.docName;
       }
 
@@ -289,7 +314,7 @@ Page({
         archivedDocs,
         archivedCount: archivedDocs.length,
         smartUploadSuggestion,
-        pageState: 'index_loaded'
+        pageState: 'index_loaded',
       });
     } catch (e) {
       console.error('[证件夹] 模板加载失败:', e);
@@ -299,97 +324,117 @@ Page({
 
   /** Bug #10: 云端 solution-engine 数据到达后刷新槽位视图 */
   _refreshSlotView(template) {
-    var uploadedDocs = getAllDocuments();
+    const uploadedDocs = getAllDocuments();
     const { computeSlotStates } = require('../../../data/document-index-templates');
-    var slotCategories = computeSlotStates(template, uploadedDocs, this.data.identityOwner);
+    const slotCategories = computeSlotStates(template, uploadedDocs, this.data.identityOwner);
 
-    var filledTotal = slotCategories.reduce(function(sum, cat) {
-      return sum + (cat.categoryProgress && cat.categoryProgress.filled || 0);
+    const filledTotal = slotCategories.reduce(function (sum, cat) {
+      return sum + ((cat.categoryProgress && cat.categoryProgress.filled) || 0);
     }, 0);
-    var requiredTotal = slotCategories.reduce(function(sum, cat) {
-      return sum + (cat.categoryProgress && cat.categoryProgress.total || 0);
+    const requiredTotal = slotCategories.reduce(function (sum, cat) {
+      return sum + ((cat.categoryProgress && cat.categoryProgress.total) || 0);
     }, 0);
-    var percentage = requiredTotal > 0 ? Math.round((filledTotal / requiredTotal) * 100) : 0;
-    var deg = (percentage / 100) * 360;
-    var rightDeg = Math.min(deg, 180);
-    var leftDeg = Math.max(0, deg - 180);
+    const percentage = requiredTotal > 0 ? Math.round((filledTotal / requiredTotal) * 100) : 0;
+    const deg = (percentage / 100) * 360;
+    const rightDeg = Math.min(deg, 180);
+    const leftDeg = Math.max(0, deg - 180);
 
-    var allSlots = slotCategories.reduce(function(arr, c) { return arr.concat(c.slots); }, []);
-    var emptyRequired = allSlots.filter(function(s) {
+    const allSlots = slotCategories.reduce(function (arr, c) {
+      return arr.concat(c.slots);
+    }, []);
+    const emptyRequired = allSlots.filter(function (s) {
       return s.requirement === 'required' && s.fillStatus === 'empty';
     });
-    var smartUploadSuggestion = '';
+    let smartUploadSuggestion = '';
     if (emptyRequired.length > 0) {
-      var pick = emptyRequired[Math.floor(Math.random() * emptyRequired.length)];
+      const pick = emptyRequired[Math.floor(Math.random() * emptyRequired.length)];
       smartUploadSuggestion = pick.docName;
     }
 
     this.setData({
       slotTemplate: template,
       slotCategories: slotCategories,
-      slotProgress: { filled: filledTotal, total: requiredTotal, percentage: percentage, rightDeg: rightDeg, leftDeg: leftDeg },
-      smartUploadSuggestion: smartUploadSuggestion
+      slotProgress: {
+        filled: filledTotal,
+        total: requiredTotal,
+        percentage: percentage,
+        rightDeg: rightDeg,
+        leftDeg: leftDeg,
+      },
+      smartUploadSuggestion: smartUploadSuggestion,
     });
   },
 
   /** 检查家庭空间并扩展身份选项 */
-  checkFamilySpace: function() {
-    var that = this;
-    wx.cloud.callFunction({
-      name: 'family-space-manage',
-      data: { action: 'get-space' }
-    }).then(function(res) {
-      var result = res.result || {};
-      if (result.code === 0 && result.data && result.data.hasSpace) {
-        var space = result.data;
-        var spouseUserId = null;
-        (space.members || []).forEach(function(m) {
-          if (m.role === 'spouse' && !spouseUserId) spouseUserId = m.userId;
-        });
-        if (!spouseUserId && !space.isOwner) {
-          spouseUserId = space.ownerUserId;
-        }
-        if (spouseUserId) {
-          that.setData({ familySpace: { active: true, spouseUserId: spouseUserId, spaceId: space.spaceId } });
-          var opts = that.data.ownerOptions.slice();
-          if (!opts.some(function(o) { return o.value === 'family_spouse'; })) {
-            opts.splice(1, 0, { value: 'family_spouse', label: '配偶(家庭)' });
+  checkFamilySpace: function () {
+    const that = this;
+    wx.cloud
+      .callFunction({
+        name: 'family-space-manage',
+        data: { action: 'get-space' },
+      })
+      .then(function (res) {
+        const result = res.result || {};
+        if (result.code === 0 && result.data && result.data.hasSpace) {
+          const space = result.data;
+          let spouseUserId = null;
+          (space.members || []).forEach(function (m) {
+            if (m.role === 'spouse' && !spouseUserId) spouseUserId = m.userId;
+          });
+          if (!spouseUserId && !space.isOwner) {
+            spouseUserId = space.ownerUserId;
           }
-          that.setData({ ownerOptions: opts });
+          if (spouseUserId) {
+            that.setData({ familySpace: { active: true, spouseUserId: spouseUserId, spaceId: space.spaceId } });
+            const opts = that.data.ownerOptions.slice();
+            if (
+              !opts.some(function (o) {
+                return o.value === 'family_spouse';
+              })
+            ) {
+              opts.splice(1, 0, { value: 'family_spouse', label: '配偶(家庭)' });
+            }
+            that.setData({ ownerOptions: opts });
+          }
+        } else {
+          that.setData({ familySpace: { active: false, spouseUserId: null, spaceId: null } });
         }
-      } else {
+      })
+      .catch(function () {
         that.setData({ familySpace: { active: false, spouseUserId: null, spaceId: null } });
-      }
-    }).catch(function() {
-      that.setData({ familySpace: { active: false, spouseUserId: null, spaceId: null } });
-    });
+      });
   },
 
   /** 拉取配偶的文档填充状态 */
-  fetchSpouseDocStatus: function() {
-    var that = this;
-    var spouseUserId = this.data.familySpace.spouseUserId;
+  fetchSpouseDocStatus: function () {
+    const that = this;
+    const spouseUserId = this.data.familySpace.spouseUserId;
     if (!spouseUserId) return;
-    wx.cloud.callFunction({
-      name: 'family-space-manage',
-      data: { action: 'get-doc-status', targetUserId: spouseUserId }
-    }).then(function(res) {
-      var result = res.result || {};
-      if (result.code === 0 && result.data) {
-        that.setData({ spouseDocStatus: result.data.slots || {} });
-        that.mergeSpouseStatus();
-      }
-    }).catch(function() { that.setData({ spouseDocStatus: null }); });
+    wx.cloud
+      .callFunction({
+        name: 'family-space-manage',
+        data: { action: 'get-doc-status', targetUserId: spouseUserId },
+      })
+      .then(function (res) {
+        const result = res.result || {};
+        if (result.code === 0 && result.data) {
+          that.setData({ spouseDocStatus: result.data.slots || {} });
+          that.mergeSpouseStatus();
+        }
+      })
+      .catch(function () {
+        that.setData({ spouseDocStatus: null });
+      });
   },
 
   /** 将远端配偶状态合并到 slotCategories */
-  mergeSpouseStatus: function() {
-    var status = this.data.spouseDocStatus;
+  mergeSpouseStatus: function () {
+    const status = this.data.spouseDocStatus;
     if (!status) return;
-    var categories = (this.data.slotCategories || []).slice();
-    categories.forEach(function(cat) {
-      (cat.slots || []).forEach(function(slot) {
-        var remote = status[slot.slotKey];
+    const categories = (this.data.slotCategories || []).slice();
+    categories.forEach(function (cat) {
+      (cat.slots || []).forEach(function (slot) {
+        const remote = status[slot.slotKey];
         if (remote && remote.filled) {
           slot._spouseFilled = true;
           slot._spouseUpdatedAt = remote.updatedAt;
@@ -401,8 +446,8 @@ Page({
 
   /** 切换身份卡槽所属人 */
   switchIdentityOwner(e) {
-    var value = e.currentTarget.dataset.value;
-    var isSpouseView = (value === 'family_spouse');
+    const value = e.currentTarget.dataset.value;
+    const isSpouseView = value === 'family_spouse';
     this.setData({ identityOwner: value, isSpouseView: isSpouseView });
     if (isSpouseView) {
       this.fetchSpouseDocStatus();
@@ -431,7 +476,9 @@ Page({
     if (!slot) return;
 
     // 免费用户检查上限（付费用户跳过）
-    var docLimit = this.data.effectiveLimit ? this.data.effectiveLimit.maxDocuments : constants.FREE_LIMITS.MAX_DOCUMENTS;
+    const docLimit = this.data.effectiveLimit
+      ? this.data.effectiveLimit.maxDocuments
+      : constants.FREE_LIMITS.MAX_DOCUMENTS;
     if (this.data.isFreeUser && this.data.documentCount >= docLimit) {
       wx.showModal({
         title: '免费额度已满',
@@ -439,7 +486,7 @@ Page({
         confirmText: '了解会员',
         success: (res) => {
           if (res.confirm) wx.navigateTo({ url: '/subpkg-chat/pages/membership/index' });
-        }
+        },
       });
       return;
     }
@@ -447,14 +494,14 @@ Page({
     // Bug #7修复: 始终传递ownerType，确保谁添加就标记为谁
     const ownerParam = `&ownerType=${this.data.identityOwner || 'self'}`;
     wx.navigateTo({
-      url: `/subpkg-docs/pages/documents-add/index?slotKey=${slotKey}&docName=${encodeURIComponent(slot.docName)}&guideId=${slot.guideId || ''}${ownerParam}`
+      url: `/subpkg-docs/pages/documents-add/index?slotKey=${slotKey}&docName=${encodeURIComponent(slot.docName)}&guideId=${slot.guideId || ''}${ownerParam}`,
     });
   },
 
   /** 在槽位列表中查找指定槽位 */
   findSlot(slotKey) {
     for (const cat of this.data.slotCategories) {
-      const found = cat.slots.find(s => s.slotKey === slotKey);
+      const found = cat.slots.find((s) => s.slotKey === slotKey);
       if (found) return found;
     }
     return null;
@@ -474,13 +521,13 @@ Page({
       try {
         const res = await wx.cloud.callFunction({
           name: constants.CLOUD_FUNCTIONS.DOCUMENT_MANAGER,
-          data: { action: 'list' }
+          data: { action: 'list' },
         });
         if (res.result && res.result.documents) {
           const map = new Map();
-          documents.forEach(d => map.set(d.id, d));
-          res.result.documents.forEach(d => {
-            if (!map.has(d.id) || (d.updatedAt > (map.get(d.id).updatedAt || 0))) {
+          documents.forEach((d) => map.set(d.id, d));
+          res.result.documents.forEach((d) => {
+            if (!map.has(d.id) || d.updatedAt > (map.get(d.id).updatedAt || 0)) {
               map.set(d.id, d);
             }
           });
@@ -488,7 +535,7 @@ Page({
           saveDocuments(documents);
         }
       } catch (e) {
-        console.log('[证件夹] 云端同步不可用，使用本地数据');
+        console.debug('[证件夹] 云端同步不可用，使用本地数据');
       }
     }
 
@@ -498,7 +545,10 @@ Page({
       allDocuments: documents,
       documentCount: documents.length,
       loading: false,
-      showLimitTip: this.data.isFreeUser && documents.length >= (this.data.effectiveLimit ? this.data.effectiveLimit.maxDocuments : constants.FREE_LIMITS.MAX_DOCUMENTS)
+      showLimitTip:
+        this.data.isFreeUser &&
+        documents.length >=
+          (this.data.effectiveLimit ? this.data.effectiveLimit.maxDocuments : constants.FREE_LIMITS.MAX_DOCUMENTS),
     });
 
     // 刷新身份分类槽位状态（包含全部slot重新计算）
@@ -508,42 +558,55 @@ Page({
 
   /** 刷新全部槽位（按当前 identityOwner 过滤所有分类） */
   refreshIdentitySlots() {
-    var template = this._slotTemplate;
-    var allDocuments = this.data.allDocuments;
-    var identityOwner = this.data.identityOwner;
+    const template = this._slotTemplate;
+    const allDocuments = this.data.allDocuments;
+    const identityOwner = this.data.identityOwner;
     if (!template || !allDocuments) return;
 
-    var computeSlotStates = require('../../../data/document-index-templates').computeSlotStates;
-    var updated = computeSlotStates(template, allDocuments, identityOwner);
+    const computeSlotStates = require('../../../data/document-index-templates').computeSlotStates;
+    const updated = computeSlotStates(template, allDocuments, identityOwner);
 
     // Bug #7修复: 溢出区也按ownerType过滤
-    var overflowDocs = allDocuments.filter(function(d) {
-      var docOwner = d.ownerType || 'self';
+    const overflowDocs = allDocuments.filter(function (d) {
+      const docOwner = d.ownerType || 'self';
       if (docOwner !== (identityOwner || 'self')) return false;
-      return !updated.some(function(cat) {
-        return cat.slots.some(function(s) {
-          return s.uploadedDocs && s.uploadedDocs.some(function(ud) { return ud.id === d.id; });
-        });
-      }) && !d.archived;
+      return (
+        !updated.some(function (cat) {
+          return cat.slots.some(function (s) {
+            return (
+              s.uploadedDocs &&
+              s.uploadedDocs.some(function (ud) {
+                return ud.id === d.id;
+              })
+            );
+          });
+        }) && !d.archived
+      );
     });
 
     // 重新计算进度
-    var filledTotal = updated.reduce(function(sum, cat) {
+    const filledTotal = updated.reduce(function (sum, cat) {
       return sum + (cat.categoryProgress ? cat.categoryProgress.filled : 0);
     }, 0);
-    var requiredTotal = updated.reduce(function(sum, cat) {
+    const requiredTotal = updated.reduce(function (sum, cat) {
       return sum + (cat.categoryProgress ? cat.categoryProgress.total : 0);
     }, 0);
-    var percentage = requiredTotal > 0 ? Math.round((filledTotal / requiredTotal) * 100) : 0;
-    var deg = (percentage / 100) * 360;
-    var rightDeg = Math.min(deg, 180);
-    var leftDeg = Math.max(0, deg - 180);
+    const percentage = requiredTotal > 0 ? Math.round((filledTotal / requiredTotal) * 100) : 0;
+    const deg = (percentage / 100) * 360;
+    const rightDeg = Math.min(deg, 180);
+    const leftDeg = Math.max(0, deg - 180);
 
     this.setData({
       slotCategories: updated,
       overflowDocs: overflowDocs,
       overflowCount: overflowDocs.length,
-      slotProgress: { filled: filledTotal, total: requiredTotal, percentage: percentage, rightDeg: rightDeg, leftDeg: leftDeg }
+      slotProgress: {
+        filled: filledTotal,
+        total: requiredTotal,
+        percentage: percentage,
+        rightDeg: rightDeg,
+        leftDeg: leftDeg,
+      },
     });
   },
 
@@ -552,10 +615,10 @@ Page({
     let docs = [...allDocuments];
 
     // Bug #7: 按所属人过滤 + 工作经历/资产/申请材料仅本人
-    var SELF_ONLY = ['work', 'assets', 'approved'];
+    const SELF_ONLY = ['work', 'assets', 'approved'];
     if (identityOwner) {
-      docs = docs.filter(function(d) {
-        var docOwner = d.ownerType || 'self';
+      docs = docs.filter(function (d) {
+        const docOwner = d.ownerType || 'self';
         // 仅本人分类：始终只显示本人的材料
         if (SELF_ONLY.indexOf(d.category) !== -1) return docOwner === 'self';
         return docOwner === identityOwner;
@@ -563,41 +626,53 @@ Page({
     }
 
     if (activeCategory !== 'all') {
-      docs = docs.filter(d => d.category === activeCategory);
+      docs = docs.filter((d) => d.category === activeCategory);
     }
 
     if (searchQuery.trim()) {
       const q = searchQuery.trim().toLowerCase();
-      docs = docs.filter(d =>
-        (d.name && d.name.toLowerCase().includes(q)) ||
-        (d.docNumber && d.docNumber.includes(q)) ||
-        (d.categoryLabel && d.categoryLabel.includes(q)) ||
-        (d.notes && d.notes.toLowerCase().includes(q))
+      docs = docs.filter(
+        (d) =>
+          (d.name && d.name.toLowerCase().includes(q)) ||
+          (d.docNumber && d.docNumber.includes(q)) ||
+          (d.categoryLabel && d.categoryLabel.includes(q)) ||
+          (d.notes && d.notes.toLowerCase().includes(q)),
       );
     }
 
-    const filteredDocs = docs.map(doc => ({
+    const filteredDocs = docs.map((doc) => ({
       ...doc,
       displayName: this.getDisplayName(doc),
       displayDesc: this.getDisplayDesc(doc),
       statusTag: this.getStatusTag(doc),
-      cssIcon: this.getCssIcon(doc)
+      cssIcon: this.getCssIcon(doc),
     }));
 
     this.setData({
       filteredDocs,
-      showEmptyGuide: filteredDocs.length === 0 && allDocuments.length === 0
+      showEmptyGuide: filteredDocs.length === 0 && allDocuments.length === 0,
     });
   },
 
   getDisplayName(doc) {
     if (doc.name && doc.name !== '未命名证件') return doc.name;
     const typeNames = {
-      id_card: '身份证', hk_id: '香港身份证', passport: '护照', eep: '回乡证',
-      degree: '学位证书', work_proof: '工作证明', income_proof: '收入证明',
-      bank_statement: '银行流水', visa: '签证', approval_notice: '获批通知',
-      tax_record: '税单', rental_contract: '租约', mpf_record: 'MPF记录',
-      recommendation: '推荐信', plan_statement: '赴港计划书', slip: '签证标签纸'
+      id_card: '身份证',
+      hk_id: '香港身份证',
+      passport: '护照',
+      eep: '回乡证',
+      degree: '学位证书',
+      work_proof: '工作证明',
+      income_proof: '收入证明',
+      bank_statement: '银行流水',
+      visa: '签证',
+      approval_notice: '获批通知',
+      tax_record: '税单',
+      rental_contract: '租约',
+      mpf_record: 'MPF记录',
+      recommendation: '推荐信',
+      plan_statement: '赴港计划书',
+      slip: '签证标签纸',
     };
     return typeNames[doc.type] || '证件';
   },
@@ -629,10 +704,19 @@ Page({
   /** CSS class icon — replaces emoji */
   getCssIcon(doc) {
     const map = {
-      identity: 'ico-id', education: 'ico-edu', work: 'ico-work',
-      assets: 'ico-asset', approved: 'ico-done', renewal: 'ico-renew', permanent: 'ico-pr',
-      identities: 'ico-id', employment: 'ico-work', financial: 'ico-asset',
-      application: 'ico-doc', visas: 'ico-visa', custom: 'ico-file'
+      identity: 'ico-id',
+      education: 'ico-edu',
+      work: 'ico-work',
+      assets: 'ico-asset',
+      approved: 'ico-done',
+      renewal: 'ico-renew',
+      permanent: 'ico-pr',
+      identities: 'ico-id',
+      employment: 'ico-work',
+      financial: 'ico-asset',
+      application: 'ico-doc',
+      visas: 'ico-visa',
+      custom: 'ico-file',
     };
     return map[doc.category] || 'ico-file';
   },
@@ -643,9 +727,9 @@ Page({
 
   onCategoryTap(e) {
     const key = e.currentTarget.dataset.key;
-    this.setData({ 
+    this.setData({
       activeCategory: key,
-      identityOwner: 'self'   // 切换分类时重置所属人为本人
+      identityOwner: 'self', // 切换分类时重置所属人为本人
     });
     this.applyFilter();
   },
@@ -661,7 +745,9 @@ Page({
   },
 
   navigateToAdd() {
-    var docLimit = this.data.effectiveLimit ? this.data.effectiveLimit.maxDocuments : constants.FREE_LIMITS.MAX_DOCUMENTS;
+    const docLimit = this.data.effectiveLimit
+      ? this.data.effectiveLimit.maxDocuments
+      : constants.FREE_LIMITS.MAX_DOCUMENTS;
     if (this.data.isFreeUser && this.data.documentCount >= docLimit) {
       wx.showModal({
         title: '免费额度已满',
@@ -670,12 +756,15 @@ Page({
         cancelText: '稍后再说',
         success: (res) => {
           if (res.confirm) wx.navigateTo({ url: '/subpkg-chat/pages/membership/index' });
-        }
+        },
       });
       return;
     }
-    var ownerParam = this.data.identityOwner && this.data.identityOwner !== 'self' ? '&ownerType=' + this.data.identityOwner : '';
-    wx.navigateTo({ url: '/subpkg-docs/pages/documents-add/index?ownerPass=' + (this.data.identityOwner || 'self') + ownerParam });
+    const ownerParam =
+      this.data.identityOwner && this.data.identityOwner !== 'self' ? '&ownerType=' + this.data.identityOwner : '';
+    wx.navigateTo({
+      url: '/subpkg-docs/pages/documents-add/index?ownerPass=' + (this.data.identityOwner || 'self') + ownerParam,
+    });
   },
 
   navigateToDetail(e) {
@@ -685,33 +774,35 @@ Page({
 
   // #4: 多证件槽位预览 — Bug #4修复: 显示证件面标签
   previewSlotDocs(e) {
-    var slotKey = e.currentTarget.dataset.slotKey;
-    var slot = null;
-    (this.data.slotCategories || []).forEach(function(cat) {
-      (cat.slots || []).forEach(function(s) {
+    const slotKey = e.currentTarget.dataset.slotKey;
+    let slot = null;
+    (this.data.slotCategories || []).forEach(function (cat) {
+      (cat.slots || []).forEach(function (s) {
         if (s.slotKey === slotKey) slot = s;
       });
     });
     if (!slot || !slot.uploadedDocs || !slot.uploadedDocs.length) return;
-    var docs = slot.uploadedDocs;
+    const docs = slot.uploadedDocs;
     if (docs.length === 1) {
       wx.navigateTo({ url: '/subpkg-docs/pages/documents-detail/index?id=' + docs[0].id });
       return;
     }
     // 多张→弹窗选择，显示证件面（按证件类型区分背面标签）
-    var backName = slotKey === 'hk_permit' ? '签注面' : (slotKey === 'passport' ? '信息页' : '国徽面');
+    const backName = slotKey === 'hk_permit' ? '签注面' : slotKey === 'passport' ? '信息页' : '国徽面';
     function sideLabel(d) {
-      var side = d.photoSide;
+      const side = d.photoSide;
       if (side === 'front') return '人像面';
       if (side === 'back') return backName;
       return d.displayName || d.name || '证件';
     }
     wx.showActionSheet({
-      itemList: docs.map(function(d) { return sideLabel(d); }),
-      success: function(res) {
-        var idx = res.tapIndex;
+      itemList: docs.map(function (d) {
+        return sideLabel(d);
+      }),
+      success: function (res) {
+        const idx = res.tapIndex;
         wx.navigateTo({ url: '/subpkg-docs/pages/documents-detail/index?id=' + docs[idx].id });
-      }
+      },
     });
   },
 
@@ -721,11 +812,13 @@ Page({
 
   // ===== 画廊功能 =====
   toggleGallery() {
-    var show = !this.data.showGallery;
+    const show = !this.data.showGallery;
     if (show) {
-      var allDocs = this.data.allDocuments || [];
-      var owner = this.data.identityOwner || 'self';
-      var docsWithImg = allDocs.filter(function(d) { return d.filePath && !d.archived && (d.ownerType || 'self') === owner; });
+      const allDocs = this.data.allDocuments || [];
+      const owner = this.data.identityOwner || 'self';
+      const docsWithImg = allDocs.filter(function (d) {
+        return d.filePath && !d.archived && (d.ownerType || 'self') === owner;
+      });
       this.setData({ showGallery: show, filteredDocsWithImage: docsWithImg });
     } else {
       this.setData({ showGallery: false, showImageViewer: false });
@@ -733,7 +826,7 @@ Page({
   },
 
   previewImage(e) {
-    var idx = e.currentTarget.dataset.index;
+    const idx = e.currentTarget.dataset.index;
     this.setData({ showImageViewer: true, previewIndex: idx });
   },
 
@@ -752,7 +845,7 @@ Page({
   },
 
   /** 账户锁定 → 跳转会员页解锁 */
-  goUnlock: function() {
+  goUnlock: function () {
     wx.navigateTo({ url: '/subpkg-chat/pages/membership/index' });
   },
 
@@ -762,7 +855,9 @@ Page({
 
   /** 智能上传 — 拍照后自动分类 */
   smartUpload() {
-    var docLimit = this.data.effectiveLimit ? this.data.effectiveLimit.maxDocuments : constants.FREE_LIMITS.MAX_DOCUMENTS;
+    const docLimit = this.data.effectiveLimit
+      ? this.data.effectiveLimit.maxDocuments
+      : constants.FREE_LIMITS.MAX_DOCUMENTS;
     if (this.data.isFreeUser && this.data.documentCount >= docLimit) {
       wx.showModal({
         title: '免费额度已满',
@@ -770,7 +865,7 @@ Page({
         confirmText: '了解',
         success: (res) => {
           if (res.confirm) wx.navigateTo({ url: '/subpkg-chat/pages/membership/index' });
-        }
+        },
       });
       return;
     }
@@ -794,10 +889,10 @@ Page({
   },
 
   /** 查找卡槽中的已上传文档 */
-  findSlotDocs: function(slotKey) {
-    var docs = [];
-    (this.data.slotCategories || []).forEach(function(cat) {
-      (cat.slots || []).forEach(function(s) {
+  findSlotDocs: function (slotKey) {
+    let docs = [];
+    (this.data.slotCategories || []).forEach(function (cat) {
+      (cat.slots || []).forEach(function (s) {
         if (s.slotKey === slotKey && s.uploadedDocs) {
           docs = s.uploadedDocs;
         }
@@ -806,38 +901,49 @@ Page({
     return docs;
   },
 
-  onAddChildTap: function() { this.setData({ showAddChild: true, newChildName: "" }); },
-  onAddChildCancel: function() { this.setData({ showAddChild: false }); },
-  onAddChildInput: function(e) { this.setData({ newChildName: e.detail.value }); },
-  onAddChildConfirm: function() {
-    var name = (this.data.newChildName || "").trim();
-    if (!name) { wx.showToast({ title: "请输入子女姓名", icon: "none" }); return; }
-    var custom = this.data.customChildren.slice();
-    var idx = custom.length + 1;
-    var newChild = { value: "child_" + idx, label: name };
+  onAddChildTap: function () {
+    this.setData({ showAddChild: true, newChildName: '' });
+  },
+  onAddChildCancel: function () {
+    this.setData({ showAddChild: false });
+  },
+  onAddChildInput: function (e) {
+    this.setData({ newChildName: e.detail.value });
+  },
+  onAddChildConfirm: function () {
+    const name = (this.data.newChildName || '').trim();
+    if (!name) {
+      wx.showToast({ title: '请输入子女姓名', icon: 'none' });
+      return;
+    }
+    const custom = this.data.customChildren.slice();
+    const idx = custom.length + 1;
+    const newChild = { value: 'child_' + idx, label: name };
     custom.push(newChild);
-    wx.setStorageSync("__custom_children__", custom);
-    this.setData({ showAddChild: false, newChildName: "" });
+    wx.setStorageSync('__custom_children__', custom);
+    this.setData({ showAddChild: false, newChildName: '' });
     this.buildOwnerOptions();
-    wx.showToast({ title: "已添加: " + name, icon: "success" });
+    wx.showToast({ title: '已添加: ' + name, icon: 'success' });
   },
 
-  generateSlotPDF: function(e) {
+  generateSlotPDF: function (e) {
     // 配偶视图禁用PDF（无本地文件）
     if (this.data.isSpouseView) {
       wx.showToast({ title: '配偶证件PDF需在网页版会员后查看', icon: 'none', duration: 2000 });
       return;
     }
-    var slotKey = e.currentTarget.dataset.slotKey;
-    var name = e.currentTarget.dataset.name || slotKey;
-    var docs = this.findSlotDocs(slotKey);
-    console.log('[PDF] slotKey=' + slotKey + ' docs.length=' + (docs ? docs.length : 0));
+    const slotKey = e.currentTarget.dataset.slotKey;
+    const name = e.currentTarget.dataset.name || slotKey;
+    const docs = this.findSlotDocs(slotKey);
+    console.debug('[PDF] slotKey=' + slotKey + ' docs.length=' + (docs ? docs.length : 0));
     if (!docs || docs.length === 0) {
       wx.showToast({ title: '无证件图片可合成，请先添加证件照片', icon: 'none', duration: 2500 });
       return;
     }
     // 检查是否有可用的文件路径
-    var validDocs = docs.filter(function(d) { return !!d.filePath; });
+    const validDocs = docs.filter(function (d) {
+      return !!d.filePath;
+    });
     if (validDocs.length === 0) {
       wx.showToast({ title: '证件图片路径异常，请重新添加', icon: 'none', duration: 2500 });
       return;
@@ -847,5 +953,5 @@ Page({
 
   onShareAppMessage() {
     return { title: '我正在使用住港伴，你也来看看', path: '/pages/documents/index/index' };
-  }
+  },
 });

@@ -6,8 +6,14 @@
  */
 
 const {
-  goToTab, navigateTo, tapElement, findElement, findElements,
-  typeText, initTestState, waitFor,
+  goToTab,
+  navigateTo,
+  tapElement,
+  findElement,
+  findElements,
+  typeText,
+  initTestState,
+  waitFor,
 } = require('../helpers');
 
 let mp;
@@ -20,7 +26,6 @@ beforeAll(async () => {
 });
 
 describe('§6 攻略书 (guidebooks)', () => {
-
   test('6.1 进入攻略书 → 8分类卡片 + 图标 + 篇数', async () => {
     const page = await mp.currentPage();
     expect(page.path).toContain('guidebooks');
@@ -85,5 +90,4 @@ describe('§6 攻略书 (guidebooks)', () => {
     const page = await mp.currentPage();
     expect(page.path).toBeTruthy();
   });
-
 });

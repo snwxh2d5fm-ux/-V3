@@ -8,7 +8,7 @@ const db = cloud.database();
 const _ = db.command;
 
 // 管理员openid白名单——仅列表内用户可调用管理操作
-var ADMIN_OPENIDS = (process.env.ADMIN_OPENIDS || '').split(',').filter(Boolean);
+const ADMIN_OPENIDS = (process.env.ADMIN_OPENIDS || '').split(',').filter(Boolean);
 
 function isAdmin(openid) {
   // 必须配置至少一个管理员——空列表意味着无人有权执行管理操作
@@ -17,12 +17,12 @@ function isAdmin(openid) {
 }
 
 exports.main = async (event, context) => {
-  var action = event.action;
-  var wxContext = cloud.getWXContext();
-  var openid = wxContext.OPENID;
+  const action = event.action;
+  const wxContext = cloud.getWXContext();
+  const openid = wxContext.OPENID;
 
   // 管理类操作需要管理员权限
-  var adminActions = ['backup', 'updateAIConfig', 'importKnowledge', 'emergencyCleanK2'];
+  const adminActions = ['backup', 'updateAIConfig', 'importKnowledge', 'emergencyCleanK2'];
   if (adminActions.indexOf(action) >= 0 && !isAdmin(openid)) {
     return { ok: false, error: 'unauthorized' };
   }
@@ -52,15 +52,15 @@ async function getStats() {
     const [docsCount, remindersCount, processesCount] = await Promise.all([
       db.collection('documents').count(),
       db.collection('reminders').count(),
-      db.collection('processes').count()
+      db.collection('processes').count(),
     ]);
     return {
       code: 200,
       stats: {
         documents: docsCount.total,
         reminders: remindersCount.total,
-        processes: processesCount.total
-      }
+        processes: processesCount.total,
+      },
     };
   } catch (e) {
     return { code: 500, message: e.message };
@@ -72,16 +72,20 @@ async function syncData(openid, data) {
     // 同步用户数据
     if (data && data.documents) {
       for (const doc of data.documents) {
-        await db.collection('documents').where({ _openid: openid, id: doc.id }).update({ data: doc }).catch(() =>
-          db.collection('documents').add({ data: { ...doc, _openid: openid, updatedAt: Date.now() } })
-        );
+        await db
+          .collection('documents')
+          .where({ _openid: openid, id: doc.id })
+          .update({ data: doc })
+          .catch(() => db.collection('documents').add({ data: { ...doc, _openid: openid, updatedAt: Date.now() } }));
       }
     }
     if (data && data.reminders) {
       for (const r of data.reminders) {
-        await db.collection('reminders').where({ _openid: openid, id: r.id }).update({ data: r }).catch(() =>
-          db.collection('reminders').add({ data: { ...r, _openid: openid, updatedAt: Date.now() } })
-        );
+        await db
+          .collection('reminders')
+          .where({ _openid: openid, id: r.id })
+          .update({ data: r })
+          .catch(() => db.collection('reminders').add({ data: { ...r, _openid: openid, updatedAt: Date.now() } }));
       }
     }
     return { code: 200, message: 'sync ok' };
@@ -95,15 +99,15 @@ async function pullAllData(openid) {
     const [docsRes, remindersRes, processesRes] = await Promise.all([
       db.collection('documents').where({ _openid: openid }).get(),
       db.collection('reminders').where({ _openid: openid }).get(),
-      db.collection('processes').where({ _openid: openid }).get()
+      db.collection('processes').where({ _openid: openid }).get(),
     ]);
     return {
       code: 200,
       data: {
         documents: docsRes.data,
         reminders: remindersRes.data,
-        processes: processesRes.data
-      }
+        processes: processesRes.data,
+      },
     };
   } catch (e) {
     return { code: 500, message: e.message };
@@ -116,7 +120,7 @@ async function createBackup(openid) {
     const [docsRes, remRes, procRes] = await Promise.all([
       db.collection('documents').where({ _openid: openid }).get(),
       db.collection('reminders').where({ _openid: openid }).get(),
-      db.collection('processes').where({ _openid: openid }).get()
+      db.collection('processes').where({ _openid: openid }).get(),
     ]);
     await db.collection('backups').add({
       data: {
@@ -124,8 +128,8 @@ async function createBackup(openid) {
         timestamp,
         documents: docsRes.data,
         reminders: remRes.data,
-        processes: procRes.data
-      }
+        processes: procRes.data,
+      },
     });
     return { code: 200, message: 'backup created', timestamp };
   } catch (e) {
@@ -146,18 +150,27 @@ async function importKnowledge(batch, collection) {
   if (!batch || !Array.isArray(batch) || batch.length > 50) {
     return { code: 400, message: 'batch ≤50条' };
   }
-  let inserted = 0, skipped = 0, errors = 0;
+  let inserted = 0,
+    skipped = 0,
+    errors = 0;
   for (const item of batch) {
     try {
-      if (!item.content_hash) { errors++; continue; }
-      const exist = await db.collection(collection)
-        .where({ content_hash: item.content_hash }).count();
-      if (exist.total > 0) { skipped++; continue; }
+      if (!item.content_hash) {
+        errors++;
+        continue;
+      }
+      const exist = await db.collection(collection).where({ content_hash: item.content_hash }).count();
+      if (exist.total > 0) {
+        skipped++;
+        continue;
+      }
       await db.collection(collection).add({
-        data: { ...item, createdAt: db.serverDate(), updatedAt: db.serverDate() }
+        data: { ...item, createdAt: db.serverDate(), updatedAt: db.serverDate() },
       });
       inserted++;
-    } catch (e) { errors++; }
+    } catch (e) {
+      errors++;
+    }
   }
   return { code: 0, data: { inserted, skipped, errors } };
 }
@@ -168,19 +181,20 @@ async function importKnowledge(batch, collection) {
  * @param {boolean} dryRun — true=预览, false=执行删除
  */
 async function emergencyCleanK2(dryRun) {
-  var collection = 'knowledge_chunks';
+  const collection = 'knowledge_chunks';
 
   try {
     // 匹配条件: doc_id字段以DOC-开头（模型识别库的唯一标识模式）
     // 这些条目含有 visual_features/privacy_level/vault_mode 等K2字段
     // 使用 RegExp 直接匹配 doc_id 字段，避免扫描全部8779条记录
-    var docPattern = db.RegExp({ regexp: '^DOC-', options: '' });
-    var res = await db.collection(collection)
+    const docPattern = db.RegExp({ regexp: '^DOC-', options: '' });
+    const res = await db
+      .collection(collection)
       .where({ doc_id: docPattern })
       .field({ doc_id: true, name_zh: true, _id: true })
-      .limit(100)   // 最多100条（预期16条）
+      .limit(100) // 最多100条（预期16条）
       .get();
-    var k2Records = res.data;
+    const k2Records = res.data;
 
     if (dryRun) {
       return {
@@ -188,35 +202,34 @@ async function emergencyCleanK2(dryRun) {
         message: '[DRY RUN] 预览将被删除的记录 — 不会实际删除',
         data: {
           matched_count: k2Records.length,
-          records: k2Records.map(function(r) {
+          records: k2Records.map(function (r) {
             return {
               _id: r._id,
               doc_id: r.doc_id,
-              name_zh: r.name_zh || '(无)'
+              name_zh: r.name_zh || '(无)',
             };
-          })
-        }
+          }),
+        },
       };
     }
 
     // 执行删除
-    var deleted = 0;
-    for (var j = 0; j < k2Records.length; j++) {
+    let deleted = 0;
+    for (let j = 0; j < k2Records.length; j++) {
       await db.collection(collection).doc(k2Records[j]._id).remove();
       deleted++;
     }
 
-    var remaining = await db.collection(collection).count();
+    const remaining = await db.collection(collection).count();
 
     return {
       code: 200,
       message: 'K2内容清理完成',
       data: {
         total_deleted: deleted,
-        remaining_total: remaining.total
-      }
+        remaining_total: remaining.total,
+      },
     };
-
   } catch (err) {
     console.error('[emergencyCleanK2] 清理失败:', err);
     return { code: 500, message: 'K2清理失败: ' + (err.message || String(err)) };

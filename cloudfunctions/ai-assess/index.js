@@ -17,25 +17,25 @@ const db = cloud.database();
 
 /**
  */
-var scoring = require('./scoring');
+const scoring = require('./scoring');
 
 /**
  * 计算差距分析
  */
 function computeGapAnalysis(pathResults, answers) {
-  var gaps = [];
-  var topPath = pathResults[0];
+  const gaps = [];
+  const topPath = pathResults[0];
 
   if (!topPath || !topPath.isQualified) {
     gaps.push('所有路径均未达到理想申请条件');
     return gaps;
   }
 
-  var age = answers.age || '';
-  var edu = answers.education || '';
-  var school = answers.school || '';
-  var income = answers.income || '';
-  var lang = answers.language || '';
+  const age = answers.age || '';
+  const edu = answers.education || '';
+  const school = answers.school || '';
+  const income = answers.income || '';
+  const lang = answers.language || '';
 
   // 通用差距
   if (lang.indexOf('流利') === -1 && lang.indexOf('雅思') === -1 && lang.indexOf('托福') === -1) {
@@ -71,7 +71,7 @@ function computeGapAnalysis(pathResults, answers) {
 function estimateTimeline(pathResults) {
   if (pathResults.length === 0) return '待评估';
 
-  var best = pathResults[0];
+  const best = pathResults[0];
   if (best.isQualified) {
     return best.estimatedTimeline || '3-6个月';
   }
@@ -92,7 +92,7 @@ function estimateCost(pathResults) {
  * 云函数入口
  */
 exports.main = async function (event, context) {
-  var answers = event.answers;
+  const answers = event.answers;
 
   // 参数校验
   if (!answers || typeof answers !== 'object' || Object.keys(answers).length === 0) {
@@ -105,7 +105,7 @@ exports.main = async function (event, context) {
 
   try {
     // 计算各路径得分
-    var results = [
+    const results = [
       scoring.scoreQMAS(answers),
       scoring.scoreTTPS(answers),
       scoring.scoreASMPT(answers),
@@ -114,13 +114,15 @@ exports.main = async function (event, context) {
     ];
 
     // 按概率排序（降序）
-    results.sort(function (a, b) { return b.probability - a.probability; });
+    results.sort(function (a, b) {
+      return b.probability - a.probability;
+    });
 
     // 取最佳路径
-    var bestPath = results[0];
+    const bestPath = results[0];
 
     // 格式化成输出结构
-    var paths = results.map(function (r) {
+    const paths = results.map(function (r) {
       return {
         id: r.pathId,
         name: r.pathName,
@@ -133,17 +135,16 @@ exports.main = async function (event, context) {
     });
 
     // 差距分析
-    var gapAnalysis = computeGapAnalysis(results, answers);
+    const gapAnalysis = computeGapAnalysis(results, answers);
 
     // 估算
-    var estimatedTimeline = estimateTimeline(results);
-    var estimatedCost = estimateCost(results);
+    const estimatedTimeline = estimateTimeline(results);
+    const estimatedCost = estimateCost(results);
 
     // 相似案例数——查询真实数据
-    var similarCases = 0;
+    let similarCases = 0;
     try {
-      var caseResult = await db.collection('assessment_cases')
-        .where({ pathId: bestPath.pathId }).count();
+      const caseResult = await db.collection('assessment_cases').where({ pathId: bestPath.pathId }).count();
       similarCases = caseResult.total || 0;
     } catch (e) {
       similarCases = 0;

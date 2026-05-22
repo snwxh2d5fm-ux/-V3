@@ -61,7 +61,16 @@
 
     "audit_logging": {
       "collection": "ocr_audit",
-      "fields": ["_openid", "doc_type", "selected_path", "ocr_available", "matched", "text_length", "duration_ms", "created_at"],
+      "fields": [
+        "_openid",
+        "doc_type",
+        "selected_path",
+        "ocr_available",
+        "matched",
+        "text_length",
+        "duration_ms",
+        "created_at"
+      ],
       "retention_days": 90
     }
   },

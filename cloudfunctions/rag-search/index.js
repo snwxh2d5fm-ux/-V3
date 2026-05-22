@@ -21,18 +21,35 @@ const _ = db.command;
 //  Layer 2: 检索后 K2 禁止模式扫描 (POST_RETRIEVAL)
 // ============================================================
 const POST_RETRIEVAL_FORBIDDEN_PATTERNS = [
-  '圆角边框', '防伪特征', '光变油墨', '微缩文字', '全息防伪',
-  '安全特征', '校验位算法', 'Canny', 'AES-256', 'PBKDF2',
-  'WASM', 'OCR模型', 'validation_rules', 'vault_mode', 'privacy_level',
-  'MOD 11', 'MOD11', '边缘检测', '轮廓近似', '安全线', '防伪底纹'
+  '圆角边框',
+  '防伪特征',
+  '光变油墨',
+  '微缩文字',
+  '全息防伪',
+  '安全特征',
+  '校验位算法',
+  'Canny',
+  'AES-256',
+  'PBKDF2',
+  'WASM',
+  'OCR模型',
+  'validation_rules',
+  'vault_mode',
+  'privacy_level',
+  'MOD 11',
+  'MOD11',
+  '边缘检测',
+  '轮廓近似',
+  '安全线',
+  '防伪底纹',
 ];
 
 function filterForbiddenChunks(chunks) {
-  return chunks.filter(function(c) {
+  return chunks.filter(function (c) {
     const text = c.content || (c.chunk && c.chunk.content) || '';
     for (let i = 0; i < POST_RETRIEVAL_FORBIDDEN_PATTERNS.length; i++) {
       if (text.indexOf(POST_RETRIEVAL_FORBIDDEN_PATTERNS[i]) !== -1) {
-        console.log('[rag-search V7] filtered K2 content:', POST_RETRIEVAL_FORBIDDEN_PATTERNS[i]);
+        console.debug('[rag-search V7] filtered K2 content:', POST_RETRIEVAL_FORBIDDEN_PATTERNS[i]);
         return false;
       }
     }
@@ -91,7 +108,7 @@ function getFetchFields() {
     source: true,
     doc_id: true,
     name_zh: true,
-    content_hash: true
+    content_hash: true,
   };
 }
 
@@ -110,11 +127,7 @@ async function keywordSearch(query, filters, topK) {
     const pattern = db.RegExp({ regexp: query, options: 'i' });
     where.content = pattern;
 
-    const res = await db.collection('knowledge_chunks')
-      .where(where)
-      .field(getFetchFields())
-      .limit(topK)
-      .get();
+    const res = await db.collection('knowledge_chunks').where(where).field(getFetchFields()).limit(topK).get();
 
     let results = res.data || [];
 
@@ -124,7 +137,7 @@ async function keywordSearch(query, filters, topK) {
     return {
       results: results.slice(0, topK),
       total: results.length,
-      filtered_by_k2: (res.data || []).length - results.length
+      filtered_by_k2: (res.data || []).length - results.length,
     };
   } catch (e) {
     console.error('[rag-search] keywordSearch error:', e.message);
@@ -144,7 +157,8 @@ async function vectorSearch(queryEmbedding, filters, topK) {
     // 注: CloudBase NoSQL 不原生支持向量运算。
     // 实际部署时建议使用 CloudBase 的 MySQL 向量扩展或外部向量数据库。
     // 此处提供简化版: 拉取满足 where 条件的记录做内存距离计算。
-    const res = await db.collection('knowledge_chunks')
+    const res = await db
+      .collection('knowledge_chunks')
       .where(where)
       .field(getFetchFields())
       .limit(200) // 候选池
@@ -153,7 +167,7 @@ async function vectorSearch(queryEmbedding, filters, topK) {
     const candidates = res.data || [];
 
     // 内存向量相似度 (cosine via dot product)
-    const scored = candidates.map(function(c) {
+    const scored = candidates.map(function (c) {
       const emb = c.embedding;
       if (!emb || !Array.isArray(emb) || emb.length === 0) {
         return { chunk: c, score: 0 };
@@ -170,8 +184,12 @@ async function vectorSearch(queryEmbedding, filters, topK) {
       return { chunk: c, score: score };
     });
 
-    scored.sort(function(a, b) { return b.score - a.score; });
-    const top = scored.slice(0, topK).map(function(s) { return s.chunk; });
+    scored.sort(function (a, b) {
+      return b.score - a.score;
+    });
+    const top = scored.slice(0, topK).map(function (s) {
+      return s.chunk;
+    });
 
     // Layer 2: 检索后 K2 过滤
     const beforeCount = top.length;
@@ -180,17 +198,20 @@ async function vectorSearch(queryEmbedding, filters, topK) {
     return {
       results: top,
       total: top.length,
-      filtered_by_k2: beforeCount - top.length
+      filtered_by_k2: beforeCount - top.length,
     };
   } catch (e) {
     console.error('[rag-search] vectorSearch error:', e.message);
-    console.warn('[rag-search] vectorSearch degraded: RegExp search failed, falling back to batch fetch', e.stack || e.message);
+    console.warn(
+      '[rag-search] vectorSearch degraded: RegExp search failed, falling back to batch fetch',
+      e.stack || e.message,
+    );
     return {
       results: [],
       total: 0,
       error: e.message,
       degraded: true,
-      degradation_reason: 'RegExp search failed: ' + e.message
+      degradation_reason: 'RegExp search failed: ' + e.message,
     };
   }
 }
@@ -236,14 +257,14 @@ async function hybridSearch(query, queryEmbedding, filters, topK) {
     total: Math.min(merged.length, topK),
     filtered_by_k2: beforeCount - merged.length,
     keyword_total: kwRes.total,
-    vector_total: vecRes.total
+    vector_total: vecRes.total,
   };
 }
 
 // ============================================================
 //  主入口
 // ============================================================
-exports.main = async function(event) {
+exports.main = async function (event) {
   const action = event.action || 'keyword';
   const query = event.query || '';
   const queryEmbedding = event.queryEmbedding || null;

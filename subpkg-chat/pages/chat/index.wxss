@@ -91,7 +91,7 @@
 }
 
 .user-avatar {
-  background: #DBEAFE;
+  background: #dbeafe;
   margin-left: 12rpx;
   font-size: 28rpx;
 }
@@ -110,7 +110,7 @@
   background: var(--color-bg-card);
   color: var(--gray-800);
   border-top-left-radius: 4rpx;
-  box-shadow: 0 1rpx 4rpx rgba(0,0,0,0.05);
+  box-shadow: 0 1rpx 4rpx rgba(0, 0, 0, 0.05);
 }
 
 .bubble.user {
@@ -152,8 +152,14 @@
 }
 
 @keyframes typing {
-  0%, 60%, 100% { opacity: 0.3; }
-  30% { opacity: 1; }
+  0%,
+  60%,
+  100% {
+    opacity: 0.3;
+  }
+  30% {
+    opacity: 1;
+  }
 }
 
 /* ========== [V4.1-PHASE2] Task 2: 游戏化进度条 ========== */
@@ -194,17 +200,17 @@
 
 .quick-reply-btn {
   padding: 8rpx 24rpx;
-  background: linear-gradient(135deg, #EFF6FF 0%, #DBEAFE 100%);
-  border: 1rpx solid #93C5FD;
+  background: linear-gradient(135deg, #eff6ff 0%, #dbeafe 100%);
+  border: 1rpx solid #93c5fd;
   border-radius: 32rpx;
   font-size: 24rpx;
-  color: #1D4ED8;
+  color: #1d4ed8;
   white-space: nowrap;
   box-shadow: 0 2rpx 4rpx rgba(37, 99, 235, 0.1);
 }
 
 .quick-reply-btn:active {
-  background: linear-gradient(135deg, #DBEAFE 0%, #BFDBFE 100%);
+  background: linear-gradient(135deg, #dbeafe 0%, #bfdbfe 100%);
   transform: scale(0.96);
 }
 
@@ -296,7 +302,7 @@
 
 .safety-banner {
   background: var(--color-bg-card);
-  border-left: 6rpx solid #FFC107;
+  border-left: 6rpx solid #ffc107;
   padding: 12rpx 16rpx;
   margin-bottom: 8rpx;
   border-radius: 4rpx;
@@ -343,19 +349,19 @@
   line-height: 1.4;
 }
 .confidence-high {
-  background: #D1FAE5;
-  color: #065F46;
-  border: 1rpx solid #A7F3D0;
+  background: #d1fae5;
+  color: #065f46;
+  border: 1rpx solid #a7f3d0;
 }
 .confidence-medium {
-  background: #FEF3C7;
-  color: #92400E;
-  border: 1rpx solid #FDE68A;
+  background: #fef3c7;
+  color: #92400e;
+  border: 1rpx solid #fde68a;
 }
 .confidence-low {
-  background: #FEE2E2;
-  color: #991B1B;
-  border: 1rpx solid #FCA5A5;
+  background: #fee2e2;
+  color: #991b1b;
+  border: 1rpx solid #fca5a5;
 }
 .confidence-icon {
   font-size: 24rpx;
@@ -363,10 +369,10 @@
 .low-confidence-warning {
   margin-top: 8rpx;
   padding: 8rpx 12rpx;
-  background: #FFF5F5;
-  border: 1rpx solid #FED7D7;
+  background: #fff5f5;
+  border: 1rpx solid #fed7d7;
   border-radius: 8rpx;
   font-size: 22rpx;
-  color: #9B2C2C;
+  color: #9b2c2c;
   line-height: 1.5;
 }

@@ -22,8 +22,8 @@ cloudfunctions/
 exports.main = async (event, context) => {
   return {
     code: 0,
-    message: "ok",
-    data: { event }
+    message: 'ok',
+    data: { event },
   };
 };
 ```
@@ -36,14 +36,14 @@ Use `manageFunctions(action="createFunction")` and make the function type explic
 
 ```javascript
 manageFunctions({
-  action: "createFunction",
+  action: 'createFunction',
   func: {
-    name: "myFunction",
-    type: "Event",
-    runtime: "Nodejs18.15",
-    timeout: 30
+    name: 'myFunction',
+    type: 'Event',
+    runtime: 'Nodejs18.15',
+    timeout: 30,
   },
-  functionRootPath: "/absolute/path/to/cloudfunctions"
+  functionRootPath: '/absolute/path/to/cloudfunctions',
 });
 ```
 
@@ -53,9 +53,9 @@ Use `manageFunctions(action="updateFunctionCode")` when only code changes.
 
 ```javascript
 manageFunctions({
-  action: "updateFunctionCode",
-  functionName: "myFunction",
-  functionRootPath: "/absolute/path/to/cloudfunctions"
+  action: 'updateFunctionCode',
+  functionName: 'myFunction',
+  functionRootPath: '/absolute/path/to/cloudfunctions',
 });
 ```
 
@@ -70,12 +70,12 @@ manageFunctions({
 ### Web
 
 ```javascript
-import cloudbase from "@cloudbase/js-sdk";
+import cloudbase from '@cloudbase/js-sdk';
 
-const app = cloudbase.init({ env: "your-env-id" });
+const app = cloudbase.init({ env: 'your-env-id' });
 const result = await app.callFunction({
-  name: "myFunction",
-  data: { userId: "123" }
+  name: 'myFunction',
+  data: { userId: '123' },
 });
 ```
 
@@ -83,20 +83,20 @@ const result = await app.callFunction({
 
 ```javascript
 const result = await wx.cloud.callFunction({
-  name: "myFunction",
-  data: { userId: "123" }
+  name: 'myFunction',
+  data: { userId: '123' },
 });
 ```
 
 ### Node.js backend
 
 ```javascript
-const tcb = require("@cloudbase/node-sdk");
-const app = tcb.init({ env: "your-env-id" });
+const tcb = require('@cloudbase/node-sdk');
+const app = tcb.init({ env: 'your-env-id' });
 
 const result = await app.callFunction({
-  name: "myFunction",
-  data: { userId: "123" }
+  name: 'myFunction',
+  data: { userId: '123' },
 });
 ```
 
@@ -120,14 +120,14 @@ exports.main = async (event, context) => {
     const result = await doWork(event);
     return {
       code: 0,
-      message: "Success",
-      data: result
+      message: 'Success',
+      data: result,
     };
   } catch (error) {
     return {
       code: -1,
       message: error.message,
-      data: null
+      data: null,
     };
   }
 };

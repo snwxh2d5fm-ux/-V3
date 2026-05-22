@@ -24,7 +24,7 @@ Page({
     batchStats: null,
 
     // 熔断
-    killed: false
+    killed: false,
   },
 
   onShow() {
@@ -36,7 +36,7 @@ Page({
     try {
       const res = await wx.cloud.callFunction({
         name: 'invite-code',
-        data: { action: 'get-code-stats' }
+        data: { action: 'get-code-stats' },
       });
       if (res.result && res.result.code === 0) {
         this.setData({ stats: res.result.data });
@@ -51,9 +51,15 @@ Page({
   },
 
   // ===== 生成 =====
-  onGenCount(e) { this.setData({ genCount: parseInt(e.detail.value) || 50 }); },
-  onExpireDays(e) { this.setData({ expireDays: parseInt(e.detail.value) || 60 }); },
-  onChannelChange(e) { this.setData({ selectedChannel: parseInt(e.detail.value) }); },
+  onGenCount(e) {
+    this.setData({ genCount: parseInt(e.detail.value) || 50 });
+  },
+  onExpireDays(e) {
+    this.setData({ expireDays: parseInt(e.detail.value) || 60 });
+  },
+  onChannelChange(e) {
+    this.setData({ selectedChannel: parseInt(e.detail.value) });
+  },
 
   async generateCodes() {
     const { genCount, channels, selectedChannel, expireDays } = this.data;
@@ -71,8 +77,8 @@ Page({
           action: 'generate-seed-codes',
           count: genCount,
           channel: channels[selectedChannel],
-          expiresInDays: expireDays
-        }
+          expiresInDays: expireDays,
+        },
       });
 
       if (res.result && res.result.code === 0) {
@@ -80,7 +86,7 @@ Page({
         this.setData({
           generating: false,
           generatedCodes: data.codes || [],
-          lastBatch: data.batch || ''
+          lastBatch: data.batch || '',
         });
         wx.showToast({ title: `已生成 ${data.count} 个码` });
         this.loadStats();
@@ -99,12 +105,14 @@ Page({
     const text = this.data.generatedCodes.join('\n');
     wx.setClipboardData({
       data: text,
-      success: () => wx.showToast({ title: '已复制' })
+      success: () => wx.showToast({ title: '已复制' }),
     });
   },
 
   // ===== 查询 =====
-  onSearchKey(e) { this.setData({ searchKey: e.detail.value || '' }); },
+  onSearchKey(e) {
+    this.setData({ searchKey: e.detail.value || '' });
+  },
 
   async searchCode() {
     const key = this.data.searchKey.trim();
@@ -117,25 +125,25 @@ Page({
         // 单个码查询
         const res = await wx.cloud.callFunction({
           name: 'invite-code',
-          data: { action: 'query-code-status', code: key }
+          data: { action: 'query-code-status', code: key },
         });
         this.setData({
           searching: false,
-          searchResult: res.result || { status: '未知', msg: '查询失败' }
+          searchResult: res.result || { status: '未知', msg: '查询失败' },
         });
       } else {
         // 批次查询
         const res = await wx.cloud.callFunction({
           name: 'invite-code',
-          data: { action: 'get-code-stats', batchId: key }
+          data: { action: 'get-code-stats', batchId: key },
         });
         if (res.result && res.result.code === 0) {
           this.setData({
             searching: false,
             batchStats: {
               batch: key,
-              ...res.result.data
-            }
+              ...res.result.data,
+            },
           });
         } else {
           this.setData({ searching: false });
@@ -157,7 +165,7 @@ Page({
     try {
       const res = await wx.cloud.callFunction({
         name: 'invite-code',
-        data: { action: 'revoke-code', code }
+        data: { action: 'revoke-code', code },
       });
       if (res.result && res.result.code === 0) {
         wx.showToast({ title: '已撤销' });
@@ -182,7 +190,7 @@ Page({
       wx.showLoading({ title: '撤销中...' });
       const res = await wx.cloud.callFunction({
         name: 'invite-code',
-        data: { action: 'revoke-batch', batchId: batch }
+        data: { action: 'revoke-batch', batchId: batch },
       });
       wx.hideLoading();
 
@@ -207,9 +215,9 @@ Page({
     this.setData({ killed: !e.detail.value });
     wx.showToast({
       title: e.detail.value ? '兑换功能已恢复' : '兑换功能已暂停',
-      icon: 'none'
+      icon: 'none',
     });
-  }
+  },
 });
 
 /** Promise化的确认弹窗 */
@@ -221,7 +229,7 @@ function showConfirm(title, content) {
       confirmText: '确定',
       cancelText: '取消',
       confirmColor: '#ff4d4f',
-      success: (res) => resolve(res.confirm)
+      success: (res) => resolve(res.confirm),
     });
   });
 }

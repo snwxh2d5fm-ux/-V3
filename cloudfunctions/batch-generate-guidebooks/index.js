@@ -13,21 +13,31 @@
  *   3. 按 source_title 聚合去重
  *   4. 规则化提取：标题→标题、##/数字/①→分段、Q:/A:→FAQ
  */
-var cloud = require('wx-server-sdk');
+const cloud = require('wx-server-sdk');
 cloud.init({ env: cloud.DYNAMIC_CURRENT_ENV });
-var db = cloud.database();
-var _ = db.command;
+const db = cloud.database();
+const _ = db.command;
 
 // ========== 分类映射 ==========
-var DOMAIN_MAP = {
-  'QMAS': 'qmas', 'TTPS': 'ttps', 'ASMTP': 'asmpt', 'IANG': 'iang',
-  'LANDING': 'landing', 'RENEWAL': 'renewal', 'PR': 'pr_sprint',
-  'LIFE': 'life', 'TAX': 'life', 'EDUCATION': 'life',
-  'GENERAL': 'life', 'BANK': 'life', 'HOUSING': 'life', 'OTHER': 'other'
+const DOMAIN_MAP = {
+  QMAS: 'qmas',
+  TTPS: 'ttps',
+  ASMTP: 'asmpt',
+  IANG: 'iang',
+  LANDING: 'landing',
+  RENEWAL: 'renewal',
+  PR: 'pr_sprint',
+  LIFE: 'life',
+  TAX: 'life',
+  EDUCATION: 'life',
+  GENERAL: 'life',
+  BANK: 'life',
+  HOUSING: 'life',
+  OTHER: 'other',
 };
 
 // 标题关键词 → 分类映射
-var KEYWORD_CATEGORY = [
+const KEYWORD_CATEGORY = [
   { words: ['银行', '开户', '汇丰', '中银', '渣打', 'ZA Bank', '港卡'], cat: 'life' },
   { words: ['租房', '租金', '劏房', '屋苑', '地产'], cat: 'life' },
   { words: ['驾照', '换领', '运输署'], cat: 'life' },
@@ -42,16 +52,16 @@ var KEYWORD_CATEGORY = [
   { words: ['IANG', '学生签证', '毕业'], cat: 'iang' },
   { words: ['过关', '入境', '小白条', '身份证', '人事登记'], cat: 'landing' },
   { words: ['MPF', '强积金', '公积金'], cat: 'landing' },
-  { words: ['CIES', '资本投资者', '3000万'], cat: 'pr_sprint' }
+  { words: ['CIES', '资本投资者', '3000万'], cat: 'pr_sprint' },
 ];
 
 // ========== 根据关键词/domain 确定分类 ==========
 function getCategory(content, domain) {
   if (domain && DOMAIN_MAP[domain]) return DOMAIN_MAP[domain];
-  var text = (content || '').substring(0, 200);
-  for (var i = 0; i < KEYWORD_CATEGORY.length; i++) {
-    var kw = KEYWORD_CATEGORY[i];
-    for (var j = 0; j < kw.words.length; j++) {
+  const text = (content || '').substring(0, 200);
+  for (let i = 0; i < KEYWORD_CATEGORY.length; i++) {
+    const kw = KEYWORD_CATEGORY[i];
+    for (let j = 0; j < kw.words.length; j++) {
       if (text.indexOf(kw.words[j]) >= 0) return kw.cat;
     }
   }
@@ -61,7 +71,7 @@ function getCategory(content, domain) {
 // ========== 提取标题（去掉知乎前缀、作者名等） ==========
 function cleanTitle(raw) {
   if (!raw) return '未命名攻略';
-  var t = raw
+  let t = raw
     // 去掉 markdown 标题符号
     .replace(/^#{1,3}\s*/g, '')
     // 去掉知乎来源标记
@@ -85,10 +95,17 @@ function cleanTitle(raw) {
 // ========== 提取描述（第一段内容摘要） ==========
 function extractDesc(content) {
   if (!content) return '';
-  var lines = content.split('\n');
-  for (var i = 0; i < Math.min(lines.length, 10); i++) {
-    var line = lines[i].trim();
-    if (!line || line.startsWith('#') || line.startsWith('**作者') || line.startsWith('**来源') || line.startsWith('目录')) continue;
+  const lines = content.split('\n');
+  for (let i = 0; i < Math.min(lines.length, 10); i++) {
+    const line = lines[i].trim();
+    if (
+      !line ||
+      line.startsWith('#') ||
+      line.startsWith('**作者') ||
+      line.startsWith('**来源') ||
+      line.startsWith('目录')
+    )
+      continue;
     if (line.length > 15) return line.substring(0, 80).replace(/\*/g, '');
   }
   return '';
@@ -97,14 +114,31 @@ function extractDesc(content) {
 // ========== 提取第一段非元数据正文（fallback desc） ==========
 function extractFirstRealParagraph(content) {
   if (!content) return '';
-  var lines = content.split('\n');
-  var skipPrefixes = ['**作者', '**来源', '**发文', '**采集', '**互动', '采集时间', '发文时间', '---', '# ', '## ', '目录', '参考自', 'http'];
-  for (var i = 0; i < Math.min(lines.length, 30); i++) {
-    var line = lines[i].trim();
+  const lines = content.split('\n');
+  const skipPrefixes = [
+    '**作者',
+    '**来源',
+    '**发文',
+    '**采集',
+    '**互动',
+    '采集时间',
+    '发文时间',
+    '---',
+    '# ',
+    '## ',
+    '目录',
+    '参考自',
+    'http',
+  ];
+  for (let i = 0; i < Math.min(lines.length, 30); i++) {
+    const line = lines[i].trim();
     if (!line || line === '\u200B') continue;
-    var skip = false;
-    for (var s = 0; s < skipPrefixes.length; s++) {
-      if (line.indexOf(skipPrefixes[s]) === 0) { skip = true; break; }
+    let skip = false;
+    for (let s = 0; s < skipPrefixes.length; s++) {
+      if (line.indexOf(skipPrefixes[s]) === 0) {
+        skip = true;
+        break;
+      }
     }
     if (skip) continue;
     if (line.length > 15) return line.replace(/\*/g, '').substring(0, 80);
@@ -118,7 +152,9 @@ function cleanTableText(line) {
   if (/^\|[\s\-:|]+\|$/.test(line)) return '';
   // 表格行 "| col1 | col2 |" → "col1：col2"
   if (/^\|.+\|$/.test(line)) {
-    var cells = line.split('|').filter(function(c) { return c.trim(); });
+    const cells = line.split('|').filter(function (c) {
+      return c.trim();
+    });
     if (cells.length >= 2) {
       return cells[0].trim() + '：' + cells.slice(1).join('；');
     }
@@ -130,30 +166,43 @@ function cleanTableText(line) {
 // ========== 提取分段标题和正文 ==========
 function extractSections(content) {
   if (!content) return [];
-  var sections = [];
-  var currentHeading = '';
-  var currentBody = '';
+  const sections = [];
+  let currentHeading = '';
+  let currentBody = '';
 
-  var lines = content.split('\n');
-  for (var i = 0; i < lines.length; i++) {
-    var line = lines[i].trim();
+  const lines = content.split('\n');
+  for (let i = 0; i < lines.length; i++) {
+    let line = lines[i].trim();
     if (!line) continue;
 
     // 跳过元数据行
-    if (line.startsWith('**作者') || line.startsWith('**来源') || line.startsWith('**发文') ||
-        line.startsWith('**采集') || line.startsWith('**互动') || line.startsWith('---') ||
-        line.startsWith('参考自') || line.startsWith('推荐阅读') || line.startsWith('相关咨询') ||
-        line.startsWith('http') || line.startsWith('图 |') || line === '\u200B') continue;
+    if (
+      line.startsWith('**作者') ||
+      line.startsWith('**来源') ||
+      line.startsWith('**发文') ||
+      line.startsWith('**采集') ||
+      line.startsWith('**互动') ||
+      line.startsWith('---') ||
+      line.startsWith('参考自') ||
+      line.startsWith('推荐阅读') ||
+      line.startsWith('相关咨询') ||
+      line.startsWith('http') ||
+      line.startsWith('图 |') ||
+      line === '\u200B'
+    )
+      continue;
 
     // 表格清洗（非标题行）
     line = cleanTableText(line);
     if (!line) continue;
 
     // 检测段落标题（确保不是表格行残留）
-    var isHeading = false;
-    var headingText = line;
-    if (/^#{1,3}\s/.test(line)) { isHeading = true; headingText = line.replace(/^#{1,3}\s*/, ''); }
-    else if (/^[一二三四五六七八九十]、/.test(line) && !/[\d%]/.test(line)) isHeading = true;
+    let isHeading = false;
+    let headingText = line;
+    if (/^#{1,3}\s/.test(line)) {
+      isHeading = true;
+      headingText = line.replace(/^#{1,3}\s*/, '');
+    } else if (/^[一二三四五六七八九十]、/.test(line) && !/[\d%]/.test(line)) isHeading = true;
     else if (/^（[一二三四五六七八九十]）/.test(line)) isHeading = true;
     else if (/^\d+[\.、]/.test(line) && line.length < 25 && line.indexOf('|') < 0) isHeading = true;
     else if (/^(第[一二三四五六七八九十\d]+[步条节项章]|总结|写在前面|前言|注意)/.test(line)) isHeading = true;
@@ -183,15 +232,15 @@ function extractSections(content) {
   }
 
   // 去重：合并同标题的 section，删除空 section
-  var deduped = [];
-  var seenHeadings = {};
-  for (var d = 0; d < sections.length; d++) {
-    var h = sections[d].heading;
-    var b = sections[d].body;
+  const deduped = [];
+  const seenHeadings = {};
+  for (let d = 0; d < sections.length; d++) {
+    const h = sections[d].heading;
+    const b = sections[d].body;
     if (!b) continue; // 跳过空 body
     if (seenHeadings[h]) {
       // 合并到已有 section
-      for (var dd = 0; dd < deduped.length; dd++) {
+      for (let dd = 0; dd < deduped.length; dd++) {
         if (deduped[dd].heading === h) {
           deduped[dd].body += '。' + b;
           break;
@@ -208,11 +257,11 @@ function extractSections(content) {
 // ========== 内容安全：去平台名/作者/ID/推广 + 二创改写 ==========
 
 // 黑名单词库（正则模式 + 替换提示）
-var REDACT_PATTERNS = [
+const REDACT_PATTERNS = [
   // --- 平台/APP名 → 去品牌化 ---
   { re: /知乎/g, sub: '知识社区' },
   { re: /微信公众号/g, sub: '公众号' },
-  { re: /微信/g, sub: '' },       // 独立"微信"直接去掉
+  { re: /微信/g, sub: '' }, // 独立"微信"直接去掉
   { re: /微博/g, sub: '社交平台' },
   { re: /小红书/g, sub: '社区' },
   { re: /淘宝/g, sub: '电商平台' },
@@ -251,11 +300,11 @@ var REDACT_PATTERNS = [
   // --- 图片标记 ---
   { re: /图\s*\|[^。\n]+/g, sub: '' },
   { re: /二维码[^。]+/g, sub: '' },
-  { re: /\(下图\)/g, sub: '' }
+  { re: /\(下图\)/g, sub: '' },
 ];
 
 // 二创改写词库（常见表述→原创表述）
-var REWRITE_PATTERNS = [
+const REWRITE_PATTERNS = [
   { re: /保姆级教程/g, sub: '完整指南' },
   { re: /本文首发于/g, sub: '' },
   { re: /全文仅个人体验[^。]+。/g, sub: '' },
@@ -271,35 +320,37 @@ var REWRITE_PATTERNS = [
   { re: /我给大家/g, sub: '' },
   { re: /必须和大家说/g, sub: '需要说明' },
   { re: /直接放干货/g, sub: '以下是核心内容' },
-  { re: /全是我们团队亲自实测过/g, sub: '经过验证' }
+  { re: /全是我们团队亲自实测过/g, sub: '经过验证' },
 ];
 
 function redactContent(text) {
   if (!text) return '';
 
   // 第一轮：去平台/作者/ID
-  for (var i = 0; i < REDACT_PATTERNS.length; i++) {
+  for (let i = 0; i < REDACT_PATTERNS.length; i++) {
     text = text.replace(REDACT_PATTERNS[i].re, REDACT_PATTERNS[i].sub);
   }
 
   // 第二轮：二创改写（去个人化表述）
-  for (var j = 0; j < REWRITE_PATTERNS.length; j++) {
+  for (let j = 0; j < REWRITE_PATTERNS.length; j++) {
     text = text.replace(REWRITE_PATTERNS[j].re, REWRITE_PATTERNS[j].sub);
   }
 
   // 第三轮：清理残留
   text = text
-    .replace(/[\\n\\r]{2,}/g, '\n')     // 合并多余空行
-    .replace(/^\s+|\s+$/g, '')          // 去首尾空白
-    .replace(/\s{2,}/g, ' ')            // 合并多余空格
-    .replace(/[,，。；;]{2,}/g, function(m) { return m[0]; }); // 合并重复标点
+    .replace(/[\\n\\r]{2,}/g, '\n') // 合并多余空行
+    .replace(/^\s+|\s+$/g, '') // 去首尾空白
+    .replace(/\s{2,}/g, ' ') // 合并多余空格
+    .replace(/[,，。；;]{2,}/g, function (m) {
+      return m[0];
+    }); // 合并重复标点
 
   return text;
 }
 
 // ========== 正文清理 ==========
 function cleanBody(body) {
-  body = redactContent(body);  // ★ 先过安全层
+  body = redactContent(body); // ★ 先过安全层
   return body
     .replace(/[。.]{2,}/g, '。')
     .replace(/^\s*[。.]\s*/, '')
@@ -311,19 +362,19 @@ function cleanBody(body) {
 // ========== 提取精选金句/要点 ==========
 function extractFeatures(content) {
   if (!content) return [];
-  var features = [];
-  var lines = content.split('\n');
-  for (var i = 0; i < lines.length; i++) {
-    var line = lines[i].trim();
+  const features = [];
+  const lines = content.split('\n');
+  for (let i = 0; i < lines.length; i++) {
+    const line = lines[i].trim();
     if (!line) continue;
     // 提取以 ✓ ✅ ⚠️ 💡 开头的要点
     if (/^[✓✅⚠️💡🔴🟢❶❷❸❹❺]/.test(line)) {
-      var f = line.substring(1).trim().replace(/\*/g, '').substring(0, 40);
+      const f = line.substring(1).trim().replace(/\*/g, '').substring(0, 40);
       if (f) features.push(f);
     }
     // 提取以 - • · — 开头的列表项
     if (/^[-•·—]/.test(line)) {
-      var f2 = line.substring(1).trim().replace(/\*/g, '').substring(0, 40);
+      const f2 = line.substring(1).trim().replace(/\*/g, '').substring(0, 40);
       if (f2 && features.indexOf(f2) < 0) features.push(f2);
     }
   }
@@ -332,10 +383,10 @@ function extractFeatures(content) {
 
 // ========== 提取标签 ==========
 function extractTags(content, domain) {
-  var tags = [];
+  const tags = [];
   if (domain && domain !== 'GENERAL') tags.push(domain.toLowerCase());
-  var keywords = ['银行', '开户', '租房', '驾照', '教育', '医疗', '税', '强积金', '续签', '永居'];
-  for (var i = 0; i < keywords.length; i++) {
+  const keywords = ['银行', '开户', '租房', '驾照', '教育', '医疗', '税', '强积金', '续签', '永居'];
+  for (let i = 0; i < keywords.length; i++) {
     if (content.indexOf(keywords[i]) >= 0 && tags.indexOf(keywords[i]) < 0) {
       tags.push(keywords[i]);
     }
@@ -347,15 +398,22 @@ function extractTags(content, domain) {
 function extractTitleFromContent(content) {
   if (!content) return '';
   // 找第一个 "# " 或 "## " 标题行
-  var lines = content.split('\n');
-  for (var i = 0; i < Math.min(lines.length, 5); i++) {
-    var line = lines[i].trim();
+  const lines = content.split('\n');
+  for (let i = 0; i < Math.min(lines.length, 5); i++) {
+    const line = lines[i].trim();
     // 跳过元数据行
-    if (line.startsWith('**作者') || line.startsWith('**来源') ||
-        line.startsWith('**发文') || line.startsWith('**采集') ||
-        line.startsWith('**互动') || line === '---' || line === '\u200B') continue;
+    if (
+      line.startsWith('**作者') ||
+      line.startsWith('**来源') ||
+      line.startsWith('**发文') ||
+      line.startsWith('**采集') ||
+      line.startsWith('**互动') ||
+      line === '---' ||
+      line === '\u200B'
+    )
+      continue;
     // 匹配 "# xxx" 标题
-    var m = line.match(/^#{1,3}\s+(.+)/);
+    const m = line.match(/^#{1,3}\s+(.+)/);
     if (m) return cleanTitle(m[1]);
   }
   return '';
@@ -363,27 +421,27 @@ function extractTitleFromContent(content) {
 
 // ========== 为单条 chunk 生成攻略条目 ==========
 function chunkToArticle(chunk, index) {
-  var content = chunk.content || '';
+  const content = chunk.content || '';
   // 优先 source_title，如果是 DB-xxx 则从正文提取
-  var rawTitle = chunk.source_title || '';
+  let rawTitle = chunk.source_title || '';
   if (/^DB-/.test(rawTitle) || rawTitle.length < 5) {
-    var fromContent = extractTitleFromContent(content);
+    const fromContent = extractTitleFromContent(content);
     if (fromContent) rawTitle = fromContent;
   }
-  var title = redactContent(cleanTitle(rawTitle));
-  var domain = chunk.knowledge_domain || 'GENERAL';
-  var category = getCategory(content, domain);
-  var desc = extractDesc(content);
+  const title = redactContent(cleanTitle(rawTitle));
+  const domain = chunk.knowledge_domain || 'GENERAL';
+  const category = getCategory(content, domain);
+  let desc = extractDesc(content);
   // 如果 desc 是元数据（采集时间等），重新提取
   if (/^(采集时间|发文时间)/.test(desc) || desc.length < 10) {
     desc = extractFirstRealParagraph(content);
   }
-  desc = redactContent(desc);  // ★ 过安全层
-  var sections = extractSections(content);
-  var features = extractFeatures(content);
-  var tags = extractTags(content, domain);
-  var confidence = chunk.content_grade === 'green' ? 'B' : 'C';
-  var articleId = 'auto_' + category + '_' + (index + 1).toString().padStart(3, '0');
+  desc = redactContent(desc); // ★ 过安全层
+  const sections = extractSections(content);
+  const features = extractFeatures(content);
+  const tags = extractTags(content, domain);
+  const confidence = chunk.content_grade === 'green' ? 'B' : 'C';
+  const articleId = 'auto_' + category + '_' + (index + 1).toString().padStart(3, '0');
 
   return {
     id: articleId,
@@ -402,20 +460,29 @@ function chunkToArticle(chunk, index) {
     sections: sections,
     features: features,
     pitfalls: [],
-    materials: []
+    materials: [],
   };
 }
 
 function getIcon(cat) {
-  var icons = { qmas: '🎯', ttps: '💰', asmpt: '💼', iang: '🎓', landing: '🛃', renewal: '🔄', pr_sprint: '🏁', life: '📌' };
+  const icons = {
+    qmas: '🎯',
+    ttps: '💰',
+    asmpt: '💼',
+    iang: '🎓',
+    landing: '🛃',
+    renewal: '🔄',
+    pr_sprint: '🏁',
+    life: '📌',
+  };
   return icons[cat] || '📄';
 }
 
 // ========== 主入口 ==========
-exports.main = async function(event) {
-  var action = event.action || 'generate';
-  var limit = event.limit || 50;
-  var skip = event.skip || 0;
+exports.main = async function (event) {
+  const action = event.action || 'generate';
+  const limit = event.limit || 50;
+  const skip = event.skip || 0;
 
   try {
     if (action === 'stats') return await getStats();
@@ -428,28 +495,35 @@ exports.main = async function(event) {
 
 // ========== 统计数据 ==========
 async function getStats() {
-  var greenCount = await db.collection('knowledge_chunks').where({ content_grade: 'green' }).count();
-  var yellowCount = await db.collection('knowledge_chunks').where({ content_grade: 'yellow' }).count();
+  const greenCount = await db.collection('knowledge_chunks').where({ content_grade: 'green' }).count();
+  const yellowCount = await db.collection('knowledge_chunks').where({ content_grade: 'yellow' }).count();
 
   // 统计 green 的 source_title 数量
-  var greenSources = await db.collection('knowledge_chunks')
+  const greenSources = await db
+    .collection('knowledge_chunks')
     .where({ content_grade: 'green' })
     .field({ source_title: true })
     .limit(200)
     .get();
 
   // 统计 yellow 的 source_title 数量
-  var yellowSources = await db.collection('knowledge_chunks')
+  const yellowSources = await db
+    .collection('knowledge_chunks')
     .where({ content_grade: 'yellow' })
     .field({ source_title: true })
     .limit(200)
     .get();
 
-  var greenUniq = {}, yellowUniq = {};
-  var greenList = greenSources.data || [];
-  var yellowList = yellowSources.data || [];
-  for (var i = 0; i < greenList.length; i++) { greenUniq[greenList[i].source_title || ''] = true; }
-  for (var j = 0; j < yellowList.length; j++) { yellowUniq[yellowList[j].source_title || ''] = true; }
+  const greenUniq = {},
+    yellowUniq = {};
+  const greenList = greenSources.data || [];
+  const yellowList = yellowSources.data || [];
+  for (let i = 0; i < greenList.length; i++) {
+    greenUniq[greenList[i].source_title || ''] = true;
+  }
+  for (let j = 0; j < yellowList.length; j++) {
+    yellowUniq[yellowList[j].source_title || ''] = true;
+  }
 
   return {
     code: 0,
@@ -457,95 +531,112 @@ async function getStats() {
       greenCount: greenCount.total,
       yellowCount: yellowCount.total,
       greenUniqueSources: Object.keys(greenUniq).length,
-      yellowUniqueSources: Object.keys(yellowUniq).length
-    }
+      yellowUniqueSources: Object.keys(yellowUniq).length,
+    },
   };
 }
 
 // ========== 批量生成 ==========
 async function generate(limit, skip) {
   skip = skip || 0;
-  var articles = [];
-  var seenSources = {};
-  var skipped = 0;
+  const articles = [];
+  const seenSources = {};
+  let skipped = 0;
 
   // 第一优先：green 级官方内容
-  var greenRes = await db.collection('knowledge_chunks')
+  const greenRes = await db
+    .collection('knowledge_chunks')
     .where({ content_grade: 'green' })
     .field({ content: true, source_title: true, knowledge_domain: true, source_type: true, content_grade: true })
     .limit(200)
     .get();
 
-  var greenChunks = greenRes.data || [];
-  for (var i = 0; i < greenChunks.length; i++) {
-    var chunk = greenChunks[i];
-    var src = chunk.source_title || '';
+  const greenChunks = greenRes.data || [];
+  for (let i = 0; i < greenChunks.length; i++) {
+    const chunk = greenChunks[i];
+    const src = chunk.source_title || '';
     if (seenSources[src]) continue;
     seenSources[src] = true;
-    if (skipped < skip) { skipped++; continue; }
+    if (skipped < skip) {
+      skipped++;
+      continue;
+    }
     articles.push(chunkToArticle(chunk, articles.length));
     if (articles.length >= limit) break;
   }
 
   // 第二优先：yellow 级社区内容
   if (articles.length < limit) {
-    var remaining = limit - articles.length;
-    var yellowRes = await db.collection('knowledge_chunks')
+    const remaining = limit - articles.length;
+    const yellowRes = await db
+      .collection('knowledge_chunks')
       .where({ content_grade: 'yellow' })
       .field({ content: true, source_title: true, knowledge_domain: true, source_type: true, content_grade: true })
       .limit(Math.max(400, remaining * 3))
       .get();
 
-    var yellowChunks = yellowRes.data || [];
-    for (var j = 0; j < yellowChunks.length; j++) {
-      var yChunk = yellowChunks[j];
-      var ySrc = yChunk.source_title || '';
+    const yellowChunks = yellowRes.data || [];
+    for (let j = 0; j < yellowChunks.length; j++) {
+      const yChunk = yellowChunks[j];
+      const ySrc = yChunk.source_title || '';
       if (seenSources[ySrc]) continue;
       seenSources[ySrc] = true;
-      if (skipped < skip) { skipped++; continue; }
+      if (skipped < skip) {
+        skipped++;
+        continue;
+      }
       articles.push(chunkToArticle(yChunk, articles.length));
       if (articles.length >= limit) break;
     }
   }
 
   // === 内容安全审核 ===
-  var moderatedArticles = [];
-  var blockedCount = 0;
-  for (var k = 0; k < articles.length; k++) {
-    var article = articles[k];
+  const moderatedArticles = [];
+  let blockedCount = 0;
+  for (let k = 0; k < articles.length; k++) {
+    const article = articles[k];
     try {
-      var modRes = await cloud.callFunction({
+      const modRes = await cloud.callFunction({
         name: 'content-moderation',
         data: {
           action: 'moderateText',
-          content: ((article.title || '') + ' ' + (article.desc || '') + ' ' + 
-                   (article.sections || []).map(function(s) { return s.body || ''; }).join(' ')).substring(0, 9000),
+          content: (
+            (article.title || '') +
+            ' ' +
+            (article.desc || '') +
+            ' ' +
+            (article.sections || [])
+              .map(function (s) {
+                return s.body || '';
+              })
+              .join(' ')
+          ).substring(0, 9000),
           dataId: article.id,
-          source: 'batch-generate-guidebooks'
-        }
+          source: 'batch-generate-guidebooks',
+        },
       });
-      var modData = (modRes.result && modRes.result.data) ? modRes.result.data : {};
+      const modData = modRes.result && modRes.result.data ? modRes.result.data : {};
       article.moderation = {
         suggestion: modData.suggestion || 'Pass',
         label: modData.label || 'Normal',
         score: modData.score || 0,
-        keywords: modData.keywords || []
+        keywords: modData.keywords || [],
       };
       if (modData.suggestion === 'Block' && !modData.degraded) {
         blockedCount++;
         continue; // 跳过被拦截的文章
       }
     } catch (modErr) {
-      console.log('[batch-generate] 审核失败，默认放行:', article.id, modErr.message);
+      console.debug('[batch-generate] 审核失败，默认放行:', article.id, modErr.message);
       article.moderation = { suggestion: 'Pass', label: 'Normal', score: 0, keywords: [], degraded: true };
     }
     moderatedArticles.push(article);
   }
 
   // 统计各分类数量
-  var catCounts = {};
-  for (var m = 0; m < moderatedArticles.length; m++) {
-    var c = moderatedArticles[m].category;
+  const catCounts = {};
+  for (let m = 0; m < moderatedArticles.length; m++) {
+    const c = moderatedArticles[m].category;
     catCounts[c] = (catCounts[c] || 0) + 1;
   }
 
@@ -556,26 +647,26 @@ async function generate(limit, skip) {
       totalBeforeModeration: articles.length,
       blockedCount: blockedCount,
       categoryCounts: catCounts,
-      articles: moderatedArticles
-    }
+      articles: moderatedArticles,
+    },
   };
 }
 
 // ========== 导出 ==========
 async function exportArticles(maxResults, skip) {
-  var result = await generate(maxResults, skip);
+  const result = await generate(maxResults, skip);
   if (result.code !== 0) return result;
 
   // 格式化为可直接粘贴到 guidebook-data.js 的 JS 对象
-  var articles = result.data.articles;
-  var output = '// ==================== 自动生成攻略条目 ====================\n';
+  const articles = result.data.articles;
+  let output = '// ==================== 自动生成攻略条目 ====================\n';
   output += '// 从 knowledge_chunks 批量提取，时间: ' + new Date().toISOString() + '\n';
   output += '// 总计: ' + articles.length + ' 条\n\n';
 
-  for (var i = 0; i < articles.length; i++) {
-    var a = articles[i];
+  for (let i = 0; i < articles.length; i++) {
+    const a = articles[i];
     // 使用 JSON 序列化但格式化换行
-    var json = JSON.stringify(a, null, 2);
+    const json = JSON.stringify(a, null, 2);
     output += '  ' + a.id + ': ' + json + ',\n\n';
   }
 

@@ -37,10 +37,12 @@ exports.main = async (event) => {
       try {
         const fields = enrichMap[taskId];
         const updateData = {};
-        if (fields.required_items && fields.required_items.length > 0) updateData.required_items = fields.required_items;
+        if (fields.required_items && fields.required_items.length > 0)
+          updateData.required_items = fields.required_items;
         if (fields.tips && fields.tips.length > 0) updateData.tips = fields.tips;
         if (fields.pitfalls && fields.pitfalls.length > 0) updateData.pitfalls = fields.pitfalls;
-        if (fields.official_links && fields.official_links.length > 0) updateData.official_links = fields.official_links;
+        if (fields.official_links && fields.official_links.length > 0)
+          updateData.official_links = fields.official_links;
 
         if (Object.keys(updateData).length === 0) {
           stats.skipped++;
@@ -48,9 +50,7 @@ exports.main = async (event) => {
           return;
         }
 
-        const result = await db.collection('life_guide_tasks')
-          .where({ id: taskId })
-          .update({ data: updateData });
+        const result = await db.collection('life_guide_tasks').where({ id: taskId }).update({ data: updateData });
 
         if (result.stats && result.stats.updated > 0) {
           stats.updated++;

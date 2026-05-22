@@ -9,11 +9,11 @@
  * 遵循合规、安全、便捷三原则。
  */
 
-var app = getApp();
+const app = getApp();
 
 // 微信订阅消息模板 ID (V1 仅一个通用模板)
-var TMPL_REMIND = 'h3_x4HVt6xq_fVQXGv5DQCgi8J58pBvJtIcH9OIAd-k';
-var STORAGE_KEY = '__notify_v1__';
+const TMPL_REMIND = 'h3_x4HVt6xq_fVQXGv5DQCgi8J58pBvJtIcH9OIAd-k';
+const STORAGE_KEY = '__notify_v1__';
 
 Page({
   data: {
@@ -24,7 +24,7 @@ Page({
       icon: '🔴',
       desc: '签证到期前 90/60/30/14/7/3/1 天逐级提醒',
       reason: '签证到期直接导致身份失效，关掉可能导致严重后果',
-      tmplAuth: 'unknown'   // 'authorized' | 'needs_auth' | 'rejected'
+      tmplAuth: 'unknown', // 'authorized' | 'needs_auth' | 'rejected'
     },
     acc01: {
       id: 'ACC-01',
@@ -32,25 +32,25 @@ Page({
       icon: '💳',
       desc: '免费试用到期前 30/14/7/3/1 天提醒',
       reason: '确保你不会在不知情的情况下失去服务使用权',
-      tmplAuth: 'unknown'
+      tmplAuth: 'unknown',
     },
 
     // 系统权限
-    systemNotifyEnabled: true,  // 微信系统级通知权限
+    systemNotifyEnabled: true, // 微信系统级通知权限
     showSystemWarning: false,
 
     // 用户状态: permanent 时 CRT-01 自动停用
     userStatus: '',
-    isPermanent: false
+    isPermanent: false,
   },
 
-  onLoad: function() {
+  onLoad: function () {
     this.loadAuthStatus();
     this.checkSystemPermission();
     this.loadUserStatus();
   },
 
-  onShow: function() {
+  onShow: function () {
     // 每次进入页面刷新授权状态 (用户可能从系统设置回来)
     this.checkSystemPermission();
     this.loadAuthStatus();
@@ -59,14 +59,14 @@ Page({
   /**
    * 读取本地存储的模板授权状态
    */
-  loadAuthStatus: function() {
-    var settings = {};
+  loadAuthStatus: function () {
+    let settings = {};
     try {
       settings = wx.getStorageSync(STORAGE_KEY) || {};
     } catch (e) {}
 
-    var tmplAuth = settings.tmplAuth && settings.tmplAuth.TMPL_REMIND;
-    var authState = 'needs_auth';
+    const tmplAuth = settings.tmplAuth && settings.tmplAuth.TMPL_REMIND;
+    let authState = 'needs_auth';
     if (tmplAuth === true) {
       authState = 'authorized';
     } else if (tmplAuth === false) {
@@ -75,70 +75,70 @@ Page({
 
     this.setData({
       'crt01.tmplAuth': authState,
-      'acc01.tmplAuth': authState
+      'acc01.tmplAuth': authState,
     });
   },
 
   /**
    * 检测微信系统级通知权限
    */
-  checkSystemPermission: function() {
-    var that = this;
+  checkSystemPermission: function () {
+    const that = this;
     wx.getSetting({
-      success: function(res) {
-        var itemSettings = res.subscriptionsSetting || {};
+      success: function (res) {
+        const itemSettings = res.subscriptionsSetting || {};
         // itemSettings.mainSwitch: 系统级通知总开关
         // itemSettings.itemSettings: { [tmplId]: 'accept'|'reject'|'ban' }
-        var mainSwitch = itemSettings.mainSwitch !== false;
+        const mainSwitch = itemSettings.mainSwitch !== false;
         that.setData({
           systemNotifyEnabled: mainSwitch,
-          showSystemWarning: !mainSwitch
+          showSystemWarning: !mainSwitch,
         });
 
         // 如果 mainSwitch 为 false，标记所有为 rejected
         if (!mainSwitch) {
           that.setData({
             'crt01.tmplAuth': 'rejected',
-            'acc01.tmplAuth': 'rejected'
+            'acc01.tmplAuth': 'rejected',
           });
         }
       },
-      fail: function() {
+      fail: function () {
         // 降级: 假设权限正常 (避免误告警)
         that.setData({ systemNotifyEnabled: true, showSystemWarning: false });
-      }
+      },
     });
   },
 
   /**
    * 读取用户状态 (permanent 时 CRT-01 自动停用)
    */
-  loadUserStatus: function() {
-    var userStatus = app.globalData.userStatus || '';
+  loadUserStatus: function () {
+    let userStatus = app.globalData.userStatus || '';
     try {
       userStatus = userStatus || wx.getStorageSync('__user_status__') || '';
     } catch (e) {}
 
-    var isPermanent = userStatus === 'permanent';
+    const isPermanent = userStatus === 'permanent';
     this.setData({
       userStatus: userStatus,
-      isPermanent: isPermanent
+      isPermanent: isPermanent,
     });
   },
 
   /**
    * 触发订阅消息授权
    */
-  requestAuth: function() {
-    var that = this;
+  requestAuth: function () {
+    const that = this;
     wx.requestSubscribeMessage({
       tmplIds: [TMPL_REMIND],
-      success: function(res) {
+      success: function (res) {
         // res[TMPL_REMIND] 可能为 'accept' | 'reject' | 'ban'
-        var accepted = res[TMPL_REMIND] === 'accept';
+        const accepted = res[TMPL_REMIND] === 'accept';
 
         // 保存授权状态到本地
-        var settings = {};
+        let settings = {};
         try {
           settings = wx.getStorageSync(STORAGE_KEY) || {};
         } catch (e) {}
@@ -151,10 +151,10 @@ Page({
         // 同步到云端
         that.syncToCloud(accepted);
 
-        var authState = accepted ? 'authorized' : 'rejected';
+        const authState = accepted ? 'authorized' : 'rejected';
         that.setData({
           'crt01.tmplAuth': authState,
-          'acc01.tmplAuth': authState
+          'acc01.tmplAuth': authState,
         });
 
         if (accepted) {
@@ -163,40 +163,42 @@ Page({
           wx.showToast({ title: '已拒绝授权', icon: 'none' });
         }
       },
-      fail: function(err) {
+      fail: function (err) {
         // 用户勾选"总是保持以上选择"后不再弹窗，直接进 fail
         console.warn('[notify-settings] subscribeMessage fail:', err);
         wx.showToast({ title: '授权失败，请前往微信设置', icon: 'none', duration: 2000 });
-      }
+      },
     });
   },
 
   /**
    * 同步模板授权状态到云端
    */
-  syncToCloud: function(accepted) {
-    wx.cloud.callFunction({
-      name: 'user-auth',
-      data: {
-        action: 'syncNotifyPrefs',
-        prefs: {
-          tmplAuth: { TMPL_REMIND: accepted }
-        }
-      }
-    }).catch(function(err) {
-      console.warn('[notify-settings] cloud sync failed:', err);
-      // 本地已保存，云同步失败不阻塞
-    });
+  syncToCloud: function (accepted) {
+    wx.cloud
+      .callFunction({
+        name: 'user-auth',
+        data: {
+          action: 'syncNotifyPrefs',
+          prefs: {
+            tmplAuth: { TMPL_REMIND: accepted },
+          },
+        },
+      })
+      .catch(function (err) {
+        console.warn('[notify-settings] cloud sync failed:', err);
+        // 本地已保存，云同步失败不阻塞
+      });
   },
 
   /**
    * 打开微信系统设置
    */
-  openSystemSetting: function() {
+  openSystemSetting: function () {
     wx.openSetting({
-      success: function() {
+      success: function () {
         // 用户从设置页返回后，onShow 会重新检测权限
-      }
+      },
     });
-  }
+  },
 });

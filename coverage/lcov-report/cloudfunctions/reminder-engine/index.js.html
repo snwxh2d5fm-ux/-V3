@@ -1,0 +1,1321 @@
+
+<!doctype html>
+<html lang="en">
+
+<head>
+    <title>Code coverage report for cloudfunctions/reminder-engine/index.js</title>
+    <meta charset="utf-8" />
+    <link rel="stylesheet" href="../../prettify.css" />
+    <link rel="stylesheet" href="../../base.css" />
+    <link rel="shortcut icon" type="image/x-icon" href="../../favicon.png" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <style type='text/css'>
+        .coverage-summary .sorter {
+            background-image: url(../../sort-arrow-sprite.png);
+        }
+    </style>
+</head>
+    
+<body>
+<div class='wrapper'>
+    <div class='pad1'>
+        <h1><a href="../../index.html">All files</a> / <a href="index.html">cloudfunctions/reminder-engine</a> index.js</h1>
+        <div class='clearfix'>
+            
+            <div class='fl pad1y space-right2'>
+                <span class="strong">0% </span>
+                <span class="quiet">Statements</span>
+                <span class='fraction'>0/216</span>
+            </div>
+        
+            
+            <div class='fl pad1y space-right2'>
+                <span class="strong">0% </span>
+                <span class="quiet">Branches</span>
+                <span class='fraction'>0/152</span>
+            </div>
+        
+            
+            <div class='fl pad1y space-right2'>
+                <span class="strong">0% </span>
+                <span class="quiet">Functions</span>
+                <span class='fraction'>0/28</span>
+            </div>
+        
+            
+            <div class='fl pad1y space-right2'>
+                <span class="strong">0% </span>
+                <span class="quiet">Lines</span>
+                <span class='fraction'>0/186</span>
+            </div>
+        
+            
+        </div>
+        <p class="quiet">
+            Press <em>n</em> or <em>j</em> to go to the next uncovered block, <em>b</em>, <em>p</em> or <em>k</em> for the previous block.
+        </p>
+        <template id="filterTemplate">
+            <div class="quiet">
+                Filter:
+                <input type="search" id="fileSearch">
+            </div>
+        </template>
+    </div>
+    <div class='status-line low'></div>
+    <pre><table class="coverage">
+<tr><td class="line-count quiet"><a name='L1'></a><a href='#L1'>1</a>
+<a name='L2'></a><a href='#L2'>2</a>
+<a name='L3'></a><a href='#L3'>3</a>
+<a name='L4'></a><a href='#L4'>4</a>
+<a name='L5'></a><a href='#L5'>5</a>
+<a name='L6'></a><a href='#L6'>6</a>
+<a name='L7'></a><a href='#L7'>7</a>
+<a name='L8'></a><a href='#L8'>8</a>
+<a name='L9'></a><a href='#L9'>9</a>
+<a name='L10'></a><a href='#L10'>10</a>
+<a name='L11'></a><a href='#L11'>11</a>
+<a name='L12'></a><a href='#L12'>12</a>
+<a name='L13'></a><a href='#L13'>13</a>
+<a name='L14'></a><a href='#L14'>14</a>
+<a name='L15'></a><a href='#L15'>15</a>
+<a name='L16'></a><a href='#L16'>16</a>
+<a name='L17'></a><a href='#L17'>17</a>
+<a name='L18'></a><a href='#L18'>18</a>
+<a name='L19'></a><a href='#L19'>19</a>
+<a name='L20'></a><a href='#L20'>20</a>
+<a name='L21'></a><a href='#L21'>21</a>
+<a name='L22'></a><a href='#L22'>22</a>
+<a name='L23'></a><a href='#L23'>23</a>
+<a name='L24'></a><a href='#L24'>24</a>
+<a name='L25'></a><a href='#L25'>25</a>
+<a name='L26'></a><a href='#L26'>26</a>
+<a name='L27'></a><a href='#L27'>27</a>
+<a name='L28'></a><a href='#L28'>28</a>
+<a name='L29'></a><a href='#L29'>29</a>
+<a name='L30'></a><a href='#L30'>30</a>
+<a name='L31'></a><a href='#L31'>31</a>
+<a name='L32'></a><a href='#L32'>32</a>
+<a name='L33'></a><a href='#L33'>33</a>
+<a name='L34'></a><a href='#L34'>34</a>
+<a name='L35'></a><a href='#L35'>35</a>
+<a name='L36'></a><a href='#L36'>36</a>
+<a name='L37'></a><a href='#L37'>37</a>
+<a name='L38'></a><a href='#L38'>38</a>
+<a name='L39'></a><a href='#L39'>39</a>
+<a name='L40'></a><a href='#L40'>40</a>
+<a name='L41'></a><a href='#L41'>41</a>
+<a name='L42'></a><a href='#L42'>42</a>
+<a name='L43'></a><a href='#L43'>43</a>
+<a name='L44'></a><a href='#L44'>44</a>
+<a name='L45'></a><a href='#L45'>45</a>
+<a name='L46'></a><a href='#L46'>46</a>
+<a name='L47'></a><a href='#L47'>47</a>
+<a name='L48'></a><a href='#L48'>48</a>
+<a name='L49'></a><a href='#L49'>49</a>
+<a name='L50'></a><a href='#L50'>50</a>
+<a name='L51'></a><a href='#L51'>51</a>
+<a name='L52'></a><a href='#L52'>52</a>
+<a name='L53'></a><a href='#L53'>53</a>
+<a name='L54'></a><a href='#L54'>54</a>
+<a name='L55'></a><a href='#L55'>55</a>
+<a name='L56'></a><a href='#L56'>56</a>
+<a name='L57'></a><a href='#L57'>57</a>
+<a name='L58'></a><a href='#L58'>58</a>
+<a name='L59'></a><a href='#L59'>59</a>
+<a name='L60'></a><a href='#L60'>60</a>
+<a name='L61'></a><a href='#L61'>61</a>
+<a name='L62'></a><a href='#L62'>62</a>
+<a name='L63'></a><a href='#L63'>63</a>
+<a name='L64'></a><a href='#L64'>64</a>
+<a name='L65'></a><a href='#L65'>65</a>
+<a name='L66'></a><a href='#L66'>66</a>
+<a name='L67'></a><a href='#L67'>67</a>
+<a name='L68'></a><a href='#L68'>68</a>
+<a name='L69'></a><a href='#L69'>69</a>
+<a name='L70'></a><a href='#L70'>70</a>
+<a name='L71'></a><a href='#L71'>71</a>
+<a name='L72'></a><a href='#L72'>72</a>
+<a name='L73'></a><a href='#L73'>73</a>
+<a name='L74'></a><a href='#L74'>74</a>
+<a name='L75'></a><a href='#L75'>75</a>
+<a name='L76'></a><a href='#L76'>76</a>
+<a name='L77'></a><a href='#L77'>77</a>
+<a name='L78'></a><a href='#L78'>78</a>
+<a name='L79'></a><a href='#L79'>79</a>
+<a name='L80'></a><a href='#L80'>80</a>
+<a name='L81'></a><a href='#L81'>81</a>
+<a name='L82'></a><a href='#L82'>82</a>
+<a name='L83'></a><a href='#L83'>83</a>
+<a name='L84'></a><a href='#L84'>84</a>
+<a name='L85'></a><a href='#L85'>85</a>
+<a name='L86'></a><a href='#L86'>86</a>
+<a name='L87'></a><a href='#L87'>87</a>
+<a name='L88'></a><a href='#L88'>88</a>
+<a name='L89'></a><a href='#L89'>89</a>
+<a name='L90'></a><a href='#L90'>90</a>
+<a name='L91'></a><a href='#L91'>91</a>
+<a name='L92'></a><a href='#L92'>92</a>
+<a name='L93'></a><a href='#L93'>93</a>
+<a name='L94'></a><a href='#L94'>94</a>
+<a name='L95'></a><a href='#L95'>95</a>
+<a name='L96'></a><a href='#L96'>96</a>
+<a name='L97'></a><a href='#L97'>97</a>
+<a name='L98'></a><a href='#L98'>98</a>
+<a name='L99'></a><a href='#L99'>99</a>
+<a name='L100'></a><a href='#L100'>100</a>
+<a name='L101'></a><a href='#L101'>101</a>
+<a name='L102'></a><a href='#L102'>102</a>
+<a name='L103'></a><a href='#L103'>103</a>
+<a name='L104'></a><a href='#L104'>104</a>
+<a name='L105'></a><a href='#L105'>105</a>
+<a name='L106'></a><a href='#L106'>106</a>
+<a name='L107'></a><a href='#L107'>107</a>
+<a name='L108'></a><a href='#L108'>108</a>
+<a name='L109'></a><a href='#L109'>109</a>
+<a name='L110'></a><a href='#L110'>110</a>
+<a name='L111'></a><a href='#L111'>111</a>
+<a name='L112'></a><a href='#L112'>112</a>
+<a name='L113'></a><a href='#L113'>113</a>
+<a name='L114'></a><a href='#L114'>114</a>
+<a name='L115'></a><a href='#L115'>115</a>
+<a name='L116'></a><a href='#L116'>116</a>
+<a name='L117'></a><a href='#L117'>117</a>
+<a name='L118'></a><a href='#L118'>118</a>
+<a name='L119'></a><a href='#L119'>119</a>
+<a name='L120'></a><a href='#L120'>120</a>
+<a name='L121'></a><a href='#L121'>121</a>
+<a name='L122'></a><a href='#L122'>122</a>
+<a name='L123'></a><a href='#L123'>123</a>
+<a name='L124'></a><a href='#L124'>124</a>
+<a name='L125'></a><a href='#L125'>125</a>
+<a name='L126'></a><a href='#L126'>126</a>
+<a name='L127'></a><a href='#L127'>127</a>
+<a name='L128'></a><a href='#L128'>128</a>
+<a name='L129'></a><a href='#L129'>129</a>
+<a name='L130'></a><a href='#L130'>130</a>
+<a name='L131'></a><a href='#L131'>131</a>
+<a name='L132'></a><a href='#L132'>132</a>
+<a name='L133'></a><a href='#L133'>133</a>
+<a name='L134'></a><a href='#L134'>134</a>
+<a name='L135'></a><a href='#L135'>135</a>
+<a name='L136'></a><a href='#L136'>136</a>
+<a name='L137'></a><a href='#L137'>137</a>
+<a name='L138'></a><a href='#L138'>138</a>
+<a name='L139'></a><a href='#L139'>139</a>
+<a name='L140'></a><a href='#L140'>140</a>
+<a name='L141'></a><a href='#L141'>141</a>
+<a name='L142'></a><a href='#L142'>142</a>
+<a name='L143'></a><a href='#L143'>143</a>
+<a name='L144'></a><a href='#L144'>144</a>
+<a name='L145'></a><a href='#L145'>145</a>
+<a name='L146'></a><a href='#L146'>146</a>
+<a name='L147'></a><a href='#L147'>147</a>
+<a name='L148'></a><a href='#L148'>148</a>
+<a name='L149'></a><a href='#L149'>149</a>
+<a name='L150'></a><a href='#L150'>150</a>
+<a name='L151'></a><a href='#L151'>151</a>
+<a name='L152'></a><a href='#L152'>152</a>
+<a name='L153'></a><a href='#L153'>153</a>
+<a name='L154'></a><a href='#L154'>154</a>
+<a name='L155'></a><a href='#L155'>155</a>
+<a name='L156'></a><a href='#L156'>156</a>
+<a name='L157'></a><a href='#L157'>157</a>
+<a name='L158'></a><a href='#L158'>158</a>
+<a name='L159'></a><a href='#L159'>159</a>
+<a name='L160'></a><a href='#L160'>160</a>
+<a name='L161'></a><a href='#L161'>161</a>
+<a name='L162'></a><a href='#L162'>162</a>
+<a name='L163'></a><a href='#L163'>163</a>
+<a name='L164'></a><a href='#L164'>164</a>
+<a name='L165'></a><a href='#L165'>165</a>
+<a name='L166'></a><a href='#L166'>166</a>
+<a name='L167'></a><a href='#L167'>167</a>
+<a name='L168'></a><a href='#L168'>168</a>
+<a name='L169'></a><a href='#L169'>169</a>
+<a name='L170'></a><a href='#L170'>170</a>
+<a name='L171'></a><a href='#L171'>171</a>
+<a name='L172'></a><a href='#L172'>172</a>
+<a name='L173'></a><a href='#L173'>173</a>
+<a name='L174'></a><a href='#L174'>174</a>
+<a name='L175'></a><a href='#L175'>175</a>
+<a name='L176'></a><a href='#L176'>176</a>
+<a name='L177'></a><a href='#L177'>177</a>
+<a name='L178'></a><a href='#L178'>178</a>
+<a name='L179'></a><a href='#L179'>179</a>
+<a name='L180'></a><a href='#L180'>180</a>
+<a name='L181'></a><a href='#L181'>181</a>
+<a name='L182'></a><a href='#L182'>182</a>
+<a name='L183'></a><a href='#L183'>183</a>
+<a name='L184'></a><a href='#L184'>184</a>
+<a name='L185'></a><a href='#L185'>185</a>
+<a name='L186'></a><a href='#L186'>186</a>
+<a name='L187'></a><a href='#L187'>187</a>
+<a name='L188'></a><a href='#L188'>188</a>
+<a name='L189'></a><a href='#L189'>189</a>
+<a name='L190'></a><a href='#L190'>190</a>
+<a name='L191'></a><a href='#L191'>191</a>
+<a name='L192'></a><a href='#L192'>192</a>
+<a name='L193'></a><a href='#L193'>193</a>
+<a name='L194'></a><a href='#L194'>194</a>
+<a name='L195'></a><a href='#L195'>195</a>
+<a name='L196'></a><a href='#L196'>196</a>
+<a name='L197'></a><a href='#L197'>197</a>
+<a name='L198'></a><a href='#L198'>198</a>
+<a name='L199'></a><a href='#L199'>199</a>
+<a name='L200'></a><a href='#L200'>200</a>
+<a name='L201'></a><a href='#L201'>201</a>
+<a name='L202'></a><a href='#L202'>202</a>
+<a name='L203'></a><a href='#L203'>203</a>
+<a name='L204'></a><a href='#L204'>204</a>
+<a name='L205'></a><a href='#L205'>205</a>
+<a name='L206'></a><a href='#L206'>206</a>
+<a name='L207'></a><a href='#L207'>207</a>
+<a name='L208'></a><a href='#L208'>208</a>
+<a name='L209'></a><a href='#L209'>209</a>
+<a name='L210'></a><a href='#L210'>210</a>
+<a name='L211'></a><a href='#L211'>211</a>
+<a name='L212'></a><a href='#L212'>212</a>
+<a name='L213'></a><a href='#L213'>213</a>
+<a name='L214'></a><a href='#L214'>214</a>
+<a name='L215'></a><a href='#L215'>215</a>
+<a name='L216'></a><a href='#L216'>216</a>
+<a name='L217'></a><a href='#L217'>217</a>
+<a name='L218'></a><a href='#L218'>218</a>
+<a name='L219'></a><a href='#L219'>219</a>
+<a name='L220'></a><a href='#L220'>220</a>
+<a name='L221'></a><a href='#L221'>221</a>
+<a name='L222'></a><a href='#L222'>222</a>
+<a name='L223'></a><a href='#L223'>223</a>
+<a name='L224'></a><a href='#L224'>224</a>
+<a name='L225'></a><a href='#L225'>225</a>
+<a name='L226'></a><a href='#L226'>226</a>
+<a name='L227'></a><a href='#L227'>227</a>
+<a name='L228'></a><a href='#L228'>228</a>
+<a name='L229'></a><a href='#L229'>229</a>
+<a name='L230'></a><a href='#L230'>230</a>
+<a name='L231'></a><a href='#L231'>231</a>
+<a name='L232'></a><a href='#L232'>232</a>
+<a name='L233'></a><a href='#L233'>233</a>
+<a name='L234'></a><a href='#L234'>234</a>
+<a name='L235'></a><a href='#L235'>235</a>
+<a name='L236'></a><a href='#L236'>236</a>
+<a name='L237'></a><a href='#L237'>237</a>
+<a name='L238'></a><a href='#L238'>238</a>
+<a name='L239'></a><a href='#L239'>239</a>
+<a name='L240'></a><a href='#L240'>240</a>
+<a name='L241'></a><a href='#L241'>241</a>
+<a name='L242'></a><a href='#L242'>242</a>
+<a name='L243'></a><a href='#L243'>243</a>
+<a name='L244'></a><a href='#L244'>244</a>
+<a name='L245'></a><a href='#L245'>245</a>
+<a name='L246'></a><a href='#L246'>246</a>
+<a name='L247'></a><a href='#L247'>247</a>
+<a name='L248'></a><a href='#L248'>248</a>
+<a name='L249'></a><a href='#L249'>249</a>
+<a name='L250'></a><a href='#L250'>250</a>
+<a name='L251'></a><a href='#L251'>251</a>
+<a name='L252'></a><a href='#L252'>252</a>
+<a name='L253'></a><a href='#L253'>253</a>
+<a name='L254'></a><a href='#L254'>254</a>
+<a name='L255'></a><a href='#L255'>255</a>
+<a name='L256'></a><a href='#L256'>256</a>
+<a name='L257'></a><a href='#L257'>257</a>
+<a name='L258'></a><a href='#L258'>258</a>
+<a name='L259'></a><a href='#L259'>259</a>
+<a name='L260'></a><a href='#L260'>260</a>
+<a name='L261'></a><a href='#L261'>261</a>
+<a name='L262'></a><a href='#L262'>262</a>
+<a name='L263'></a><a href='#L263'>263</a>
+<a name='L264'></a><a href='#L264'>264</a>
+<a name='L265'></a><a href='#L265'>265</a>
+<a name='L266'></a><a href='#L266'>266</a>
+<a name='L267'></a><a href='#L267'>267</a>
+<a name='L268'></a><a href='#L268'>268</a>
+<a name='L269'></a><a href='#L269'>269</a>
+<a name='L270'></a><a href='#L270'>270</a>
+<a name='L271'></a><a href='#L271'>271</a>
+<a name='L272'></a><a href='#L272'>272</a>
+<a name='L273'></a><a href='#L273'>273</a>
+<a name='L274'></a><a href='#L274'>274</a>
+<a name='L275'></a><a href='#L275'>275</a>
+<a name='L276'></a><a href='#L276'>276</a>
+<a name='L277'></a><a href='#L277'>277</a>
+<a name='L278'></a><a href='#L278'>278</a>
+<a name='L279'></a><a href='#L279'>279</a>
+<a name='L280'></a><a href='#L280'>280</a>
+<a name='L281'></a><a href='#L281'>281</a>
+<a name='L282'></a><a href='#L282'>282</a>
+<a name='L283'></a><a href='#L283'>283</a>
+<a name='L284'></a><a href='#L284'>284</a>
+<a name='L285'></a><a href='#L285'>285</a>
+<a name='L286'></a><a href='#L286'>286</a>
+<a name='L287'></a><a href='#L287'>287</a>
+<a name='L288'></a><a href='#L288'>288</a>
+<a name='L289'></a><a href='#L289'>289</a>
+<a name='L290'></a><a href='#L290'>290</a>
+<a name='L291'></a><a href='#L291'>291</a>
+<a name='L292'></a><a href='#L292'>292</a>
+<a name='L293'></a><a href='#L293'>293</a>
+<a name='L294'></a><a href='#L294'>294</a>
+<a name='L295'></a><a href='#L295'>295</a>
+<a name='L296'></a><a href='#L296'>296</a>
+<a name='L297'></a><a href='#L297'>297</a>
+<a name='L298'></a><a href='#L298'>298</a>
+<a name='L299'></a><a href='#L299'>299</a>
+<a name='L300'></a><a href='#L300'>300</a>
+<a name='L301'></a><a href='#L301'>301</a>
+<a name='L302'></a><a href='#L302'>302</a>
+<a name='L303'></a><a href='#L303'>303</a>
+<a name='L304'></a><a href='#L304'>304</a>
+<a name='L305'></a><a href='#L305'>305</a>
+<a name='L306'></a><a href='#L306'>306</a>
+<a name='L307'></a><a href='#L307'>307</a>
+<a name='L308'></a><a href='#L308'>308</a>
+<a name='L309'></a><a href='#L309'>309</a>
+<a name='L310'></a><a href='#L310'>310</a>
+<a name='L311'></a><a href='#L311'>311</a>
+<a name='L312'></a><a href='#L312'>312</a>
+<a name='L313'></a><a href='#L313'>313</a>
+<a name='L314'></a><a href='#L314'>314</a>
+<a name='L315'></a><a href='#L315'>315</a>
+<a name='L316'></a><a href='#L316'>316</a>
+<a name='L317'></a><a href='#L317'>317</a>
+<a name='L318'></a><a href='#L318'>318</a>
+<a name='L319'></a><a href='#L319'>319</a>
+<a name='L320'></a><a href='#L320'>320</a>
+<a name='L321'></a><a href='#L321'>321</a>
+<a name='L322'></a><a href='#L322'>322</a>
+<a name='L323'></a><a href='#L323'>323</a>
+<a name='L324'></a><a href='#L324'>324</a>
+<a name='L325'></a><a href='#L325'>325</a>
+<a name='L326'></a><a href='#L326'>326</a>
+<a name='L327'></a><a href='#L327'>327</a>
+<a name='L328'></a><a href='#L328'>328</a>
+<a name='L329'></a><a href='#L329'>329</a>
+<a name='L330'></a><a href='#L330'>330</a>
+<a name='L331'></a><a href='#L331'>331</a>
+<a name='L332'></a><a href='#L332'>332</a>
+<a name='L333'></a><a href='#L333'>333</a>
+<a name='L334'></a><a href='#L334'>334</a>
+<a name='L335'></a><a href='#L335'>335</a>
+<a name='L336'></a><a href='#L336'>336</a>
+<a name='L337'></a><a href='#L337'>337</a>
+<a name='L338'></a><a href='#L338'>338</a>
+<a name='L339'></a><a href='#L339'>339</a>
+<a name='L340'></a><a href='#L340'>340</a>
+<a name='L341'></a><a href='#L341'>341</a>
+<a name='L342'></a><a href='#L342'>342</a>
+<a name='L343'></a><a href='#L343'>343</a>
+<a name='L344'></a><a href='#L344'>344</a>
+<a name='L345'></a><a href='#L345'>345</a>
+<a name='L346'></a><a href='#L346'>346</a>
+<a name='L347'></a><a href='#L347'>347</a>
+<a name='L348'></a><a href='#L348'>348</a>
+<a name='L349'></a><a href='#L349'>349</a>
+<a name='L350'></a><a href='#L350'>350</a>
+<a name='L351'></a><a href='#L351'>351</a>
+<a name='L352'></a><a href='#L352'>352</a>
+<a name='L353'></a><a href='#L353'>353</a>
+<a name='L354'></a><a href='#L354'>354</a>
+<a name='L355'></a><a href='#L355'>355</a>
+<a name='L356'></a><a href='#L356'>356</a>
+<a name='L357'></a><a href='#L357'>357</a>
+<a name='L358'></a><a href='#L358'>358</a>
+<a name='L359'></a><a href='#L359'>359</a>
+<a name='L360'></a><a href='#L360'>360</a>
+<a name='L361'></a><a href='#L361'>361</a>
+<a name='L362'></a><a href='#L362'>362</a>
+<a name='L363'></a><a href='#L363'>363</a>
+<a name='L364'></a><a href='#L364'>364</a>
+<a name='L365'></a><a href='#L365'>365</a>
+<a name='L366'></a><a href='#L366'>366</a>
+<a name='L367'></a><a href='#L367'>367</a>
+<a name='L368'></a><a href='#L368'>368</a>
+<a name='L369'></a><a href='#L369'>369</a>
+<a name='L370'></a><a href='#L370'>370</a>
+<a name='L371'></a><a href='#L371'>371</a>
+<a name='L372'></a><a href='#L372'>372</a>
+<a name='L373'></a><a href='#L373'>373</a>
+<a name='L374'></a><a href='#L374'>374</a>
+<a name='L375'></a><a href='#L375'>375</a>
+<a name='L376'></a><a href='#L376'>376</a>
+<a name='L377'></a><a href='#L377'>377</a>
+<a name='L378'></a><a href='#L378'>378</a>
+<a name='L379'></a><a href='#L379'>379</a>
+<a name='L380'></a><a href='#L380'>380</a>
+<a name='L381'></a><a href='#L381'>381</a>
+<a name='L382'></a><a href='#L382'>382</a>
+<a name='L383'></a><a href='#L383'>383</a>
+<a name='L384'></a><a href='#L384'>384</a>
+<a name='L385'></a><a href='#L385'>385</a>
+<a name='L386'></a><a href='#L386'>386</a>
+<a name='L387'></a><a href='#L387'>387</a>
+<a name='L388'></a><a href='#L388'>388</a>
+<a name='L389'></a><a href='#L389'>389</a>
+<a name='L390'></a><a href='#L390'>390</a>
+<a name='L391'></a><a href='#L391'>391</a>
+<a name='L392'></a><a href='#L392'>392</a>
+<a name='L393'></a><a href='#L393'>393</a>
+<a name='L394'></a><a href='#L394'>394</a>
+<a name='L395'></a><a href='#L395'>395</a>
+<a name='L396'></a><a href='#L396'>396</a>
+<a name='L397'></a><a href='#L397'>397</a>
+<a name='L398'></a><a href='#L398'>398</a>
+<a name='L399'></a><a href='#L399'>399</a>
+<a name='L400'></a><a href='#L400'>400</a>
+<a name='L401'></a><a href='#L401'>401</a>
+<a name='L402'></a><a href='#L402'>402</a>
+<a name='L403'></a><a href='#L403'>403</a>
+<a name='L404'></a><a href='#L404'>404</a>
+<a name='L405'></a><a href='#L405'>405</a>
+<a name='L406'></a><a href='#L406'>406</a>
+<a name='L407'></a><a href='#L407'>407</a>
+<a name='L408'></a><a href='#L408'>408</a>
+<a name='L409'></a><a href='#L409'>409</a>
+<a name='L410'></a><a href='#L410'>410</a>
+<a name='L411'></a><a href='#L411'>411</a>
+<a name='L412'></a><a href='#L412'>412</a>
+<a name='L413'></a><a href='#L413'>413</a></td><td class="line-coverage quiet"><span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span></td><td class="text"><pre class="prettyprint lang-js">/**
+ * reminder-engine v4.1 — 提醒规则引擎 (PRD v3.1)
+ * V5升级: 12×4×N四维规则矩阵 + 置信度分级 + 决策节点提醒
+ */
+const cloud = <span class="cstat-no" title="statement not covered" >require('wx-server-sdk');</span>
+<span class="cstat-no" title="statement not covered" >cloud.init({ env: cloud.DYNAMIC_CURRENT_ENV });</span>
+const db = <span class="cstat-no" title="statement not covered" >cloud.database();</span>
+const _ = <span class="cstat-no" title="statement not covered" >db.command;</span>
+&nbsp;
+// V5置信度规则: A/B自动生效, C需确认, D不自动生成
+const AUTO_APPLY = <span class="cstat-no" title="statement not covered" >['A', 'B'];</span>
+const CONFIRM_APPLY = <span class="cstat-no" title="statement not covered" >['C'];</span>
+const DISABLED_APPLY = <span class="cstat-no" title="statement not covered" >['D'];</span>
+&nbsp;
+<span class="cstat-no" title="statement not covered" >exports.main = <span class="fstat-no" title="function not covered" >as</span>ync (event) =&gt; {</span>
+  const { action } = <span class="cstat-no" title="statement not covered" >event;</span>
+  const wxContext = <span class="cstat-no" title="statement not covered" >cloud.getWXContext();</span>
+  const openid = <span class="cstat-no" title="statement not covered" >wxContext.OPENID;</span>
+<span class="cstat-no" title="statement not covered" >  try {</span>
+<span class="cstat-no" title="statement not covered" >    switch (action) {</span>
+      case 'generateFromEvent':
+<span class="cstat-no" title="statement not covered" >        return await generateFromEvent(openid, event);</span>
+      case 'generateFromOCR':
+<span class="cstat-no" title="statement not covered" >        return await generateFromOCR(openid, event.docId);</span>
+      case 'generateFromText':
+<span class="cstat-no" title="statement not covered" >        return await generateFromText(openid, event.text);</span>
+      case 'createCustom':
+<span class="cstat-no" title="statement not covered" >        return await createCustom(openid, event);</span>
+      case 'confirm':
+<span class="cstat-no" title="statement not covered" >        return await confirmReminder(openid, event.reminderIds);</span>
+      case 'dismiss':
+<span class="cstat-no" title="statement not covered" >        return await dismissReminder(openid, event);</span>
+      case 'complete':
+<span class="cstat-no" title="statement not covered" >        return await completeReminder(openid, event.reminderId);</span>
+      case 'listActive':
+<span class="cstat-no" title="statement not covered" >        return await listActive(openid);</span>
+      case 'listByDate':
+<span class="cstat-no" title="statement not covered" >        return await listByDate(openid, event);</span>
+      case 'getByProcess':
+<span class="cstat-no" title="statement not covered" >        return await getByProcess(openid, event.processId);</span>
+      case 'getTimeline':
+<span class="cstat-no" title="statement not covered" >        return await getTimeline(openid, event.processId);</span>
+      case 'scanExpiringToday':
+<span class="cstat-no" title="statement not covered" >        return await scanExpiringToday();</span>
+      case 'getRule':
+<span class="cstat-no" title="statement not covered" >        return await getRule(event.ruleId);</span>
+      case 'getDecisionReminders':
+<span class="cstat-no" title="statement not covered" >        return await getDecisionReminders(openid, event.decisionPoint);</span>
+      default:
+<span class="cstat-no" title="statement not covered" >        return { code: 400, msg: '无效操作' };</span>
+    }
+  } catch (err) {
+<span class="cstat-no" title="statement not covered" >    console.error('[reminder-engine]', err);</span>
+<span class="cstat-no" title="statement not covered" >    return { code: 500, msg: '提醒服务异常', error: err.message };</span>
+  }
+};
+&nbsp;
+async function <span class="fstat-no" title="function not covered" >generateFromEvent(</span>openid, event) {
+  const { eventName, eventDate, pathType, phase, docId } = <span class="cstat-no" title="statement not covered" >event;</span>
+<span class="cstat-no" title="statement not covered" >  if (!eventName || !eventDate) <span class="cstat-no" title="statement not covered" >return { code: 400, msg: '缺少事件名或日期' };</span></span>
+&nbsp;
+  const rulesQuery = <span class="cstat-no" title="statement not covered" >{ isActive: true };</span>
+<span class="cstat-no" title="statement not covered" >  if (pathType) <span class="cstat-no" title="statement not covered" >rulesQuery['trigger.pathType'] = _.in([pathType, 'all']);</span></span>
+<span class="cstat-no" title="statement not covered" >  if (phase) <span class="cstat-no" title="statement not covered" >rulesQuery['trigger.phase'] = phase;</span></span>
+  const rulesResult = <span class="cstat-no" title="statement not covered" >await db.collection('reminder_rules').where(rulesQuery).get();</span>
+&nbsp;
+  const matchedRules = <span class="cstat-no" title="statement not covered" >rulesResult.data.filter(<span class="fstat-no" title="function not covered" >(r</span>) =&gt; {</span>
+    const te = <span class="cstat-no" title="statement not covered" >(r.trigger.event || '').toLowerCase();</span>
+    const en = <span class="cstat-no" title="statement not covered" >eventName.toLowerCase();</span>
+<span class="cstat-no" title="statement not covered" >    return te.includes(en) || en.includes(te);</span>
+  });
+&nbsp;
+<span class="cstat-no" title="statement not covered" >  if (matchedRules.length === 0) <span class="cstat-no" title="statement not covered" >return { code: 0, data: { reminders: [], ruleCount: 0, message: '未找到匹配规则' } };</span></span>
+&nbsp;
+  const generated = <span class="cstat-no" title="statement not covered" >[];</span>
+<span class="cstat-no" title="statement not covered" >  for (const rule of matchedRules) {</span>
+    // V5置信度过滤: D级不自动生成
+<span class="cstat-no" title="statement not covered" >    if (DISABLED_APPLY.includes(rule.confidence)) <span class="cstat-no" title="statement not covered" >continue;</span></span>
+    const autoApply = <span class="cstat-no" title="statement not covered" >AUTO_APPLY.includes(rule.confidence)</span>
+      ? 'auto'
+      : CONFIRM_APPLY.includes(rule.confidence)
+        ? 'confirm'
+        : 'auto';
+&nbsp;
+<span class="cstat-no" title="statement not covered" >    for (const rem of rule.reminders || []) {</span>
+      const deadlineDate = <span class="cstat-no" title="statement not covered" >calcDeadline(eventDate, rem.offsetDays);</span>
+      const alertDates = <span class="cstat-no" title="statement not covered" >calcAlertDates(deadlineDate, rem.alerts || []);</span>
+<span class="cstat-no" title="statement not covered" >      generated.push({</span>
+        _openid: openid,
+        ruleId: rule.ruleId,
+        sourceDocId: docId || null,
+        title: rem.label,
+        description: rem.description || '',
+        baselineDate: eventDate,
+        deadlineDate,
+        alertDates,
+        parentReminderId: null,
+        childReminderIds: [],
+        status: autoApply === 'confirm' ? 'pending_confirm' : 'pending',
+        // V5新增字段
+        confidence: rule.confidence || 'B',
+        autoApply,
+        path: rule.path || null,
+        phase: rule.phase || null,
+        decisionPoint: rule.milestone_tag || null,
+        legalBasis: rule.legal_basis || null,
+        completedAt: null,
+        dismissedAt: null,
+        dismissedReason: null,
+        lastNotifiedAt: null,
+        notifyCount: 0,
+        notifyChannel: 'subscription_msg',
+        isCustom: false,
+        isAutoGenerated: true,
+        createdAt: db.serverDate(),
+        updatedAt: db.serverDate(),
+      });
+    }
+  }
+<span class="cstat-no" title="statement not covered" >  return { code: 0, data: { eventName, eventDate, candidates: generated, totalCount: generated.length } };</span>
+}
+&nbsp;
+async function <span class="fstat-no" title="function not covered" >generateFromOCR(</span>openid, docId) {
+<span class="cstat-no" title="statement not covered" >  if (!docId) <span class="cstat-no" title="statement not covered" >return { code: 400, msg: '缺少 docId' };</span></span>
+  const doc = <span class="cstat-no" title="statement not covered" >await db.collection('user_documents').where({ _id: docId, _openid: openid }).get();</span>
+<span class="cstat-no" title="statement not covered" >  if (doc.data.length === 0) <span class="cstat-no" title="statement not covered" >return { code: 404, msg: '证件不存在' };</span></span>
+  const record = <span class="cstat-no" title="statement not covered" >doc.data[0];</span>
+  const dates = <span class="cstat-no" title="statement not covered" >[];</span>
+  const fields = <span class="cstat-no" title="statement not covered" >record.ocrResult?.fields || {};</span>
+<span class="cstat-no" title="statement not covered" >  if (fields.validFrom) <span class="cstat-no" title="statement not covered" >dates.push({ label: '生效日期', date: fields.validFrom, field: 'validFrom' });</span></span>
+<span class="cstat-no" title="statement not covered" >  if (fields.validUntil) <span class="cstat-no" title="statement not covered" >dates.push({ label: '有效截止', date: fields.validUntil, field: 'validUntil' });</span></span>
+<span class="cstat-no" title="statement not covered" >  if (fields.birthDate) <span class="cstat-no" title="statement not covered" >dates.push({ label: '出生日期', date: fields.birthDate, field: 'birthDate' });</span></span>
+  const allCandidates = <span class="cstat-no" title="statement not covered" >[];</span>
+<span class="cstat-no" title="statement not covered" >  for (const d of dates) {</span>
+    const result = <span class="cstat-no" title="statement not covered" >await generateFromEvent(openid, {</span>
+      eventName: `${record.docName}${d.label}`,
+      eventDate: d.date,
+      docId,
+    });
+<span class="cstat-no" title="statement not covered" >    if (result.code === 0 &amp;&amp; result.data.candidates) <span class="cstat-no" title="statement not covered" >allCandidates.push(...result.data.candidates);</span></span>
+  }
+<span class="cstat-no" title="statement not covered" >  return { code: 0, data: { docId, docName: record.docName, detectedDates: dates, candidates: allCandidates } };</span>
+}
+&nbsp;
+async function <span class="fstat-no" title="function not covered" >generateFromText(</span>openid, text) {
+<span class="cstat-no" title="statement not covered" >  if (!text) <span class="cstat-no" title="statement not covered" >return { code: 400, msg: '文本为空' };</span></span>
+  const datePatterns = <span class="cstat-no" title="statement not covered" >[</span>
+    /(\d{4})[年\-\/](\d{1,2})[月\-\/](\d{1,2})/g,
+    /(\d{4})-(\d{2})-(\d{2})/g,
+    /(\d{4})\/(\d{2})\/(\d{2})/g,
+  ];
+  const detectedDates = <span class="cstat-no" title="statement not covered" >[];</span>
+<span class="cstat-no" title="statement not covered" >  for (const p of datePatterns) {</span>
+    let m;
+<span class="cstat-no" title="statement not covered" >    while ((m = p.exec(text)) !== null) {</span>
+      const ds = <span class="cstat-no" title="statement not covered" >`${m[1]}-${m[2].padStart(2, '0')}-${m[3].padStart(2, '0')}`;</span>
+<span class="cstat-no" title="statement not covered" >      if (!detectedDates.find(<span class="fstat-no" title="function not covered" >(d</span>d) =&gt; <span class="cstat-no" title="statement not covered" >dd.date === ds)</span>) <span class="cstat-no" title="statement not covered" >detectedDates.push({ date: ds, context: m[0] });</span></span>
+    }
+  }
+  const allCandidates = <span class="cstat-no" title="statement not covered" >[];</span>
+<span class="cstat-no" title="statement not covered" >  for (const dd of detectedDates) {</span>
+    const r = <span class="cstat-no" title="statement not covered" >await generateFromEvent(openid, { eventName: '文本提取日期', eventDate: dd.date });</span>
+<span class="cstat-no" title="statement not covered" >    if (r.code === 0 &amp;&amp; r.data.candidates) <span class="cstat-no" title="statement not covered" >allCandidates.push(...r.data.candidates);</span></span>
+  }
+<span class="cstat-no" title="statement not covered" >  return { code: 0, data: { detectedDates, candidates: allCandidates } };</span>
+}
+&nbsp;
+async function <span class="fstat-no" title="function not covered" >confirmReminder(</span>openid, reminderIds) {
+  const ids = <span class="cstat-no" title="statement not covered" >Array.isArray(reminderIds) ? reminderIds : [reminderIds];</span>
+  const confirmed = <span class="cstat-no" title="statement not covered" >[];</span>
+<span class="cstat-no" title="statement not covered" >  for (const rid of ids) {</span>
+<span class="cstat-no" title="statement not covered" >    if (typeof rid === 'object') {</span>
+<span class="cstat-no" title="statement not covered" >      delete rid._dependsOn;</span>
+<span class="cstat-no" title="statement not covered" >      delete rid._ruleIndex;</span>
+<span class="cstat-no" title="statement not covered" >      rid.status = 'pending';</span>
+<span class="cstat-no" title="statement not covered" >      rid.createdAt = db.serverDate();</span>
+<span class="cstat-no" title="statement not covered" >      rid.updatedAt = db.serverDate();</span>
+      const r = <span class="cstat-no" title="statement not covered" >await db.collection('user_reminders').add({ data: rid });</span>
+<span class="cstat-no" title="statement not covered" >      confirmed.push(r._id);</span>
+    } else {
+<span class="cstat-no" title="statement not covered" >      await db</span>
+        .collection('user_reminders')
+        .where({ _id: rid, _openid: openid })
+        .update({ data: { status: 'pending', updatedAt: db.serverDate() } });
+<span class="cstat-no" title="statement not covered" >      confirmed.push(rid);</span>
+    }
+  }
+<span class="cstat-no" title="statement not covered" >  await activateChainChildren(openid, confirmed);</span>
+<span class="cstat-no" title="statement not covered" >  await db</span>
+    .collection('users')
+    .where({ _openid: openid })
+    .update({ data: { reminderCount: _.inc(confirmed.length), updatedAt: db.serverDate() } });
+<span class="cstat-no" title="statement not covered" >  return { code: 0, data: { confirmedIds: confirmed } };</span>
+}
+&nbsp;
+async function <span class="fstat-no" title="function not covered" >createCustom(</span>openid, event) {
+  const { title, description, baselineDate, deadlineDate, alertDays } = <span class="cstat-no" title="statement not covered" >event;</span>
+<span class="cstat-no" title="statement not covered" >  if (!title || !deadlineDate) <span class="cstat-no" title="statement not covered" >return { code: 400, msg: '缺少标题或截止日期' };</span></span>
+  const alerts = <span class="cstat-no" title="statement not covered" >alertDays || [30, 14, 7, 3, 1];</span>
+  const alertDates = <span class="cstat-no" title="statement not covered" >calcAlertDates(deadlineDate, alerts);</span>
+  const r = <span class="cstat-no" title="statement not covered" >await db</span>
+    .collection('user_reminders')
+    .add({
+      data: {
+        _openid: openid,
+        ruleId: null,
+        sourceDocId: event.docId || null,
+        title,
+        description: description || '',
+        baselineDate: baselineDate || new Date().toISOString().slice(0, 10),
+        deadlineDate,
+        alertDates,
+        parentReminderId: null,
+        childReminderIds: [],
+        status: 'pending',
+        isCustom: true,
+        isAutoGenerated: false,
+        notifyChannel: event.notifyChannel || 'subscription_msg',
+        createdAt: db.serverDate(),
+        updatedAt: db.serverDate(),
+      },
+    });
+<span class="cstat-no" title="statement not covered" >  return { code: 0, data: { reminderId: r._id } };</span>
+}
+&nbsp;
+async function <span class="fstat-no" title="function not covered" >dismissReminder(</span>openid, event) {
+  const { reminderId, reason } = <span class="cstat-no" title="statement not covered" >event;</span>
+<span class="cstat-no" title="statement not covered" >  await db</span>
+    .collection('user_reminders')
+    .where({ _id: reminderId, _openid: openid })
+    .update({ data: { status: 'dismissed', dismissedAt: db.serverDate(), dismissedReason: reason || '' } });
+<span class="cstat-no" title="statement not covered" >  return { code: 0, msg: 'ok' };</span>
+}
+&nbsp;
+async function <span class="fstat-no" title="function not covered" >completeReminder(</span>openid, reminderId) {
+<span class="cstat-no" title="statement not covered" >  await db</span>
+    .collection('user_reminders')
+    .where({ _id: reminderId, _openid: openid })
+    .update({ data: { status: 'completed', completedAt: db.serverDate() } });
+<span class="cstat-no" title="statement not covered" >  await activateChainChildren(openid, [reminderId]);</span>
+<span class="cstat-no" title="statement not covered" >  return { code: 0, msg: 'ok' };</span>
+}
+&nbsp;
+async function <span class="fstat-no" title="function not covered" >listActive(</span>openid) {
+  const r = <span class="cstat-no" title="statement not covered" >await db</span>
+    .collection('user_reminders')
+    .where({ _openid: openid, status: _.in(['pending', 'pending_confirm']) })
+    .orderBy('deadlineDate', 'asc')
+    .get();
+<span class="cstat-no" title="statement not covered" >  return { code: 0, data: groupByDate(r.data) };</span>
+}
+&nbsp;
+async function <span class="fstat-no" title="function not covered" >listByDate(</span>openid, event) {
+  const { range = <span class="branch-0 cbranch-no" title="branch not covered" >'all' </span>} = <span class="cstat-no" title="statement not covered" >event || {};</span>
+  const now = <span class="cstat-no" title="statement not covered" >new Date();</span>
+  let dateFilter;
+<span class="cstat-no" title="statement not covered" >  if (range === 'today') {</span>
+<span class="cstat-no" title="statement not covered" >    dateFilter = { alertDates: now.toISOString().slice(0, 10) };</span>
+  } else <span class="cstat-no" title="statement not covered" >if (range === 'week') {</span>
+    const we = <span class="cstat-no" title="statement not covered" >new Date(now.getTime() + 7 * 86400000).toISOString().slice(0, 10);</span>
+<span class="cstat-no" title="statement not covered" >    dateFilter = { alertDates: _.elemMatch(_.gte(now.toISOString().slice(0, 10)).and(_.lte(we))) };</span>
+  }
+  const query = <span class="cstat-no" title="statement not covered" >{ _openid: openid, status: 'pending' };</span>
+<span class="cstat-no" title="statement not covered" >  if (dateFilter) <span class="cstat-no" title="statement not covered" >Object.assign(query, dateFilter);</span></span>
+  const r = <span class="cstat-no" title="statement not covered" >await db.collection('user_reminders').where(query).orderBy('deadlineDate', 'asc').get();</span>
+<span class="cstat-no" title="statement not covered" >  return { code: 0, data: r.data };</span>
+}
+&nbsp;
+async function <span class="fstat-no" title="function not covered" >getByProcess(</span>openid, processId) {
+  const docs = <span class="cstat-no" title="statement not covered" >await db.collection('user_documents').where({ _openid: openid }).get();</span>
+  const docIds = <span class="cstat-no" title="statement not covered" >docs.data.map(<span class="fstat-no" title="function not covered" >(d</span>) =&gt; <span class="cstat-no" title="statement not covered" >d._id)</span>;</span>
+  const r = <span class="cstat-no" title="statement not covered" >await db</span>
+    .collection('user_reminders')
+    .where({ _openid: openid, sourceDocId: _.in(docIds) })
+    .orderBy('deadlineDate', 'asc')
+    .get();
+<span class="cstat-no" title="statement not covered" >  return { code: 0, data: r.data };</span>
+}
+&nbsp;
+async function <span class="fstat-no" title="function not covered" >getTimeline(</span>openid, processId) {
+  const all = <span class="cstat-no" title="statement not covered" >await db.collection('user_reminders').where({ _openid: openid }).orderBy('deadlineDate', 'asc').get();</span>
+  const nodes = <span class="cstat-no" title="statement not covered" >all.data.map(<span class="fstat-no" title="function not covered" >(r</span>) =&gt; (<span class="cstat-no" title="statement not covered" >{</span></span>
+    id: r._id,
+    title: r.title,
+    baselineDate: r.baselineDate,
+    deadlineDate: r.deadlineDate,
+    status: r.status,
+    isCompleted: r.status === 'completed',
+    isOverdue: r.status === 'pending' &amp;&amp; new Date(r.deadlineDate) &lt; new Date(),
+    isUpcoming: r.status === 'pending' &amp;&amp; daysUntil(r.deadlineDate) &lt;= 7,
+    confidence: r.confidence,
+    decisionPoint: r.decisionPoint,
+  }));
+  const total = <span class="cstat-no" title="statement not covered" >nodes.length,</span>
+    completed = <span class="cstat-no" title="statement not covered" >nodes.filter(<span class="fstat-no" title="function not covered" >(n</span>) =&gt; <span class="cstat-no" title="statement not covered" >n.isCompleted)</span>.length;</span>
+<span class="cstat-no" title="statement not covered" >  return {</span>
+    code: 0,
+    data: { nodes, progress: total &gt; 0 ? Math.round((completed / total) * 100) : 0, total, completed },
+  };
+}
+&nbsp;
+async function <span class="fstat-no" title="function not covered" >scanExpiringToday(</span>) {
+  // 仅允许定时触发器调用——无openid上下文时执行全量扫描
+  // 如有调用方openid（用户直接调用），则过滤到该用户
+  let wxContext;
+<span class="cstat-no" title="statement not covered" >  try {</span>
+<span class="cstat-no" title="statement not covered" >    wxContext = cloud.getWXContext();</span>
+  } catch (e) {}
+  const openid = <span class="cstat-no" title="statement not covered" >wxContext ? wxContext.OPENID : null;</span>
+  const today = <span class="cstat-no" title="statement not covered" >new Date().toISOString().slice(0, 10);</span>
+  const query = <span class="cstat-no" title="statement not covered" >{ status: 'pending', alertDates: _.elemMatch(_.lte(today)) };</span>
+<span class="cstat-no" title="statement not covered" >  if (openid) <span class="cstat-no" title="statement not covered" >query._openid = openid;</span></span>
+  const r = <span class="cstat-no" title="statement not covered" >await db</span>
+    .collection('user_reminders')
+    .where(query)
+    .limit(openid ? 50 : 500)
+    .get();
+  const expiring = <span class="cstat-no" title="statement not covered" >r.data.filter(<span class="fstat-no" title="function not covered" >fu</span>nction (rem) {</span>
+    const ld = <span class="cstat-no" title="statement not covered" >rem.lastNotifiedAt ? new Date(rem.lastNotifiedAt).toISOString().slice(0, 10) : null;</span>
+<span class="cstat-no" title="statement not covered" >    return ld !== today;</span>
+  });
+  // 如果有openid上下文，脱敏返回（不暴露其他用户数据）
+<span class="cstat-no" title="statement not covered" >  if (openid) {</span>
+<span class="cstat-no" title="statement not covered" >    return { code: 0, data: { expiringCount: expiring.length, expiringReminders: expiring } };</span>
+  }
+<span class="cstat-no" title="statement not covered" >  return { code: 0, data: { expiringCount: expiring.length } };</span>
+}
+&nbsp;
+async function <span class="fstat-no" title="function not covered" >getRule(</span>ruleId) {
+  const r = <span class="cstat-no" title="statement not covered" >await db.collection('reminder_rules').where({ ruleId }).get();</span>
+<span class="cstat-no" title="statement not covered" >  if (r.data.length === 0) <span class="cstat-no" title="statement not covered" >return { code: 404, msg: '规则不存在' };</span></span>
+<span class="cstat-no" title="statement not covered" >  return { code: 0, data: r.data[0] };</span>
+}
+&nbsp;
+// V5新增: 决策节点提醒
+async function <span class="fstat-no" title="function not covered" >getDecisionReminders(</span>openid, decisionPoint) {
+  const r = <span class="cstat-no" title="statement not covered" >await db</span>
+    .collection('user_reminders')
+    .where({ _openid: openid, decisionPoint, status: _.in(['pending', 'pending_confirm']) })
+    .orderBy('deadlineDate', 'asc')
+    .get();
+<span class="cstat-no" title="statement not covered" >  return { code: 0, data: r.data || [] };</span>
+}
+&nbsp;
+// 辅助函数
+function <span class="fstat-no" title="function not covered" >calcDeadline(</span>d, o) {
+  const b = <span class="cstat-no" title="statement not covered" >new Date(d);</span>
+<span class="cstat-no" title="statement not covered" >  b.setDate(b.getDate() + o);</span>
+<span class="cstat-no" title="statement not covered" >  return b.toISOString().slice(0, 10);</span>
+}
+function <span class="fstat-no" title="function not covered" >calcAlertDates(</span>dl, offsets) {
+  const deadline = <span class="cstat-no" title="statement not covered" >new Date(dl),</span>
+    now = <span class="cstat-no" title="statement not covered" >new Date();</span>
+<span class="cstat-no" title="statement not covered" >  return offsets</span>
+    .map(<span class="fstat-no" title="function not covered" >(d</span>) =&gt; {
+      const a = <span class="cstat-no" title="statement not covered" >new Date(deadline.getTime() - d * 86400000);</span>
+<span class="cstat-no" title="statement not covered" >      return a.toISOString().slice(0, 10);</span>
+    })
+    .filter(<span class="fstat-no" title="function not covered" >(d</span>) =&gt; <span class="cstat-no" title="statement not covered" >new Date(d) &gt;= new Date(now.toISOString().slice(0, 10)))</span>;
+}
+function <span class="fstat-no" title="function not covered" >daysUntil(</span>d) {
+<span class="cstat-no" title="statement not covered" >  return Math.ceil((new Date(d).getTime() - Date.now()) / 86400000);</span>
+}
+function <span class="fstat-no" title="function not covered" >groupByDate(</span>reminders) {
+  const g = <span class="cstat-no" title="statement not covered" >{ overdue: [], today: [], week: [], month: [], later: [] };</span>
+  const now = <span class="cstat-no" title="statement not covered" >new Date(),</span>
+    today = <span class="cstat-no" title="statement not covered" >now.toISOString().slice(0, 10),</span>
+    we = <span class="cstat-no" title="statement not covered" >new Date(now.getTime() + 7 * 86400000).toISOString().slice(0, 10),</span>
+    me = <span class="cstat-no" title="statement not covered" >new Date(now.getTime() + 30 * 86400000).toISOString().slice(0, 10);</span>
+<span class="cstat-no" title="statement not covered" >  for (const r of reminders) {</span>
+<span class="cstat-no" title="statement not covered" >    if (r.deadlineDate &lt; today) <span class="cstat-no" title="statement not covered" >g.overdue.push(r);</span></span>
+    else <span class="cstat-no" title="statement not covered" >if (r.deadlineDate === today) <span class="cstat-no" title="statement not covered" >g.today.push(r);</span></span>
+    else <span class="cstat-no" title="statement not covered" >if (r.deadlineDate &lt;= we) <span class="cstat-no" title="statement not covered" >g.week.push(r);</span></span>
+    else <span class="cstat-no" title="statement not covered" >if (r.deadlineDate &lt;= me) <span class="cstat-no" title="statement not covered" >g.month.push(r);</span></span>
+    else <span class="cstat-no" title="statement not covered" >g.later.push(r);</span>
+  }
+<span class="cstat-no" title="statement not covered" >  return g;</span>
+}
+async function <span class="fstat-no" title="function not covered" >activateChainChildren(</span>openid, parentIds) {
+<span class="cstat-no" title="statement not covered" >  for (const pid of parentIds) {</span>
+    const parent = <span class="cstat-no" title="statement not covered" >await db.collection('user_reminders').where({ _id: pid, _openid: openid }).get();</span>
+<span class="cstat-no" title="statement not covered" >    if (parent.data.length === 0) <span class="cstat-no" title="statement not covered" >continue;</span></span>
+    const ruleId = <span class="cstat-no" title="statement not covered" >parent.data[0].ruleId;</span>
+<span class="cstat-no" title="statement not covered" >    if (!ruleId) <span class="cstat-no" title="statement not covered" >continue;</span></span>
+    const rule = <span class="cstat-no" title="statement not covered" >await db.collection('reminder_rules').where({ ruleId }).get();</span>
+<span class="cstat-no" title="statement not covered" >    if (rule.data.length === 0) <span class="cstat-no" title="statement not covered" >continue;</span></span>
+<span class="cstat-no" title="statement not covered" >    for (const rem of rule.data[0].reminders || []) {</span>
+<span class="cstat-no" title="statement not covered" >      if (!rem.dependsOn) <span class="cstat-no" title="statement not covered" >continue;</span></span>
+      const children = <span class="cstat-no" title="statement not covered" >await db</span>
+        .collection('user_reminders')
+        .where({ _openid: openid, ruleId, status: 'chain_waiting' })
+        .get();
+<span class="cstat-no" title="statement not covered" >      for (const child of children.data) {</span>
+        const gen = <span class="cstat-no" title="statement not covered" >await generateFromEvent(openid, { eventName: '链式触发', eventDate: parent.data[0].deadlineDate });</span>
+<span class="cstat-no" title="statement not covered" >        if (gen.code === 0 &amp;&amp; gen.data.candidates) {</span>
+<span class="cstat-no" title="statement not covered" >          for (const cand of gen.data.candidates) {</span>
+<span class="cstat-no" title="statement not covered" >            if (cand.title === rem.label) {</span>
+<span class="cstat-no" title="statement not covered" >              cand.parentReminderId = pid;</span>
+<span class="cstat-no" title="statement not covered" >              cand.status = 'pending';</span>
+<span class="cstat-no" title="statement not covered" >              delete cand._dependsOn;</span>
+              const s = <span class="cstat-no" title="statement not covered" >await db.collection('user_reminders').add({ data: cand });</span>
+<span class="cstat-no" title="statement not covered" >              await db</span>
+                .collection('user_reminders')
+                .where({ _id: pid })
+                .update({ data: { childReminderIds: _.push(s._id) } });
+            }
+          }
+        }
+      }
+    }
+  }
+}
+&nbsp;</pre></td></tr></table></pre>
+
+                <div class='push'></div><!-- for sticky footer -->
+            </div><!-- /wrapper -->
+            <div class='footer quiet pad2 space-top1 center small'>
+                Code coverage generated by
+                <a href="https://istanbul.js.org/" target="_blank" rel="noopener noreferrer">istanbul</a>
+                at 2026-05-21T14:01:31.572Z
+            </div>
+        <script src="../../prettify.js"></script>
+        <script>
+            window.onload = function () {
+                prettyPrint();
+            };
+        </script>
+        <script src="../../sorter.js"></script>
+        <script src="../../block-navigation.js"></script>
+    </body>
+</html>
+    

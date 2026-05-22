@@ -4,44 +4,53 @@
  */
 function parseDateFromText(text) {
   if (!text) return [];
-  var dates = [];
-  var seen = {};
+  const dates = [];
+  const seen = {};
 
   // ISO 格式: 2026-05-07
-  var isoRe = /\d{4}-\d{2}-\d{2}/g;
-  var m;
+  const isoRe = /\d{4}-\d{2}-\d{2}/g;
+  let m;
   while ((m = isoRe.exec(text)) !== null) {
-    if (!seen[m[0]]) { seen[m[0]] = true; dates.push({ date: m[0], format: 'ISO', original: m[0], label: extractContext(text, m.index, m[0]) }); }
+    if (!seen[m[0]]) {
+      seen[m[0]] = true;
+      dates.push({ date: m[0], format: 'ISO', original: m[0], label: extractContext(text, m.index, m[0]) });
+    }
   }
 
   // 中文格式: 2026年8月15日（含前/后/止等上下文）
-  var cnRe = /(\d{4})\s*年\s*(\d{1,2})\s*月\s*(\d{1,2})\s*日/g;
+  const cnRe = /(\d{4})\s*年\s*(\d{1,2})\s*月\s*(\d{1,2})\s*日/g;
   while ((m = cnRe.exec(text)) !== null) {
-    var dateStr = m[1] + '-' + m[2].padStart(2,'0') + '-' + m[3].padStart(2,'0');
+    const dateStr = m[1] + '-' + m[2].padStart(2, '0') + '-' + m[3].padStart(2, '0');
     if (!seen[dateStr]) {
       seen[dateStr] = true;
-      var orig = m[0];
-      var label = extractContext(text, m.index, orig);
+      const orig = m[0];
+      const label = extractContext(text, m.index, orig);
       dates.push({ date: dateStr, format: 'CN', original: orig, label: label });
     }
   }
 
   // 英文格式
-  var enRe = /(?:Jan|Feb|Mar|Apr|May|Jun|Jul|Aug|Sep|Oct|Nov|Dec)[a-z]*\s+\d{1,2},?\s+\d{4}/gi;
+  const enRe = /(?:Jan|Feb|Mar|Apr|May|Jun|Jul|Aug|Sep|Oct|Nov|Dec)[a-z]*\s+\d{1,2},?\s+\d{4}/gi;
   while ((m = enRe.exec(text)) !== null) {
-    var p = new Date(m[0]);
+    const p = new Date(m[0]);
     if (!isNaN(p)) {
-      var ds = p.toISOString().slice(0,10);
-      if (!seen[ds]) { seen[ds] = true; dates.push({ date: ds, format: 'EN', original: m[0], label: extractContext(text, m.index, m[0]) }); }
+      const ds = p.toISOString().slice(0, 10);
+      if (!seen[ds]) {
+        seen[ds] = true;
+        dates.push({ date: ds, format: 'EN', original: m[0], label: extractContext(text, m.index, m[0]) });
+      }
     }
   }
 
   // 斜杠格式: 07/05/2026
-  var slRe = /\d{2}\/\d{2}\/\d{4}/g;
+  const slRe = /\d{2}\/\d{2}\/\d{4}/g;
   while ((m = slRe.exec(text)) !== null) {
-    var parts = m[0].split('/');
-    var ds2 = parts[2] + '-' + parts[1] + '-' + parts[0];
-    if (!seen[ds2]) { seen[ds2] = true; dates.push({ date: ds2, format: 'SLASH', original: m[0], label: extractContext(text, m.index, m[0]) }); }
+    const parts = m[0].split('/');
+    const ds2 = parts[2] + '-' + parts[1] + '-' + parts[0];
+    if (!seen[ds2]) {
+      seen[ds2] = true;
+      dates.push({ date: ds2, format: 'SLASH', original: m[0], label: extractContext(text, m.index, m[0]) });
+    }
   }
 
   return dates;
@@ -49,8 +58,8 @@ function parseDateFromText(text) {
 
 /** 从日期前后提取事件上下文 */
 function extractContext(text, idx, dateStr) {
-  var before = text.substring(Math.max(0, idx - 20), idx).replace(/\s+/g, '');
-  var after = text.substring(idx + dateStr.length, Math.min(text.length, idx + dateStr.length + 30)).trim();
+  let before = text.substring(Math.max(0, idx - 20), idx).replace(/\s+/g, '');
+  const after = text.substring(idx + dateStr.length, Math.min(text.length, idx + dateStr.length + 30)).trim();
   // 去掉日期前的修饰词
   before = before.replace(/[之前此后至到应须在从于於]/g, '').trim();
   // 日期后紧跟的关键词提示
@@ -64,7 +73,10 @@ function extractContext(text, idx, dateStr) {
     return (before || '') + '起' + (after.replace(/^(?:开始|起|生效)/, '').trim() || '');
   }
   // 取日期后15字符作为标签
-  var label = after.substring(0, 20).replace(/[，,。.；;！!？?\s]+/g, '').trim();
+  let label = after
+    .substring(0, 20)
+    .replace(/[，,。.；;！!？?\s]+/g, '')
+    .trim();
   if (!label && before) label = before;
   return label || '关键日期';
 }
@@ -82,7 +94,7 @@ function getCountdown(targetDate) {
     isToday: days === 0,
     isUpcoming: days > 0 && days <= 7,
     isWithinMonth: days > 0 && days <= 30,
-    display: days > 0 ? `还有 ${days} 天` : days === 0 ? '今天' : `已过期 ${Math.abs(days)} 天`
+    display: days > 0 ? `还有 ${days} 天` : days === 0 ? '今天' : `已过期 ${Math.abs(days)} 天`,
   };
 }
 

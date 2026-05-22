@@ -15,6 +15,7 @@
 `identityReset` 和 `unlockAllPhases` 两个函数被错误插入到 `handleV3Callback` 的 JSDoc 注释中间，破坏了文件结构。
 
 当前部署版本结构:
+
 ```
 deleteOrder 结束
   ↓
@@ -31,6 +32,7 @@ async function handleV3Callback(event) { ... }                 ← 函数主体
 ## 修复
 
 重组文件结构为正确顺序:
+
 ```
 deleteOrder → handleV3Callback (完整JSDoc+函数体) → identityReset → unlockAllPhases → checkSubscription → ...
 ```
@@ -38,6 +40,7 @@ deleteOrder → handleV3Callback (完整JSDoc+函数体) → identityReset → u
 ## 验证
 
 修复后重新部署:
+
 ```
 mcp updateFunctionCode → invoke(action=identityReset) → 应返回 500 "支付服务未配置" 而非 ReferenceError
 ```

@@ -11,14 +11,17 @@
 ## 变更内容
 
 ### Bug 修复
+
 - `utils/storage.js`：新增 `archiveRemindersByPath` / `unarchiveRemindersByPath` 函数并导出
 
 ### 系统性防护（V4.1）
-- 存储版本管理：`getStorageVersion` / `setStorageVersion` / `ensureStorageVersion`（minReadable + _future_data 容忍机制）
+
+- 存储版本管理：`getStorageVersion` / `setStorageVersion` / `ensureStorageVersion`（minReadable + \_future_data 容忍机制）
 - Schema 校验降级：`validateProcessLine` / `validateAndRepairProcesses`（坏数据→重命名备份 + 降级空状态）
 - 启动完整性：`runStorageStartupCheck()`（版本迁移→数据校验→健康上报）
 
 ### 测试
+
 - `__tests__/storage-resilience.test.js` — 25 用例（Schema校验 + 坏数据降级 + 版本迁移 + 启动完整性）
 - `__tests__/storage-archive-reminders.test.js` — 16 用例（封存/恢复/往返）
 - `__tests__/process-path-select-fix.test.js` — 9 用例（onSelectDirectPath 调用链集成）

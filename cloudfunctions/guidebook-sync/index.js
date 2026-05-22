@@ -29,9 +29,12 @@ exports.main = async (event, context) => {
 
   try {
     switch (action) {
-      case 'saveProgress': return await saveProgress(OPENID, progress);
-      case 'getProgress':  return await getProgress(OPENID);
-      default:             return { code: 400, msg: '无效操作' };
+      case 'saveProgress':
+        return await saveProgress(OPENID, progress);
+      case 'getProgress':
+        return await getProgress(OPENID);
+      default:
+        return { code: 400, msg: '无效操作' };
     }
   } catch (e) {
     console.error('[guidebook-sync]', e);
@@ -44,36 +47,31 @@ async function saveProgress(openid, progress) {
     return { code: 400, msg: '缺少 progress 或 updatedAt' };
   }
 
-  const userRes = await db.collection('users')
-    .where({ _openid: openid })
-    .field({ guidebookProgress: true })
-    .get();
+  const userRes = await db.collection('users').where({ _openid: openid }).field({ guidebookProgress: true }).get();
 
   if (userRes.data.length === 0) return { code: 404, msg: '用户不存在' };
 
   const cloudProgress = userRes.data[0].guidebookProgress || null;
   const merged = resolveConflict(cloudProgress, progress);
 
-  await db.collection('users')
+  await db
+    .collection('users')
     .where({ _openid: openid })
     .update({
       data: {
         guidebookProgress: merged,
-        updatedAt: db.serverDate()
-      }
+        updatedAt: db.serverDate(),
+      },
     });
 
   return {
     code: 0,
-    data: { syncedAt: merged.updatedAt, strategyUsed: merged._conflictStrategy || 'push' }
+    data: { syncedAt: merged.updatedAt, strategyUsed: merged._conflictStrategy || 'push' },
   };
 }
 
 async function getProgress(openid) {
-  const userRes = await db.collection('users')
-    .where({ _openid: openid })
-    .field({ guidebookProgress: true })
-    .get();
+  const userRes = await db.collection('users').where({ _openid: openid }).field({ guidebookProgress: true }).get();
 
   if (userRes.data.length === 0) return { code: 404, msg: '用户不存在' };
 
@@ -84,8 +82,8 @@ async function getProgress(openid) {
     data: {
       progress: cloudProgress,
       serverUpdatedAt: cloudProgress ? cloudProgress.updatedAt : null,
-      exists: !!cloudProgress
-    }
+      exists: !!cloudProgress,
+    },
   };
 }
 
@@ -138,8 +136,7 @@ function resolveConflict(cloudProgress, localProgress) {
           cloudTasks[taskId] = localTasks[taskId];
         } else if (localTasks[taskId].completedAt && cloudTasks[taskId].completedAt) {
           // 保留较晚完成的
-          if (new Date(localTasks[taskId].completedAt).getTime() >
-              new Date(cloudTasks[taskId].completedAt).getTime()) {
+          if (new Date(localTasks[taskId].completedAt).getTime() > new Date(cloudTasks[taskId].completedAt).getTime()) {
             cloudTasks[taskId] = localTasks[taskId];
           }
         }

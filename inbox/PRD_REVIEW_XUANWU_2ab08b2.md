@@ -1,7 +1,7 @@
 # 玄武PRD审查报告 — commit 2ab08b2
 
 **审查对象**: `2ab08b2` (玄武3P0+3P1+4P2全量修复)
-**审查范围**: 3文件变更 — process/index/index.js + guidebooks/index/*
+**审查范围**: 3文件变更 — process/index/index.js + guidebooks/index/\*
 **审查者**: 玄武 (via Hermes subagent)
 **审查时间**: 2026-05-20
 **PRD对照**: PRD v3.1 流程控/攻略书双模块
@@ -19,15 +19,15 @@
 
 - **泄露路径**（全部不清理 `__completingAllSteps` 和 `completingStageIdx`）:
 
-  | 行号 | 条件 | 后果 |
-  |------|------|------|
+  | 行号 | 条件                                     | 后果                           |
+  | ---- | ---------------------------------------- | ------------------------------ |
   | L183 | `__completingAllSteps` 已为 true（双击） | 死锁 + completingStageIdx 残留 |
-  | L189 | `!phase`（阶段不存在） | 死锁 + 按钮永久灰显 |
-  | L194 | `phase.status !== 'current'` | 死锁 + 按钮永久灰显 |
-  | L202 | 无 activeProcess 或其 stages 为空 | 死锁 + 按钮永久灰显 |
-  | L220 | `!currentStage` 未找到对应阶段 | 死锁 + 按钮永久灰显 |
-  | L230 | `pendingSteps.length === 0` | 死锁 + 按钮永久灰显 |
-  | L236 | `!processId` | 死锁 + 按钮永久灰显 |
+  | L189 | `!phase`（阶段不存在）                   | 死锁 + 按钮永久灰显            |
+  | L194 | `phase.status !== 'current'`             | 死锁 + 按钮永久灰显            |
+  | L202 | 无 activeProcess 或其 stages 为空        | 死锁 + 按钮永久灰显            |
+  | L220 | `!currentStage` 未找到对应阶段           | 死锁 + 按钮永久灰显            |
+  | L230 | `pendingSteps.length === 0`              | 死锁 + 按钮永久灰显            |
+  | L236 | `!processId`                             | 死锁 + 按钮永久灰显            |
 
 - **影响**: 任意验证失败后，用户无法再次点击任何阶段的「完成当前阶段」按钮，必须杀进程重开页面。按钮UI永久灰显（completingStageIdx 不恢复为 -1）。
 
@@ -39,17 +39,17 @@
     if (this.__completingAllSteps) return;
     this.__completingAllSteps = true;
     this.setData({ completingStageIdx: index });
-    
+
     // 统一清理函数
     var cleanup = function() {
       this.__completingAllSteps = false;
       this.setData({ completingStageIdx: -1 });
     }.bind(this);
-    
+
     // 所有早期返回前调用 cleanup()
     if (!phase) { cleanup(); wx.showToast(...); return; }
     // ... 其余同理
-    
+
     // Promise 链 .finally(cleanup)
   }
   ```
@@ -81,9 +81,11 @@
   function callWithTimeout(fn, timeout) {
     return Promise.race([
       fn,
-      new Promise(function(_, reject) {
-        setTimeout(function() { reject(new Error('TIMEOUT')); }, timeout);
-      })
+      new Promise(function (_, reject) {
+        setTimeout(function () {
+          reject(new Error('TIMEOUT'));
+        }, timeout);
+      }),
     ]);
   }
   ```
@@ -116,7 +118,7 @@
 
 ## 🟡 P1 — 重要 (发版前修复)
 
-### P1-01: _toStepIdx 未知phaseId 兜底映射使用数组索引而非 order 字段 [映射偏差]
+### P1-01: \_toStepIdx 未知phaseId 兜底映射使用数组索引而非 order 字段 [映射偏差]
 
 - **文件**: `pages/process/index/index.js:400-403`
 - **PRD条目**: 流程控 — 7步指示器进度准确性
@@ -131,7 +133,9 @@
 - **偏差**: 变量 `si` 是 `allStages` 数组的**遍历索引**（for 循环变量），而非 stage 自身的 `order` 字段。若 stages 数组顺序与 order 不一致（如经过排序、插入等操作），映射结果会偏离正确步骤。
 - **修复**: 改用 stage 自身的 order 字段计算比例：
   ```javascript
-  var orders = allStages.map(function(s) { return s.order || 0; });
+  var orders = allStages.map(function (s) {
+    return s.order || 0;
+  });
   var minOrder = Math.min.apply(null, orders);
   var maxOrder = Math.max.apply(null, orders);
   var range = maxOrder - minOrder || 1;
@@ -140,20 +144,31 @@
 
 ---
 
-### P1-02: _loadBrowseLocal 未同步 isMember 参数传递 [功能遗漏]
+### P1-02: \_loadBrowseLocal 未同步 isMember 参数传递 [功能遗漏]
 
 - **文件**: `pages/guidebooks/index/index.js:738`
 - **偏差**: 该 commit 在主数据加载路径（L156）新增了 `isMember` 参数传递给 `fetchByPathLocal`，但 `_loadBrowseLocal` 方法（L738，deprecated 标记）仍使用旧的 4 参数签名。
 - **代码对比**:
+
   ```javascript
   // L156 主路径 — 已更新 ✅
   localResult = cache.fetchByPathLocal(
-    params.visaType, params.familyStatus, params.arrivalScenario, params.existingAssets, isMember
+    params.visaType,
+    params.familyStatus,
+    params.arrivalScenario,
+    params.existingAssets,
+    isMember,
   );
-  
+
   // L738 _loadBrowseLocal — 未更新 ❌
-  var result = cache.fetchByPathLocal(params.visaType, params.familyStatus, params.arrivalScenario, params.existingAssets);
+  var result = cache.fetchByPathLocal(
+    params.visaType,
+    params.familyStatus,
+    params.arrivalScenario,
+    params.existingAssets,
+  );
   ```
+
 - **影响**: 若 `_loadBrowseLocal` 仍被调用（虽标记 deprecated 但未被移除），会员用户在该路径下看到的内容不会反映会员解锁状态。
 - **修复**: 同步更新 `_loadBrowseLocal` 调用签名，或直接移除此 deprecated 方法。
 
@@ -208,27 +223,27 @@
 
 ## 📊 汇总
 
-| 级别 | 数量 | 关键项 |
-|:----:|:----:|--------|
-| P0 | 3 | 防重入死锁 / 无超时保护 / catch静默吞错 |
-| P1 | 3 | 兜底映射偏差 / isMember遗漏 / 设计复审 |
-| P2 | 4 | 联动刷新 / loading兜底 / 递归深度 / 边界确认 |
+| 级别 | 数量 | 关键项                                       |
+| :--: | :--: | -------------------------------------------- |
+|  P0  |  3   | 防重入死锁 / 无超时保护 / catch静默吞错      |
+|  P1  |  3   | 兜底映射偏差 / isMember遗漏 / 设计复审       |
+|  P2  |  4   | 联动刷新 / loading兜底 / 递归深度 / 边界确认 |
 
 ---
 
 ## ✅ 已验证修复 (本次commit正确交付的项)
 
-| # | 修复项 | 文件 | 状态 |
-|---|--------|------|:----:|
-| P0-F1 | _toStepIdx phase2 order归一化 (localOrder计算) | process/index/index.js | ✅ |
-| P0-F2 | currentStepIdx多重兜底 (全完成→7, 推算, ratio) | process/index/index.js | ✅ |
-| P0-F3 | unlockAllPhasesPay 无 async (前序已修) | — | ✅ |
-| P1-F1 | button→view 消除事件穿透 | guidebooks/index.wxml | ✅ |
-| P1-F3 | phases完成材料检测 (doneCount===materialCount) | process/index/index.js | ✅ |
-| P2-F1 | assessmentDone 注释解耦说明 | process/index/index.js | ✅ |
-| P2-F2 | 解锁横幅 !loading 防初次闪烁 | guidebooks/index.wxml | ✅ |
-| P2-F3 | confirmPayment catch 添加 console.error | guidebooks/index.js | ✅ |
-| P2-F4 | async/await→Promise 递归链 (低版本微信兼容) | process/index/index.js | ✅ (结构正确) |
+| #     | 修复项                                          | 文件                   |     状态      |
+| ----- | ----------------------------------------------- | ---------------------- | :-----------: |
+| P0-F1 | \_toStepIdx phase2 order归一化 (localOrder计算) | process/index/index.js |      ✅       |
+| P0-F2 | currentStepIdx多重兜底 (全完成→7, 推算, ratio)  | process/index/index.js |      ✅       |
+| P0-F3 | unlockAllPhasesPay 无 async (前序已修)          | —                      |      ✅       |
+| P1-F1 | button→view 消除事件穿透                        | guidebooks/index.wxml  |      ✅       |
+| P1-F3 | phases完成材料检测 (doneCount===materialCount)  | process/index/index.js |      ✅       |
+| P2-F1 | assessmentDone 注释解耦说明                     | process/index/index.js |      ✅       |
+| P2-F2 | 解锁横幅 !loading 防初次闪烁                    | guidebooks/index.wxml  |      ✅       |
+| P2-F3 | confirmPayment catch 添加 console.error         | guidebooks/index.js    |      ✅       |
+| P2-F4 | async/await→Promise 递归链 (低版本微信兼容)     | process/index/index.js | ✅ (结构正确) |
 
 ---
 

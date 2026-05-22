@@ -47,7 +47,7 @@
 }
 .app-icon {
   font-size: 100rpx;
-  filter: drop-shadow(0 4rpx 16rpx rgba(26,115,232,0.15));
+  filter: drop-shadow(0 4rpx 16rpx rgba(26, 115, 232, 0.15));
 }
 .app-name {
   font-size: 52rpx;
@@ -82,8 +82,12 @@
   border: 1rpx solid var(--gray-100);
   transition: transform var(--duration-fast);
 }
-.feature:active { transform: scale(0.97); }
-.feat-icon { font-size: 36rpx; }
+.feature:active {
+  transform: scale(0.97);
+}
+.feat-icon {
+  font-size: 36rpx;
+}
 .feat-title {
   font-size: var(--font-sm);
   font-weight: 600;
@@ -113,14 +117,16 @@
   font-weight: 600;
   padding: 28rpx;
   text-align: center;
-  box-shadow: 0 4rpx 20rpx rgba(26,115,232,0.25);
+  box-shadow: 0 4rpx 20rpx rgba(26, 115, 232, 0.25);
   transition: all var(--duration-fast);
 }
 .login-btn:active {
   opacity: 0.9;
   transform: scale(0.98);
 }
-.login-btn::after { border: none; }
+.login-btn::after {
+  border: none;
+}
 
 .privacy-check {
   font-size: var(--font-xs);
@@ -168,7 +174,12 @@
   font-size: var(--font-lg);
   font-weight: 600;
   padding: 24rpx;
-  box-shadow: 0 4rpx 20rpx rgba(26,115,232,0.3);
+  box-shadow: 0 4rpx 20rpx rgba(26, 115, 232, 0.3);
 }
-.upgrade-btn::after { border: none; }
-.upgrade-btn:active { opacity: 0.9; transform: scale(0.98); }
+.upgrade-btn::after {
+  border: none;
+}
+.upgrade-btn:active {
+  opacity: 0.9;
+  transform: scale(0.98);
+}

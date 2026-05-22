@@ -7,7 +7,7 @@ Page({
     loading: true,
     unauthenticated: false,
     locked: false,
-    membershipDays: 0
+    membershipDays: 0,
   },
 
   onLoad() {
@@ -30,7 +30,7 @@ Page({
       //   新格式（app.saveSession 写入）：'__session__' = { token, userInfo, ... }
       const rawSession = wx.getStorageSync('__session__');
       const isOldFormat = typeof rawSession === 'string';
-      const sessionToken = isOldFormat ? rawSession : (rawSession && rawSession.token);
+      const sessionToken = isOldFormat ? rawSession : rawSession && rawSession.token;
       const userData = wx.getStorageSync('user_data') || wx.getStorageSync('__cloud_user__');
 
       // P1-1: 旧格式迁移日志 — 记录迁移事件便于排查
@@ -60,16 +60,15 @@ Page({
           userInfo: app.globalData.userInfo || { nickName: '住港伴用户' },
           userStatus: app.globalData.userStatus || 'unapplied',
           membershipLevel: app.globalData.membershipLevel || 'free',
-          phoneBound: app.globalData.phoneBound || false
+          phoneBound: app.globalData.phoneBound || false,
         });
         // P1-1: 迁移后轻提示，用户无感知但可知道登录态已更新
         wx.showToast({ title: '登录状态已更新', icon: 'none', duration: 1500 });
       }
 
       // 检查会员锁定（优先从 session 读，降级到 __user_profile__）
-      const profile = (rawSession && typeof rawSession === 'object')
-        ? rawSession
-        : (wx.getStorageSync('__user_profile__') || {});
+      const profile =
+        rawSession && typeof rawSession === 'object' ? rawSession : wx.getStorageSync('__user_profile__') || {};
       const isLocked = profile.isLocked || false;
       const freeTrialEnd = profile.freeTrialEndAt;
 
@@ -124,7 +123,7 @@ Page({
     try {
       const res = await wx.cloud.callFunction({
         name: 'user-auth',
-        data: { action: 'phoneLogin', phoneCode: code, loginType: 'wechat_phone' }
+        data: { action: 'phoneLogin', phoneCode: code, loginType: 'wechat_phone' },
       });
 
       wx.hideLoading();
@@ -157,7 +156,7 @@ Page({
             userInfo: app.globalData.userInfo,
             userStatus: app.globalData.userStatus,
             membershipLevel: app.globalData.membershipLevel,
-            phoneBound: app.globalData.phoneBound
+            phoneBound: app.globalData.phoneBound,
           });
         } else {
           console.warn('[home] saveSession 跳过: token 为空');
@@ -177,7 +176,7 @@ Page({
           title: '手机号登录提示',
           content: `当前环境不支持手机号登录（${result.msg}）。\n\n建议：使用「其他方式登录」进入，真机调试时手机号功能正常。`,
           showCancel: false,
-          confirmText: '知道了'
+          confirmText: '知道了',
         });
       } else {
         wx.showToast({ title: result.msg || '登录失败，请重试', icon: 'none' });
@@ -204,7 +203,7 @@ Page({
   onShareAppMessage() {
     return {
       title: '住港伴 — 香港身份全流程陪伴工具',
-      path: '/pages/home/home'
+      path: '/pages/home/home',
     };
-  }
+  },
 });

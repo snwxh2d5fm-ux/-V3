@@ -16,34 +16,43 @@
  * 源自: 住港伴-miniapp/src/cloud/functions/ai-doc-gen/index.js
  * 适配: 原生小程序框架 + CommonJS
  */
-var https = require('https');
-var { URL } = require('url');
-var templates = require('./templates');
+const https = require('https');
+const { URL } = require('url');
+const templates = require('./templates');
 
-var DEEPSEEK_BASE_URL = 'https://api.deepseek.com/v1';
+const DEEPSEEK_BASE_URL = 'https://api.deepseek.com/v1';
 
 function httpPostJson(url, body, headers) {
   return new Promise(function (resolve, reject) {
-    var parsedUrl = new URL(url);
-    var options = {
+    const parsedUrl = new URL(url);
+    const options = {
       method: 'POST',
       hostname: parsedUrl.hostname,
       path: parsedUrl.pathname + parsedUrl.search,
-      headers: Object.assign({
-        'Content-Type': 'application/json',
-        'Content-Length': Buffer.byteLength(body, 'utf8')
-      }, headers || {})
+      headers: Object.assign(
+        {
+          'Content-Type': 'application/json',
+          'Content-Length': Buffer.byteLength(body, 'utf8'),
+        },
+        headers || {},
+      ),
     };
 
-    var req = https.request(options, function (res) {
-      var data = '';
-      res.on('data', function (chunk) { data += chunk; });
+    const req = https.request(options, function (res) {
+      let data = '';
+      res.on('data', function (chunk) {
+        data += chunk;
+      });
       res.on('end', function () {
         resolve({
           ok: res.statusCode >= 200 && res.statusCode < 300,
           status: res.statusCode,
-          text: async function () { return data; },
-          json: async function () { return JSON.parse(data); }
+          text: async function () {
+            return data;
+          },
+          json: async function () {
+            return JSON.parse(data);
+          },
         });
       });
     });
@@ -58,25 +67,30 @@ function httpPostJson(url, body, headers) {
  * 构建 DeepSeek 文档生成请求
  */
 function buildDocGenRequest(docType, userLabels, extraInfo) {
-  var labelSummary = userLabels.map(function (l) {
-    return l.category + ':' + l.label;
-  }).join('、');
+  const labelSummary = userLabels
+    .map(function (l) {
+      return l.category + ':' + l.label;
+    })
+    .join('、');
 
-  var docTypeNames = {
-    'statement_plan': '赴港计划书',
-    'recommendation': '推荐信',
-    'work_proof': '工作证明',
+  const docTypeNames = {
+    statement_plan: '赴港计划书',
+    recommendation: '推荐信',
+    work_proof: '工作证明',
   };
 
-  var docTypeName = docTypeNames[docType] || '文档';
+  const docTypeName = docTypeNames[docType] || '文档';
 
-  var systemPrompt = '你是一位专业的香港入境申请文书撰写助手，擅于撰写高质量的申请文档。\n\n' +
-    '请根据以下用户信息撰写一份' + docTypeName + '：\n' +
+  const systemPrompt =
+    '你是一位专业的香港入境申请文书撰写助手，擅于撰写高质量的申请文档。\n\n' +
+    '请根据以下用户信息撰写一份' +
+    docTypeName +
+    '：\n' +
     '格式要求：正式、专业、完整，符合香港入境事务处的规范。\n' +
     '语言：中文（繁体或简体均可）。\n' +
     '不要添加占位符，所有内容应该根据用户信息尽量填充完整。';
 
-  var userPrompt = '文档类型：' + docTypeName + '\n\n';
+  let userPrompt = '文档类型：' + docTypeName + '\n\n';
 
   if (labelSummary) {
     userPrompt += '用户标签信息：' + labelSummary + '\n';
@@ -111,7 +125,7 @@ function buildDocGenRequest(docType, userLabels, extraInfo) {
  * 调用 DeepSeek API
  */
 async function callDeepSeek(requestBody) {
-  var apiKey = process.env.DEEPSEEK_API_KEY;
+  const apiKey = process.env.DEEPSEEK_API_KEY;
 
   if (!apiKey) {
     console.warn('DEEPSEEK_API_KEY 未设置，使用模板生成');
@@ -119,30 +133,30 @@ async function callDeepSeek(requestBody) {
   }
 
   try {
-    var body = JSON.stringify(requestBody);
-    var response;
+    const body = JSON.stringify(requestBody);
+    let response;
 
     if (typeof fetch === 'function') {
       response = await fetch(DEEPSEEK_BASE_URL + '/chat/completions', {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
-          'Authorization': 'Bearer ' + apiKey,
+          Authorization: 'Bearer ' + apiKey,
         },
         body: body,
       });
     } else {
       response = await httpPostJson(DEEPSEEK_BASE_URL + '/chat/completions', body, {
-        'Authorization': 'Bearer ' + apiKey
+        Authorization: 'Bearer ' + apiKey,
       });
     }
 
     if (!response.ok) {
-      var errorText = await response.text();
+      const errorText = await response.text();
       throw new Error('DeepSeek API error: ' + response.status + ' ' + errorText);
     }
 
-    var result = await response.json();
+    const result = await response.json();
     return result;
   } catch (error) {
     console.error('DeepSeek API call failed:', error);
@@ -158,7 +172,7 @@ function parseGeneratedContent(apiResult) {
     return null;
   }
 
-  var content = apiResult.choices[0].message.content;
+  const content = apiResult.choices[0].message.content;
 
   return {
     content: content + templates.AI_DISCLAIMER,
@@ -179,12 +193,12 @@ function parseGeneratedContent(apiResult) {
  * 云函数入口
  */
 exports.main = async function (event, context) {
-  var docType = event.docType;
-  var userLabels = event.userLabels;
-  var extraInfo = event.extraInfo;
+  const docType = event.docType;
+  const userLabels = event.userLabels;
+  const extraInfo = event.extraInfo;
 
   // 参数校验
-  var validDocTypes = ['statement_plan', 'recommendation', 'work_proof'];
+  const validDocTypes = ['statement_plan', 'recommendation', 'work_proof'];
   if (!docType || validDocTypes.indexOf(docType) === -1) {
     return {
       code: 400,
@@ -210,14 +224,14 @@ exports.main = async function (event, context) {
   }
 
   try {
-    var result;
+    let result;
 
     // 1. 尝试使用 AI 增强生成
-    var requestBody = buildDocGenRequest(docType, userLabels, extraInfo);
-    var apiResult = await callDeepSeek(requestBody);
+    const requestBody = buildDocGenRequest(docType, userLabels, extraInfo);
+    const apiResult = await callDeepSeek(requestBody);
 
     if (apiResult) {
-      var parsed = parseGeneratedContent(apiResult);
+      const parsed = parseGeneratedContent(apiResult);
       if (parsed) {
         result = parsed;
       }

@@ -1,4 +1,22 @@
-.progress-bar { display: flex; align-items: center; gap: 12rpx; padding: 8rpx 0; }
-.progress-bar__bg { flex: 1; background: var(--gray-200); border-radius: 4rpx; overflow: hidden; }
-.progress-bar__fill { border-radius: 4rpx; transition: width 0.3s ease; }
-.progress-bar__text { font-size: var(--font-xs); color: var(--color-text-muted); width: 60rpx; text-align: right; }
+.progress-bar {
+  display: flex;
+  align-items: center;
+  gap: 12rpx;
+  padding: 8rpx 0;
+}
+.progress-bar__bg {
+  flex: 1;
+  background: var(--gray-200);
+  border-radius: 4rpx;
+  overflow: hidden;
+}
+.progress-bar__fill {
+  border-radius: 4rpx;
+  transition: width 0.3s ease;
+}
+.progress-bar__text {
+  font-size: var(--font-xs);
+  color: var(--color-text-muted);
+  width: 60rpx;
+  text-align: right;
+}

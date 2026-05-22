@@ -12,7 +12,7 @@ const _ = db.command;
 function sanitizePII(text) {
   if (!text || typeof text !== 'string') return text;
   try {
-    var s = text;
+    let s = text;
     // 中国大陆身份证 (18位)
     s = s.replace(/[1-9]\d{5}(?:19|20)\d{2}(?:0[1-9]|1[0-2])(?:0[1-9]|[12]\d|3[01])\d{3}[\dXx]/g, '***');
     // 中国大陆身份证 (15位，旧版)
@@ -28,7 +28,9 @@ function sanitizePII(text) {
     // 护照号 (E + 8位数字，或 G + 8位数字)
     s = s.replace(/\b[EG]\d{8}\b/g, '***');
     return s;
-  } catch (e) { return text; }
+  } catch (e) {
+    return text;
+  }
 }
 
 // ============ 脱敏昵称 ============
@@ -40,24 +42,29 @@ function maskNickname(nickname) {
 
 // ============ 生成工单号 ============
 function generateTicketId() {
-  var now = new Date();
-  var y = now.getFullYear();
-  var m = String(now.getMonth() + 1).padStart(2, '0');
-  var d = String(now.getDate()).padStart(2, '0');
-  var seq = String(Math.floor(Math.random() * 9000) + 1000);
+  const now = new Date();
+  const y = now.getFullYear();
+  const m = String(now.getMonth() + 1).padStart(2, '0');
+  const d = String(now.getDate()).padStart(2, '0');
+  const seq = String(Math.floor(Math.random() * 9000) + 1000);
   return 'FB-' + y + m + d + '-' + seq;
 }
 
 // ============ 主入口 ============
 exports.main = async (event) => {
-  var action = event.action;
+  const action = event.action;
   try {
     switch (action) {
-      case 'submit': return await submit(event);
-      case 'list':   return await list(event);
-      case 'detail': return await detail(event);
-      case 'append': return await append(event);
-      default:       return { code: 400, msg: '不支持的操作: ' + action + '，支持: submit/list/detail/append' };
+      case 'submit':
+        return await submit(event);
+      case 'list':
+        return await list(event);
+      case 'detail':
+        return await detail(event);
+      case 'append':
+        return await append(event);
+      default:
+        return { code: 400, msg: '不支持的操作: ' + action + '，支持: submit/list/detail/append' };
     }
   } catch (err) {
     console.error('[feedback-submit]', err);
@@ -67,38 +74,38 @@ exports.main = async (event) => {
 
 // ============ 1. 提交反馈 ============
 async function submit(event) {
-  var content = (event.content || '').trim();
-  var type = event.type;             // bug / content / other
-  var isAnonymous = !!event.isAnonymous;
-  var screenshot = event.screenshot || '';  // cloud fileID
-  var contact = event.contact || {};
+  const content = (event.content || '').trim();
+  const type = event.type; // bug / content / other
+  const isAnonymous = !!event.isAnonymous;
+  const screenshot = event.screenshot || ''; // cloud fileID
+  const contact = event.contact || {};
 
   // 校验
   if (!content) return { code: 400, msg: '反馈内容不能为空' };
   if (content.length < 10) return { code: 400, msg: '反馈内容至少10个字' };
   if (content.length > 500) return { code: 400, msg: '反馈内容不能超过500字' };
-  var validTypes = ['bug', 'content', 'other'];
+  const validTypes = ['bug', 'content', 'other'];
   if (validTypes.indexOf(type) === -1) return { code: 400, msg: '请选择反馈类型: bug/content/other' };
 
-  var wxContext = cloud.getWXContext();
-  var openid = wxContext.OPENID;
+  const wxContext = cloud.getWXContext();
+  const openid = wxContext.OPENID;
 
   // 匿名模式不写userId
-  var userId = isAnonymous ? null : (openid || null);
+  const userId = isAnonymous ? null : openid || null;
 
   // PII 脱敏
-  var sanitizedContent = sanitizePII(content);
+  const sanitizedContent = sanitizePII(content);
 
   // 脱敏昵称
-  var nickname = '';
+  let nickname = '';
   if (!isAnonymous && contact.nickname) {
     nickname = maskNickname(contact.nickname);
   }
 
-  var ticketId = generateTicketId();
-  var now = Date.now();
+  const ticketId = generateTicketId();
+  const now = Date.now();
 
-  var record = {
+  const record = {
     ticketId: ticketId,
     userId: userId,
     isAnonymous: isAnonymous,
@@ -108,7 +115,7 @@ async function submit(event) {
     contact: { nickname: nickname },
     status: 'submitted',
     createdAt: now,
-    updatedAt: now
+    updatedAt: now,
   };
 
   try {
@@ -118,8 +125,8 @@ async function submit(event) {
       data: {
         ticketId: ticketId,
         status: 'submitted',
-        createdAt: now
-      }
+        createdAt: now,
+      },
     };
   } catch (dbErr) {
     console.error('[feedback-submit] 写入失败:', dbErr);
@@ -129,15 +136,15 @@ async function submit(event) {
 
 // ============ 2. 查询反馈列表 ============
 async function list(event) {
-  var wxContext = cloud.getWXContext();
-  var openid = wxContext.OPENID;
+  const wxContext = cloud.getWXContext();
+  const openid = wxContext.OPENID;
   if (!openid) return { code: 403, msg: '请先登录' };
 
-  var status = event.status || '';   // '' = 全部, 'submitted'/'in_progress'/'replied'/'closed'
-  var limit = Math.min(event.limit || 20, 50);
-  var skip = event.skip || 0;
+  const status = event.status || ''; // '' = 全部, 'submitted'/'in_progress'/'replied'/'closed'
+  const limit = Math.min(event.limit || 20, 50);
+  const skip = event.skip || 0;
 
-  var where = { userId: openid };
+  const where = { userId: openid };
   if (status) {
     // "处理中"Tab 需同时匹配 submitted + in_progress
     if (status === 'submitted') {
@@ -148,7 +155,8 @@ async function list(event) {
   }
 
   try {
-    var result = await db.collection('feedback')
+    const result = await db
+      .collection('feedback')
       .where(where)
       .orderBy('createdAt', 'desc')
       .skip(skip)
@@ -156,10 +164,10 @@ async function list(event) {
       .get();
 
     // 为每条反馈附上最新一条回复
-    var items = [];
-    for (var i = 0; i < result.data.length; i++) {
-      var fb = result.data[i];
-      var item = {
+    const items = [];
+    for (let i = 0; i < result.data.length; i++) {
+      const fb = result.data[i];
+      const item = {
         ticketId: fb.ticketId,
         type: fb.type,
         content: fb.content,
@@ -167,11 +175,12 @@ async function list(event) {
         createdAt: fb.createdAt,
         updatedAt: fb.updatedAt,
         hasScreenshot: !!fb.screenshot,
-        latestReply: null
+        latestReply: null,
       };
       // 查询最新回复
       try {
-        var replyResult = await db.collection('feedback_reply')
+        const replyResult = await db
+          .collection('feedback_reply')
           .where({ ticketId: fb.ticketId })
           .orderBy('createdAt', 'desc')
           .limit(1)
@@ -180,21 +189,25 @@ async function list(event) {
           item.latestReply = {
             content: replyResult.data[0].content,
             role: replyResult.data[0].role,
-            createdAt: replyResult.data[0].createdAt
+            createdAt: replyResult.data[0].createdAt,
           };
         }
-      } catch (e) { /* 忽略查询失败 */ }
+      } catch (e) {
+        /* 忽略查询失败 */
+      }
       items.push(item);
     }
 
     // 精确 hasMore: 用 count() 而非 items.length >= limit
-    var totalCount = 0;
+    let totalCount = 0;
     try {
-      var countResult = await db.collection('feedback').where(where).count();
+      const countResult = await db.collection('feedback').where(where).count();
       totalCount = countResult.total;
-    } catch (e) { /* count 失败降级 */ }
-    var realTotal = totalCount || items.length;
-    return { code: 0, data: { items: items, total: realTotal, hasMore: (skip + items.length) < realTotal } };
+    } catch (e) {
+      /* count 失败降级 */
+    }
+    const realTotal = totalCount || items.length;
+    return { code: 0, data: { items: items, total: realTotal, hasMore: skip + items.length < realTotal } };
   } catch (dbErr) {
     console.error('[feedback-submit] 查询失败:', dbErr);
     return { code: 500, msg: '查询失败' };
@@ -203,40 +216,41 @@ async function list(event) {
 
 // ============ 3. 查询反馈详情（含回复） ============
 async function detail(event) {
-  var wxContext = cloud.getWXContext();
-  var openid = wxContext.OPENID;
+  const wxContext = cloud.getWXContext();
+  const openid = wxContext.OPENID;
   if (!openid) return { code: 403, msg: '请先登录' };
 
-  var ticketId = event.ticketId;
+  const ticketId = event.ticketId;
   if (!ticketId) return { code: 400, msg: '缺少工单号' };
 
   try {
-    var fbResult = await db.collection('feedback')
-      .where({ ticketId: ticketId, userId: openid })
-      .get();
+    const fbResult = await db.collection('feedback').where({ ticketId: ticketId, userId: openid }).get();
 
     if (fbResult.data.length === 0) {
       return { code: 404, msg: '工单不存在或无权查看' };
     }
 
-    var fb = fbResult.data[0];
+    const fb = fbResult.data[0];
 
     // 查询回复列表
-    var replies = [];
+    let replies = [];
     try {
-      var replyResult = await db.collection('feedback_reply')
+      const replyResult = await db
+        .collection('feedback_reply')
         .where({ ticketId: ticketId })
         .orderBy('createdAt', 'asc')
         .get();
-      replies = replyResult.data.map(function(r) {
+      replies = replyResult.data.map(function (r) {
         return {
           replyId: r._id,
           role: r.role,
           content: r.content,
-          createdAt: r.createdAt
+          createdAt: r.createdAt,
         };
       });
-    } catch (e) { /* 忽略 */ }
+    } catch (e) {
+      /* 忽略 */
+    }
 
     return {
       code: 0,
@@ -249,8 +263,8 @@ async function detail(event) {
         isAnonymous: fb.isAnonymous,
         createdAt: fb.createdAt,
         updatedAt: fb.updatedAt,
-        replies: replies
-      }
+        replies: replies,
+      },
     };
   } catch (dbErr) {
     console.error('[feedback-submit] 详情查询失败:', dbErr);
@@ -260,12 +274,12 @@ async function detail(event) {
 
 // ============ 4. 用户追加补充说明 ============
 async function append(event) {
-  var wxContext = cloud.getWXContext();
-  var openid = wxContext.OPENID;
+  const wxContext = cloud.getWXContext();
+  const openid = wxContext.OPENID;
   if (!openid) return { code: 403, msg: '请先登录' };
 
-  var ticketId = event.ticketId;
-  var content = (event.content || '').trim();
+  const ticketId = event.ticketId;
+  const content = (event.content || '').trim();
 
   if (!ticketId) return { code: 400, msg: '缺少工单号' };
   if (!content) return { code: 400, msg: '补充内容不能为空' };
@@ -273,15 +287,13 @@ async function append(event) {
 
   // 校验反馈属于当前用户
   try {
-    var fbResult = await db.collection('feedback')
-      .where({ ticketId: ticketId, userId: openid })
-      .get();
+    const fbResult = await db.collection('feedback').where({ ticketId: ticketId, userId: openid }).get();
 
     if (fbResult.data.length === 0) {
       return { code: 404, msg: '工单不存在或无权操作' };
     }
 
-    var fb = fbResult.data[0];
+    const fb = fbResult.data[0];
 
     // 已关闭的反馈不允许追加
     if (fb.status === 'closed') {
@@ -289,20 +301,21 @@ async function append(event) {
     }
 
     // PII 脱敏
-    var sanitizedContent = sanitizePII(content);
-    var now = Date.now();
+    const sanitizedContent = sanitizePII(content);
+    const now = Date.now();
 
     await db.collection('feedback_reply').add({
       data: {
         ticketId: ticketId,
         role: 'user',
         content: sanitizedContent,
-        createdAt: now
-      }
+        createdAt: now,
+      },
     });
 
     // 更新反馈时间戳
-    await db.collection('feedback')
+    await db
+      .collection('feedback')
       .where({ ticketId: ticketId })
       .update({ data: { updatedAt: now } });
 

@@ -15,8 +15,8 @@
  *     │       └─ No cache at all? → Return null (caller shows empty state + retry button)
  */
 
-var CACHE_PREFIX = 'life-guide-cache-';
-var TTL_MS = 86400000; // 24 hours
+const CACHE_PREFIX = 'life-guide-cache-';
+const TTL_MS = 86400000; // 24 hours
 
 /**
  * Build a namespaced cache key for wx.Storage.
@@ -34,11 +34,11 @@ function buildKey(suffix) {
  */
 function isCacheValid(key) {
   try {
-    var raw = wx.getStorageSync(key);
+    const raw = wx.getStorageSync(key);
     if (!raw) return false;
-    var cachedAt = new Date(raw.fetchedAt).getTime();
+    const cachedAt = new Date(raw.fetchedAt).getTime();
     if (isNaN(cachedAt)) return false;
-    return (Date.now() - cachedAt) < TTL_MS;
+    return Date.now() - cachedAt < TTL_MS;
   } catch (e) {
     console.error('[lifeGuideCache] isCacheValid error:', e);
     return false;
@@ -52,9 +52,9 @@ function isCacheValid(key) {
  */
 function getCacheAge(key) {
   try {
-    var raw = wx.getStorageSync(key);
+    const raw = wx.getStorageSync(key);
     if (!raw) return null;
-    var cachedAt = new Date(raw.fetchedAt).getTime();
+    const cachedAt = new Date(raw.fetchedAt).getTime();
     if (isNaN(cachedAt)) return null;
     return Date.now() - cachedAt;
   } catch (e) {
@@ -70,7 +70,7 @@ function getCacheAge(key) {
  */
 function readCacheData(key) {
   try {
-    var raw = wx.getStorageSync(key);
+    const raw = wx.getStorageSync(key);
     return raw || null;
   } catch (e) {
     console.error('[lifeGuideCache] readCacheData error:', e);
@@ -87,7 +87,7 @@ function writeCache(key, data) {
   try {
     wx.setStorageSync(key, {
       data: data,
-      fetchedAt: new Date().toISOString()
+      fetchedAt: new Date().toISOString(),
     });
   } catch (e) {
     console.error('[lifeGuideCache] writeCache error:', e);
@@ -108,7 +108,7 @@ function writeCache(key, data) {
  */
 function fetchTasks(mode, params) {
   // Normalise params to a deterministic suffix for the cache key.
-  var suffix;
+  let suffix;
   if (mode === 'all' || !params) {
     suffix = mode;
   } else {
@@ -119,16 +119,16 @@ function fetchTasks(mode, params) {
     }
   }
 
-  var key = buildKey(suffix);
+  const key = buildKey(suffix);
 
   // ── 1. Check fresh cache ──
   if (isCacheValid(key)) {
-    var cached = readCacheData(key);
+    const cached = readCacheData(key);
     if (cached && cached.data) {
       return Promise.resolve({
         data: cached.data,
         fromCache: true,
-        stale: false
+        stale: false,
       });
     }
   }
@@ -139,18 +139,18 @@ function fetchTasks(mode, params) {
       name: 'queryLifeGuideTasks',
       data: {
         mode: mode,
-        params: params || {}
+        params: params || {},
       },
       success: function (res) {
-        var result = res.result || {};
+        const result = res.result || {};
         // 去重：云函数可能返回重复数据
         if (result.data && Array.isArray(result.data)) {
-          var deduped = [];
-          var seenId = {};
-          result.data.forEach(function(t) {
+          const deduped = [];
+          const seenId = {};
+          result.data.forEach(function (t) {
             if (t._id && seenId[t._id]) return;
-                        if (t._id) seenId[t._id] = true;
-                        deduped.push(t);
+            if (t._id) seenId[t._id] = true;
+            deduped.push(t);
           });
           result.data = deduped;
         }
@@ -158,24 +158,24 @@ function fetchTasks(mode, params) {
         resolve({
           data: result,
           fromCache: false,
-          stale: false
+          stale: false,
         });
       },
       fail: function (err) {
         console.error('[lifeGuideCache] cloud function failed:', err);
         // ── 3a. Fall back to expired cache ──
-        var expired = readCacheData(key);
+        const expired = readCacheData(key);
         if (expired && expired.data) {
           resolve({
             data: expired.data,
             fromCache: true,
-            stale: true
+            stale: true,
           });
           return;
         }
         // ── 3b. No cache at all ──
         resolve(null);
-      }
+      },
     });
   });
 }
@@ -201,17 +201,18 @@ function fetchAllTasks() {
  * @returns {Promise<{data?: object, fromCache?: boolean, stale?: boolean}|null>}
  */
 function fetchByPath(visaType, familyStatus, arrivalScenario, existingAssets) {
-  var suffix = 'path-' + visaType + '-' + familyStatus + '-' + arrivalScenario + '-' + (existingAssets||[]).sort().join(',');
-  var key = buildKey(suffix);
+  const suffix =
+    'path-' + visaType + '-' + familyStatus + '-' + arrivalScenario + '-' + (existingAssets || []).sort().join(',');
+  const key = buildKey(suffix);
 
   // ── 1. Check fresh cache ──
   if (isCacheValid(key)) {
-    var cached = readCacheData(key);
+    const cached = readCacheData(key);
     if (cached && cached.data) {
       return Promise.resolve({
         data: cached.data,
         fromCache: true,
-        stale: false
+        stale: false,
       });
     }
   }
@@ -226,31 +227,31 @@ function fetchByPath(visaType, familyStatus, arrivalScenario, existingAssets) {
           visaType: visaType,
           familyStatus: familyStatus,
           arrivalScenario: arrivalScenario,
-          existingAssets: existingAssets || []
-        }
+          existingAssets: existingAssets || [],
+        },
       },
       success: function (res) {
-        var result = res.result || {};
+        const result = res.result || {};
         writeCache(key, result);
         resolve({
           data: result,
           fromCache: false,
-          stale: false
+          stale: false,
         });
       },
       fail: function (err) {
         console.error('[lifeGuideCache] fetchByPath cloud function failed:', err);
-        var expired = readCacheData(key);
+        const expired = readCacheData(key);
         if (expired && expired.data) {
           resolve({
             data: expired.data,
             fromCache: true,
-            stale: true
+            stale: true,
           });
           return;
         }
         resolve(null);
-      }
+      },
     });
   });
 }
@@ -261,10 +262,10 @@ function fetchByPath(visaType, familyStatus, arrivalScenario, existingAssets) {
  */
 function invalidateCache() {
   try {
-    var info = wx.getStorageInfoSync();
-    var keys = info.keys || [];
-    var toRemove = [];
-    for (var i = 0; i < keys.length; i++) {
+    const info = wx.getStorageInfoSync();
+    const keys = info.keys || [];
+    const toRemove = [];
+    for (let i = 0; i < keys.length; i++) {
       if (keys[i].indexOf(CACHE_PREFIX) === 0) {
         toRemove.push(keys[i]);
       }
@@ -272,7 +273,7 @@ function invalidateCache() {
     toRemove.forEach(function (k) {
       wx.removeStorageSync(k);
     });
-    console.log('[lifeGuideCache] invalidated ' + toRemove.length + ' cache entries');
+    console.debug('[lifeGuideCache] invalidated ' + toRemove.length + ' cache entries');
   } catch (e) {
     console.error('[lifeGuideCache] invalidateCache error:', e);
   }
@@ -290,17 +291,17 @@ function invalidateCache() {
  * @returns {{data: {tasks: Array, phases: Array, summary: Object}, source: string}}
  */
 function fetchByPathLocal(visaType, familyStatus, arrivalScenario, existingAssets, memberUnlockAll) {
-  var assemblePath = require('../data/onboarding-paths').assemblePath;
-  var result = assemblePath({
+  const assemblePath = require('../data/onboarding-paths').assemblePath;
+  const result = assemblePath({
     visaType: visaType,
     familyStatus: familyStatus,
     arrivalScenario: arrivalScenario,
     existingAssets: existingAssets || [],
-    memberUnlockAll: !!memberUnlockAll
+    memberUnlockAll: !!memberUnlockAll,
   });
   return {
     data: { tasks: result.tasks, phases: result.phases, summary: result.summary },
-    source: 'local'
+    source: 'local',
   };
 }
 
@@ -311,5 +312,5 @@ module.exports = {
   fetchByPathLocal: fetchByPathLocal,
   invalidateCache: invalidateCache,
   isCacheValid: isCacheValid,
-  getCacheAge: getCacheAge
+  getCacheAge: getCacheAge,
 };

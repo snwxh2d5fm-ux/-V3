@@ -9,7 +9,7 @@ Page({
     piiLabels: [],
     encryptionStatus: 'AES-256-GCM 已启用',
     localStorageOnly: true,
-    authHistory: []
+    authHistory: [],
   },
 
   onLoad() {
@@ -46,7 +46,7 @@ Page({
       { key: 'email', label: '邮箱', level: 'L2', enabled: false, desc: '泛化脱敏' },
       { key: 'company', label: '工作单位', level: 'L3', enabled: false, desc: '可保留，用户自选' },
       { key: 'school', label: '毕业院校', level: 'L3', enabled: false, desc: '可保留，用户自选' },
-      { key: 'income', label: '收入信息', level: 'L3', enabled: false, desc: '可保留，用户自选' }
+      { key: 'income', label: '收入信息', level: 'L3', enabled: false, desc: '可保留，用户自选' },
     ];
     this.setData({ piiLabels: labels });
   },
@@ -54,14 +54,14 @@ Page({
   loadAuthHistory() {
     const history = [
       { action: '隐私模式切换', time: '2026-05-09', detail: 'L2 → L1' },
-      { action: '账号登录', time: '2026-05-09', detail: '微信手机号登录' }
+      { action: '账号登录', time: '2026-05-09', detail: '微信手机号登录' },
     ];
     this.setData({ authHistory: history });
   },
 
   toggleLabel(e) {
     const { key } = e.currentTarget.dataset;
-    const labels = this.data.piiLabels.map(l => {
+    const labels = this.data.piiLabels.map((l) => {
       if (l.key === key) l.enabled = !l.enabled;
       return l;
     });
@@ -78,11 +78,11 @@ Page({
       `加密: ${this.data.encryptionStatus}`,
       '',
       'PII标签授权:',
-      ...this.data.piiLabels.map(l => `  ${l.enabled ? '✅' : '⬜'} ${l.label} (${l.level}) - ${l.desc}`)
+      ...this.data.piiLabels.map((l) => `  ${l.enabled ? '✅' : '⬜'} ${l.label} (${l.level}) - ${l.desc}`),
     ];
     wx.setClipboardData({
       data: lines.join('\n'),
-      success: () => wx.showToast({ title: '已复制', icon: 'success' })
+      success: () => wx.showToast({ title: '已复制', icon: 'success' }),
     });
   },
 
@@ -95,7 +95,7 @@ Page({
           this.setData({ authHistory: [] });
           wx.showToast({ title: '已清除', icon: 'success' });
         }
-      }
+      },
     });
-  }
+  },
 });

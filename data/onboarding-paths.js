@@ -23,7 +23,7 @@ const PHASE_NAMES = {
   4: '出行融入',
   5: '子女教育',
   6: '财务税务',
-  7: '续签准备'
+  7: '续签准备',
 };
 
 const PHASE_TIME_ESTIMATES = {
@@ -34,7 +34,7 @@ const PHASE_TIME_ESTIMATES = {
   4: 'Month 1-3',
   5: 'Month 1-3',
   6: 'Month 3-6',
-  7: 'Month 6-12'
+  7: 'Month 6-12',
 };
 
 /** 全部8关始终可见；解锁由 guidebooks/index rebuildPhases 通过 STAGE_BRIDGE_MAP 动态判定 */
@@ -42,16 +42,16 @@ const FULL_PHASES = [0, 1, 2, 3, 4, 5, 6, 7];
 
 /** 已拥有资产的显示名称映射 */
 const ASSET_DISPLAY_NAMES = {
-  'hkid': '香港身份证',
+  hkid: '香港身份证',
   'bank-account': '银行账户',
-  'rental': '租约',
-  'driving-license': '驾驶执照'
+  rental: '租约',
+  'driving-license': '驾驶执照',
 };
 
 /** Phase 5 子女教育：childAgeTrack 与 familyStatus 的匹配规则 */
 const CHILD_AGE_TRACK_MAP = {
-  'preschool': ['preschool'],
-  'school':    ['school-age', 'teen']
+  preschool: ['preschool'],
+  school: ['school-age', 'teen'],
 };
 
 /** 关卡里程碑文案（接受 familyStatus 作差异化） */
@@ -63,7 +63,7 @@ const PHASE_MILESTONES = {
   4: '🚇 出行融入，香港不再陌生',
   5: '📚 子女教育安排妥当，安心上学',
   6: '💰 财务税务打基础，未来可期',
-  7: '✅ 续签材料齐全，永居之路更进一步'
+  7: '✅ 续签材料齐全，永居之路更进一步',
 };
 
 // ─────────────────────────────────────────────────────────────
@@ -76,7 +76,7 @@ const PHASE_MILESTONES = {
  * @returns {string}
  */
 function getPhaseName(phase) {
-  return PHASE_NAMES[phase] || ('关卡' + phase);
+  return PHASE_NAMES[phase] || '关卡' + phase;
 }
 
 /**
@@ -125,7 +125,7 @@ function isTaskApplicable(task, params, unlockedPhases) {
     return false;
   }
 
-  var applicable = task.applicableTo || {};
+  const applicable = task.applicableTo || {};
 
   // 会员全解锁模式下跳过签证/家庭状态过滤
   if (params.memberUnlockAll) {
@@ -143,13 +143,16 @@ function isTaskApplicable(task, params, unlockedPhases) {
   }
 
   // 4) 抵港场景匹配
-  if (applicable.arrivalScenario.indexOf('all') === -1 && applicable.arrivalScenario.indexOf(params.arrivalScenario) === -1) {
+  if (
+    applicable.arrivalScenario.indexOf('all') === -1 &&
+    applicable.arrivalScenario.indexOf(params.arrivalScenario) === -1
+  ) {
     return false;
   }
 
   // 5) Phase 5 子女教育 — childAgeTrack 额外检查
   if (task.phase === 5 && applicable.childAgeTrack) {
-    var allowedFamilyStatuses = CHILD_AGE_TRACK_MAP[applicable.childAgeTrack];
+    const allowedFamilyStatuses = CHILD_AGE_TRACK_MAP[applicable.childAgeTrack];
     if (!allowedFamilyStatuses || allowedFamilyStatuses.indexOf(params.familyStatus) === -1) {
       return false;
     }
@@ -165,8 +168,8 @@ function isTaskApplicable(task, params, unlockedPhases) {
  * @returns {string[]}
  */
 function arrayIntersection(arrA, arrB) {
-  var result = [];
-  var i, j;
+  const result = [];
+  let i, j;
   for (i = 0; i < arrA.length; i++) {
     for (j = 0; j < arrB.length; j++) {
       if (arrA[i] === arrB[j]) {
@@ -189,32 +192,43 @@ function arrayIntersection(arrA, arrB) {
  */
 function assemblePath(params) {
   // ── 参数校验与默认 ──
-  var visaType = params.visaType || 'iang';
-  var familyStatus = params.familyStatus || 'single';
-  var arrivalScenario = params.arrivalScenario || 'fresh';
-  var existingAssets = params.existingAssets || [];
+  const visaType = params.visaType || 'iang';
+  const familyStatus = params.familyStatus || 'single';
+  const arrivalScenario = params.arrivalScenario || 'fresh';
+  const existingAssets = params.existingAssets || [];
 
   // ── 全部关卡始终返回；解锁由 guidebooks/index 动态判定 ──
-  var unlockedPhases = FULL_PHASES;
+  const unlockedPhases = FULL_PHASES;
 
   // ── 筛选与排序任务 ──
-  var matchedTasks = [];
-  var i, task;
+  const matchedTasks = [];
+  let i, task;
 
   for (i = 0; i < allTasks.length; i++) {
     task = allTasks[i];
 
     // 检查是否适用
-    if (!isTaskApplicable(task, { visaType: visaType, familyStatus: familyStatus, arrivalScenario: arrivalScenario, memberUnlockAll: params.memberUnlockAll }, unlockedPhases)) {
+    if (
+      !isTaskApplicable(
+        task,
+        {
+          visaType: visaType,
+          familyStatus: familyStatus,
+          arrivalScenario: arrivalScenario,
+          memberUnlockAll: params.memberUnlockAll,
+        },
+        unlockedPhases,
+      )
+    ) {
       continue;
     }
 
     // 深拷贝任务对象以免修改原模板
-    var clonedTask = deepCloneTask(task);
+    const clonedTask = deepCloneTask(task);
 
     // 检查自动跳过（已拥有资产）
-    var skipList = clonedTask.applicableTo.skipIfExisting || [];
-    var intersection = arrayIntersection(skipList, existingAssets);
+    const skipList = clonedTask.applicableTo.skipIfExisting || [];
+    const intersection = arrayIntersection(skipList, existingAssets);
 
     if (intersection.length > 0) {
       clonedTask.autoSkipped = true;
@@ -234,9 +248,9 @@ function assemblePath(params) {
   });
 
   // ── 全部8关始终返回 (TC-3.1.1 fix: 空关卡也可见) ──
-  var phases = [];
-  var phaseStats = {};
-  var j, phase;
+  const phases = [];
+  const phaseStats = {};
+  let j, phase;
 
   for (j = 0; j < unlockedPhases.length; j++) {
     phase = unlockedPhases[j];
@@ -261,7 +275,7 @@ function assemblePath(params) {
     if (!phaseStats[phase]) {
       phaseStats[phase] = { totalTasks: 0, totalRequired: 0 };
     }
-    var stats = phaseStats[phase];
+    const stats = phaseStats[phase];
     phases.push({
       phase: phase,
       name: PHASE_NAMES[phase],
@@ -269,19 +283,19 @@ function assemblePath(params) {
       unlocked: true,
       totalRequired: stats.totalRequired,
       totalTasks: stats.totalTasks,
-      requiredCompleted: 0
+      requiredCompleted: 0,
     });
   }
 
   // ── 汇总 ──
-  var totalRequired = 0;
-  var totalAll = 0;
+  let totalRequired = 0;
+  let totalAll = 0;
   for (i = 0; i < phases.length; i++) {
     totalRequired += phases[i].totalRequired;
     totalAll += phases[i].totalTasks;
   }
 
-  var applicableFamily = (familyStatus !== 'single' && familyStatus !== 'couple');
+  const applicableFamily = familyStatus !== 'single' && familyStatus !== 'couple';
 
   return {
     phases: phases,
@@ -289,8 +303,8 @@ function assemblePath(params) {
     summary: {
       totalRequired: totalRequired,
       totalTasks: totalAll,
-      applicableFamily: applicableFamily
-    }
+      applicableFamily: applicableFamily,
+    },
   };
 }
 
@@ -315,5 +329,5 @@ module.exports = {
   assemblePath: assemblePath,
   getPhaseName: getPhaseName,
   getPhaseTimeEstimate: getPhaseTimeEstimate,
-  getPhaseMilestone: getPhaseMilestone
+  getPhaseMilestone: getPhaseMilestone,
 };

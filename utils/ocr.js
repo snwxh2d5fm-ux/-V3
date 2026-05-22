@@ -10,45 +10,64 @@ const DOC_TYPES = {
   ID_CARD: {
     type: 'id_card',
     name: '身份证',
-    fields: ['name', 'gender', 'ethnicity', 'birthDate', 'address', 'idNumber', 'issuingAuthority', 'validFrom', 'validTo'],
-    validate: (data) => !!data.idNumber && data.idNumber.length >= 15
+    fields: [
+      'name',
+      'gender',
+      'ethnicity',
+      'birthDate',
+      'address',
+      'idNumber',
+      'issuingAuthority',
+      'validFrom',
+      'validTo',
+    ],
+    validate: (data) => !!data.idNumber && data.idNumber.length >= 15,
   },
   HK_PERMIT: {
     type: 'hk_permit',
     name: '港澳通行证',
     fields: ['name', 'idNumber', 'birthDate', 'validFrom', 'validTo', 'issuingAuthority', 'issuePlace'],
-    validate: (data) => !!data.idNumber && data.idNumber.length >= 8
+    validate: (data) => !!data.idNumber && data.idNumber.length >= 8,
   },
   PASSPORT: {
     type: 'passport',
     name: '护照',
-    fields: ['name', 'passportNumber', 'nationality', 'birthDate', 'birthPlace', 'validFrom', 'validTo', 'issuingAuthority'],
-    validate: (data) => !!data.passportNumber
+    fields: [
+      'name',
+      'passportNumber',
+      'nationality',
+      'birthDate',
+      'birthPlace',
+      'validFrom',
+      'validTo',
+      'issuingAuthority',
+    ],
+    validate: (data) => !!data.passportNumber,
   },
   DEGREE: {
     type: 'degree',
     name: '学位证',
     fields: ['name', 'university', 'degree', 'major', 'graduationDate', 'certNumber'],
-    validate: (data) => !!data.university && !!data.degree
+    validate: (data) => !!data.university && !!data.degree,
   },
   APPROVAL_LETTER: {
     type: 'approval_letter',
     name: '获批通知书',
     fields: ['name', 'applicationNumber', 'approvalDate', 'visaType', 'validTo'],
-    validate: (data) => !!data.applicationNumber || !!data.approvalDate
+    validate: (data) => !!data.applicationNumber || !!data.approvalDate,
   },
   BANK_STATEMENT: {
     type: 'bank_statement',
     name: '银行流水',
     fields: ['accountHolder', 'bankName', 'accountNumber', 'statementFrom', 'statementTo', 'currency'],
-    validate: (data) => !!data.bankName
+    validate: (data) => !!data.bankName,
   },
   HK_ID: {
     type: 'hk_id',
     name: '香港身份证',
     fields: ['name', 'hkIdNumber', 'birthDate', 'issueDate', 'symbol'],
-    validate: (data) => !!data.hkIdNumber
-  }
+    validate: (data) => !!data.hkIdNumber,
+  },
 };
 
 /**
@@ -59,31 +78,49 @@ const DOC_TYPES = {
 function identifyDocType(imagePath) {
   // 基于OCR初步识别结果的关键词匹配来判断证件类型
   return new Promise((resolve, reject) => {
-    wx.cloud.callFunction({
-      name: 'ocr-service',
-      data: { action: 'identify', imagePath }
-    }).then(res => {
-      if (res.result && res.result.text) {
-        const text = res.result.text;
-        let docType = 'unknown';
-        let confidence = 0;
+    wx.cloud
+      .callFunction({
+        name: 'ocr-service',
+        data: { action: 'identify', imagePath },
+      })
+      .then((res) => {
+        if (res.result && res.result.text) {
+          const text = res.result.text;
+          let docType = 'unknown';
+          let confidence = 0;
 
-        if (/身份证|居民身份/.test(text)) { docType = 'id_card'; confidence = 0.95; }
-        else if (/港澳通行证|往来港澳/.test(text)) { docType = 'hk_permit'; confidence = 0.95; }
-        else if (/PASSPORT|护照|Passport/.test(text)) { docType = 'passport'; confidence = 0.95; }
-        else if (/学位|学士|硕士|博士|Bachelor|Master|Doctor/.test(text)) { docType = 'degree'; confidence = 0.85; }
-        else if (/獲批|批准|原則上批准|Approval/.test(text)) { docType = 'approval_letter'; confidence = 0.80; }
-        else if (/銀行|Bank|流水|Statement/.test(text)) { docType = 'bank_statement'; confidence = 0.80; }
-        else if (/HONG KONG.*IDENTITY|香港.*身份證/.test(text)) { docType = 'hk_id'; confidence = 0.95; }
+          if (/身份证|居民身份/.test(text)) {
+            docType = 'id_card';
+            confidence = 0.95;
+          } else if (/港澳通行证|往来港澳/.test(text)) {
+            docType = 'hk_permit';
+            confidence = 0.95;
+          } else if (/PASSPORT|护照|Passport/.test(text)) {
+            docType = 'passport';
+            confidence = 0.95;
+          } else if (/学位|学士|硕士|博士|Bachelor|Master|Doctor/.test(text)) {
+            docType = 'degree';
+            confidence = 0.85;
+          } else if (/獲批|批准|原則上批准|Approval/.test(text)) {
+            docType = 'approval_letter';
+            confidence = 0.8;
+          } else if (/銀行|Bank|流水|Statement/.test(text)) {
+            docType = 'bank_statement';
+            confidence = 0.8;
+          } else if (/HONG KONG.*IDENTITY|香港.*身份證/.test(text)) {
+            docType = 'hk_id';
+            confidence = 0.95;
+          }
 
-        resolve({ docType, confidence, rawText: text });
-      } else {
-        resolve({ docType: 'unknown', confidence: 0 });
-      }
-    }).catch(err => {
-      // 离线模式：返回未知类型，用户手动选择
-      resolve({ docType: 'unknown', confidence: 0, offline: true });
-    });
+          resolve({ docType, confidence, rawText: text });
+        } else {
+          resolve({ docType: 'unknown', confidence: 0 });
+        }
+      })
+      .catch((err) => {
+        // 离线模式：返回未知类型，用户手动选择
+        resolve({ docType: 'unknown', confidence: 0, offline: true });
+      });
   });
 }
 
@@ -106,7 +143,7 @@ async function extractFields(imagePath, docType) {
     const fields = {};
 
     // 基于正则表达式提取各字段
-    config.fields.forEach(fieldName => {
+    config.fields.forEach((fieldName) => {
       const extractor = FIELD_EXTRACTORS[fieldName];
       if (extractor) {
         const value = extractor(rawText);
@@ -118,7 +155,7 @@ async function extractFields(imagePath, docType) {
       fields,
       rawText,
       confidence: ocrResult.confidence || 0.8,
-      docType
+      docType,
     };
   } catch (e) {
     console.error('[OCR] 字段提取失败:', e);
@@ -198,7 +235,7 @@ const FIELD_EXTRACTORS = {
   bankName: (text) => {
     const m = text.match(/(?:汇丰|HSBC|中银|BOC|渣打|Standard Chartered|恒生|Hang Seng|东亚|BEA|工银|ICBC)/);
     return m ? m[0] : null;
-  }
+  },
 };
 
 // 辅助：日期范围提取
@@ -211,16 +248,19 @@ function extractDateRange(text, keyword) {
 // 调用 OCR 服务（通过云函数）
 function callOCR(imagePath) {
   return new Promise((resolve, reject) => {
-    wx.cloud.callFunction({
-      name: 'ocr-service',
-      data: { action: 'ocr', imagePath: imagePath }
-    }).then(r => {
-      if (r.result && r.result.code === 0) {
-        resolve({ text: r.result.data.rawText, fields: r.result.data.fields });
-      } else {
-        reject(r.result || { msg: 'OCR 识别失败' });
-      }
-    }).catch(reject);
+    wx.cloud
+      .callFunction({
+        name: 'ocr-service',
+        data: { action: 'ocr', imagePath: imagePath },
+      })
+      .then((r) => {
+        if (r.result && r.result.code === 0) {
+          resolve({ text: r.result.data.rawText, fields: r.result.data.fields });
+        } else {
+          reject(r.result || { msg: 'OCR 识别失败' });
+        }
+      })
+      .catch(reject);
   });
 }
 
@@ -241,20 +281,29 @@ function checkImageQuality(imagePath) {
         // 宽高比检查（证件通常接近 3:4 或 2:3）
         const ratio = info.width / info.height;
         if (ratio < 0.5 || ratio > 2.0) {
-          issues.push({ type: 'aspect_ratio', severity: 'warning', message: '图片比例可能不是标准证件照，建议重新拍摄' });
+          issues.push({
+            type: 'aspect_ratio',
+            severity: 'warning',
+            message: '图片比例可能不是标准证件照，建议重新拍摄',
+          });
         }
         resolve({
           pass: issues.length === 0,
           issues,
-          dimensions: { width: info.width, height: info.height }
+          dimensions: { width: info.width, height: info.height },
         });
       },
-      fail: () => resolve({ pass: false, issues: [{ type: 'load_error', severity: 'error', message: '无法读取图片信息' }] })
+      fail: () =>
+        resolve({ pass: false, issues: [{ type: 'load_error', severity: 'error', message: '无法读取图片信息' }] }),
     });
   });
 }
 
 module.exports = {
-  DOC_TYPES, identifyDocType, extractFields, checkImageQuality,
-  callOCR, FIELD_EXTRACTORS
+  DOC_TYPES,
+  identifyDocType,
+  extractFields,
+  checkImageQuality,
+  callOCR,
+  FIELD_EXTRACTORS,
 };

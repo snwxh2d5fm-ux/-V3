@@ -15,10 +15,14 @@ exports.main = async (event, context) => {
 
   try {
     switch (action) {
-      case 'dailyCheck':     return await dailyCheck();
-      case 'checkUser':      return await checkUser(event.openid);
-      case 'getStatus':      return await getTrialStatus(event.openid);
-      default:               return await dailyCheck();
+      case 'dailyCheck':
+        return await dailyCheck();
+      case 'checkUser':
+        return await checkUser(event.openid);
+      case 'getStatus':
+        return await getTrialStatus(event.openid);
+      default:
+        return await dailyCheck();
     }
   } catch (err) {
     console.error('[free-trial-monitor]', err);
@@ -36,12 +40,15 @@ async function dailyCheck() {
   const stats = { locked: 0, warned: 0, alreadyLocked: 0 };
 
   // 1. 查找今天到期的免费试用用户
-  const expiringToday = await db.collection('users')
+  const expiringToday = await db
+    .collection('users')
     .where({
       membershipLevel: 'free_trial',
       isLocked: false,
-      freeTrialEndAt: _.lte(today + 'T23:59:59.999Z')
-    }).limit(500).get();
+      freeTrialEndAt: _.lte(today + 'T23:59:59.999Z'),
+    })
+    .limit(500)
+    .get();
 
   for (const user of expiringToday.data) {
     await _lockUser(user._openid);
@@ -54,13 +61,14 @@ async function dailyCheck() {
     const warnDate = new Date(now.getTime() + days * 86400000);
     const warnDateStr = warnDate.toISOString().slice(0, 10);
 
-    const usersToWarn = await db.collection('users')
+    const usersToWarn = await db
+      .collection('users')
       .where({
         membershipLevel: 'free_trial',
         isLocked: false,
-        freeTrialEndAt: _.gte(warnDateStr + 'T00:00:00.000Z')
-          .and(_.lte(warnDateStr + 'T23:59:59.999Z'))
-      }).get();
+        freeTrialEndAt: _.gte(warnDateStr + 'T00:00:00.000Z').and(_.lte(warnDateStr + 'T23:59:59.999Z')),
+      })
+      .get();
 
     for (const user of usersToWarn.data) {
       await _createTrialExpiryReminder(user._openid, user.freeTrialEndAt, days);
@@ -69,13 +77,13 @@ async function dailyCheck() {
   }
 
   // 3. 统计已锁定的用户（确认）
-  const alreadyLocked = await db.collection('users')
-    .where({ isLocked: true }).count();
+  const alreadyLocked = await db.collection('users').where({ isLocked: true }).count();
   stats.alreadyLocked = alreadyLocked.total;
 
   return {
-    code: 0, msg: 'ok',
-    data: { checkedAt: today, ...stats }
+    code: 0,
+    msg: 'ok',
+    data: { checkedAt: today, ...stats },
   };
 }
 
@@ -83,8 +91,7 @@ async function dailyCheck() {
  * 检查单个用户试用状态
  */
 async function checkUser(openid) {
-  const result = await db.collection('users')
-    .where({ _openid: openid }).limit(1).get();
+  const result = await db.collection('users').where({ _openid: openid }).limit(1).get();
   if (result.data.length === 0) return { code: 404, msg: '用户不存在' };
 
   const user = result.data[0];
@@ -103,7 +110,7 @@ async function checkUser(openid) {
 
   return {
     code: 0,
-    data: { locked: false, trialExpired: false, daysRemaining, freeTrialEndAt: user.freeTrialEndAt }
+    data: { locked: false, trialExpired: false, daysRemaining, freeTrialEndAt: user.freeTrialEndAt },
   };
 }
 
@@ -111,8 +118,7 @@ async function checkUser(openid) {
  * 获取用户试用状态
  */
 async function getTrialStatus(openid) {
-  const result = await db.collection('users')
-    .where({ _openid: openid }).limit(1).get();
+  const result = await db.collection('users').where({ _openid: openid }).limit(1).get();
   if (result.data.length === 0) return { code: 404, msg: '用户不存在' };
 
   const user = result.data[0];
@@ -128,8 +134,8 @@ async function getTrialStatus(openid) {
       freeTrialStartAt: user.freeTrialStartAt,
       freeTrialEndAt: user.freeTrialEndAt,
       daysRemaining: Math.max(0, daysRemaining),
-      trialExpired: daysRemaining <= 0 && user.membershipLevel === 'free_trial'
-    }
+      trialExpired: daysRemaining <= 0 && user.membershipLevel === 'free_trial',
+    },
   };
 }
 
@@ -139,10 +145,11 @@ async function getTrialStatus(openid) {
  * FL-01: 锁定用户
  */
 async function _lockUser(openid) {
-  await db.collection('users')
+  await db
+    .collection('users')
     .where({ _openid: openid })
     .update({
-      data: { isLocked: true, updatedAt: db.serverDate() }
+      data: { isLocked: true, updatedAt: db.serverDate() },
     });
 
   await db.collection('audit_logs').add({
@@ -150,8 +157,8 @@ async function _lockUser(openid) {
       _openid: openid,
       action: 'trial_expired',
       detail: { entityType: 'user', entityId: openid, toState: 'locked' },
-      createdAt: db.serverDate()
-    }
+      createdAt: db.serverDate(),
+    },
   });
 }
 
@@ -160,13 +167,15 @@ async function _lockUser(openid) {
  */
 async function _createTrialExpiryReminder(openid, endDate, daysRemaining) {
   // 检查是否已创建过相同天数的提醒
-  const existing = await db.collection('user_reminders')
+  const existing = await db
+    .collection('user_reminders')
     .where({
       _openid: openid,
       title: `免费试用即将到期`,
       deadlineDate: endDate,
-      isAutoGenerated: true
-    }).count();
+      isAutoGenerated: true,
+    })
+    .count();
 
   if (existing.total > 0) return;
 
@@ -185,7 +194,7 @@ async function _createTrialExpiryReminder(openid, endDate, daysRemaining) {
       isCustom: false,
       isAutoGenerated: true,
       createdAt: db.serverDate(),
-      updatedAt: db.serverDate()
-    }
+      updatedAt: db.serverDate(),
+    },
   });
 }

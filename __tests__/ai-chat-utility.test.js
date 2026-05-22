@@ -18,29 +18,33 @@ global.cloud = { callFunction: () => Promise.resolve({ result: { data: null } })
 process.env.DEEPSEEK_API_KEY = 'sk-mock';
 
 // Mock @cloudbase/node-sdk — CI 环境无腾讯云凭证
-jest.mock('@cloudbase/node-sdk', () => {
-  const mockDb = () => ({
-    collection: () => ({
-      where: () => ({ get: () => Promise.resolve({ data: [] }) }),
-      orderBy: () => ({ get: () => Promise.resolve({ data: [] }) }),
-      get: () => Promise.resolve({ data: [] }),
-      add: () => Promise.resolve({ _id: 'mock-id' }),
-    }),
-    command: { in: () => ({}), and: () => ({}), or: () => ({}) },
-    RegExp: () => ({}),
-  });
-  return {
-    init: () => ({
-      ai: {
-        generateText: () => Promise.resolve({ text: '[mock] AI 响应' }),
-        streamText: () => Promise.resolve({ text: '[mock] AI 流式响应' }),
-      },
+jest.mock(
+  '@cloudbase/node-sdk',
+  () => {
+    const mockDb = () => ({
+      collection: () => ({
+        where: () => ({ get: () => Promise.resolve({ data: [] }) }),
+        orderBy: () => ({ get: () => Promise.resolve({ data: [] }) }),
+        get: () => Promise.resolve({ data: [] }),
+        add: () => Promise.resolve({ _id: 'mock-id' }),
+      }),
+      command: { in: () => ({}), and: () => ({}), or: () => ({}) },
+      RegExp: () => ({}),
+    });
+    return {
+      init: () => ({
+        ai: {
+          generateText: () => Promise.resolve({ text: '[mock] AI 响应' }),
+          streamText: () => Promise.resolve({ text: '[mock] AI 流式响应' }),
+        },
+        database: mockDb,
+      }),
       database: mockDb,
-    }),
-    database: mockDb,
-    callFunction: () => Promise.resolve({ result: {} }),
-  };
-}, { virtual: true });
+      callFunction: () => Promise.resolve({ result: {} }),
+    };
+  },
+  { virtual: true },
+);
 
 const aiChat = require('../cloudfunctions/ai-chat/index.js');
 
@@ -48,7 +52,6 @@ const aiChat = require('../cloudfunctions/ai-chat/index.js');
 // U1: 领域覆盖度 — 真实用户问题池
 // ============================================================
 describe('U1. 领域覆盖度 — 12条路径 × 8类问题', () => {
-
   // 真实用户场景问题池
   const USER_QUERIES = {
     // 优才 QMAS
@@ -68,42 +71,17 @@ describe('U1. 领域覆盖度 — 12条路径 × 8类问题', () => {
       '高才通C类可以带家属吗',
     ],
     // 专才 ASMTP
-    asmtp: [
-      '专才计划需要雇主配合吗',
-      '专才换工作怎么办',
-      '专才自雇可以吗',
-    ],
+    asmtp: ['专才计划需要雇主配合吗', '专才换工作怎么办', '专才自雇可以吗'],
     // IANG
-    iang: [
-      'IANG签证怎么申请',
-      '毕业后多久可以申请IANG',
-      'IANG续签需要什么材料',
-      '兼读制可以申请IANG吗',
-    ],
+    iang: ['IANG签证怎么申请', '毕业后多久可以申请IANG', 'IANG续签需要什么材料', '兼读制可以申请IANG吗'],
     // 受养人
-    dependent: [
-      '配偶可以一起申请吗',
-      '小孩读书怎么办',
-      '受养人可以工作吗',
-    ],
+    dependent: ['配偶可以一起申请吗', '小孩读书怎么办', '受养人可以工作吗'],
     // 永居
-    pr: [
-      '住满7年一定能拿永居吗',
-      '永居申请被拒怎么办',
-      '申请永居期间可以离港吗',
-    ],
+    pr: ['住满7年一定能拿永居吗', '永居申请被拒怎么办', '申请永居期间可以离港吗'],
     // 生活
-    life: [
-      '香港税制是怎样的',
-      '香港教育体系介绍',
-      '香港买房需要什么条件',
-    ],
+    life: ['香港税制是怎样的', '香港教育体系介绍', '香港买房需要什么条件'],
     // 边界/负面
-    edge: [
-      '我没有学历能去香港吗',
-      '大龄50岁以上还能申请吗',
-      '投资移民还有吗',
-    ],
+    edge: ['我没有学历能去香港吗', '大龄50岁以上还能申请吗', '投资移民还有吗'],
   };
 
   test('U1.1 Mock 降级覆盖 — 代表性查询均返回官网引导兜底', async () => {
@@ -154,7 +132,6 @@ describe('U1. 领域覆盖度 — 12条路径 × 8类问题', () => {
 // U2: Mock 降级质量深度审计
 // ============================================================
 describe('U2. Mock 降级质量', () => {
-
   test('U2.1 Mock 回答信息准确性审查', async () => {
     const savedKey = process.env.DEEPSEEK_API_KEY;
     delete process.env.DEEPSEEK_API_KEY;
@@ -219,12 +196,7 @@ describe('U2. Mock 降级质量', () => {
     delete process.env.DEEPSEEK_API_KEY;
 
     // Hallucination 特征: 凭空捏造数字、日期、人名
-    const HALLO_PATTERNS = [
-      /据.{0,5}统计/,
-      /研究(表明|显示)/,
-      /专家(认为|指出)/,
-      /案例.{0,10}成功/,
-    ];
+    const HALLO_PATTERNS = [/据.{0,5}统计/, /研究(表明|显示)/, /专家(认为|指出)/, /案例.{0,10}成功/];
 
     const tests = ['优才', '高才通', '专才', 'IANG'];
     for (const q of tests) {
@@ -242,13 +214,12 @@ describe('U2. Mock 降级质量', () => {
 // U3: 模式分配合理性
 // ============================================================
 describe('U3. 模式分配合理性', () => {
-
   test('U3.1 四种模式各有明确适用场景', () => {
     const scenarios = {
-      'assessment': ['评估', '测评', '自评', '测一下', '我能不能'],
-      'qa': ['优才', '高才通', '专才', 'IANG', '续签', '条件', '政策'],
-      'general': ['你好', '帮助', '功能', '怎么用'],
-      'solution_recommend': ['推荐', '方案', '适合', '路径', '选择'],
+      assessment: ['评估', '测评', '自评', '测一下', '我能不能'],
+      qa: ['优才', '高才通', '专才', 'IANG', '续签', '条件', '政策'],
+      general: ['你好', '帮助', '功能', '怎么用'],
+      solution_recommend: ['推荐', '方案', '适合', '路径', '选择'],
     };
 
     // 验证模式白名单存在于代码中
@@ -267,7 +238,7 @@ describe('U3. 模式分配合理性', () => {
     delete process.env.DEEPSEEK_API_KEY;
 
     const res = await aiChat.main({ message: '你好', mode: 'nonexistent' }, {});
-    expect(res.code).toBe(200);  // 不报错
+    expect(res.code).toBe(200); // 不报错
     // V3: 降级为统一 fallback
     expect(res.data.content).toContain('immd.gov.hk');
 
@@ -291,16 +262,19 @@ describe('U3. 模式分配合理性', () => {
     delete process.env.DEEPSEEK_API_KEY;
 
     // assessment 模式 + 第0步 → 应生成年龄选项
-    const res = await aiChat.main({
-      message: '开始评估',
-      mode: 'assessment',
-      context: { assessmentStep: 0 }
-    }, {});
+    const res = await aiChat.main(
+      {
+        message: '开始评估',
+        mode: 'assessment',
+        context: { assessmentStep: 0 },
+      },
+      {},
+    );
     expect(res.code).toBe(200);
     if (res.data.quickReplies && res.data.quickReplies.length > 0) {
       // 第一步是年龄
-      const ages = res.data.quickReplies.map(q => q.text);
-      expect(ages.some(a => a.includes('岁'))).toBe(true);
+      const ages = res.data.quickReplies.map((q) => q.text);
+      expect(ages.some((a) => a.includes('岁'))).toBe(true);
     }
 
     process.env.DEEPSEEK_API_KEY = savedKey;
@@ -311,7 +285,6 @@ describe('U3. 模式分配合理性', () => {
 // U4: 响应质量标准
 // ============================================================
 describe('U4. 响应质量标准', () => {
-
   test('U4.1 general 模式 prompt 含置信度标注要求', () => {
     const prompts = require('../cloudfunctions/ai-chat/prompts');
     // general 模式: "标注置信度等级和酌情空间"
@@ -354,7 +327,7 @@ describe('U4. 响应质量标准', () => {
 
   test('U4.5 回答中必须使用"身份规划"术语 (非"移民")', () => {
     const prompts = require('../cloudfunctions/ai-chat/prompts');
-    ['general', 'qa', 'solution_recommend'].forEach(mode => {
+    ['general', 'qa', 'solution_recommend'].forEach((mode) => {
       const p = prompts.getSystemPrompt(mode);
       // 至少一个模式明确要求使用"身份规划"
       if (p.includes('身份规划')) return; // pass
@@ -369,15 +342,14 @@ describe('U4. 响应质量标准', () => {
 // U5: 12条路径 × 8类问题综合评分
 // ============================================================
 describe('U5. 综合评分', () => {
-
   test('U5.1 Mock 回答覆盖率计分', () => {
     // Mock 仅覆盖 3 个关键词: 优才/高才通/专才
     // 加上 general/solution_recommend 的固定模板
     const mockCoverage = {
-      '关键词匹配(qa)': 3,       // 优才/高才通/专才
-      '固定模板': 3,              // general/assessment/solution_recommend 默认
-      '总计有意义回答路径': 6,
-      '兜底回答': '落入官网引导',
+      '关键词匹配(qa)': 3, // 优才/高才通/专才
+      固定模板: 3, // general/assessment/solution_recommend 默认
+      总计有意义回答路径: 6,
+      兜底回答: '落入官网引导',
     };
 
     // 在真实 DeepSeek API 模式下，prompt 覆盖 12 条路径
@@ -391,7 +363,7 @@ describe('U5. 综合评分', () => {
     // 检查返回格式是否符合小程序预期
     const returnFormat = {
       'code (200/400/500)': true,
-      'message': true,
+      message: true,
       'data.messageId (msg_xxx)': true,
       'data.content (string)': true,
       'data.quickReplies (array|null)': true,
@@ -410,25 +382,25 @@ describe('U5. 综合评分', () => {
   test('U5.3 实用性综合评分', () => {
     const scoring = {
       // 基础能力
-      '输入校验': { score: 9, max: 10, note: '完善' },
-      '错误处理': { score: 8, max: 10, note: '500兜底+审核容错' },
-      '模式切换': { score: 7, max: 10, note: '4模式覆盖主场景，但需调用方指定' },
+      输入校验: { score: 9, max: 10, note: '完善' },
+      错误处理: { score: 8, max: 10, note: '500兜底+审核容错' },
+      模式切换: { score: 7, max: 10, note: '4模式覆盖主场景，但需调用方指定' },
 
       // 核心能力
-      'Mock降级': { score: 4, max: 10, note: '仅3个关键词匹配，IANG/永居/生活类全兜底' },
-      '回答准确性': { score: 8, max: 10, note: 'Mock数据经审查准确，但需持续维护' },
-      '领域覆盖': { score: 6, max: 10, note: 'Mock3条路径，API全12条' },
+      Mock降级: { score: 4, max: 10, note: '仅3个关键词匹配，IANG/永居/生活类全兜底' },
+      回答准确性: { score: 8, max: 10, note: 'Mock数据经审查准确，但需持续维护' },
+      领域覆盖: { score: 6, max: 10, note: 'Mock3条路径，API全12条' },
 
       // 安全合规
-      'K2护栏': { score: 9, max: 10, note: '六条规则+安全响应模板' },
-      '旧计分阻止': { score: 9, max: 10, note: 'V6护栏全覆盖' },
-      '内容审核': { score: 8, max: 10, note: 'Block/Review/降级三层' },
-      '敏感词合规': { score: 9, max: 10, note: 'Mock+Prompt+代码三层扫描通过' },
+      K2护栏: { score: 9, max: 10, note: '六条规则+安全响应模板' },
+      旧计分阻止: { score: 9, max: 10, note: 'V6护栏全覆盖' },
+      内容审核: { score: 8, max: 10, note: 'Block/Review/降级三层' },
+      敏感词合规: { score: 9, max: 10, note: 'Mock+Prompt+代码三层扫描通过' },
 
       // 交互体验
-      '快捷回复': { score: 8, max: 10, note: 'Mock全带快捷回复，引导明确' },
-      '多轮对话': { score: 3, max: 10, note: '无内置会话历史管理，依赖调用方传context' },
-      '流式输出': { score: 0, max: 10, note: '当前stream:false，不支持的流式' },
+      快捷回复: { score: 8, max: 10, note: 'Mock全带快捷回复，引导明确' },
+      多轮对话: { score: 3, max: 10, note: '无内置会话历史管理，依赖调用方传context' },
+      流式输出: { score: 0, max: 10, note: '当前stream:false，不支持的流式' },
     };
 
     const totalScore = Object.values(scoring).reduce((s, v) => s + v.score, 0);
@@ -440,17 +412,17 @@ describe('U5. 综合评分', () => {
     console.log('═══════════════════════════════════════');
 
     const categories = {
-      '基础能力': ['输入校验', '错误处理', '模式切换'],
-      '核心能力': ['Mock降级', '回答准确性', '领域覆盖'],
-      '安全合规': ['K2护栏', '旧计分阻止', '内容审核', '敏感词合规'],
-      '交互体验': ['快捷回复', '多轮对话', '流式输出'],
+      基础能力: ['输入校验', '错误处理', '模式切换'],
+      核心能力: ['Mock降级', '回答准确性', '领域覆盖'],
+      安全合规: ['K2护栏', '旧计分阻止', '内容审核', '敏感词合规'],
+      交互体验: ['快捷回复', '多轮对话', '流式输出'],
     };
 
     for (const [cat, items] of Object.entries(categories)) {
       const catScore = items.reduce((s, i) => s + scoring[i].score, 0);
       const catMax = items.reduce((s, i) => s + scoring[i].max, 0);
       const pct = ((catScore / catMax) * 100).toFixed(0);
-      const bar = '█'.repeat(Math.round(catScore / catMax * 20));
+      const bar = '█'.repeat(Math.round((catScore / catMax) * 20));
       console.log(`  ${cat.padEnd(10)} ${bar.padEnd(22)} ${pct}% (${catScore}/${catMax})`);
     }
 

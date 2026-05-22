@@ -44,6 +44,7 @@ Keep local `references/...` paths for files that ship with the current skill dir
 ## When to use this skill
 
 Use when the user wants to manage CloudBase resources via command line:
+
 - Deploy/debug cloud functions, web apps, CloudRun services
 - Manage storage, hosting, databases (NoSQL/MySQL)
 - Configure permissions, CORS, domains, routing
@@ -71,18 +72,18 @@ Use when the user wants to manage CloudBase resources via command line:
 
 ## Routing
 
-| User Task | Read |
-|-----------|------|
-| Login, env switching, tcb docs, error diagnosis | `references/core.md` |
-| Deploy/debug cloud functions | `references/functions.md` |
-| Deploy web app (React/Vue/Next.js) | `references/app.md` |
-| Deploy CloudRun service | `references/cloudrun.md` |
-| Deploy static site | `references/hosting.md` |
-| Upload/download files, ACL rules | `references/storage.md` |
-| NoSQL (MongoDB) database operations | `references/nosql.md` |
-| MySQL database operations | `references/mysql.md` |
-| Roles, policies, access control | `references/permission.md` |
-| CORS, custom domains, routing rules | `references/access.md` |
+| User Task                                       | Read                       |
+| ----------------------------------------------- | -------------------------- |
+| Login, env switching, tcb docs, error diagnosis | `references/core.md`       |
+| Deploy/debug cloud functions                    | `references/functions.md`  |
+| Deploy web app (React/Vue/Next.js)              | `references/app.md`        |
+| Deploy CloudRun service                         | `references/cloudrun.md`   |
+| Deploy static site                              | `references/hosting.md`    |
+| Upload/download files, ACL rules                | `references/storage.md`    |
+| NoSQL (MongoDB) database operations             | `references/nosql.md`      |
+| MySQL database operations                       | `references/mysql.md`      |
+| Roles, policies, access control                 | `references/permission.md` |
+| CORS, custom domains, routing rules             | `references/access.md`     |
 
 ## Quick workflow
 

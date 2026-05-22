@@ -14,7 +14,7 @@ Page({
     ocrResult: null,
     verifyResult: null,
     verifying: false,
-    retryCount: 0
+    retryCount: 0,
   },
 
   onLoad(options) {
@@ -25,27 +25,31 @@ Page({
       stageId: options.stageId || '',
       milestoneType: options.milestoneType || '',
       label: options.label || '上传材料',
-      retryCount: wx.getStorageSync('__milestone_retry__') || 0
+      retryCount: wx.getStorageSync('__milestone_retry__') || 0,
     });
   },
 
   takePhoto() {
     wx.chooseMedia({
-      count: 1, mediaType: ['image'], sourceType: ['camera'],
+      count: 1,
+      mediaType: ['image'],
+      sourceType: ['camera'],
       success: (res) => {
         this.setData({ imagePath: res.tempFiles[0].tempFilePath });
         this.runVerify(res.tempFiles[0].tempFilePath);
-      }
+      },
     });
   },
 
   chooseFromAlbum() {
     wx.chooseMedia({
-      count: 1, mediaType: ['image'], sourceType: ['album'],
+      count: 1,
+      mediaType: ['image'],
+      sourceType: ['album'],
       success: (res) => {
         this.setData({ imagePath: res.tempFiles[0].tempFilePath });
         this.runVerify(res.tempFiles[0].tempFilePath);
-      }
+      },
     });
   },
 
@@ -53,20 +57,20 @@ Page({
     this.setData({ verifying: true });
     try {
       // 先上传图片到云存储，获取 fileID（云函数只能访问云存储文件）
-      var uploadRes = await wx.cloud.uploadFile({
+      const uploadRes = await wx.cloud.uploadFile({
         cloudPath: 'milestones/' + Date.now() + '_' + Math.random().toString(36).substring(2, 6) + '.jpg',
-        filePath: imagePath
+        filePath: imagePath,
       });
-      var cloudFileID = uploadRes.fileID;
+      const cloudFileID = uploadRes.fileID;
 
       // OCR识别（通过云存储 fileID）
       let docType = 'hk_id';
       if (this.data.milestoneType === 'submission_receipt') docType = 'approval_letter';
       else if (this.data.milestoneType === 'hk_pr_id') docType = 'hk_id';
 
-      var result;
+      let result;
       result = await extractFields(cloudFileID, docType);
-      var detectedDocType = result.docType || ''; // 空类型 → 云函数放行
+      const detectedDocType = result.docType || ''; // 空类型 → 云函数放行
 
       // 里程碑验证
       const validation = validateMilestone(this.data.status, result.fields);
@@ -77,49 +81,68 @@ Page({
         const docId = `MILESTONE_${Date.now()}`;
         await saveFile(imagePath, docId, 'visas');
         saveDocumentMeta({
-          id: docId, name: this.data.label, category: 'visas',
-          categoryLabel: '里程碑', ocrData: result.fields,
-          ocrVerified: true, isMilestone: true, createdAt: new Date().toISOString()
+          id: docId,
+          name: this.data.label,
+          category: 'visas',
+          categoryLabel: '里程碑',
+          ocrData: result.fields,
+          ocrVerified: true,
+          isMilestone: true,
+          createdAt: new Date().toISOString(),
         });
 
         // ★ 本地推进：找第一个 in_progress → completed，下一个 locked → in_progress
-        var stageIndex = parseInt(this.options.stageIndex) || 0;
-        console.log('[里程碑验证] 推进 stageIndex=' + stageIndex);
-        var app = getApp();
-        var localId = this.data.localProcessId || this.data.processId;
+        const stageIndex = parseInt(this.options.stageIndex) || 0;
+        console.debug('[里程碑验证] 推进 stageIndex=' + stageIndex);
+        const app = getApp();
+        const localId = this.data.localProcessId || this.data.processId;
         try {
-          var { getAllProcessLines: gl, saveProcessLine: sp } = require('../../../utils/storage');
-          var ls = gl();
-          var line = ls.find(function(l) { return l.id === localId || l._id === localId || l.cloudId === localId; });
+          const { getAllProcessLines: gl, saveProcessLine: sp } = require('../../../utils/storage');
+          const ls = gl();
+          const line = ls.find(function (l) {
+            return l.id === localId || l._id === localId || l.cloudId === localId;
+          });
           if (line && line.stages) {
-            console.log('[里程碑验证] lines=' + ls.length + ' found=true stages=' + line.stages.length);
+            console.debug('[里程碑验证] lines=' + ls.length + ' found=true stages=' + line.stages.length);
             // 找第一个 in_progress → completed
-            var doneIdx = -1;
-            for (var si = 0; si < line.stages.length; si++) {
-              if (line.stages[si].status === 'in_progress') { doneIdx = si; break; }
+            let doneIdx = -1;
+            for (let si = 0; si < line.stages.length; si++) {
+              if (line.stages[si].status === 'in_progress') {
+                doneIdx = si;
+                break;
+              }
             }
             if (doneIdx >= 0) {
               line.stages[doneIdx].status = 'completed';
-              line.stages[doneIdx].steps = (line.stages[doneIdx].steps || []).map(function(st) { return Object.assign({}, st, { status: 'completed', completedAt: new Date().toISOString() }); });
+              line.stages[doneIdx].steps = (line.stages[doneIdx].steps || []).map(function (st) {
+                return Object.assign({}, st, { status: 'completed', completedAt: new Date().toISOString() });
+              });
               // 下一个 locked → in_progress
               if (doneIdx + 1 < line.stages.length && line.stages[doneIdx + 1].status === 'locked') {
                 line.stages[doneIdx + 1].status = 'in_progress';
-                line.stages[doneIdx + 1].steps = (line.stages[doneIdx + 1].steps || []).map(function(st) { return Object.assign({}, st, { status: 'pending' }); });
+                line.stages[doneIdx + 1].steps = (line.stages[doneIdx + 1].steps || []).map(function (st) {
+                  return Object.assign({}, st, { status: 'pending' });
+                });
               }
               sp(line);
               app.globalData.activeProcess = line;
-              var newStage = Math.min(doneIdx + 1, 6);
+              const newStage = Math.min(doneIdx + 1, 6);
               wx.setStorageSync('__process_stage__', newStage);
-              console.log('[里程碑验证] 已推进 doneIdx=' + doneIdx + ' nextStage=' + newStage);
+              console.debug('[里程碑验证] 已推进 doneIdx=' + doneIdx + ' nextStage=' + newStage);
             } else {
               console.warn('[里程碑验证] 无 in_progress 阶段');
             }
 
             // ★ 里程碑事件
-            var MILESTONE_EVENTS = { 1: 'preparation_done', 2: 'application_submitted', 3: 'awaiting_approval', 4: 'approval_activated' };
-            var evt = MILESTONE_EVENTS[stageIndex] || '';
+            const MILESTONE_EVENTS = {
+              1: 'preparation_done',
+              2: 'application_submitted',
+              3: 'awaiting_approval',
+              4: 'approval_activated',
+            };
+            const evt = MILESTONE_EVENTS[stageIndex] || '';
             if (evt) {
-              var events = wx.getStorageSync('__milestone_events__') || [];
+              const events = wx.getStorageSync('__milestone_events__') || [];
               events.push({ event: evt, stageIdx: stageIndex, ts: Date.now() });
               wx.setStorageSync('__milestone_events__', events);
               app.globalData._lastMilestoneEvent = evt;
@@ -127,7 +150,9 @@ Page({
           } else {
             console.warn('[里程碑验证] 未找到流程线');
           }
-        } catch(se) { console.warn('[里程碑验证] 同步失败:', se); }
+        } catch (se) {
+          console.warn('[里程碑验证] 同步失败:', se);
+        }
 
         // ★ 标记数据已更新，流程控 onShow 据此刷新
         wx.setStorageSync('__process_data_version__', Date.now());
@@ -145,5 +170,5 @@ Page({
 
   retry() {
     this.setData({ imagePath: '', ocrResult: null, verifyResult: null });
-  }
+  },
 });

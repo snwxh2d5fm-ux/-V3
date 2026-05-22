@@ -6,6 +6,6 @@
 
 ---
 
-336d336 误删了 __tests__/ tests/ scripts/，Hermes 已恢复到工作区。
+336d336 误删了 **tests**/ tests/ scripts/，Hermes 已恢复到工作区。
 
 请读取 `inbox/REVIEW_restore_gate_infra.md`，git add + commit + push 这3个目录。

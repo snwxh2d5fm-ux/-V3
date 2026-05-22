@@ -13,17 +13,22 @@
 ## 失败清单
 
 ### 1. `__tests__/v3-unit.test.js` — 引用已删除页面
+
 引用了 `pages/documents/detail/` `pages/documents/combine/` `pages/reminder/` 等已重构/删除的页面路径。
 
 ### 2. `tests/jest/unit/guidebook-data.test.js` — 数据文件已拆分
+
 `data/guidebook-data.js` 已拆分为 `data/guidebook-cards.js` + 懒加载，测试引用路径失效。
 
 ### 3. `__tests__/smoke.test.js` — 模块已迁子包
+
 `persona-path-compat.js` 已迁入子包，测试引用路径失效。
 
 ### 4. `__tests__/ai-chat-risk-assessment.test.js` — 引用已删除代码
+
 7 项静态检查引用已移除的函数/模块：
-- `content-moderation` 
+
+- `content-moderation`
 - `cleanHtmlTags`
 - `v5Corrections`
 - 等
@@ -31,6 +36,7 @@
 ## 修复策略
 
 逐文件修复，原则：
+
 - 页面/模块已删除 → 删对应测试
 - 页面/模块已重命名 → 更新引用路径
 - 函数已移除 → 删对应测试

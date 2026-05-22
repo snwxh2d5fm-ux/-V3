@@ -10,12 +10,12 @@ Use this skill for **calling AI models using CloudBase** across all platforms.
 
 **Supported platforms:**
 
-| Platform | SDK/API | Section |
-|----------|---------|---------|
-| Web (Browser) | `@cloudbase/js-sdk` | Part 1 |
+| Platform                         | SDK/API                       | Section                           |
+| -------------------------------- | ----------------------------- | --------------------------------- |
+| Web (Browser)                    | `@cloudbase/js-sdk`           | Part 1                            |
 | Node.js (Server/Cloud Functions) | `@cloudbase/node-sdk` ≥3.16.0 | Part 1 (same API, different init) |
-| Any platform (HTTP) | HTTP API / OpenAI SDK | Part 2 |
-| WeChat Mini Program | `wx.cloud.extend.AI` | Part 3 ⚠️ Different API |
+| Any platform (HTTP)              | HTTP API / OpenAI SDK         | Part 2                            |
+| WeChat Mini Program              | `wx.cloud.extend.AI`          | Part 3 ⚠️ Different API           |
 
 ---
 
@@ -47,11 +47,11 @@ npm install @cloudbase/node-sdk
 ## Initialization - Web (JS SDK)
 
 ```js
-import cloudbase from "@cloudbase/js-sdk";
+import cloudbase from '@cloudbase/js-sdk';
 
 const app = cloudbase.init({
-  env: "<YOUR_ENV_ID>",
-  accessKey: "<YOUR_PUBLISHABLE_KEY>"  // Get from CloudBase console
+  env: '<YOUR_ENV_ID>',
+  accessKey: '<YOUR_PUBLISHABLE_KEY>', // Get from CloudBase console
 });
 
 const auth = app.auth();
@@ -75,42 +75,42 @@ exports.main = async (event, context) => {
 ## generateText() - Non-streaming
 
 ```js
-const model = ai.createModel("hunyuan-exp");
+const model = ai.createModel('hunyuan-exp');
 
 const result = await model.generateText({
-  model: "hunyuan-lite",
-  messages: [{ role: "user", content: "你好，请你介绍一下李白" }],
+  model: 'hunyuan-lite',
+  messages: [{ role: 'user', content: '你好，请你介绍一下李白' }],
 });
 
-console.log(result.text);           // Generated text string
-console.log(result.usage);          // { prompt_tokens, completion_tokens, total_tokens }
-console.log(result.messages);       // Full message history
-console.log(result.rawResponses);   // Raw model responses
+console.log(result.text); // Generated text string
+console.log(result.usage); // { prompt_tokens, completion_tokens, total_tokens }
+console.log(result.messages); // Full message history
+console.log(result.rawResponses); // Raw model responses
 ```
 
 ## streamText() - Streaming
 
 ```js
-const model = ai.createModel("hunyuan-exp");
+const model = ai.createModel('hunyuan-exp');
 
 const res = await model.streamText({
-  model: "hunyuan-turbos-latest",
-  messages: [{ role: "user", content: "你好，请你介绍一下李白" }],
+  model: 'hunyuan-turbos-latest',
+  messages: [{ role: 'user', content: '你好，请你介绍一下李白' }],
 });
 
 // Option 1: Iterate text stream (recommended)
 for await (let text of res.textStream) {
-  console.log(text);  // Incremental text chunks
+  console.log(text); // Incremental text chunks
 }
 
 // Option 2: Iterate data stream for full response data
 for await (let data of res.dataStream) {
-  console.log(data);  // Full response chunk with metadata
+  console.log(data); // Full response chunk with metadata
 }
 
 // Option 3: Get final results
-const messages = await res.messages;  // Full message history
-const usage = await res.usage;        // Token usage
+const messages = await res.messages; // Full message history
+const usage = await res.usage; // Token usage
 ```
 
 ## generateImage() - Image Generation
@@ -119,17 +119,17 @@ const usage = await res.usage;        // Token usage
 
 ```js
 // Node SDK only
-const imageModel = ai.createImageModel("hunyuan-image");
+const imageModel = ai.createImageModel('hunyuan-image');
 
 const res = await imageModel.generateImage({
-  model: "hunyuan-image",
-  prompt: "一只可爱的猫咪在草地上玩耍",
-  size: "1024x1024",
-  version: "v1.9",
+  model: 'hunyuan-image',
+  prompt: '一只可爱的猫咪在草地上玩耍',
+  size: '1024x1024',
+  version: 'v1.9',
 });
 
-console.log(res.data[0].url);           // Image URL (valid 24 hours)
-console.log(res.data[0].revised_prompt);// Revised prompt if revise=true
+console.log(res.data[0].url); // Image URL (valid 24 hours)
+console.log(res.data[0].revised_prompt); // Revised prompt if revise=true
 ```
 
 ---
@@ -164,16 +164,16 @@ curl -X POST 'https://<ENV_ID>.api.tcloudbasegateway.com/v1/ai/deepseek/v1/chat/
 ## OpenAI SDK Compatible
 
 ```js
-const OpenAI = require("openai");
+const OpenAI = require('openai');
 
 const client = new OpenAI({
-  apiKey: "<YOUR_API_KEY>",
-  baseURL: "https://<ENV_ID>.api.tcloudbasegateway.com/v1/ai/deepseek/v1",
+  apiKey: '<YOUR_API_KEY>',
+  baseURL: 'https://<ENV_ID>.api.tcloudbasegateway.com/v1/ai/deepseek/v1',
 });
 
 const completion = await client.chat.completions.create({
-  model: "deepseek-r1",
-  messages: [{ role: "user", content: "你好" }],
+  model: 'deepseek-r1',
+  messages: [{ role: 'user', content: '你好' }],
   stream: true,
 });
 
@@ -195,10 +195,10 @@ for await (const chunk of completion) {
 ```js
 // app.js
 App({
-  onLaunch: function() {
-    wx.cloud.init({ env: "<YOUR_ENV_ID>" });
-  }
-})
+  onLaunch: function () {
+    wx.cloud.init({ env: '<YOUR_ENV_ID>' });
+  },
+});
 ```
 
 ## generateText() - Non-streaming
@@ -206,16 +206,16 @@ App({
 ⚠️ **Different from JS/Node SDK:** Return value is raw model response.
 
 ```js
-const model = wx.cloud.extend.AI.createModel("hunyuan-exp");
+const model = wx.cloud.extend.AI.createModel('hunyuan-exp');
 
 const res = await model.generateText({
-  model: "hunyuan-lite",
-  messages: [{ role: "user", content: "你好" }],
+  model: 'hunyuan-lite',
+  messages: [{ role: 'user', content: '你好' }],
 });
 
 // ⚠️ Return value is RAW model response, NOT wrapped like JS/Node SDK
-console.log(res.choices[0].message.content);  // Access via choices array
-console.log(res.usage);                        // Token usage
+console.log(res.choices[0].message.content); // Access via choices array
+console.log(res.usage); // Token usage
 ```
 
 ## streamText() - Streaming
@@ -223,23 +223,27 @@ console.log(res.usage);                        // Token usage
 ⚠️ **Different from JS/Node SDK:** Must wrap parameters in `data` object, supports callbacks.
 
 ```js
-const model = wx.cloud.extend.AI.createModel("hunyuan-exp");
+const model = wx.cloud.extend.AI.createModel('hunyuan-exp');
 
 // ⚠️ Parameters MUST be wrapped in `data` object
 const res = await model.streamText({
-  data: {                              // ⚠️ Required wrapper
-    model: "hunyuan-lite",
-    messages: [{ role: "user", content: "hi" }]
+  data: {
+    // ⚠️ Required wrapper
+    model: 'hunyuan-lite',
+    messages: [{ role: 'user', content: 'hi' }],
   },
-  onText: (text) => {                  // Optional: incremental text callback
-    console.log("New text:", text);
+  onText: (text) => {
+    // Optional: incremental text callback
+    console.log('New text:', text);
   },
-  onEvent: ({ data }) => {             // Optional: raw event callback
-    console.log("Event:", data);
+  onEvent: ({ data }) => {
+    // Optional: raw event callback
+    console.log('Event:', data);
   },
-  onFinish: (fullText) => {            // Optional: completion callback
-    console.log("Done:", fullText);
-  }
+  onFinish: (fullText) => {
+    // Optional: completion callback
+    console.log('Done:', fullText);
+  },
 });
 
 // Async iteration also available
@@ -250,7 +254,8 @@ for await (let str of res.textStream) {
 // Check for completion with eventStream
 for await (let event of res.eventStream) {
   console.log(event);
-  if (event.data === "[DONE]") {       // ⚠️ Check for [DONE] to stop
+  if (event.data === '[DONE]') {
+    // ⚠️ Check for [DONE] to stop
     break;
   }
 }
@@ -260,15 +265,15 @@ for await (let event of res.eventStream) {
 
 # API Comparison: JS/Node SDK vs WeChat Mini Program
 
-| Feature | JS/Node SDK | WeChat Mini Program |
-|---------|-------------|---------------------|
-| **Namespace** | `app.ai()` | `wx.cloud.extend.AI` |
-| **generateText params** | Direct object | Direct object |
-| **generateText return** | `{ text, usage, messages }` | Raw: `{ choices, usage }` |
-| **streamText params** | Direct object | ⚠️ Wrapped in `data: {...}` |
-| **streamText return** | `{ textStream, dataStream }` | `{ textStream, eventStream }` |
-| **Callbacks** | Not supported | `onText`, `onEvent`, `onFinish` |
-| **Image generation** | Node SDK only | Not available |
+| Feature                 | JS/Node SDK                  | WeChat Mini Program             |
+| ----------------------- | ---------------------------- | ------------------------------- |
+| **Namespace**           | `app.ai()`                   | `wx.cloud.extend.AI`            |
+| **generateText params** | Direct object                | Direct object                   |
+| **generateText return** | `{ text, usage, messages }`  | Raw: `{ choices, usage }`       |
+| **streamText params**   | Direct object                | ⚠️ Wrapped in `data: {...}`     |
+| **streamText return**   | `{ textStream, dataStream }` | `{ textStream, eventStream }`   |
+| **Callbacks**           | Not supported                | `onText`, `onEvent`, `onFinish` |
+| **Image generation**    | Node SDK only                | Not available                   |
 
 ---
 
@@ -278,27 +283,27 @@ for await (let event of res.eventStream) {
 
 ```ts
 interface BaseChatModelInput {
-  model: string;                        // Required: model name
-  messages: Array<ChatModelMessage>;    // Required: message array
-  temperature?: number;                 // Optional: sampling temperature
-  topP?: number;                        // Optional: nucleus sampling
+  model: string; // Required: model name
+  messages: Array<ChatModelMessage>; // Required: message array
+  temperature?: number; // Optional: sampling temperature
+  topP?: number; // Optional: nucleus sampling
 }
 
 type ChatModelMessage =
-  | { role: "user"; content: string }
-  | { role: "system"; content: string }
-  | { role: "assistant"; content: string };
+  | { role: 'user'; content: string }
+  | { role: 'system'; content: string }
+  | { role: 'assistant'; content: string };
 ```
 
 ## JS/Node SDK - generateText() Return
 
 ```ts
 interface GenerateTextResult {
-  text: string;                         // Generated text
-  messages: Array<ChatModelMessage>;    // Full message history
-  usage: Usage;                         // Token usage
-  rawResponses: Array<unknown>;         // Raw model responses
-  error?: unknown;                      // Error if any
+  text: string; // Generated text
+  messages: Array<ChatModelMessage>; // Full message history
+  usage: Usage; // Token usage
+  rawResponses: Array<unknown>; // Raw model responses
+  error?: unknown; // Error if any
 }
 
 interface Usage {
@@ -312,11 +317,11 @@ interface Usage {
 
 ```ts
 interface StreamTextResult {
-  textStream: AsyncIterable<string>;    // Incremental text stream
+  textStream: AsyncIterable<string>; // Incremental text stream
   dataStream: AsyncIterable<DataChunk>; // Full data stream
-  messages: Promise<ChatModelMessage[]>;// Final message history
-  usage: Promise<Usage>;                // Final token usage
-  error?: unknown;                      // Error if any
+  messages: Promise<ChatModelMessage[]>; // Final message history
+  usage: Promise<Usage>; // Final token usage
+  error?: unknown; // Error if any
 }
 
 interface DataChunk {
@@ -333,16 +338,17 @@ interface DataChunk {
 
 ```ts
 interface WxStreamTextInput {
-  data: {                              // ⚠️ Required wrapper object
+  data: {
+    // ⚠️ Required wrapper object
     model: string;
     messages: Array<{
-      role: "user" | "system" | "assistant";
+      role: 'user' | 'system' | 'assistant';
       content: string;
     }>;
   };
-  onText?: (text: string) => void;     // Incremental text callback
-  onEvent?: (prop: { data: string }) => void;  // Raw event callback
-  onFinish?: (text: string) => void;   // Completion callback
+  onText?: (text: string) => void; // Incremental text callback
+  onEvent?: (prop: { data: string }) => void; // Raw event callback
+  onFinish?: (text: string) => void; // Completion callback
 }
 ```
 
@@ -350,11 +356,12 @@ interface WxStreamTextInput {
 
 ```ts
 interface WxStreamTextResult {
-  textStream: AsyncIterable<string>;   // Incremental text stream
-  eventStream: AsyncIterable<{         // Raw event stream
+  textStream: AsyncIterable<string>; // Incremental text stream
+  eventStream: AsyncIterable<{
+    // Raw event stream
     event?: unknown;
     id?: unknown;
-    data: string;                      // "[DONE]" when complete
+    data: string; // "[DONE]" when complete
   }>;
 }
 ```
@@ -365,13 +372,13 @@ interface WxStreamTextResult {
 // Raw model response (OpenAI-compatible format)
 interface WxGenerateTextResponse {
   id: string;
-  object: "chat.completion";
+  object: 'chat.completion';
   created: number;
   model: string;
   choices: Array<{
     index: number;
     message: {
-      role: "assistant";
+      role: 'assistant';
       content: string;
     };
     finish_reason: string;
@@ -388,23 +395,23 @@ interface WxGenerateTextResponse {
 
 ```ts
 interface HunyuanGenerateImageInput {
-  model: "hunyuan-image" | string;      // Required
-  prompt: string;                       // Required: image description
-  version?: "v1.8.1" | "v1.9";         // Default: "v1.8.1"
-  size?: string;                        // Default: "1024x1024"
-  negative_prompt?: string;             // v1.9 only
-  style?: string;                       // v1.9 only
-  revise?: boolean;                     // Default: true
-  n?: number;                           // Default: 1
-  footnote?: string;                    // Watermark, max 16 chars
-  seed?: number;                        // Range: [1, 4294967295]
+  model: 'hunyuan-image' | string; // Required
+  prompt: string; // Required: image description
+  version?: 'v1.8.1' | 'v1.9'; // Default: "v1.8.1"
+  size?: string; // Default: "1024x1024"
+  negative_prompt?: string; // v1.9 only
+  style?: string; // v1.9 only
+  revise?: boolean; // Default: true
+  n?: number; // Default: 1
+  footnote?: string; // Watermark, max 16 chars
+  seed?: number; // Range: [1, 4294967295]
 }
 
 interface HunyuanGenerateImageOutput {
   id: string;
   created: number;
   data: Array<{
-    url: string;                        // Image URL (24h valid)
+    url: string; // Image URL (24h valid)
     revised_prompt?: string;
   }>;
 }
@@ -419,4 +426,3 @@ interface HunyuanGenerateImageOutput {
 3. **Keep API Keys secure** - Never expose in client-side code
 4. **Initialize early** - Initialize SDK/cloud in app entry point
 5. **Check for [DONE]** - In WeChat Mini Program streaming, check `event.data === "[DONE]"` to stop
-

@@ -165,8 +165,8 @@ function generateWeTestScript() {
 // ============================================================
 function main() {
   const args = process.argv.slice(2);
-  const apiKey = args.find(a => a.startsWith('--apikey='))?.split('=')[1];
-  const version = args.find(a => a.startsWith('--version='))?.split('=')[1] || 'trial';
+  const apiKey = args.find((a) => a.startsWith('--apikey='))?.split('=')[1];
+  const version = args.find((a) => a.startsWith('--version='))?.split('=')[1] || 'trial';
 
   if (!apiKey) {
     console.log('⚠️  未提供 --apikey，仅生成本地脚本文件');
