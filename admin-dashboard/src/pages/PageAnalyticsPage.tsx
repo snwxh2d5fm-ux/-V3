@@ -1,4 +1,4 @@
-import { useEffect, useState, useMemo } from 'react';
+import { useEffect, useState } from 'react';
 
 // 页面→模块映射
 const PAGE_MODULES: Record<string, { module: string; icon: string }> = {

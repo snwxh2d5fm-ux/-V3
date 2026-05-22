@@ -36,15 +36,15 @@ export function RevenuePage() {
 
       {/* Revenue Summary */}
       <div className="grid grid-cols-4 gap-4">
-        {[
+        {([
           ['总收入 ¥', ((summary.totalRevenue as number) || 0) / 100],
           ['订单数', summary.orderCount || 0],
           ['客单价 ¥', ((summary.avgOrder as number) || 0) / 100],
           ['开票申请', invoiceTotal],
-        ].map(([l, v], i) => (
-          <div key={i} className="rounded-lg border border-[var(--border)] bg-[var(--card)] p-3">
+        ] as const).map(([l, v]) => (
+          <div key={l} className="rounded-lg border border-[var(--border)] bg-[var(--card)] p-3">
             <div className="text-xs text-[var(--muted-foreground)]">{l}</div>
-            <div className="text-xl font-bold">{typeof v === 'number' ? v.toLocaleString() : v}</div>
+            <div className="text-xl font-bold">{typeof v === 'number' ? v.toLocaleString() : String(v)}</div>
           </div>
         ))}
       </div>

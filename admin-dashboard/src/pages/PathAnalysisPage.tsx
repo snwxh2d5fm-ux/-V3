@@ -7,7 +7,7 @@ const PATH_LABELS: Record<string, string> = {
   dependent: '受养人', renewal: '续签', pr: '永居冲刺'
 };
 
-const PATH_COLORS: Record<string, string> = ['#3b82f6','#22c55e','#eab308','#ef4444','#8b5cf6','#ec4899','#14b8a6','#f97316','#6366f1'];
+const PATH_COLORS: string[] = ['#3b82f6','#22c55e','#eab308','#ef4444','#8b5cf6','#ec4899','#14b8a6','#f97316','#6366f1'];
 
 type PathData = { path: string; label: string; count: number; pct: number };
 
@@ -18,13 +18,13 @@ export function PathAnalysisPage() {
 
   useEffect(() => {
     let c = false; setLoading(true);
-    getDashboard().then(r => {
+    getDashboard().then((r: { code: number; data?: unknown }) => {
       if (c) return;
       if (r.code === 0 && r.data) {
         const d = r.data as Record<string, unknown>;
         const byPath = (d.usersByPath || {}) as Record<string, number>;
-        const t = Object.values(byPath).reduce((a,b) => (a as number)+(b as number), 0) as number || 1;
-        const list = Object.entries(byPath).map(([k, v], i) => ({
+        const t: number = Object.values(byPath).reduce((a: number, b: number) => a + b, 0) || 1;
+        const list = Object.entries(byPath).map(([k, v]) => ({
           path: k, label: PATH_LABELS[k] || k,
           count: v as number,
           pct: Math.round((v as number) / t * 100)

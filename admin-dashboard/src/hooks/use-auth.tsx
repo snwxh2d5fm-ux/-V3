@@ -33,15 +33,15 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       } catch {
         sessionStorage.removeItem('zgb_admin_api_key');
         sessionStorage.removeItem('zgb_admin_user');
-        setState((s) => ({ ...s, isLoading: false }));
+        setState((s: AuthState) => ({ ...s, isLoading: false }));
       }
     } else {
-      setState((s) => ({ ...s, isLoading: false }));
+      setState((s: AuthState) => ({ ...s, isLoading: false }));
     }
   }, []);
 
   const login = useCallback(async (email: string, password: string) => {
-    setState((s) => ({ ...s, isLoading: true, error: null }));
+    setState((s: AuthState) => ({ ...s, isLoading: true, error: null }));
     try {
       const res = await adminLogin(email, password);
       if (res.code === 0 && res.data) {
@@ -57,14 +57,14 @@ export function AuthProvider({ children }: { children: ReactNode }) {
           error: null,
         });
       } else {
-        setState((s) => ({
+        setState((s: AuthState) => ({
           ...s,
           isLoading: false,
           error: res.msg || '登录失败',
         }));
       }
     } catch (err) {
-      setState((s) => ({
+      setState((s: AuthState) => ({
         ...s,
         isLoading: false,
         error: err instanceof Error ? err.message : '网络错误',

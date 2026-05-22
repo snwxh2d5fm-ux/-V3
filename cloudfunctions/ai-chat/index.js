@@ -814,6 +814,8 @@ async function logConversation(data) {
       stream_enabled: data.streamEnabled || false,
       // [V4.1-PHASE2] ZGB-AI-203: 置信度字段
       confidence_level: data.confidenceLevel || null,
+      // [V4.2] AI对话反馈后台: RAG来源详情
+      source_chunks: data.sourceChunks || null,
       timestamp: new Date(),
     }).catch(() => {});
   } catch(e) {

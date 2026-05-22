@@ -1,1 +1,9 @@
-{"name":"admin-ai-quality","version":"1.0.0","main":"index.js","dependencies":{"@cloudbase/node-sdk":"^2.0.0"}}
+{
+  "name": "admin-ai-quality",
+  "version": "1.0.0",
+  "main": "index.js",
+  "dependencies": {
+    "@cloudbase/node-sdk": "^2.0.0"
+  },
+  "description": "住港伴V4 - admin-ai-quality 云函数"
+}

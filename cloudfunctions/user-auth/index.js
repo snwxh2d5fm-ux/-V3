@@ -330,7 +330,7 @@ function sanitizeUser(user) {
 function makeToken(openid, userId) {
   // 使用 crypto.randomBytes 生成不可预测的随机令牌
   const randomPart = require('crypto').randomBytes(32).toString('hex');
-  const hmac = require('crypto').createHmac('sha256', process.env.TOKEN_SECRET || 'zhgb-internal-key');
+  const hmac = require('crypto').createHmac('sha256', process.env.TOKEN_SECRET);
   const payload = [openid, userId, Date.now(), randomPart].join(':');
   const signature = hmac.update(payload).digest('hex');
   return Buffer.from(payload + ':' + signature).toString('base64');
@@ -343,7 +343,7 @@ function verifyToken(token) {
     if (parts.length < 5) return null;
     var payload = parts.slice(0, 4).join(':');
     var sig = parts[4];
-    var hmac = require('crypto').createHmac('sha256', process.env.TOKEN_SECRET || 'zhgb-internal-key');
+    var hmac = require('crypto').createHmac('sha256', process.env.TOKEN_SECRET);
     var expected = hmac.update(payload).digest('hex');
     if (sig !== expected) return null;
     return { openid: parts[0], uid: parts[1], iat: parseInt(parts[2]) };

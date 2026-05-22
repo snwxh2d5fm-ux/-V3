@@ -1,1 +1,9 @@
-{"name":"admin-compliance","version":"1.0.0","main":"index.js","dependencies":{"@cloudbase/node-sdk":"^2.0.0"}}
+{
+  "name": "admin-compliance",
+  "version": "1.0.0",
+  "main": "index.js",
+  "dependencies": {
+    "@cloudbase/node-sdk": "^2.0.0"
+  },
+  "description": "住港伴V4 - admin-compliance 云函数"
+}

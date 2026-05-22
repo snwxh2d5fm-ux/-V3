@@ -44,8 +44,8 @@ export function ContentPage() {
         </div>
         <div className="rounded-lg border border-[var(--border)] bg-[var(--card)] p-4">
           <h2 className="mb-3 text-sm font-semibold">任务完成率</h2>
-          <div className="text-xl font-bold">{tasks.tasks as number ?? 0} 条任务</div>
-          {tasks.byCategory && <div className="mt-2 space-y-1 text-xs">
+          <div className="text-xl font-bold">{String(tasks.tasks ?? 0)} 条任务</div>
+          {Boolean(tasks.byCategory) && <div className="mt-2 space-y-1 text-xs">
             {Object.entries(tasks.byCategory as Record<string, {total: number, completed: number}>).map(([cat, v]) => (
               <div key={cat} className="flex justify-between"><span>{cat}</span><span>{v.completed}/{v.total}</span></div>
             ))}

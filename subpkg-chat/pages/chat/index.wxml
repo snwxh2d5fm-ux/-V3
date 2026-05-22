@@ -13,6 +13,14 @@
     </view>
   </view>
 
+  <!-- [V4.1-PHASE2] Task 2: 游戏化进度条 -->
+  <view class="progress-bar-container">
+    <view class="progress-track">
+      <view class="progress-fill" style="width:{{sessionProgress * 10}}%"></view>
+    </view>
+    <text class="progress-text">{{sessionProgress}}/10 轮对话</text>
+  </view>
+
   <!-- 消息列表 -->
   <scroll-view
     class="chat-messages"
@@ -46,14 +54,26 @@
           <view class="bubble {{item.role}}">
             <rich-text class="bubble-text" nodes="<div style='font-size:28rpx;line-height:1.8;color:#374151'>{{item.content}}</div>" user-select></rich-text>
 
+            <!-- [V4.1-PHASE2] Task 3: 置信度图标 -->
+            <view wx:if="{{item.role === 'assistant' && item.confidenceLevel}}" class="confidence-badge confidence-{{item.confidenceLevel}}">
+              <text wx:if="{{item.confidenceLevel === 'high'}}" class="confidence-icon">🛡️</text>
+              <text wx:elif="{{item.confidenceLevel === 'medium'}}" class="confidence-icon">❓</text>
+              <text wx:elif="{{item.confidenceLevel === 'low'}}" class="confidence-icon">⚠️</text>
+            </view>
+
             <!-- V8: RAG知识来源标注 -->
             <view wx:if="{{item.role === 'assistant' && showSources && sources.length > 0 && index === messages.length - 2}}" class="sources-tag">
               <text class="sources-label">📎 参考来源: </text>
               <text class="sources-list" wx:for="{{sources}}" wx:for-item="src" wx:key="title">{{src.title}}{{src.confidence ? ' ['+src.confidence+']' : ''}}{{index > 0 ? '; ' : ''}}</text>
             </view>
 
-            <!-- 快捷回复按钮 -->
-            <view wx:if="{{item.quickReplies && item.quickReplies.length > 0}}" class="quick-replies">
+            <!-- [V4.1-PHASE2] Task 3: 低置信警语 -->
+            <view wx:if="{{item.role === 'assistant' && item.confidenceLevel === 'low'}}" class="low-confidence-warning">
+              <text>⚠️ 本回答准确度较低，建议进一步核实官方信息</text>
+            </view>
+
+            <!-- [V4.1-PHASE2] Task 1: 动态快捷回复按钮 -->
+            <view wx:if="{{item.quickReplies && item.quickReplies.length > 0}}" class="dynamic-quick-replies">
               <view
                 wx:for="{{item.quickReplies}}"
                 wx:for-item="qr"
@@ -66,10 +86,14 @@
               </view>
             </view>
 
-            <!-- V7: 反馈按钮 (仅最后一条assistant消息) -->
-            <view wx:if="{{item.role === 'assistant' && showFeedback && index === messages.length - 2}}" class="feedback-row">
-              <text class="feedback-btn" data-type="inaccurate" bindtap="onFeedback">回答不准确</text>
-              <text class="feedback-btn" data-type="safety" bindtap="onFeedback">可能泄露信息</text>
+            <!-- [V4.1-PHASE1] Task 3: 👍/👎 反馈按钮 (支持已反馈禁用态) -->
+            <view wx:if="{{item.role === 'assistant' && index === messages.length - 2 && !item.feedbackGiven}}" class="feedback-row">
+              <text class="feedback-btn like" data-type="like" data-msg-id="{{item.msgId}}" bindtap="onFeedback">👍 有帮助</text>
+              <text class="feedback-btn dislike" data-type="dislike" data-msg-id="{{item.msgId}}" bindtap="onFeedback">👎 需改进</text>
+            </view>
+            <!-- [V4.1-PHASE1] Task 3: 已反馈状态 -->
+            <view wx:if="{{item.role === 'assistant' && index === messages.length - 2 && item.feedbackGiven}}" class="feedback-row">
+              <text class="feedback-btn disabled {{item.feedbackGiven}}">{{item.feedbackGiven === 'like' ? '👍 已反馈' : '👎 已反馈'}}</text>
             </view>
           </view>
 
@@ -80,7 +104,7 @@
         </view>
       </block>
 
-      <!-- 加载状态 -->
+      <!-- [V4.1-PHASE1] Task 2: 流式状态指示器 (含已生成字数) -->
       <view wx:if="{{loading}}" class="message-wrapper assistant">
         <view class="avatar assistant-avatar">
           <image src="/images/ai-avatar.png" mode="aspectFill" aria-label="AI住港伴专员" />
@@ -89,6 +113,8 @@
           <text class="typing-dot">●</text>
           <text class="typing-dot">●</text>
           <text class="typing-dot">●</text>
+          <text class="typing-text" wx:if="{{streamingWordCount > 0}}"> 已生成{{streamingWordCount}}字</text>
+          <text class="typing-text" wx:else> 对方正在输入...</text>
         </view>
       </view>
     </view>

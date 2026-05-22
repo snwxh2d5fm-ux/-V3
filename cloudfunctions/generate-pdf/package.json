@@ -5,5 +5,6 @@
   "dependencies": {
     "wx-server-sdk": "~2.6.0",
     "jspdf": "^2.5.0"
-  }
+  },
+  "description": "住港伴V4 - generate-pdf 云函数"
 }

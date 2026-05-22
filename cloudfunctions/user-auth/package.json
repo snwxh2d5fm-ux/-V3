@@ -1,1 +1,9 @@
-{"name":"user-auth","version":"1.0.0","main":"index.js","dependencies":{"wx-server-sdk":"~2.6.0"}}
+{
+  "name": "user-auth",
+  "version": "1.0.0",
+  "main": "index.js",
+  "dependencies": {
+    "wx-server-sdk": "~2.6.0"
+  },
+  "description": "住港伴V4 - user-auth 云函数"
+}

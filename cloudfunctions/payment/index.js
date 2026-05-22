@@ -29,7 +29,7 @@ const _ = db.command;
 // ========== 微信支付V3配置 (从环境变量读取) ==========
 const WXPAY_CONFIG = {
   mchid: process.env.WXPAY_MCHID || '',
-  appid: process.env.WXPAY_APPID || 'wx08c2222c1bf042fd',
+  appid: process.env.WXPAY_APPID || '',
   apiV3Key: process.env.WXPAY_API_V3_KEY || '',
   serialNo: process.env.WXPAY_SERIAL_NO || '',
   privateKey: (process.env.WXPAY_PRIVATE_KEY || '').replace(/\\n/g, '\n'),

@@ -23,10 +23,10 @@ export function AIQualityPage() {
     <div className="space-y-6">
       <div><h1 className="text-xl font-bold">AI 质量监控</h1><p className="text-sm text-[var(--muted-foreground)]">⚠️ response_preview 不在此页面展示 (P0-05)</p></div>
       <div className="grid grid-cols-4 gap-4">
-        {[['总对话', dash.conversations], ['安全事件', dash.safetyEvents], ['预估成本￥', dash.estimatedCostRMB], ['总Tokens', dash.totalTokens?.toLocaleString()]].map(([l, v], i) => (
-          <div key={i} className="rounded-lg border border-[var(--border)] bg-[var(--card)] p-3">
+        {([['总对话', dash.conversations], ['安全事件', dash.safetyEvents], ['预估成本￥', dash.estimatedCostRMB], ['总Tokens', dash.totalTokens?.toLocaleString()]] as const).map(([l, v]) => (
+          <div key={l} className="rounded-lg border border-[var(--border)] bg-[var(--card)] p-3">
             <div className="text-xs text-[var(--muted-foreground)]">{l}</div>
-            <div className="text-xl font-bold">{v ?? '--'}</div>
+            <div className="text-xl font-bold">{String(v ?? '--')}</div>
           </div>
         ))}
       </div>

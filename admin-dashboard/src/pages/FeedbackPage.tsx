@@ -33,15 +33,15 @@ export function FeedbackPage() {
       <div><h1 className="text-xl font-bold">客服工单</h1><p className="text-sm text-[var(--muted-foreground)]">⚠️ 内容已PII脱敏 (P0-04) · 含内测码兑换反馈</p></div>
 
       <div className="grid grid-cols-4 gap-3">
-        {[
+        {([
           ['总工单', total],
           ['已处理', stats.resolved || 0],
           ['闭环率', stats.closureRate || '0%'],
           ['PII脱敏', '已启用'],
-        ].map(([l, v], i) => (
-          <div key={i} className="rounded-lg border border-[var(--border)] bg-[var(--card)] p-3 text-center">
+        ] as const).map(([l, v]) => (
+          <div key={l} className="rounded-lg border border-[var(--border)] bg-[var(--card)] p-3 text-center">
             <div className="text-xs text-[var(--muted-foreground)]">{l}</div>
-            <div className="text-xl font-bold">{v ?? '--'}</div>
+            <div className="text-xl font-bold">{String(v ?? '--')}</div>
           </div>
         ))}
       </div>

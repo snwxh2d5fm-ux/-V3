@@ -1,1 +1,9 @@
-{"name":"document-manager","version":"1.0.0","main":"index.js","dependencies":{"wx-server-sdk":"~2.6.0"}}
+{
+  "name": "document-manager",
+  "version": "1.0.0",
+  "main": "index.js",
+  "dependencies": {
+    "wx-server-sdk": "~2.6.0"
+  },
+  "description": "住港伴V4 - document-manager 云函数"
+}

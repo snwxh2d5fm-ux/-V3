@@ -23,10 +23,10 @@ export function CompliancePage() {
     <div className="space-y-6">
       <div><h1 className="text-xl font-bold">合规安全</h1><p className="text-sm text-[var(--muted-foreground)]">敏感词 / K2泄露 / 内容审核</p></div>
       <div className="grid grid-cols-3 gap-4">
-        {[['审核日志', status.moderationLogs], ['安全触发', status.safetyTriggers], ['K2告警', status.k2LeakDetected ? '是' : '否', status.k2LeakDetected ? 'text-red-400' : 'text-green-400']].map(([l, v, cls], i) => (
-          <div key={i} className="rounded-lg border border-[var(--border)] bg-[var(--card)] p-3">
+        {([['审核日志', status.moderationLogs], ['安全触发', status.safetyTriggers], ['K2告警', status.k2LeakDetected ? '是' : '否', status.k2LeakDetected ? 'text-red-400' : 'text-green-400']] as const).map(([l, v, cls]) => (
+          <div key={l} className="rounded-lg border border-[var(--border)] bg-[var(--card)] p-3">
             <div className="text-xs text-[var(--muted-foreground)]">{l}</div>
-            <div className={`text-xl font-bold ${cls || ''}`}>{String(v ?? '--')}</div>
+            <div className={`text-xl font-bold ${String(cls || '')}`}>{String(v ?? '--')}</div>
           </div>
         ))}
       </div>

@@ -46,15 +46,15 @@ export function ShareAnalyticsPage() {
 
       {/* Overview */}
       <div className="grid grid-cols-4 gap-3">
-        {[
+        {([
           ['总分享次数', totalShares],
           ['总打开次数', totalOpens],
           ['邀请码生成', codeStats.generated || 0],
           ['邀请码激活', codeStats.activated || 0],
-        ].map(([l, v], i) => (
-          <div key={i} className="rounded-lg border border-[var(--border)] bg-[var(--card)] p-3 text-center">
+        ] as const).map(([l, v]) => (
+          <div key={l} className="rounded-lg border border-[var(--border)] bg-[var(--card)] p-3 text-center">
             <div className="text-xs text-[var(--muted-foreground)]">{l}</div>
-            <div className="text-xl font-bold">{v ?? '--'}</div>
+            <div className="text-xl font-bold">{String(v ?? '--')}</div>
           </div>
         ))}
       </div>
@@ -105,7 +105,7 @@ export function ShareAnalyticsPage() {
         <ul className="space-y-1 text-xs text-[var(--secondary-foreground)]">
           <li>攻略书是分享最多的模块（{stats[0]?.shareCount || 0}次），用户倾向于分享实用内容而非产品本身</li>
           <li>分享→打开转化率约 37%，卡片文案和配图是提升转化关键</li>
-          <li>邀请码生成 {codeStats.generated || 0} 张、激活 {(codeStats.activated as number) || 0} 张，激活率 {codeStats.activationRate || '0%'}</li>
+          <li>邀请码生成 {String(codeStats.generated || 0)} 张、激活 {String(codeStats.activated || 0)} 张，激活率 {String(codeStats.activationRate || '0%')}</li>
           <li>建议在评估结果页和攻略书详情页强化分享入口</li>
         </ul>
       </div>

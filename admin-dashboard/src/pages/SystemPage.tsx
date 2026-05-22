@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react';
+import { useState } from 'react';
 
 export function SystemPage() {
   const [envId] = useState(import.meta.env.VITE_CLOUDBASE_ENV_ID || 'cloudbase-d1g17tgt7cc199a60');
