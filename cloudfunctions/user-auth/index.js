@@ -320,10 +320,21 @@ function sanitizeUser(user) {
   return { id: _id, ...safe, phoneBound: !!phoneHash };
 }
 
+function getTokenSecret() {
+  const secret = process.env.TOKEN_SECRET;
+  if (!secret) {
+    console.error('[user-auth] TOKEN_SECRET 环境变量未设置！请在 CloudBase 控制台→云函数→user-auth→环境变量中添加 TOKEN_SECRET');
+    // 降级密钥：使用 CloudBase 环境 ID + 固定盐值，避免直接崩溃
+    // ⚠️ 这是临时降级，生产环境必须在控制台配置 TOKEN_SECRET
+    return 'zgb-fallback-' + (process.env.TCB_ENV || cloud.DYNAMIC_CURRENT_ENV || 'unknown');
+  }
+  return secret;
+}
+
 function makeToken(openid, userId) {
   // 使用 crypto.randomBytes 生成不可预测的随机令牌
   const randomPart = require('crypto').randomBytes(32).toString('hex');
-  const hmac = require('crypto').createHmac('sha256', process.env.TOKEN_SECRET);
+  const hmac = require('crypto').createHmac('sha256', getTokenSecret());
   const payload = [openid, userId, Date.now(), randomPart].join(':');
   const signature = hmac.update(payload).digest('hex');
   return Buffer.from(payload + ':' + signature).toString('base64');
@@ -336,7 +347,7 @@ function verifyToken(token) {
     if (parts.length < 5) return null;
     const payload = parts.slice(0, 4).join(':');
     const sig = parts[4];
-    const hmac = require('crypto').createHmac('sha256', process.env.TOKEN_SECRET);
+    const hmac = require('crypto').createHmac('sha256', getTokenSecret());
     const expected = hmac.update(payload).digest('hex');
     if (sig !== expected) return null;
     return { openid: parts[0], uid: parts[1], iat: parseInt(parts[2]) };

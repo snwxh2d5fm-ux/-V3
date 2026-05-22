@@ -20,7 +20,7 @@
     "scopeDataCheck": false,
     "checkInvalidKey": true,
     "checkSiteMap": true,
-    "uploadWithSourceMap": true,
+    "uploadWithSourceMap": false,
     "compileHotReLoad": false,
     "lazyloadPlaceholderEnable": false,
     "useMultiFrameRuntime": true,
@@ -89,6 +89,30 @@
       },
       {
         "value": "*.md",
+        "type": "file"
+      },
+      {
+        "value": "data/tasks",
+        "type": "folder"
+      },
+      {
+        "value": "package-lock.json",
+        "type": "file"
+      },
+      {
+        "value": "*.cjs",
+        "type": "file"
+      },
+      {
+        "value": "*.mjs",
+        "type": "file"
+      },
+      {
+        "value": "cloudbaserc.json",
+        "type": "file"
+      },
+      {
+        "value": "ledger.jsonl",
         "type": "file"
       }
     ],

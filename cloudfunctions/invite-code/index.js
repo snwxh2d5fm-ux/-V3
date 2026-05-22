@@ -657,9 +657,14 @@ function generateCode() {
   return `${CODE_PREFIX}-${raw.slice(0, 4)}-${raw.slice(4)}`;
 }
 
-/** 规范化码：去空格、转大写 */
+/** 规范化码：去空格、转大写、自动补全缺失短横 */
 function normalizeCode(input) {
-  return String(input).replace(/\s/g, '').toUpperCase();
+  let code = String(input).replace(/\s/g, '').toUpperCase();
+  // 修复缺少第二个短横的格式: ZGB-XXXXXXXX → ZGB-XXXX-XXXX
+  if (/^ZGB-[A-Z0-9]{8}$/.test(code)) {
+    code = code.slice(0, 7) + '-' + code.slice(7);
+  }
+  return code;
 }
 
 /** 校验码格式 ZGB-XXXX-XXXX */

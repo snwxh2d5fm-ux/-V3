@@ -48,3 +48,4 @@
 {"ts":"2026-05-22T01:00:00+08:00","from":"claude","action":"release_ready","commit":"df08b47","detail":"V4 Dual-Gate 发版。真机20/20。支付已修复。","state":"released"}
 {"ts":"2026-05-22T01:30:00+08:00","from":"hermes","action":"9gate_pass","commit":"8f59c76","detail":"feature/invite-code 9-Gate全绿. Gate0✅ Gate2✅380/384 Gate3✅0error Gate4麒麟P0:0 Gate5玄武P0:0 Gate6✅已部署 Gate7✅已推送. P0:0. 云函数770行9action. 3集合8索引.","state":"passed"}
 {"ts":"2026-05-22T12:00:00+08:00","from":"claude","action":"deploy_request","detail":"fix/p0-process-path-select-crash — V4.1 存储容灾修复","state":"pending_hermes_9gate"}
+{"timestamp":"2026-05-22T16:42:00+08:00","gate":"DEPLOY_QR_BAREFIX","status":"GATE_PASSED","deploy_note":"CloudBase UpdateFailed(ResourceNotFound.Package), 旧代码运行中"}

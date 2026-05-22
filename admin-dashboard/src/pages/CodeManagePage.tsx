@@ -200,19 +200,23 @@ export function CodeManagePage() {
               <tbody>
                 {codes.map((c, i) => (
                   <tr key={i} data-testid="code-row" className="border-b border-[var(--border)] last:border-0">
-                    <td className="py-2 font-mono">{c.code?.slice(0, 12)}...</td>
+                    <td className="py-2 font-mono">{c.code}</td>
                     <td className="py-2">{c.batchName || c.batchId?.slice(0, 8)}</td>
                     <td className="py-2">
                       <span
-                        className={`rounded-full px-2 py-0.5 text-xs ${c.status === 'active' ? 'bg-green-950 text-green-400' : 'bg-[var(--muted)] text-[var(--muted-foreground)]'}`}
+                        className={`rounded-full px-2 py-0.5 text-xs ${(c.status === 'unused' || c.status === 'active') ? 'bg-green-950 text-green-400' : 'bg-[var(--muted)] text-[var(--muted-foreground)]'}`}
                       >
-                        {c.status === 'active'
+                        {c.status === 'unused'
                           ? '有效'
-                          : c.status === 'used'
-                            ? '已用'
-                            : c.status === 'revoked'
-                              ? '已废'
-                              : '过期'}
+                          : c.status === 'active'
+                            ? '有效'
+                            : c.status === 'used' || c.status === 'redeemed'
+                              ? '已用'
+                              : c.status === 'revoked'
+                                ? '已废'
+                                : c.status === 'expired'
+                                  ? '过期'
+                                  : c.status}
                       </span>
                     </td>
                     <td className="py-2">

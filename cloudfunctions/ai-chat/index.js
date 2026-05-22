@@ -1401,7 +1401,10 @@ async function handleStreamResponse(
               var blockStart = fullContent.lastIndexOf('```');
               var isInCodeBlock = blockStart !== -1 && fullContent.indexOf('```', blockStart + 3) === -1;
               // [V4.1-PHASE2 FIX] 也拦截裸 quick_replies[...] 无代码围栏的泄漏
-              var qrBareIdx = fullContent.lastIndexOf('quick_replies[');
+              // P0: 使用正则允许 quick_replies 与 [ 之间的空格/换行，防止 LLM 空格绕过
+              var qrBareMatch = fullContent.match(/quick_replies\s*\[/);
+              var qrBareIdx = qrBareMatch ? qrBareMatch.index : -1;
+              var qrBareLen = qrBareMatch ? qrBareMatch[0].length : 0;
               var isInBareQR = false;
               if (qrBareIdx !== -1 && !isInCodeBlock) {
                 // 确认 quick_replies[ 不在已完成代码块内
@@ -1409,7 +1412,7 @@ async function handleStreamResponse(
                 var prevFenceOpen = qrBareIdx > 3 ? fullContent.lastIndexOf('```', qrBareIdx - 3) : -1;
                 if (prevFenceOpen === -1 || prevFenceClose > prevFenceOpen) {
                   // 检查 JSON 数组是否已闭合
-                  var afterQR = fullContent.substring(qrBareIdx + 'quick_replies['.length);
+                  var afterQR = fullContent.substring(qrBareIdx + qrBareLen);
                   var depth = 1, inStr = false, closed = false;
                   for (var qi = 0; qi < afterQR.length; qi++) {
                     var ch = afterQR[qi];
@@ -1574,8 +1577,8 @@ function stripQuickRepliesBlock(content) {
   let cleaned = content.replace(/```quick_replies[\s\S]*?```/g, '');
   // [V4.1-PHASE2 FIX] 回退: 移除裸 quick_replies[...] 无代码围栏的泄漏
   // LLM 可能不遵守 ``` 围栏格式，直接将 JSON 数组接在关键字后
-  cleaned = cleaned.replace(/quick_replies\s*(\[[\s\S]*?\])\s*$/gm, '');
-  cleaned = cleaned.replace(/quick_replies\s*(\[[\s\S]*?\])(\n|$)/g, '');
+  // P0: 去掉 $/gm 锚点，覆盖行中、行尾、文末三种场景
+  cleaned = cleaned.replace(/quick_replies\s*\[[\s\S]*?\]/g, '');
   // 清理残留多余空行
   cleaned = cleaned.replace(/\n{3,}/g, '\n\n').trim();
 

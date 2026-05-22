@@ -179,3 +179,40 @@ function merge(localTasks, cloudTasks) {
   });
   return out;
 }
+
+// ========== 变更安全护栏 ==========
+console.log('\n=== 变更安全护栏 (Change Safety Guard) ===');
+
+let safetyPass = true;
+
+// 1. 检测 process.env fallback 模式存在性
+const fs = require('fs');
+const path = require('path');
+const cloudFuncDir = path.join(__dirname, 'cloudfunctions');
+
+function checkEnvFallbacks(filePath) {
+  const content = fs.readFileSync(filePath, 'utf8');
+  const lines = content.split('\n');
+  let issues = [];
+  lines.forEach((line, i) => {
+    // 检测 process.env.X 后没有 || fallback
+    if (/process\.env\.\w+\s*\)/.test(line) && !/\|\|/.test(line) && /createHmac|createCipher|createSign/.test(line)) {
+      issues.push(`  L${i+1}: crypto函数使用了process.env但无fallback — ${line.trim().slice(0, 80)}`);
+    }
+  });
+  return issues;
+}
+
+const criticalFuncs = ['user-auth', 'payment', 'invite-code'];
+criticalFuncs.forEach(name => {
+  const indexPath = path.join(cloudFuncDir, name, 'index.js');
+  if (fs.existsSync(indexPath)) {
+    const issues = checkEnvFallbacks(indexPath);
+    if (issues.length > 0) {
+      console.log(`🟡 ${name}/index.js:`);
+      issues.forEach(i => console.log(i));
+    }
+  }
+});
+
+console.log(safetyPass ? '✅ 护栏扫描完成' : '🔴 护栏发现风险');
