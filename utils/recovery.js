@@ -62,17 +62,16 @@ async function pullFromCloud() {
   const recovered = { processes: 0, reminders: 0, documents: 0 };
 
   try {
-    // 直接查询 CloudBase 数据库，绕开 db-admin 的缓存问题
-    const db = wx.cloud.database();
-    const [docsRes, remindersRes, processesRes] = await Promise.all([
-      db.collection('user_documents').where({ _openid: '{openid}' }).get().catch(() => ({ data: [] })),
-      db.collection('reminders').where({ _openid: '{openid}' }).get().catch(() => ({ data: [] })),
-      db.collection('user_processes').where({ _openid: '{openid}' }).get().catch(() => ({ data: [] })),
-    ]);
+    const res = await wx.cloud.callFunction({
+      name: 'db-admin',
+      data: { action: 'pullAll' },
+    });
 
-    const documents = docsRes.data || [];
-    const reminders = remindersRes.data || [];
-    const processes = processesRes.data || [];
+    if (!res.result || res.result.code !== 200) {
+      return { success: false, recovered, error: '云端数据拉取失败: ' + (res.result?.msg || 'unknown') };
+    }
+
+    const { documents, reminders, processes } = res.result.data;
 
     // 恢复证件夹
     if (documents && Array.isArray(documents) && documents.length > 0) {
