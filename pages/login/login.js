@@ -220,6 +220,8 @@ Page({
       } else if (userStatus && userStatus !== 'unapplied') {
         wx.switchTab({ url: '/pages/process/index/index' });
       } else {
+        // 回访用户但 userStatus 为空（如登出重登恢复中）→ 默认进入流程控
+        wx.switchTab({ url: '/pages/process/index/index' });
       }
     }, 800);
   },
