@@ -74,7 +74,7 @@ async function pullFromCloud() {
     const { documents, reminders, processes } = res.result.data;
 
     // V4.2-fix: Schema guard — 验证云端数据格式再写入（CRIT-01）
-    const PROCESS_REQUIRED = ['id', 'name', 'templateId', 'status', 'stages'];
+    const PROCESS_REQUIRED = ['_id', 'name', 'templateId', 'status', 'stages'];
 
     // 恢复证件夹
     if (documents && Array.isArray(documents) && documents.length > 0) {
