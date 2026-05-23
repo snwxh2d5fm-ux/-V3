@@ -135,6 +135,7 @@ async function pullUserProfile() {
         selectedPath: profile.selectedPath || null,
         activeProcessId: profile.activeProcessId || null,
         membershipLevel: profile.membershipLevel || 'free',
+        guidebookProgress: profile.guidebookProgress || null,
       },
     };
   } catch (e) {
@@ -237,6 +238,7 @@ async function recoverUserData(app) {
         if (p.userSubStatus) wx.setStorageSync('__user_sub_status__', p.userSubStatus);
         if (p.selectedPath) wx.setStorageSync('__selected_path__', p.selectedPath);
         if (p.activeProcessId) wx.setStorageSync('__active_process_id__', p.activeProcessId);
+        if (p.guidebookProgress) wx.setStorageSync('__onboarding__', p.guidebookProgress);
         Object.assign(app.globalData, {
           userStatus: p.userStatus, userSubStatus: p.userSubStatus,
           selectedPath: p.selectedPath, activeProcessId: p.activeProcessId,
