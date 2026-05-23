@@ -50,9 +50,9 @@ exports.main = async (event, context) => {
 async function getStats() {
   try {
     const [docsCount, remindersCount, processesCount] = await Promise.all([
-      db.collection('documents').count(),
+      db.collection('user_documents').count(),
       db.collection('reminders').count(),
-      db.collection('processes').count(),
+      db.collection('user_processes').count(),
     ]);
     return {
       code: 200,
@@ -73,10 +73,10 @@ async function syncData(openid, data) {
     if (data && data.documents) {
       for (const doc of data.documents) {
         await db
-          .collection('documents')
+          .collection('user_documents')
           .where({ _openid: openid, id: doc.id })
           .update({ data: doc })
-          .catch(() => db.collection('documents').add({ data: { ...doc, _openid: openid, updatedAt: Date.now() } }));
+          .catch(() => db.collection('user_documents').add({ data: { ...doc, _openid: openid, updatedAt: Date.now() } }));
       }
     }
     if (data && data.reminders) {
@@ -97,9 +97,9 @@ async function syncData(openid, data) {
 async function pullAllData(openid) {
   try {
     const [docsRes, remindersRes, processesRes] = await Promise.all([
-      db.collection('documents').where({ _openid: openid }).get(),
+      db.collection('user_documents').where({ _openid: openid }).get(),
       db.collection('reminders').where({ _openid: openid }).get(),
-      db.collection('processes').where({ _openid: openid }).get(),
+      db.collection('user_processes').where({ _openid: openid }).get(),
     ]);
     return {
       code: 200,
@@ -118,9 +118,9 @@ async function createBackup(openid) {
   try {
     const timestamp = Date.now();
     const [docsRes, remRes, procRes] = await Promise.all([
-      db.collection('documents').where({ _openid: openid }).get(),
+      db.collection('user_documents').where({ _openid: openid }).get(),
       db.collection('reminders').where({ _openid: openid }).get(),
-      db.collection('processes').where({ _openid: openid }).get(),
+      db.collection('user_processes').where({ _openid: openid }).get(),
     ]);
     await db.collection('backups').add({
       data: {
