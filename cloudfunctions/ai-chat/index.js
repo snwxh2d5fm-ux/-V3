@@ -1573,12 +1573,44 @@ function stripQuickRepliesBlock(content) {
     }
   }
 
+  // [V4.1-PHASE3 FIX] 第三层回退: LLM直接输出裸 [{...}] JSON数组无任何wrapper
+  // prompts.js 指令:"不要用markdown代码块包裹，直接输出JSON数组"
+  // → DeepSeek输出裸 [{...}] 不包含 quick_replies 关键字，前两层正则均失效
+  if (quickReplies.length === 0) {
+    const qrStartIdx = content.search(/\[\s*\{[^}]*"id"\s*:\s*"qr_/);
+    if (qrStartIdx >= 0) {
+      let depth = 0, i = qrStartIdx, inString = false, escapeNext = false;
+      for (; i < content.length; i++) {
+        var ch = content[i];
+        if (escapeNext) { escapeNext = false; continue; }
+        if (ch === '\\') { escapeNext = true; continue; }
+        if (ch === '"') { inString = !inString; continue; }
+        if (inString) continue;
+        if (ch === '[') depth++;
+        else if (ch === ']') { depth--; if (depth === 0) break; }
+      }
+      if (depth === 0) {
+        const jsonStr = content.substring(qrStartIdx, i + 1);
+        try {
+          const parsed = JSON.parse(jsonStr);
+          if (Array.isArray(parsed) && parsed.length > 0) {
+            quickReplies = quickReplies.concat(parsed);
+          }
+        } catch (e) {
+          console.warn('[ai-chat] bareArray parse failed:', e.message);
+        }
+      }
+    }
+  }
+
   // 从 content 中移除所有 ```quick_replies ... ``` 块
   let cleaned = content.replace(/```quick_replies[\s\S]*?```/g, '');
   // [V4.1-PHASE2 FIX] 回退: 移除裸 quick_replies[...] 无代码围栏的泄漏
   // LLM 可能不遵守 ``` 围栏格式，直接将 JSON 数组接在关键字后
   // P0: 去掉 $/gm 锚点，覆盖行中、行尾、文末三种场景
   cleaned = cleaned.replace(/quick_replies\s*\[[\s\S]*?\]/g, '');
+  // [V4.1-PHASE3 FIX] 第三层回退: 移除裸JSON数组——匹配 [{...}] 含 "id":"qr_ 签名的片段
+  cleaned = cleaned.replace(/\[\s*\{[^}]*"id"\s*:\s*"qr_[\s\S]*?\]/g, '');
   // 清理残留多余空行
   cleaned = cleaned.replace(/\n{3,}/g, '\n\n').trim();
 
