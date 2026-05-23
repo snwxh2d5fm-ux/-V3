@@ -90,11 +90,18 @@ Page({
       this.setData({ stageProgress: 14 });
     }
 
-    if (this.data.progress) {
+    // V4.2-fix: 恢复引擎写入后强制刷新进度（解决 this.data.progress 初始为 null 的问题）
+    const recoveryApplied = wx.getStorageSync('__recovery_applied__');
+    if (this.data.progress || recoveryApplied) {
+      if (recoveryApplied) {
+        const { assemblePhases } = require('../../data/guidebook-phases');
+        const progress = wx.getStorageSync('__onboarding__');
+        if (progress) {
+          this.setData({ progress, phases: assemblePhases(progress) });
+        }
+      }
       this.refreshProgress();
-      // Refresh housingWizardDone from storage (persists across sessions)
       this.setData({ housingWizardDone: storage.isHousingWizardDone() });
-      // P0-E fix: 从云端拉取进度副本，与本地合并，解决跨设备同步
       this._syncCloudProgress();
     }
   },

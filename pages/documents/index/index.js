@@ -185,7 +185,9 @@ Page({
     // Bug #10: 检测路径变更 → 仅在路径变化或首次加载时重载模板
     const pathChanged = selectedPath !== this._lastPath;
     this._lastPath = selectedPath;
-    if (hasSelectedPath && userStatus !== 'skipped' && pathChanged) {
+    // V4.2-fix: 恢复引擎写入后强制刷新槽位模板
+    const recoveryApplied = wx.getStorageSync('__recovery_applied__');
+    if (hasSelectedPath && userStatus !== 'skipped' && (pathChanged || recoveryApplied)) {
       this.loadSlotTemplate(userStatus, selectedPath);
     }
 
