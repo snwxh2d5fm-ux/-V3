@@ -442,8 +442,8 @@ Page({
     // HTML实体编码防止XSS注入
     const escaped = this._escapeHTML(text);
     return escaped
-      .replace(/^### (.+)$/gm, '<h3 style="font-size:30rpx;font-weight:700;margin:16rpx 0 8rpx;color:#1f2937">$1</h3>')
-      .replace(/^## (.+)$/gm, '<h2 style="font-size:32rpx;font-weight:700;margin:20rpx 0 10rpx;color:#111827">$1</h2>')
+      .replace(/^### (.+)$/gm, '<br/><strong style="font-size:30rpx;display:block;margin:16rpx 0 8rpx">$1</strong>')
+      .replace(/^## (.+)$/gm, '<br/><strong style="font-size:32rpx;display:block;margin:20rpx 0 10rpx">$1</strong>')
       .replace(/\*\*(.+?)\*\*/g, '<span style="color:#1a73e8;font-weight:700">$1</span>');
   },
 
@@ -546,6 +546,8 @@ Page({
     return content
       .replace(/```quick_replies[\s\S]*?```/g, '')
       .replace(/quick_replies\s*\[[\s\S]*?\]/g, '')
+      // [V4.1-PHASE3] 第三层: LLM直接输出裸 [{...}] 无任何wrapper
+      .replace(/\[\s*\{[^}]*"id"\s*:\s*"qr_[\s\S]*?\]/g, '')
       .replace(/\n{3,}/g, '\n\n')
       .trim();
   },

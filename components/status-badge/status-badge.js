@@ -1,14 +1,14 @@
 /**
- * status-badge 组件 — 左上角身份状态 + 规划路径标签
- * 身份状态：只读，切换需 ¥599（防多人共用）
- * 规划路径：可随时切换
+ * status-badge 组件 — 身份状态 + 规划路径标签
+ * V4.2-fix (2026-05-23): 移除 ¥599 付费墙，免费身份重置 + 数据恢复引导
+ * 身份重置：轻量确认即可，7天冷却期防滥用（服务端 enforce）
+ * 数据恢复：检测到状态异常时引导从云端恢复，不作为"重置"处理
  */
 const app = getApp();
 const constants = require('../../data/constants');
 
 Component({
   properties: {
-    // 可外部传入覆盖
     status: { type: String, value: '' },
     subStatus: { type: String, value: '' },
     pathName: { type: String, value: '' },
@@ -18,8 +18,9 @@ Component({
     identityLabel: '',
     identityIcon: '',
     pathLabel: '',
-    showPaywall: false,
+    showResetModal: false,
     showConfirmStep: false,
+    isRecovery: false,   // true=数据恢复模式(从云端拉取), false=身份重置模式(清除重选)
   },
 
   lifetimes: {
@@ -42,7 +43,6 @@ Component({
       const subStatus =
         this.properties.subStatus || g.userSubStatus || wx.getStorageSync(constants.STORAGE_KEYS.USER_SUB_STATUS) || '';
 
-      // 身份标签
       const idMap = {
         unapplied: { icon: '📝', label: '未申请' },
         submitted: { icon: '📤', label: '已交件' },
@@ -70,14 +70,11 @@ Component({
       const subLabel = subMap[subStatus] || '';
       const identityLabel = subLabel ? `${idInfo.label}·${subLabel}` : idInfo.label;
 
-      // 路径标签 — 优先取 activeProcess.name（与流程控hero卡片同源），确保显示一致
       let pathLabel = this.properties.pathName || '';
       if (!pathLabel) {
-        // 优先级1: activeProcess.name（模板名称，如"高才通B类·名校学士通道"）
         if (g.activeProcess && g.activeProcess.name) {
           pathLabel = g.activeProcess.name;
         }
-        // 优先级2: PATH_NAMES映射（静态兜底）
         if (!pathLabel) {
           const activeId = g.activeProcessId || wx.getStorageSync('__active_process_id__') || '';
           const selected = g.selectedPath || '';
@@ -101,94 +98,140 @@ Component({
     },
 
     /**
-     * 点击身份标签 → 支付拦截
+     * 点击身份标签 → 弹出操作选择
+     * - 如果状态为空/未知：提供"从云端恢复数据" + "重新选择身份"
+     * - 如果状态正常：提供"重新选择身份"（免费重置）
      */
     onTapIdentity() {
-      console.debug('[status-badge] onTapIdentity 触发');
-      this.setData({ showPaywall: true });
+      const status = this.properties.status || app.globalData.userStatus || '';
+      const isUnknown = !status || status === '未知';
+
+      if (isUnknown) {
+        // 状态丢失 → 优先引导数据恢复
+        this.setData({ showResetModal: true, showConfirmStep: false, isRecovery: true });
+      } else {
+        // 状态正常 → 身份重置
+        this.setData({ showResetModal: true, showConfirmStep: false, isRecovery: false });
+      }
     },
 
-    closePaywall() {
-      this.setData({ showPaywall: false, showConfirmStep: false });
+    closeModal() {
+      this.setData({ showResetModal: false, showConfirmStep: false });
     },
 
-    confirmPaywall: function () {
+    /**
+     * 从云端恢复数据（不清除本地，委托recovery.js统一处理）
+     */
+    async recoverFromCloud() {
       const self = this;
-      console.debug('[status-badge] confirmPaywall 触发');
-      // 切换到二次确认步骤（组件内完成，不依赖原生modal）
-      self.setData({ showPaywall: true, showConfirmStep: true });
+      self.setData({ showResetModal: false });
+      wx.showLoading({ title: '正在恢复数据...' });
+
+      try {
+        const { pullFromCloud, pullUserProfile } = require('../../utils/recovery');
+
+        // 第一步：拉取全量数据
+        const cloudResult = await pullFromCloud();
+        let recoveredCount = 0;
+        if (cloudResult.success) {
+          recoveredCount = cloudResult.recovered.processes +
+            cloudResult.recovered.reminders +
+            cloudResult.recovered.documents;
+        }
+
+        // 第二步：恢复身份状态
+        try {
+          const profileResult = await pullUserProfile();
+          if (profileResult.success && profileResult.data) {
+            const p = profileResult.data;
+            if (p.userStatus) wx.setStorageSync('__user_status__', p.userStatus);
+            if (p.userSubStatus) wx.setStorageSync('__user_sub_status__', p.userSubStatus);
+            if (p.selectedPath) wx.setStorageSync('__selected_path__', p.selectedPath);
+            if (p.activeProcessId) wx.setStorageSync('__active_process_id__', p.activeProcessId);
+          }
+        } catch (e) {
+          console.warn('[status-badge] profile恢复失败（不阻塞）:', e.message);
+        }
+
+        wx.hideLoading();
+        if (recoveredCount > 0) {
+          wx.showToast({ title: `已恢复 ${recoveredCount} 条数据`, icon: 'success', duration: 2000 });
+        } else {
+          wx.showToast({ title: '云端暂无备份数据', icon: 'none' });
+        }
+        self.refresh();
+      } catch (e) {
+        console.error('[status-badge] 数据恢复失败:', e.message);
+        wx.hideLoading();
+        wx.showToast({ title: '数据恢复失败，请检查网络', icon: 'none' });
+      }
     },
 
-    confirmPaywallFinal: function () {
+    /**
+     * 确认身份重置（免费，清除本地状态后重新选择）
+     */
+    confirmReset() {
+      this.setData({ showResetModal: true, showConfirmStep: true });
+    },
+
+    /**
+     * 执行身份重置 — 清除本地状态→重定向status-select
+     */
+    executeReset() {
       const self = this;
-      console.debug('[status-badge] confirmPaywallFinal 触发 — 开始支付');
-      self.setData({ showPaywall: false, showConfirmStep: false });
-      // 调用 payment 云函数
-      console.debug('[status-badge] calling payment/identityReset...');
-      wx.cloud
-        .callFunction({
-          name: 'payment',
-          data: { action: 'identityReset' },
-        })
-        .then(function (res) {
-          console.debug(
-            '[status-badge] payment/identityReset result code=' + (res.result ? res.result.code : 'NO_RESULT'),
-          );
-          if (res.result.code !== 0) {
-            wx.showToast({ title: res.result.msg || '支付创建失败', icon: 'none' });
-            return;
-          }
-          const paymentData = res.result.data;
-          if (!paymentData || !paymentData.payment || !paymentData.payment.timeStamp) {
-            wx.showToast({ title: '支付参数异常，请重试', icon: 'none' });
-            return;
-          }
-          const payParams = paymentData.payment;
-          wx.requestPayment({
-            timeStamp: payParams.timeStamp,
-            nonceStr: payParams.nonceStr,
-            package: payParams.package,
-            signType: payParams.signType || 'RSA',
-            paySign: payParams.paySign,
-            success: function () {
-              // 确认支付
-              wx.cloud
-                .callFunction({
-                  name: 'payment',
-                  data: { action: 'confirmPayment', orderId: paymentData.orderId },
-                })
-                .catch(function () {});
-              // 清除本地storage
-              try {
-                wx.removeStorageSync('__onboarding__');
-              } catch (e) {}
-              try {
-                wx.removeStorageSync('__process_stage__');
-              } catch (e) {}
-              try {
-                wx.removeStorageSync('__active_process_id__');
-              } catch (e) {}
-              try {
-                wx.removeStorageSync('__user_status__');
-              } catch (e) {}
-              try {
-                wx.removeStorageSync('__user_sub_status__');
-              } catch (e) {}
-              wx.showToast({ title: '身份已重置，请重新选择', icon: 'success', duration: 1500 });
-              setTimeout(function () {
-                wx.redirectTo({ url: '/pages/status-select/status-select?mode=reset' });
-              }, 1500);
-            },
-            fail: function (err) {
-              if (err && err.errMsg && err.errMsg.indexOf('cancel') === -1) {
-                wx.showToast({ title: '支付失败，请重试', icon: 'none' });
+      self.setData({ showResetModal: false, showConfirmStep: false });
+
+      wx.showModal({
+        title: '确认重置身份状态',
+        content: '重置后将清除以下本地数据：\n• 当前流程进度和阶段\n• 证件材料关联\n• 提醒规则\n• 已选路径\n\n重置后可重新选择身份状态。确定继续？',
+        confirmText: '确认重置',
+        cancelText: '取消',
+        async success(res) {
+          if (!res.confirm) return;
+
+          wx.showLoading({ title: '重置中...' });
+
+          // 第一步：调用服务器确认重置
+          let serverOk = true;
+          if (app.globalData.cloudReady) {
+            try {
+              const cloudRes = await wx.cloud.callFunction({
+                name: 'process-manager',
+                data: { action: 'resetIdentityPhase', source: 'free_reset' },
+              });
+              if (cloudRes.result && cloudRes.result.code !== 0) {
+                serverOk = false;
+                wx.hideLoading();
+                wx.showToast({ title: cloudRes.result.msg || '重置失败', icon: 'none' });
+                return;
               }
-            },
+            } catch (e) {
+              serverOk = false;
+              wx.hideLoading();
+              wx.showToast({ title: '网络异常，请稍后重试', icon: 'none' });
+              return;
+            }
+          }
+
+          // 第二步：服务器确认成功后，清除本地storage
+          const keysToRemove = [
+            '__onboarding__',
+            '__process_stage__',
+            '__active_process_id__',
+            '__user_status__',
+            '__user_sub_status__',
+          ];
+          keysToRemove.forEach(function (key) {
+            try { wx.removeStorageSync(key); } catch (e) { /* key可能不存在，忽略 */ }
           });
-        })
-        .catch(function () {
-          wx.showToast({ title: '网络异常，请重试', icon: 'none' });
-        });
+
+          wx.hideLoading();
+          wx.showToast({ title: '身份已重置，请重新选择', icon: 'success', duration: 1500 });
+          setTimeout(function () {
+            wx.redirectTo({ url: '/pages/status-select/status-select?mode=reset' });
+          }, 1500);
+        },
+      });
     },
 
     /**

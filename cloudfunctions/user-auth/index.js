@@ -347,10 +347,22 @@ function verifyToken(token) {
     if (parts.length < 5) return null;
     const payload = parts.slice(0, 4).join(':');
     const sig = parts[4];
-    const hmac = require('crypto').createHmac('sha256', getTokenSecret());
-    const expected = hmac.update(payload).digest('hex');
-    if (sig !== expected) return null;
-    return { openid: parts[0], uid: parts[1], iat: parseInt(parts[2]) };
+
+    // 主验证：使用当前密钥
+    const primaryHmac = require('crypto').createHmac('sha256', getTokenSecret());
+    if (sig === primaryHmac.update(payload).digest('hex')) {
+      return { openid: parts[0], uid: parts[1], iat: parseInt(parts[2]) };
+    }
+
+    // 回退验证：兼容5.22前使用旧兜底密钥签发的token（仅验证，不签发新token）
+    const legacyKey = 'zhgb-internal-key';
+    if (legacyKey !== getTokenSecret()) {
+      const legacyHmac = require('crypto').createHmac('sha256', legacyKey);
+      if (sig === legacyHmac.update(payload).digest('hex')) {
+        return { openid: parts[0], uid: parts[1], iat: parseInt(parts[2]) };
+      }
+    }
+    return null;
   } catch (e) {
     return null;
   }

@@ -29,12 +29,16 @@ const _ = db.command;
 // ========== 微信支付V3配置 (从环境变量读取) ==========
 const WXPAY_CONFIG = {
   mchid: process.env.WXPAY_MCHID || '',
-  appid: process.env.WXPAY_APPID || '',
+  appid: process.env.WXPAY_APPID || 'wx08c2222c1bf042fd', // KEEP-INTENTIONAL: 5.22 rescue - restore removed fallback
   apiV3Key: process.env.WXPAY_API_V3_KEY || '',
   serialNo: process.env.WXPAY_SERIAL_NO || '',
   privateKey: (process.env.WXPAY_PRIVATE_KEY || '').replace(/\\n/g, '\n'),
   baseUrl: 'https://api.mch.weixin.qq.com',
 };
+
+if (!process.env.WXPAY_APPID) {
+  console.warn('[payment] WXPAY_APPID 环境变量未设置，使用硬编码兜底值。请在 CloudBase 控制台→云函数→payment→环境变量中配置 WXPAY_APPID');
+}
 
 // ========== 入口 ==========
 exports.main = async (event, context) => {
@@ -630,7 +634,7 @@ async function identityReset(openid, event) {
   const productName = '身份状态重置';
   const category = 'identity_reset';
 
-  // 前置检查: 7天内是否已有重置
+  // 前置检查1: 7天内是否已有重置
   const recentReset = await db
     .collection('orders')
     .where({
@@ -642,6 +646,23 @@ async function identityReset(openid, event) {
     .get();
   if (recentReset.data.length > 0) {
     return { code: 429, msg: '7天内已进行过身份重置，请稍后再试' };
+  }
+
+  // 前置检查2: 是否存在未支付的 identity_reset 订单（防止重复创建）
+  const pendingReset = await db
+    .collection('orders')
+    .where({
+      _openid: openid,
+      category: 'identity_reset',
+      status: 'pending',
+    })
+    .get();
+  if (pendingReset.data.length > 0) {
+    return {
+      code: 409,
+      msg: '你有一笔未完成的身份重置订单，请先完成支付或等待过期后再试',
+      data: { existingOrderId: pendingReset.data[0]._id },
+    };
   }
 
   const { _id: orderId } = await db.collection('orders').add({
@@ -722,6 +743,23 @@ async function unlockAllPhases(openid, event) {
     const user = userResult.data[0];
     if (user.guidebookAllUnlocked) return { code: 409, msg: '已解锁全部关卡，无需重复购买' };
     if (user.membershipLevel !== 'free') return { code: 409, msg: '已是付费会员，全部关卡已解锁' };
+  }
+
+  // 前置检查2: 是否存在未支付的 guidebook_unlock 订单
+  const pendingUnlock = await db
+    .collection('orders')
+    .where({
+      _openid: openid,
+      category: 'guidebook_unlock',
+      status: 'pending',
+    })
+    .get();
+  if (pendingUnlock.data.length > 0) {
+    return {
+      code: 409,
+      msg: '你有一笔未完成的关卡解锁订单，请先完成支付',
+      data: { existingOrderId: pendingUnlock.data[0]._id },
+    };
   }
 
   const { _id: orderId } = await db.collection('orders').add({
