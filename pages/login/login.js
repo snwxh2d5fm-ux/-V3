@@ -174,6 +174,7 @@ Page({
     app.globalData.userInfo = result.userInfo || { nickName: '住港伴用户' };
     app.globalData.userStatus = result.userStatus || 'unapplied';
     app.globalData.membershipLevel = result.membershipLevel || 'free';
+    wx.setStorageSync('__user_status__', app.globalData.userStatus);
 
     // 手机号绑定标记 — 来自 phoneLogin 或 data.phoneBound
     const phoneBound = !!(extra && extra.phoneBound) || !!(result.data && result.data.phoneBound);
@@ -186,23 +187,39 @@ Page({
       wx.setStorageSync('__cloud_user__', result.data);
     }
 
-    app.saveSession({
+    const userData = result.data || {};
+    await app.saveSession({
       token: app.globalData.token,
       userInfo: app.globalData.userInfo,
       userStatus: app.globalData.userStatus,
       membershipLevel: app.globalData.membershipLevel,
       phoneBound: app.globalData.phoneBound,
+      isNew: userData.isNew !== false,
     });
+
+    // V4.2-fix: 回访用户登录后触发数据恢复
+    const isNew = userData.isNew !== false;
+    if (!isNew && app.globalData.cloudReady) {
+      try {
+        const { recoverUserData } = require('../../utils/recovery');
+        await recoverUserData(app);
+      } catch (e) {
+        console.warn('[login] 数据恢复失败:', e.message);
+      }
+    }
   },
 
   navigateAfterLogin() {
     wx.showToast({ title: '登录成功', icon: 'success' });
     const userStatus = wx.getStorageSync('__user_status__');
+    const cloudUser = wx.getStorageSync('__cloud_user__') || {};
+    const isNew = cloudUser.isNew !== false;
     setTimeout(() => {
-      if (userStatus) {
-        wx.switchTab({ url: '/pages/guidebooks/index/index' });
-      } else {
+      if (isNew) {
         wx.redirectTo({ url: '/pages/status-select/status-select' });
+      } else if (userStatus && userStatus !== 'unapplied') {
+        wx.switchTab({ url: '/pages/process/index/index' });
+      } else {
       }
     }, 800);
   },
