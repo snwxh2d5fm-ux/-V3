@@ -176,6 +176,7 @@ Page({
 
         // 4. 回访用户：登录后触发数据恢复（onLaunch时未登录，恢复引擎白跑了）
         const isNew = userData.isNew !== false;
+        console.warn('[home] isNew判断:', JSON.stringify({rawIsNew:userData.isNew, isNew, hasToken:!!result.token, userStatus:result.userStatus}));
         if (!isNew && app.globalData.cloudReady) {
           try {
             const { recoverUserData } = require('../../utils/recovery');
