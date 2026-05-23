@@ -146,6 +146,8 @@ Page({
         app.globalData.userStatus = result.userStatus || 'unapplied';
         app.globalData.membershipLevel = result.membershipLevel || 'free';
         app.globalData.phoneBound = !!(result.phoneBound || userData.phoneBound);
+        app.globalData.activeProcessId = userData.activeProcessId || result.activeProcessId || null;
+        app.globalData.selectedPath = userData.selectedPath || result.selectedPath || null;
 
         // 2. 兼容旧版读取路径（checkAndRoute 依赖）
         if (result.data) {
@@ -165,6 +167,8 @@ Page({
             membershipLevel: app.globalData.membershipLevel,
             phoneBound: app.globalData.phoneBound,
             isNew: userData.isNew !== false,
+            activeProcessId: app.globalData.activeProcessId,
+            selectedPath: app.globalData.selectedPath,
           });
         } else {
           console.warn('[home] saveSession 跳过: token 为空');
