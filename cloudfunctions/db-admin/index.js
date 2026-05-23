@@ -103,6 +103,7 @@ async function pullAllData(openid) {
     ]);
     return {
       code: 200,
+      _version: 'v4.2-fix-0523',
       data: {
         documents: docsRes.data,
         reminders: remindersRes.data,
