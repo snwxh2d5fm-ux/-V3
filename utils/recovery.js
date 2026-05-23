@@ -73,6 +73,7 @@ async function pullFromCloud() {
 
     const { documents, reminders, processes } = res.result.data;
     console.warn('[recovery] db-admin version:', res.result._version || 'OLD');
+    console.warn('[recovery] db-admin raw:', JSON.stringify({docs:documents?.length, rem:reminders?.length, proc:processes?.length, sample:processes?.[0]?._id}));
 
     // 恢复证件夹
     if (documents && Array.isArray(documents) && documents.length > 0) {
