@@ -194,84 +194,67 @@ async function recoverUserData(app) {
   let recovered = false;
   let source = 'none';
 
-  // 第一步：检测是否需要恢复（传入app用于已登录判断）
-  if (!detectDataLoss(app)) {
-    return { recovered: false, source, details };
-  }
+  if (!detectDataLoss(app)) return { recovered: false, source, details };
 
-  console.debug('[recovery] 检测到数据损失，开始恢复...');
+  console.warn('[recovery] 检测到数据损失，开始恢复...');
+  wx.showLoading({ title: '恢复数据中...' });
 
-  // 第二步：优先从本地备份恢复（最快，不消耗网络）
+  // 本地备份
   const localBackup = restoreFromLocalBackup();
   if (localBackup.processes && localBackup.processes.length > 0) {
     saveProcessLines(localBackup.processes);
     details.local += localBackup.processes.length;
     recovered = true;
     source = 'local_backup';
-    console.debug(`[recovery] 本地备份恢复: ${localBackup.processes.length} 条流程`);
   }
   if (localBackup.reminders && localBackup.reminders.length > 0) {
     saveReminders(localBackup.reminders);
     details.local += localBackup.reminders.length;
     source = 'local_backup';
-    console.debug(`[recovery] 本地备份恢复: ${localBackup.reminders.length} 条提醒`);
   }
-  if (localBackup.vaultMeta && localBackup.vaultMeta.documents) {
+  if (localBackup.vaultMeta?.documents) {
     const docCount = Object.keys(localBackup.vaultMeta.documents).length;
-    if (docCount > 0) {
-      wx.setStorageSync(META_KEY, localBackup.vaultMeta);
-      details.local += docCount;
-      source = 'local_backup';
-      console.debug(`[recovery] 本地备份恢复: ${docCount} 份证件`);
-    }
+    if (docCount > 0) { wx.setStorageSync(META_KEY, localBackup.vaultMeta); details.local += docCount; source = 'local_backup'; }
   }
 
-  // 第三步：如果本地备份不足，从CloudBase补充
+  // CloudBase
   if (app.globalData.cloudReady && app.globalData.isLoggedIn) {
     try {
       const cloudResult = await pullFromCloud();
+      console.warn('[recovery] pullFromCloud:', JSON.stringify({success:cloudResult.success,recovered:cloudResult.recovered}));
       if (cloudResult.success) {
         details.cloud = cloudResult.recovered.processes + cloudResult.recovered.reminders + cloudResult.recovered.documents;
-        if (details.cloud > 0 && !recovered) {
-          recovered = true;
-          source = 'cloud';
-        } else if (details.cloud > 0) {
-          source = 'local_backup+cloud';
-        }
+        if (details.cloud > 0) { recovered = true; source = source === 'local_backup' ? 'local_backup+cloud' : 'cloud'; }
       }
 
-      // 第四步：恢复身份状态
       const profileResult = await pullUserProfile();
+      console.warn('[recovery] pullUserProfile:', JSON.stringify({success:profileResult.success,hasData:!!profileResult.data}));
       if (profileResult.success && profileResult.data) {
         const p = profileResult.data;
-        // 写入storage
         if (p.userStatus) wx.setStorageSync('__user_status__', p.userStatus);
         if (p.userSubStatus) wx.setStorageSync('__user_sub_status__', p.userSubStatus);
         if (p.selectedPath) wx.setStorageSync('__selected_path__', p.selectedPath);
         if (p.activeProcessId) wx.setStorageSync('__active_process_id__', p.activeProcessId);
-        // 更新globalData
-        app.globalData.userStatus = p.userStatus;
-        app.globalData.userSubStatus = p.userSubStatus;
-        app.globalData.selectedPath = p.selectedPath;
-        app.globalData.activeProcessId = p.activeProcessId;
-        app.globalData.membershipLevel = p.membershipLevel;
+        Object.assign(app.globalData, {
+          userStatus: p.userStatus, userSubStatus: p.userSubStatus,
+          selectedPath: p.selectedPath, activeProcessId: p.activeProcessId,
+          membershipLevel: p.membershipLevel,
+        });
         details.profile = true;
+        recovered = true;
       }
     } catch (e) {
-      console.warn('[recovery] CloudBase恢复遇错:', e.message);
+      console.error('[recovery] CloudBase恢复异常:', e.message);
     }
   }
 
+  wx.hideLoading();
   if (recovered) {
-    // 写入恢复标记，供前端展示
-    wx.setStorageSync('__recovery_applied__', {
-      source,
-      at: new Date().toISOString(),
-      details,
-    });
-    console.debug(`[recovery] 数据恢复完成: source=${source} local=${details.local} cloud=${details.cloud}`);
+    wx.setStorageSync('__recovery_applied__', { source, at: new Date().toISOString(), details });
+    wx.showToast({ title: `已恢复${details.local + details.cloud}条数据`, icon: 'success', duration: 2000 });
   }
 
+  console.warn('[recovery] 完成: recovered=' + recovered + ' source=' + source + ' local=' + details.local + ' cloud=' + details.cloud + ' profile=' + details.profile);
   return { recovered, source, details };
 }
 
