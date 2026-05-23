@@ -90,19 +90,17 @@ Page({
       this.setData({ stageProgress: 14 });
     }
 
-    // V4.2-fix: 恢复引擎写入后强制刷新进度（解决 this.data.progress 初始为 null 的问题）
-    const recoveryApplied = wx.getStorageSync('__recovery_applied__');
-    if (this.data.progress || recoveryApplied) {
-      if (recoveryApplied) {
-        const { assemblePhases } = require('../../data/guidebook-phases');
-        const progress = wx.getStorageSync('__onboarding__');
-        if (progress) {
-          this.setData({ progress, phases: assemblePhases(progress) });
-        }
-      }
+    // V4.2-fix: 恢复引擎写入后，如果 onLoad 时 progress 为 null 而错过了 init，
+    // 从 storage 重新读取 onboarding 数据后再执行刷新
+    if (this.data.progress) {
       this.refreshProgress();
       this.setData({ housingWizardDone: storage.isHousingWizardDone() });
       this._syncCloudProgress();
+    } else {
+      const recoveryApplied = wx.getStorageSync('__recovery_applied__');
+      if (recoveryApplied) {
+        this.init(); // 恢复后重新初始化攻略书
+      }
     }
   },
   onPullDownRefresh: function () {
