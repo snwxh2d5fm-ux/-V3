@@ -1,11 +1,9 @@
 // 住港伴 V4 — admin-users: 用户管理 (按身份/会员/状态/路径等多维统计)
 const cloudbase = require('@cloudbase/node-sdk');
-const crypto = require('crypto');
+const auth = require('../_shared/auth');
+const audit = require('../_shared/audit'); // P0-08
 const app = cloudbase.init({ env: 'cloudbase-d1g17tgt7cc199a60' });
 const db = app.database();
-function sha256(s) {
-  return crypto.createHash('sha256').update(String(s)).digest('hex');
-}
 
 const PERSONA_MAP = { 1: '在校学生', 2: '在职人士', 3: '企业主', 4: '海外华人', 5: '受养人' };
 
@@ -18,6 +16,11 @@ function deriveStatus(p) {
 }
 
 exports.main = async (event) => {
+  // P0-08: extract client IP before body parsing
+  const clientIp = event.headers?.['x-forwarded-for']?.split(',')[0]?.trim()
+    || event.headers?.['x-real-ip']
+    || event.httpHeaders?.['x-forwarded-for']?.split(',')[0]?.trim()
+    || '';
   let body = event;
   if (event.body && typeof event.body === 'string') {
     try {
@@ -28,17 +31,26 @@ exports.main = async (event) => {
   if (!_apiKey) return { code: 401, msg: '缺少 API Key' };
   const adm = await db
     .collection('admin_users')
-    .where({ apiKeyHash: sha256(_apiKey), status: 'active' })
+    .where({ apiKeyHash: auth.sha256(_apiKey), status: 'active' })
     .limit(1)
     .get();
   if (!adm.data.length) return { code: 401, msg: '无效的 API Key' };
+  const lock = auth.checkLockout(adm.data[0]);
+  if (lock.locked) return { code: 429, msg: lock.reason };
+  // P0-08 IP白名单
+  const ipCheck = auth.checkIPWhitelist(clientIp);
+  if (!ipCheck.allowed) {
+    console.warn('[IP白名单] admin-users 拒绝:', clientIp, ipCheck.reason);
+    return { code: 403, msg: 'IP 不在白名单中' };
+  }
+  adm.data[0]._clientIp = clientIp;
 
   try {
     switch (action) {
       case 'listUsers':
-        return listUsers(params);
+        return listUsersWithAudit(params, adm.data[0]);
       case 'getUserDetail':
-        return getUserDetail(params);
+        return getUserDetailWithAudit(params, adm.data[0]);
       case 'getUserStats':
         return getUserStats();
       case 'lockUser':
@@ -92,7 +104,8 @@ async function listUsers(p) {
 }
 
 async function getUserStats() {
-  const profs = await db.collection('user_profiles').get();
+  // P0-15: 全量拉取加 limit 防止生产 OOM
+  const profs = await db.collection('user_profiles').limit(2000).get();
   const data = profs.data || [];
   const byPersona = {},
     byPath = {},
@@ -127,12 +140,12 @@ async function getUserDetail(p) {
 
 async function lockUser(p, admin) {
   await db.collection('user_profiles').where({ _openid: p.openid }).update({ isLocked: true });
-  await audit(admin, 'lock_user', 'user', p.openid, p);
+  await auditAdminEvent(admin, audit.AUDIT_EVENTS.CRUD, 'user', p.openid, { action: 'lock_user' });
   return { code: 0, msg: 'ok' };
 }
 async function unlockUser(p, admin) {
   await db.collection('user_profiles').where({ _openid: p.openid }).update({ isLocked: false });
-  await audit(admin, 'unlock_user', 'user', p.openid, p);
+  await auditAdminEvent(admin, audit.AUDIT_EVENTS.CRUD, 'user', p.openid, { action: 'unlock_user' });
   return { code: 0, msg: 'ok' };
 }
 async function extendTrial(p, admin) {
@@ -140,22 +153,36 @@ async function extendTrial(p, admin) {
     .collection('user_profiles')
     .where({ _openid: p.openid })
     .update({ freeTrialEndAt: new Date(Date.now() + p.days * 86400000).toISOString() });
-  await audit(admin, 'extend_trial', 'user', p.openid, p);
+  await auditAdminEvent(admin, audit.AUDIT_EVENTS.CRUD, 'user', p.openid, { action: 'extend_trial', days: p.days });
   return { code: 0, msg: 'ok' };
 }
 
-async function audit(admin, action, targetType, targetId, detail) {
-  await db
-    .collection('admin_audit_trail')
-    .add({
-      adminUid: admin.uid,
-      adminName: admin.name,
-      action,
-      targetType,
-      targetId,
-      detail: JSON.parse(JSON.stringify(detail)),
-      ip: '',
-      success: true,
-      createdAt: new Date(),
-    });
+// P0-08: add audit for listUsers and getUserDetail
+async function listUsersWithAudit(p, admin) {
+  const result = await listUsers(p);
+  await auditAdminEvent(admin, audit.AUDIT_EVENTS.SENSITIVE_VIEW, 'user_list', '', {
+    filters: p.filter || {},
+    page: p.page || 1,
+  });
+  return result;
+}
+
+async function getUserDetailWithAudit(p, admin) {
+  const result = await getUserDetail(p);
+  if (result.data && result.data.profile) {
+    await auditAdminEvent(admin, audit.AUDIT_EVENTS.SENSITIVE_VIEW, 'user_detail', p.openid, {});
+  }
+  return result;
+}
+
+// P0-08: migrate to shared audit module, append-only
+async function auditAdminEvent(admin, event, targetType, targetId, detail) {
+  await audit.logAudit({
+    admin: { email: admin.email, role: admin.role || 'unknown' },
+    event,
+    targetType,
+    targetId,
+    detail: detail || {},
+    ip: admin._clientIp || '',
+  }).catch((e) => console.error('[audit]', e));
 }

@@ -7,8 +7,8 @@
  *   微信 → paymentCallback (V3 加密回调) → 更新订单 + 激活会员
  *
  * 环境变量 (CloudBase 控制台 → 云函数 → 环境变量):
- *   WXPAY_MCHID          = 1112016327
- *   WXPAY_APPID          = wx08c2222c1bf042fd
+ *   WXPAY_MCHID          = (商户号，从 pay.weixin.qq.com 获取)
+ *   WXPAY_APPID          = (小程序AppID)
  *   WXPAY_API_V3_KEY     = (在 pay.weixin.qq.com → API安全 → APIv3密钥)
  *   WXPAY_SERIAL_NO      = (商户证书序列号)
  *   WXPAY_PRIVATE_KEY    = (apiclient_key.pem 内容, base64 或直接文本)
@@ -20,9 +20,7 @@ const axios = require('axios');
 const crypto = require('crypto');
 const invoices = require('./invoices');
 
-const CLOUD_ENV = 'cloudbase-d1g17tgt7cc199a60';
-
-cloud.init({ env: CLOUD_ENV });
+cloud.init({ env: cloud.DYNAMIC_CURRENT_ENV });
 const db = cloud.database();
 const _ = db.command;
 

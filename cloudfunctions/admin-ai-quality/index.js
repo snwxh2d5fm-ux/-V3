@@ -1,14 +1,11 @@
 // 住港伴 V4 — admin-ai-quality: AI质量监控 + 对话审核反馈后台 (V4.2)
 // response_preview 绝对禁止原始返回 — P0-05: getConversationDetail已做sanitize脱敏
 const cloudbase = require('@cloudbase/node-sdk');
-const crypto = require('crypto');
+const auth = require('../_shared/auth');
+const audit = require('../_shared/audit'); // P0-08
 const app = cloudbase.init({ env: 'cloudbase-d1g17tgt7cc199a60' });
 const db = app.database();
 const _ = db.command;
-
-function sha256(s) {
-  return crypto.createHash('sha256').update(String(s)).digest('hex');
-}
 function sanitize(s) {
   return (s || '')
     .replace(/1[3-9]\d{9}/g, '[手机号]')
@@ -17,25 +14,33 @@ function sanitize(s) {
 }
 
 // ====== 鉴权 ======
-async function validateApiKey(apiKey) {
+async function validateApiKey(apiKey, clientIp) {
   if (!apiKey) return null;
-  const kh = sha256(apiKey);
+  const kh = auth.sha256(apiKey);
   const adm = await db.collection('admin_users').where({ apiKeyHash: kh, status: 'active' }).limit(1).get();
-  return adm.data.length ? adm.data[0] : null;
+  if (!adm.data.length) return null;
+  const lock = auth.checkLockout(adm.data[0]);
+  if (lock.locked) return null;
+  // P0-08 IP白名单
+  const ipCheck = auth.checkIPWhitelist(clientIp);
+  if (!ipCheck.allowed) {
+    console.warn('[IP白名单] admin-ai-quality 拒绝:', clientIp, ipCheck.reason);
+    return null;
+  }
+  adm.data[0]._clientIp = clientIp;
+  return adm.data[0];
 }
 
-// ====== 审计日志 ======
-async function auditLog(action, targetType, targetId, operator, detail) {
-  try {
-    await db.collection('admin_audit_trail').add({
-      action,
-      targetType,
-      targetId,
-      operator,
-      detail: sanitize(String(detail).slice(0, 200)),
-      timestamp: new Date(),
-    });
-  } catch (_) {}
+// ====== 审计日志 (P0-08) ======
+async function auditOp(admin, event, targetType, targetId, detail) {
+  await audit.logAudit({
+    admin: { email: admin.email, role: admin.role || 'unknown' },
+    event,
+    targetType,
+    targetId,
+    detail: detail || {},
+    ip: admin._clientIp || '',
+  }).catch((e) => console.error('[audit]', e));
 }
 
 // ====== 合规扫描 ======
@@ -73,7 +78,7 @@ async function aiDashboard(p) {
       .collection('conversation_logs')
       .where({ 'safety_triggered.0': _.neq(null) })
       .count(),
-    db.collection('conversation_logs').get(),
+    db.collection('conversation_logs').limit(1000).get(), // P0-15: 防止生产OOM
   ]);
   let totalCost = 0;
   let totalTokens = 0;
@@ -142,9 +147,12 @@ async function safetyEvents(p) {
 // ====== V4.2 新增: 对话审核 ======
 
 // listConversations — 分页对话列表
+// P0-16 fixed: 原实现先DB分页后内存过滤导致total不准确。
+// 现改为取大窗口(MAX_FETCH=500)后内存过滤再分页，保证total准确。
 async function listConversations(p) {
   const page = Math.max(1, p.page || 1);
   const pageSize = Math.min(50, Math.max(1, p.pageSize || 20));
+  const MAX_FETCH = 500;
 
   const where = {};
   if (p.model) where.model = p.model;
@@ -158,12 +166,14 @@ async function listConversations(p) {
     .collection('conversation_logs')
     .where(Object.keys(where).length ? where : {})
     .count();
+  const rawTotal = totalResult.total || 0;
+
+  // P0-16: 取大窗口(MAX_FETCH)供内存过滤，避免DB分页+内存过滤导致的total不准确
   const logs = await db
     .collection('conversation_logs')
     .where(Object.keys(where).length ? where : {})
     .orderBy('timestamp', 'desc')
-    .skip((page - 1) * pageSize)
-    .limit(pageSize)
+    .limit(MAX_FETCH)
     .get();
 
   const ids = logs.data.map((l) => l._id);
@@ -215,7 +225,11 @@ async function listConversations(p) {
   if (p.overall) filteredList = filteredList.filter((l) => l.overall_rating === p.overall);
   if (p.reviewStatus) filteredList = filteredList.filter((l) => l.review_status === p.reviewStatus);
 
-  return { code: 0, data: { total: filteredList.length, page, pageSize, list: filteredList } };
+  // P0-16: total为内存过滤后的真实总数，分页在过滤后执行
+  const filteredTotal = filteredList.length;
+  const pagedList = filteredList.slice((page - 1) * pageSize, page * pageSize);
+
+  return { code: 0, data: { total: filteredTotal, rawTotal, page, pageSize, list: pagedList } };
 }
 
 // getConversationDetail — 对话详情+标记+纠正
@@ -327,13 +341,11 @@ async function submitReview(p, admin) {
       review_count: _.inc(1),
     });
 
-  await auditLog(
-    'review_conversation',
-    'conversation_logs',
-    conversationId,
-    admin.email,
-    `标记为 ${overall}, 总分${totalScore}`,
-  );
+  await auditOp(admin, audit.AUDIT_EVENTS.CRUD, 'conversation_logs', conversationId, {
+    action: 'submitReview',
+    overall,
+    totalScore,
+  });
   return { code: 0, data: { reviewId: result.id, total_score: totalScore } };
 }
 
@@ -378,13 +390,10 @@ async function submitCorrection(p, admin) {
     submitted_at: new Date(),
   });
 
-  await auditLog(
-    'submit_correction',
-    'conversation_logs',
-    conversationId,
-    admin.email,
-    `提交正确答案, 类型: ${correctionType}`,
-  );
+  await auditOp(admin, audit.AUDIT_EVENTS.CRUD, 'conversation_logs', conversationId, {
+    action: 'submitCorrection',
+    correctionType,
+  });
   return { code: 0, data: { correctionId: result.id, status: 'pending' } };
 }
 
@@ -407,7 +416,9 @@ async function approveCorrection(p, admin) {
     review_status: 'corrected',
     has_correction: true,
   });
-  await auditLog('approve_correction', 'conversation_corrections', correctionId, admin.email, '采纳正确答案');
+  await auditOp(admin, audit.AUDIT_EVENTS.CRUD, 'conversation_corrections', correctionId, {
+    action: 'approveCorrection',
+  });
   return { code: 0, data: { status: 'approved' } };
 }
 
@@ -492,18 +503,20 @@ async function rejectCorrection(p, admin) {
       approved_at: new Date(),
     });
   await db.collection('conversation_logs').doc(corr.data[0].conversation_id).update({ review_status: 'reviewed' });
-  await auditLog(
-    'reject_correction',
-    'conversation_corrections',
-    correctionId,
-    admin.email,
-    `驳回: ${reason.slice(0, 100)}`,
-  );
+  await auditOp(admin, audit.AUDIT_EVENTS.CRUD, 'conversation_corrections', correctionId, {
+    action: 'rejectCorrection',
+    reason: reason.slice(0, 100),
+  });
   return { code: 0, data: { status: 'rejected' } };
 }
 
 // ====== 主入口 ======
 exports.main = async (event) => {
+  // P0-08: extract client IP before body parsing
+  const clientIp = event.headers?.['x-forwarded-for']?.split(',')[0]?.trim()
+    || event.headers?.['x-real-ip']
+    || event.httpHeaders?.['x-forwarded-for']?.split(',')[0]?.trim()
+    || '';
   let body = event;
   if (event.body && typeof event.body === 'string') {
     try {
@@ -512,7 +525,7 @@ exports.main = async (event) => {
   }
   const { action, params = {}, _apiKey } = body;
 
-  const admin = await validateApiKey(_apiKey);
+  const admin = await validateApiKey(_apiKey, clientIp);
   if (!admin) return { code: 401, msg: '无效的 API Key' };
 
   try {

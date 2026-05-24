@@ -7,8 +7,8 @@ const https = require('https');
 
 // 集成测试需 CloudBase HTTP 网关，仅在 CI 环境运行
 const RUN_INTEGRATION = process.env.CI === 'true' || process.env.RUN_INTEGRATION === 'true';
-const BASE = 'https://cloudbase-d1g17tgt7cc199a60.service.tcloudbase.com';
-const API_KEY = 'zgb-22bdb94b-ae4b-4335-aecb-87b6f6afc6c1';
+const BASE = process.env.TEST_CLOUDBASE_BASE || 'https://test-env.service.tcloudbase.com';
+const API_KEY = process.env.TEST_API_KEY || 'test-key-placeholder';
 
 function call(path, body) {
   return new Promise((resolve, reject) => {
@@ -44,7 +44,7 @@ describeIf('集成测试 — admin-* 云函数 API', () => {
     it('adminLogin 成功登录', async () => {
       const r = await call('/admin-stats', {
         action: 'adminLogin',
-        params: { email: 'gangban@funway.hk', password: 'zgb2026!' },
+        params: { email: 'test-admin@funway.hk', password: process.env.TEST_ADMIN_PASSWORD || 'test-password-placeholder' },
       });
       expect(r.code).toBe(0);
       expect(r.data.apiKey).toBeDefined();

@@ -1,13 +1,16 @@
 // 住港伴 V4 — admin-content: 内容运营
 const cloudbase = require('@cloudbase/node-sdk');
-const crypto = require('crypto');
+const auth = require('../_shared/auth');
+const audit = require('../_shared/audit'); // P0-08
 const app = cloudbase.init({ env: 'cloudbase-d1g17tgt7cc199a60' });
 const db = app.database();
-function sha256(s) {
-  return crypto.createHash('sha256').update(String(s)).digest('hex');
-}
 
 exports.main = async (event) => {
+  // P0-08: extract client IP before body parsing
+  const clientIp = event.headers?.['x-forwarded-for']?.split(',')[0]?.trim()
+    || event.headers?.['x-real-ip']
+    || event.httpHeaders?.['x-forwarded-for']?.split(',')[0]?.trim()
+    || '';
   let body = event;
   if (event.body && typeof event.body === 'string') {
     try {
@@ -16,16 +19,21 @@ exports.main = async (event) => {
   }
   const { action, params = {}, _apiKey } = body;
   if (!_apiKey) return { code: 401, msg: '缺少 API Key' };
-  if (
-    !(
-      await db
-        .collection('admin_users')
-        .where({ apiKeyHash: sha256(_apiKey), status: 'active' })
-        .limit(1)
-        .get()
-    ).data.length
-  )
-    return { code: 401, msg: '无效 API Key' };
+  const adm = await db
+    .collection('admin_users')
+    .where({ apiKeyHash: auth.sha256(_apiKey), status: 'active' })
+    .limit(1)
+    .get();
+  if (!adm.data.length) return { code: 401, msg: '无效 API Key' };
+  const lock = auth.checkLockout(adm.data[0]);
+  if (lock.locked) return { code: 429, msg: lock.reason };
+  // P0-08 IP白名单
+  const ipCheck = auth.checkIPWhitelist(clientIp);
+  if (!ipCheck.allowed) {
+    console.warn('[IP白名单] admin-content 拒绝:', clientIp, ipCheck.reason);
+    return { code: 403, msg: 'IP 不在白名单中' };
+  }
+  adm.data[0]._clientIp = clientIp;
 
   try {
     switch (action) {
@@ -35,6 +43,10 @@ exports.main = async (event) => {
         return taskCompletion();
       case 'getSearchHotwords':
         return searchHotwords();
+      case 'editArticle': // P0-08
+        return await editArticle(params, adm.data[0]);
+      case 'deleteArticle': // P0-08
+        return await deleteArticle(params, adm.data[0]);
       default:
         return { code: 400, msg: '无效操作: ' + action };
     }
@@ -75,4 +87,39 @@ async function searchHotwords() {
     .slice(0, 20)
     .map(([w, c]) => ({ word: w, count: c }));
   return { code: 0, data: top };
+}
+
+// P0-08: content edit/delete with audit
+async function editArticle(p, admin) {
+  const { articleId, updates } = p;
+  if (!articleId || !updates) return { code: 400, msg: '缺少 articleId 或 updates' };
+  await db.collection('guidebook_articles').doc(articleId).update({
+    ...updates,
+    updatedBy: admin.email,
+    updatedAt: new Date(),
+  });
+  await audit.logAudit({
+    admin: { email: admin.email, role: admin.role || 'unknown' },
+    event: audit.AUDIT_EVENTS.CRUD,
+    targetType: 'guidebook_articles',
+    targetId: articleId,
+    detail: { action: 'editArticle', fields: Object.keys(updates) },
+    ip: admin._clientIp || '',
+  }).catch((e) => console.error('[audit]', e));
+  return { code: 0, msg: 'ok' };
+}
+
+async function deleteArticle(p, admin) {
+  const { articleId } = p;
+  if (!articleId) return { code: 400, msg: '缺少 articleId' };
+  await db.collection('guidebook_articles').doc(articleId).remove();
+  await audit.logAudit({
+    admin: { email: admin.email, role: admin.role || 'unknown' },
+    event: audit.AUDIT_EVENTS.CRUD,
+    targetType: 'guidebook_articles',
+    targetId: articleId,
+    detail: { action: 'deleteArticle' },
+    ip: admin._clientIp || '',
+  }).catch((e) => console.error('[audit]', e));
+  return { code: 0, msg: 'ok' };
 }

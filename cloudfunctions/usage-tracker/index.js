@@ -7,7 +7,38 @@ cloud.init({ env: cloud.DYNAMIC_CURRENT_ENV });
 const db = cloud.database();
 const _ = db.command;
 
+// P0-03: page_view 1:10采样防止page_view_logs超CloudBase免费写额度
+const PAGE_VIEW_SAMPLE_RATE = 0.1;
+const BATCH_MAX_SIZE = 10;
+const BATCH_FLUSH_INTERVAL = 30000; // 30s
+const eventBatch = [];
+let batchTimer = null;
+
+async function flushBatch() {
+  if (eventBatch.length === 0) return;
+  const batch = eventBatch.splice(0);
+  try {
+    await Promise.all(batch.map(r =>
+      db.collection('page_view_logs').add({ data: r })
+    ));
+    console.debug('[track] 批量写入 page_view_logs:', batch.length);
+  } catch (e) {
+    console.error('[track] 批量写入失败:', e);
+  }
+}
+
+function pushBatch(record) {
+  eventBatch.push(record);
+  if (eventBatch.length >= BATCH_MAX_SIZE) {
+    flushBatch();
+  }
+}
+
 exports.main = async (event) => {
+  // P0-03: 启动定时刷入
+  batchTimer = setInterval(flushBatch, BATCH_FLUSH_INTERVAL);
+  if (batchTimer) batchTimer.unref();
+
   const { action } = event;
   const wxContext = cloud.getWXContext();
   const openid = wxContext.OPENID;
@@ -26,6 +57,10 @@ exports.main = async (event) => {
   } catch (err) {
     console.error('[usage-tracker]', err);
     return { code: 500, msg: '服务异常: ' + (err.message || String(err)) };
+  } finally {
+    // P0-03: 清理定时器并刷入剩余事件
+    if (batchTimer) clearInterval(batchTimer);
+    await flushBatch();
   }
 };
 
@@ -34,6 +69,22 @@ exports.main = async (event) => {
 async function trackEvent(openid, event) {
   const { eventType, payload } = event;
   if (!eventType) return { code: 400, msg: '缺少 eventType' };
+
+  // P0-03: page_view 1:10采样
+  if (eventType === 'page_view') {
+    if (Math.random() >= PAGE_VIEW_SAMPLE_RATE) {
+      return { code: 0, msg: 'sampled_out' };
+    }
+    const pvRecord = {
+      _openid: openid,
+      page: (payload || {}).page || '',
+      module: (payload || {}).module || '',
+      duration: (payload || {}).duration || 0,
+      createdAt: db.serverDate(),
+    };
+    pushBatch(pvRecord);
+    return { code: 0, msg: 'ok' };
+  }
 
   const record = {
     _openid: openid,

@@ -23,7 +23,15 @@
     { "name": "guidebook-sync", "timeout": 15 },
     { "name": "guidebook-enrich", "timeout": 60 },
     { "name": "invite-code", "timeout": 30 },
-    { "name": "admin-stats", "timeout": 30 }
+    { "name": "admin-stats", "timeout": 30 },
+    { "name": "admin-users", "timeout": 30 },
+    { "name": "admin-codes", "timeout": 30 },
+    { "name": "admin-ai-quality", "timeout": 30 },
+    { "name": "admin-compliance", "timeout": 30 },
+    { "name": "admin-content", "timeout": 30 },
+    { "name": "admin-data-lifecycle", "timeout": 30 },
+    { "name": "admin-feedback", "timeout": 30 },
+    { "name": "admin-revenue", "timeout": 30 }
   ],
   "ai": {
     "defaultAgent": "codebuddy",

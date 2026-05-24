@@ -1,0 +1,1 @@
+[{"ts":"2026-05-24T23:59:00+08:00","from":"claude","action":"deploy_request","detail":"V4运营后台13项P0修复: scrypt+锁定+IP白名单+审计+采样+TTL+limit+分页+cloudbaserc注册","state":"pending_hermes_9gate","commit":"2fcaa99","files":20,"p0_fixed":13,"p1_pending":2,"tianyuan":"conditional_pass"}]

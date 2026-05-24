@@ -1,7 +1,14 @@
 /**
- * 住港伴 — 证件图片处理工具
- * 功能：脱敏遮罩 + 扫描增强 + 旋转 + 缩放 + 裁剪
- * Canvas 2D API (canvas-id已废弃)
+ * 住港伴 V4.2 — 证件图片处理工具
+ * 功能：扫描增强 + 旋转 + 缩放 + 裁剪 + A4合并
+ * Canvas 2D API with Old Canvas API 降级兼容
+ *
+ * 2026-05-24 架构变更：
+ *   - applyPrivacyMask / computeMaskRegions / getDefaultRegions 已废弃
+ *     原因：证件照仅读取本地设备路径，从不调用wx.uploadFile上传
+ *     遮罩功能从产品需求中移除，调用不再产生任何效果
+ *   - 保留的图像处理API：rotateImage / resizeImage / cropImage /
+ *     autoRotate / enhanceToScanned / cropToDocument / mergeToA4Preview
  */
 let _canvasNode = null;
 function _getCanvas() {
@@ -64,14 +71,22 @@ function _fallbackCanvasOp(imagePath, drawFn) {
 }
 
 /**
- * 生成脱敏遮罩预览
- * 在证件图片上绘制敏感信息遮罩矩形
+ * @deprecated 2026-05-24 遮罩功能已从产品需求中移除
+ * 证件照仅读取本地设备路径，从不调用wx.uploadFile上传，无需遮罩
+ * 此函数保留仅为向后兼容，调用直接返回原图
  * @param {string} imagePath - 证件图片本地路径
- * @param {object} piiRegions - PII区域 {name/yMin等} (OCR坐标未识别时用估算位置)
- * @param {number} maskMode - 0=模糊 1=色块遮盖 2=文字提示
- * @returns {Promise<string>} 处理后的图片临时路径
+ * @param {object} _piiRegions - 忽略
+ * @param {number} _maskMode - 忽略
+ * @returns {Promise<string>} 原始图片路径（未修改）
  */
-function applyPrivacyMask(imagePath, piiRegions, maskMode = 0) {
+function applyPrivacyMask(imagePath, _piiRegions, _maskMode = 0) {
+  console.warn('[image-process] applyPrivacyMask 已废弃 (2026-05-24)，直接返回原图');
+  return Promise.resolve(imagePath);
+}
+
+// === 以下为废弃函数的原始实现，保留用于历史追溯 ===
+// eslint-disable-next-line no-unused-vars
+function _applyPrivacyMask_legacy(imagePath, piiRegions, maskMode = 0) {
   return new Promise((resolve, reject) => {
     wx.getImageInfo({
       src: imagePath,
@@ -126,10 +141,13 @@ function applyPrivacyMask(imagePath, piiRegions, maskMode = 0) {
 }
 
 /**
+ * @deprecated 2026-05-24 遮罩功能已移除
  * 默认PII区域估算（OCR未返回坐标时使用）
  * 基于常见证件布局的比例估算
  */
 function getDefaultRegions(imgW, imgH, piiRegions) {
+  console.warn('[image-process] getDefaultRegions 已废弃 (2026-05-24)');
+  return [];
   if (piiRegions && piiRegions.length > 0) {
     return piiRegions.map(function (r) {
       return {
@@ -299,12 +317,16 @@ function autoRotate(imagePath) {
 }
 
 /**
+ * @deprecated 2026-05-24 遮罩功能已移除，调用始终返回空数组
  * R3: 按证件类型+脱敏等级计算遮罩区域
- * @param {string} docType - id_card|hk_permit|passport|degree|hk_id
- * @param {string} level - low|medium|high
- * @returns {Array} 遮罩区域 [{x, y, width, height, label}]
+ * @param {string} docType - 忽略
+ * @param {string} level - 忽略
+ * @returns {Array} 始终返回空数组
  */
 function computeMaskRegions(docType, level) {
+  console.warn('[image-process] computeMaskRegions 已废弃 (2026-05-24)');
+  return [];
+  /* === 以下原始类型映射保留用于历史追溯 ===
   const types = {
     id_card: {
       low: [{ x: 0.15, y: 0.08, width: 0.22, height: 0.28, label: '照片' }],
@@ -367,6 +389,7 @@ function computeMaskRegions(docType, level) {
     },
   };
   return (types[docType] && types[docType][level]) || [];
+  === 原始类型映射结束 === */
 }
 
 /**
@@ -654,12 +677,14 @@ function cropImage(imagePath, x, y, cropWidth, cropHeight) {
 }
 
 module.exports = {
-  applyPrivacyMask,
+  // === 已废弃 (2026-05-24) - 保留导出仅为向后兼容 ===
+  applyPrivacyMask,       // @deprecated 直接返回原图
+  getDefaultRegions,      // @deprecated 直接返回空数组
+  computeMaskRegions,     // @deprecated 直接返回空数组
+  // === 活跃 API ===
   enhanceToScanned,
   cropToDocument,
   autoRotate,
-  getDefaultRegions,
-  computeMaskRegions,
   mergeToA4Preview,
   rotateImage,
   resizeImage,

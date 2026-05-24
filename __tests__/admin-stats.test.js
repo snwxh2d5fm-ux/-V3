@@ -11,10 +11,11 @@ function sha256(s) {
 describe('admin-stats — 核心逻辑', () => {
   describe('sha256 哈希', () => {
     it('相同输入产生相同输出', () => {
-      expect(sha256('zgb2026!')).toBe(sha256('zgb2026!'));
+      const pw = 'test-pw-' + Date.now();
+      expect(sha256(pw)).toBe(sha256(pw));
     });
     it('不同输入产生不同输出', () => {
-      expect(sha256('zgb2026!')).not.toBe(sha256('wrong'));
+      expect(sha256('input-a')).not.toBe(sha256('input-b'));
     });
     it('输出为 64 字符 hex', () => {
       expect(sha256('test')).toHaveLength(64);
