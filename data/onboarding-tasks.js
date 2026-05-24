@@ -14,12 +14,21 @@
  * 关卡7(续签准备) phase-7.js
  */
 
-const allTasks = [];
-for (let p = 0; p < 8; p++) {
-  const phaseTasks = require('./tasks/phase-' + p + '.js');
-  if (Array.isArray(phaseTasks)) {
-    for (let i = 0; i < phaseTasks.length; i++) allTasks.push(phaseTasks[i]);
-  }
-}
+// ★ P0-FIX (2026-05-24): 两处同时修复
+// 1) 动态require → 静态require (bundler需静态分析)
+// 2) project.config.json packOptions.ignore 移除 "data/tasks" 排除
+// 根因: data/tasks/ 被 packOptions 排除构建 → phase-*.js 永不打包
+// 构建验证: node -c data/onboarding-tasks.js && node -e "require('./data/onboarding-tasks')"
+// 技术PM+PD评审: 保持8文件架构
+const allTasks = [].concat(
+  require('./tasks/phase-0.js'),
+  require('./tasks/phase-1.js'),
+  require('./tasks/phase-2.js'),
+  require('./tasks/phase-3.js'),
+  require('./tasks/phase-4.js'),
+  require('./tasks/phase-5.js'),
+  require('./tasks/phase-6.js'),
+  require('./tasks/phase-7.js'),
+);
 
 module.exports = allTasks;

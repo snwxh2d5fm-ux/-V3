@@ -92,10 +92,6 @@
         "type": "file"
       },
       {
-        "value": "data/tasks",
-        "type": "folder"
-      },
-      {
         "value": "package-lock.json",
         "type": "file"
       },

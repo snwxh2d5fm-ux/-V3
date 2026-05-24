@@ -82,6 +82,7 @@ Page({
     this.init();
   },
   onShow: function () {
+    console.log('[GUIDEBOOK:ONSHOW] page shown — progress=' + (this.data.progress ? 'exists' : 'null') + ' browseTasks=' + (this.data.browseTasks ? this.data.browseTasks.length : 0) + ' recovery=' + (wx.getStorageSync('__recovery_applied__') ? 'yes' : 'no'));
     // Sync global stage indicator (shared across all tabs)
     try {
       const stages = getGlobalStages();
@@ -122,17 +123,21 @@ Page({
    */
   init: function () {
     const self = this;
-    if (self._loading) return;
+    console.log('[GUIDEBOOK:INIT] === 攻略书初始化开始 ===');
+    if (self._loading) { console.log('[GUIDEBOOK:INIT] 已在加载中，跳过'); return; }
     self._loading = true;
+    const t0 = Date.now();
 
     // One-time cache cleanup
     if (!wx.getStorageSync('__cache_cleared_v3__')) {
       cache.invalidateCache();
       wx.setStorageSync('__cache_cleared_v3__', true);
+      console.log('[GUIDEBOOK:INIT] 缓存已清理(v3)');
     }
     self.setData({ loading: true, loadError: false });
 
     const progress = storage.getProgress();
+    console.log('[GUIDEBOOK:INIT] progress loaded:', progress ? 'has progress' : 'null — 需要路径设置');
     if (!progress) {
       self._loading = false;
       // Check for prefill from assessment or direct path selection
@@ -197,7 +202,9 @@ Page({
     // 始终加载全部任务（从所有签证类型），关卡可见性由 mergeProgress 的解锁逻辑控制
     const unlockAll = true;
     let localResult = null;
+    console.log('[GUIDEBOOK:INIT] Step1: 本地assemblePath — visaType=' + (params.visaType) + ' family=' + (params.familyStatus) + ' scenario=' + (params.arrivalScenario) + ' unlockAll=' + unlockAll);
     try {
+      const t1 = Date.now();
       localResult = cache.fetchByPathLocal(
         params.visaType,
         params.familyStatus,
@@ -205,8 +212,9 @@ Page({
         params.existingAssets,
         unlockAll,
       );
+      console.log('[GUIDEBOOK:INIT] 本地assemblePath完成 — 耗时=' + (Date.now() - t1) + 'ms tasks=' + (localResult && localResult.data ? (localResult.data.tasks ? localResult.data.tasks.length : 0) : 0) + ' phases=' + (localResult && localResult.data ? (localResult.data.phases ? localResult.data.phases.length : 0) : 0));
     } catch (e) {
-      console.error('[Guidebooks] local assemblePath failed:', e);
+      console.error('[GUIDEBOOK:INIT] ❌ 本地assemblePath失败:', e.message, e.stack);
     }
 
     // Render local data immediately
@@ -661,8 +669,9 @@ Page({
   // ── Tab switching ──
   switchTab: function (e) {
     const tabId = parseInt(e.currentTarget.dataset.tab);
+    console.log('[GUIDEBOOK:TAB] switchTab → ' + tabId + ' (' + (this.data.tabs[tabId] ? this.data.tabs[tabId].label : '?') + ')');
     this.setData({ activeTab: tabId });
-    if (tabId === 1 && this.data.browseTasks.length === 0) this.loadBrowse('全部');
+    if (tabId === 1 && this.data.browseTasks.length === 0) { console.log('[GUIDEBOOK:TAB] Tab 1 empty, loading browse...'); this.loadBrowse('全部'); }
     if (tabId === 3 && this.data.articles.length === 0) this.loadArticles();
   },
 
@@ -858,10 +867,12 @@ Page({
    */
   loadBrowse: function (category) {
     const self = this;
+    console.log('[GUIDEBOOK:BROWSE] loadBrowse — category=' + category + ' loading=' + self._browseLoading);
     self.setData({ activeCategory: category, browseKeyword: '' });
 
     // Step 1: Load all local tasks immediately (always works, content complete)
     const localAll = self._loadAllLocalTasks();
+    console.log('[GUIDEBOOK:BROWSE] localAll count=' + localAll.length);
     let localFiltered =
       category === '全部'
         ? localAll
@@ -870,6 +881,7 @@ Page({
             return tags.indexOf(category) >= 0;
           });
     localFiltered = self._markBrowseCompletion(localFiltered);
+    console.log('[GUIDEBOOK:BROWSE] localFiltered count=' + localFiltered.length + ' (category=' + category + ')');
     self.setData({ browseTasks: localFiltered, browseTasksAll: localFiltered });
 
     // Step 2: Try CloudBase as supplement (async, merges into existing data)
@@ -922,8 +934,20 @@ Page({
 
   /** Load ALL local tasks (unfiltered by path) for full browse coverage */
   _loadAllLocalTasks: function () {
-    const allTasks = require('../../../data/onboarding-tasks');
-    return (Array.isArray(allTasks) ? allTasks : []).map(norm);
+    console.log('[GUIDEBOOK:BROWSE] _loadAllLocalTasks 开始...');
+    try {
+      const allTasks = require('../../../data/onboarding-tasks');
+      const len = Array.isArray(allTasks) ? allTasks.length : 0;
+      console.log('[GUIDEBOOK:BROWSE] _loadAllLocalTasks 完成 — ' + len + ' tasks loaded');
+      // 诊断: 打印前3个task的id验证数据完整性
+      if (len > 0) {
+        console.log('[GUIDEBOOK:BROWSE] 样本: phase0=' + allTasks.filter(function(t){return t.phase===0;}).length + ' phase1=' + allTasks.filter(function(t){return t.phase===1;}).length + ' ... total phases in data=' + (function(){var p={};allTasks.forEach(function(t){p[t.phase]=1;});return Object.keys(p).length;})());
+      }
+      return (Array.isArray(allTasks) ? allTasks : []).map(norm);
+    } catch (e) {
+      console.error('[GUIDEBOOK:BROWSE] ❌ _loadAllLocalTasks FAILED:', e.message, e.stack);
+      return [];
+    }
   },
 
   /** Deprecated: kept for reference, no longer primary path */
@@ -957,7 +981,9 @@ Page({
   },
 
   onCategoryTap: function (e) {
-    this.loadBrowse(e.currentTarget.dataset.category);
+    const cat = e.currentTarget.dataset.category;
+    console.log('[GUIDEBOOK:BROWSE] onCategoryTap — switching to category=' + cat);
+    this.loadBrowse(cat);
   },
 
   /** Search — client-side filter on title + subtitle + scene_tags */
