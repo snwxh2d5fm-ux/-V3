@@ -14,12 +14,17 @@
  * 关卡7(续签准备) phase-7.js
  */
 
-var allTasks = [];
-for (var p = 0; p < 8; p++) {
-  var phaseTasks = require('./tasks/phase-' + p + '.js');
-  if (Array.isArray(phaseTasks)) {
-    for (var i = 0; i < phaseTasks.length; i++) allTasks.push(phaseTasks[i]);
-  }
-}
+// ★ P0-FIX: 显式静态 require，WeChat bundler 才能正确打包各关卡文件
+// 原动态 require('./tasks/phase-' + p + '.js') 被 bundler 忽略 → 全部 phase-*.js 未打包 → 崩溃
+var allTasks = [].concat(
+  require('./tasks/phase-0.js'),
+  require('./tasks/phase-1.js'),
+  require('./tasks/phase-2.js'),
+  require('./tasks/phase-3.js'),
+  require('./tasks/phase-4.js'),
+  require('./tasks/phase-5.js'),
+  require('./tasks/phase-6.js'),
+  require('./tasks/phase-7.js'),
+);
 
 module.exports = allTasks;
