@@ -10,9 +10,10 @@ function sha256(s) {
 const PERSONA_MAP = { 1: '在校学生', 2: '在职人士', 3: '企业主', 4: '海外华人', 5: '受养人' };
 
 function deriveStatus(p) {
-  if (p.userStatus) return p.userStatus;
+  if (p.userStatus && p.userStatus !== '') return p.userStatus;
   if (p.onboardingCompleted) return '已抵港';
-  if (p.selectedPath) return '已评估';
+  if (p.switchCount > 0 && p.selectedPath) return '评估中';
+  if (p.selectedPath) return '已选路径';
   return '未提交';
 }
 

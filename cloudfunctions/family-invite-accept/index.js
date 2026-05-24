@@ -119,6 +119,7 @@ exports.main = async (event) => {
         data: {
           members: _.push({
             userId: openid,
+            familyName: invite.inviteeName || '',
             role: invite.role,
             permissions: invite.permissions,
             joinedAt: db.serverDate(),
@@ -185,6 +186,7 @@ async function loadInvite(event) {
     code: 0,
     data: {
       inviteCode: invite.inviteCode,
+      inviteeName: invite.inviteeName || '',
       role: invite.role,
       permissions: invite.permissions,
       expiresAt: invite.expiresAt,

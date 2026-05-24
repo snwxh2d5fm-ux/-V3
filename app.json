@@ -137,11 +137,6 @@
       }
     ]
   },
-  "permission": {
-    "scope.userLocation": {
-      "desc": "用于显示附近入境处办事处位置"
-    }
-  },
   "usingComponents": {
     "privacy-toggle": "/components/privacy-toggle/privacy-toggle",
     "timeline": "/components/timeline/timeline",
@@ -152,6 +147,7 @@
     "stage-indicator": "/components/stage-indicator/stage-indicator",
     "status-badge": "/components/status-badge/status-badge"
   },
+  "__usePrivacyCheck__": true,
   "sitemapLocation": "sitemap.json",
   "style": "v2",
   "lazyCodeLoading": "requiredComponents"

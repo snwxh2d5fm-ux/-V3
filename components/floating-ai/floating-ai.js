@@ -58,6 +58,18 @@ Component({
         });
       }
     },
+
+    /** 组件销毁时清理所有定时器，防止内存泄漏 */
+    detached() {
+      if (this._scrollTimer) {
+        clearTimeout(this._scrollTimer);
+        this._scrollTimer = null;
+      }
+      if (this._navTimer) {
+        clearTimeout(this._navTimer);
+        this._navTimer = null;
+      }
+    },
   },
 
   methods: {
@@ -78,7 +90,8 @@ Component({
 
     scrollToBottom() {
       const that = this;
-      setTimeout(function () {
+      if (this._scrollTimer) clearTimeout(this._scrollTimer);
+      this._scrollTimer = setTimeout(function () {
         const len = that.data.messages.length;
         if (len > 0) {
           that.setData({ scrollToView: 'msg-' + (len - 1) });
@@ -299,7 +312,8 @@ Component({
 
       // 延迟跳转流程控页面
       const that = this;
-      setTimeout(function () {
+      if (this._navTimer) clearTimeout(this._navTimer);
+      this._navTimer = setTimeout(function () {
         that.closePanel();
         wx.switchTab({ url: '/pages/process/index/index' });
       }, 800);

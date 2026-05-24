@@ -273,7 +273,6 @@ function invalidateCache() {
     toRemove.forEach(function (k) {
       wx.removeStorageSync(k);
     });
-    console.debug('[lifeGuideCache] invalidated ' + toRemove.length + ' cache entries');
   } catch (e) {
     console.error('[lifeGuideCache] invalidateCache error:', e);
   }

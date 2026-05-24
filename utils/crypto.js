@@ -586,7 +586,6 @@ function initCrypto() {
     const salt = wx.getStorageSync('__crypto_salt__');
     if (salt) {
       cryptoReady = true;
-      console.debug('[加密] 模块初始化完成');
     }
     return true;
   } catch (e) {

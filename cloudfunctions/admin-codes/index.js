@@ -7,13 +7,16 @@ const cloudbase = require('@cloudbase/node-sdk');
 const crypto = require('crypto');
 const app = cloudbase.init({ env: 'cloudbase-d1g17tgt7cc199a60' });
 const db = app.database();
+const _ = db.command;
 
 function sha256(s) {
   return crypto.createHash('sha256').update(String(s)).digest('hex');
 }
 
 function randomCode() {
-  return 'ZGB-' + crypto.randomBytes(4).toString('hex').toUpperCase();
+  // 统一格式 ZGB-XXXX-XXXX，与 invite-code 云函数保持一致
+  const hex = crypto.randomBytes(4).toString('hex').toUpperCase();
+  return `ZGB-${hex.slice(0, 4)}-${hex.slice(4)}`;
 }
 
 exports.main = async (event) => {
@@ -96,7 +99,7 @@ async function getCodeStats(params) {
     db.collection('invite_codes').where(query).count(),
     db
       .collection('invite_codes')
-      .where({ ...query, status: 'used' })
+      .where(_.or([{ ...query, status: 'used' }, { ...query, status: 'redeemed' }]))
       .count(),
   ]);
 

@@ -225,7 +225,7 @@ Page({
         );
         if (res && res.matches) cloudMatches = res.matches;
       } catch (e) {
-        console.debug('[自评] 云端匹配不可用，使用本地结果');
+        // 云端匹配不可用，降级使用本地结果
       }
 
       // 3. 合并结果

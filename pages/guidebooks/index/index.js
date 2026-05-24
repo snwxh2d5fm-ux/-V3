@@ -410,14 +410,7 @@ Page({
         processStage = Math.max(0, Math.min(6, Number(psVal)));
       }
     } catch (e) {}
-    console.debug(
-      '[mergeProgress] processStage=' +
-        processStage +
-        ' guidebookAllUnlocked=' +
-        guidebookAllUnlocked +
-        ' membershipLevel=' +
-        membershipLevel,
-    );
+    // processStage already set
 
     const unlockState = BRIDGE.getGuideUnlockState(processStage);
 
@@ -1150,16 +1143,7 @@ Page({
     const tp = phases.find(function (p) {
       return p.phase === phase;
     });
-    console.debug(
-      '[onPhaseTap] phase=' +
-        phase +
-        ' exists=' +
-        !!tp +
-        ' unlocked=' +
-        (tp ? tp.unlocked : 'N/A') +
-        ' phasesCount=' +
-        phases.length,
-    );
+    // phase tap routing
     phases = phases.map(function (p) {
       if (p.phase === phase) {
         p.expanded = !p.expanded;

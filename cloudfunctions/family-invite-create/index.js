@@ -39,7 +39,7 @@ exports.main = async (event) => {
       return { code: 401, msg: '请先登录' };
     }
 
-    const { role, permissions } = event;
+    const { role, permissions, recipientName } = event;
 
     if (!validateRole(role)) {
       return { code: 400, msg: '无效的家属角色，仅支持 spouse 或 child' };
@@ -47,6 +47,12 @@ exports.main = async (event) => {
 
     if (!validatePermissions(permissions)) {
       return { code: 400, msg: '无效的权限列表' };
+    }
+
+    // 接收方姓名校验（与玄武审查 #28 裁决一致：DB 存 inviteeName）
+    const inviteeName = (recipientName || '').trim();
+    if (!inviteeName || inviteeName.length < 1 || inviteeName.length > 20) {
+      return { code: 400, msg: '请填写接收方姓名（1-20字）' };
     }
 
     // financial_info 默认关闭
@@ -101,6 +107,7 @@ exports.main = async (event) => {
         spaceId: spaceId,
         role: role,
         permissions: permissions,
+        inviteeName: inviteeName,
         status: 'pending',
         createdAt: db.serverDate(),
         expiresAt: expiresAt,
@@ -116,6 +123,7 @@ exports.main = async (event) => {
           inviteCode: inviteCode,
           role: role,
           permissions: permissions,
+          inviteeName: inviteeName,
         },
         createdAt: db.serverDate(),
       },

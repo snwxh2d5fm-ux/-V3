@@ -298,7 +298,7 @@ Page({
       const docs = getAllDocuments();
       this.setData({ allDocs: docs });
     } catch (e) {
-      console.debug('[提醒详情] 加载证件列表失败');
+      // 证件列表加载失败，允许继续
     }
   },
 

@@ -537,7 +537,7 @@ Page({
           saveDocuments(documents);
         }
       } catch (e) {
-        console.debug('[证件夹] 云端同步不可用，使用本地数据');
+        // 云端同步不可用，降级使用本地数据
       }
     }
 
@@ -937,7 +937,6 @@ Page({
     const slotKey = e.currentTarget.dataset.slotKey;
     const name = e.currentTarget.dataset.name || slotKey;
     const docs = this.findSlotDocs(slotKey);
-    console.debug('[PDF] slotKey=' + slotKey + ' docs.length=' + (docs ? docs.length : 0));
     if (!docs || docs.length === 0) {
       wx.showToast({ title: '无证件图片可合成，请先添加证件照片', icon: 'none', duration: 2500 });
       return;

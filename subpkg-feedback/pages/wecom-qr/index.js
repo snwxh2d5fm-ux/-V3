@@ -12,14 +12,14 @@ Page({
 
   /** 客服按钮回调（可选，用于记录触点来源） */
   onContactCallback(e) {
-    console.debug('[客服] 用户点击客服入口', e.detail);
+    // 触点来源埋点可在此处扩展
   },
 
   /** 备用：如果按钮不生效，尝试 API 方式 */
   openCS() {
     wx.openCustomerServiceConversation({
       success: function () {
-        console.debug('[客服] 对话窗口已打开');
+        // 对话窗口已打开
       },
       fail: function (err) {
         console.error('[客服] 打开失败:', err);

@@ -84,8 +84,12 @@ Page({
     this.scrollToBottom();
   },
 
-  // [V4.1-PHASE1] Task 4: 页面卸载时触发关闭埋点
+  // [V4.1-PHASE1] Task 4: 页面卸载时触发关闭埋点 + 清理定时器
   onUnload: function () {
+    if (this._scrollTimer) {
+      clearTimeout(this._scrollTimer);
+      this._scrollTimer = null;
+    }
     const startTime = this.data.sessionStartTime;
     const durationSeconds = startTime ? Math.round((Date.now() - startTime) / 1000) : 0;
     eventTracker.track('close', {
@@ -474,7 +478,8 @@ Page({
 
   scrollToBottom: function () {
     const that = this;
-    setTimeout(function () {
+    if (this._scrollTimer) clearTimeout(this._scrollTimer);
+    this._scrollTimer = setTimeout(function () {
       const len = that.data.messages.length;
       if (len > 0) that.setData({ scrollToView: 'msg-' + (len - 1) });
     }, 100);

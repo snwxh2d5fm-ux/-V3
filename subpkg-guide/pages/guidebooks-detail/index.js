@@ -264,7 +264,7 @@ Page({
         }
       })
       .catch(function (e) {
-        console.debug('[攻略详情] 云端失败:', e.message);
+        // 云端数据加载失败，使用本地缓存
         callback(null);
       });
   },

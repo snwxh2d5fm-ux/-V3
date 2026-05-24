@@ -9,7 +9,7 @@
 const APPLICATION_PATHS = {
   QMAS: { id: 'qmas', name: '优才计划', fullName: '优秀人才入境计划' },
   TTPS: { id: 'ttps', name: '高才通', fullName: '高端人才通行证计划' },
-  ASMPT: { id: 'asmpt', name: '专才', fullName: '输入内地人才计划' },
+  ASMTP: { id: 'asmpt', name: '专才', fullName: '输入内地人才计划' },
   IANG: { id: 'iang', name: 'IANG', fullName: '非本地毕业生留港/回港就业安排' },
   INVESTMENT: { id: 'inv', name: '资本投资者入境计划', fullName: '资本投资者入境计划' },
 };
@@ -254,7 +254,7 @@ function scoreTTPS(answers) {
 /**
  * 专才评分
  */
-function scoreASMPT(answers) {
+function scoreASMTP(answers) {
   const industry = answers.industry || '';
   const exp = answers.experience || '';
   const edu = answers.education || '';
@@ -292,8 +292,8 @@ function scoreASMPT(answers) {
   const probability = Math.min(85, 50 + score * 10);
 
   return {
-    pathId: APPLICATION_PATHS.ASMPT.id,
-    pathName: APPLICATION_PATHS.ASMPT.name,
+    pathId: APPLICATION_PATHS.ASMTP.id,
+    pathName: APPLICATION_PATHS.ASMTP.name,
     score: score,
     maxScore: 5,
     probability: probability,
@@ -375,7 +375,7 @@ module.exports = {
   APPLICATION_PATHS: APPLICATION_PATHS,
   scoreQMAS: scoreQMAS,
   scoreTTPS: scoreTTPS,
-  scoreASMPT: scoreASMPT,
+  scoreASMTP: scoreASMTP,
   scoreIANG: scoreIANG,
   scoreInvestment: scoreInvestment,
 };

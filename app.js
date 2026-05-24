@@ -57,24 +57,18 @@ App({
   },
 
   async onLaunch() {
-    console.debug(`[住港伴] v${constants.APP_VERSION} 应用启动 — PRD v3.1 对齐`);
-
     if (wx.cloud) {
       wx.cloud.init({
         env: constants.CLOUD_ENV_ID,
         traceUser: true,
       });
       this.globalData.cloudReady = true;
-      console.debug('[住港伴] 云开发初始化完成');
     }
 
     // v5: 网络状态监听 (DSG-1 P0-04)
     wx.onNetworkStatusChange((res) => {
       this.globalData.isOnline = res.isConnected;
       this.globalData.networkType = res.networkType;
-      if (!res.isConnected) {
-        console.debug('[住港伴] 网络断开');
-      }
     });
     // 初始化时获取当前网络状态
     wx.getNetworkType({
@@ -103,7 +97,6 @@ App({
     try {
       const recoveryResult = await recoverUserData(this);
       if (recoveryResult.recovered) {
-        console.debug('[住港伴] 数据已自动恢复: source=' + recoveryResult.source);
         // 将恢复后更新到 globalData 的状态写回 SESSION 键，而非从旧 SESSION 键覆盖恢复结果
         if (this.globalData.token) {
           wx.setStorageSync(constants.STORAGE_KEYS.SESSION, {
@@ -162,7 +155,7 @@ App({
         }
       }
     } catch (e) {
-      console.debug('[住港伴] 无有效会话');
+      // 无有效会话，用户需重新登录
     }
   },
 
@@ -224,7 +217,7 @@ App({
         const res = await api.matchSolutionPath(userProfile);
         cloudMatches = res.matches || [];
       } catch (e) {
-        console.debug('[住港伴] 云端方案库匹配不可用，使用本地匹配');
+        // 云端匹配不可用，降级使用本地匹配
       }
     }
     const merged = mergeRecommendations(localMatches, cloudMatches);
@@ -240,7 +233,6 @@ App({
     try {
       await syncAllToCloud();
       this.globalData.dbSyncStatus = 'synced';
-      console.debug('[住港伴] 数据云端同步完成');
     } catch (e) {
       this.globalData.dbSyncStatus = 'error';
       console.error('[住港伴] 数据同步失败:', e);
@@ -258,7 +250,7 @@ App({
         this.globalData.activeProcess = res.result.data;
       }
     } catch (e) {
-      console.debug('[住港伴] 刷新流程数据失败');
+      // 流程数据刷新失败，下次 onShow 重试
     }
   },
 
@@ -345,7 +337,6 @@ App({
   markPerfComplete: function () {
     if (!this._perfStartTime) return;
     const elapsed = Date.now() - this._perfStartTime;
-    console.debug('[住港伴] 首屏渲染完成: ' + elapsed + 'ms');
     if (elapsed > 3000) console.warn('[住港伴] ⚠️ 首屏超过3秒: ' + elapsed + 'ms');
     if (this.globalData.cloudReady) {
       wx.cloud

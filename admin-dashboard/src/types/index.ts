@@ -51,7 +51,7 @@ export interface UserProfile {
 export interface CodeRecord {
   code: string;
   codeType: 'invite' | 'redemption';
-  status: 'active' | 'used' | 'expired' | 'revoked';
+  status: 'active' | 'used' | 'expired' | 'revoked' | 'unused' | 'redeemed';
   planId?: string;
   planName?: string;
   batchId: string;

@@ -92,21 +92,23 @@ async function queryCodeStatus({ code }) {
     return { code: 400, msg: '内测码格式不正确，请检查后重试' };
   }
 
-  const { data } = await db.collection(CODE_COLLECTION).where({ code: normalized }).limit(1).get();
+  // 双格式兼容查找：先查标准格式 ZGB-XXXX-XXXX，再查旧格式 ZGB-XXXXXXXX
+  let codeRecord = await findCodeByDualFormat(normalized);
 
-  if (data.length === 0) {
+  if (!codeRecord) {
     return { code: 404, msg: '内测码不存在，请检查后重试' };
   }
-
-  const record = data[0];
   const now = new Date();
 
-  switch (record.status) {
+  // 兼容运营后台的 active/used 和云函数的 unused/redeemed
+  const effectiveStatus = normalizeStatus(codeRecord.status);
+
+  switch (effectiveStatus) {
     case 'unused':
-      if (record.expires_at && new Date(record.expires_at) < now) {
+      if (codeRecord.expires_at && new Date(codeRecord.expires_at) < now) {
         return {
           code: 400,
-          msg: `该码已过期（有效期至${fmtDate(record.expires_at)}）`,
+          msg: `该码已过期（有效期至${fmtDate(codeRecord.expires_at)}）`,
           valid: false,
           status: 'expired',
         };
@@ -120,7 +122,7 @@ async function queryCodeStatus({ code }) {
     case 'redeemed':
       return { code: 400, msg: '该码已被使用', valid: false, status: 'redeemed' };
     case 'expired':
-      return { code: 400, msg: `该码已过期（有效期至${fmtDate(record.expires_at)}）`, valid: false, status: 'expired' };
+      return { code: 400, msg: `该码已过期（有效期至${fmtDate(codeRecord.expires_at)}）`, valid: false, status: 'expired' };
     case 'revoked':
       return { code: 400, msg: '该码已失效', valid: false, status: 'revoked' };
     default:
@@ -142,19 +144,23 @@ async function redeemCode(openid, { code, deviceId }) {
     return { code: 401, msg: '请先登录' };
   }
 
-  // ---- 1. 查码 ----
-  const { data: codes } = await db.collection(CODE_COLLECTION).where({ code: normalized }).limit(1).get();
+  // ---- 1. 查码（双格式兼容：ZGB-XXXX-XXXX 和 ZGB-XXXXXXXX）----
+  let codeRecord = await findCodeByDualFormat(normalized);
 
-  if (codes.length === 0) {
+  if (!codeRecord) {
     return { code: 404, msg: '内测码不存在，请检查后重试' };
   }
-
-  const codeRecord = codes[0];
   const now = new Date();
 
-  // ---- 2. 校验码状态 ----
-  if (codeRecord.status === 'redeemed') {
-    // 3. 幂等检查（同用户+同码已兑换过，返回已有结果）
+  // ---- 2. 校验码状态（兼容运营后台的 active/used 和云函数的 unused/redeemed） ----
+  const effectiveStatus = normalizeStatus(codeRecord.status);
+  const isUsed = effectiveStatus === 'redeemed';
+  const isRevoked = effectiveStatus === 'revoked';
+  const isExpired = effectiveStatus === 'expired' || (codeRecord.expires_at && new Date(codeRecord.expires_at) < now);
+  const canRedeem = effectiveStatus === 'unused';
+
+  if (isUsed) {
+    // 幂等检查（同用户+同码已兑换过，返回已有结果）
     if (codeRecord.redeemed_by_uid === openid) {
       const existingMembership = await getMembership(openid);
       return {
@@ -166,13 +172,13 @@ async function redeemCode(openid, { code, deviceId }) {
     }
     return { code: 400, msg: '该码已被使用' };
   }
-  if (codeRecord.status === 'revoked') {
+  if (isRevoked) {
     return { code: 400, msg: '该码已失效' };
   }
-  if (codeRecord.status === 'expired' || (codeRecord.expires_at && new Date(codeRecord.expires_at) < now)) {
+  if (isExpired) {
     return { code: 400, msg: `该码已过期（有效期至${fmtDate(codeRecord.expires_at)}）` };
   }
-  if (codeRecord.status !== 'unused') {
+  if (!canRedeem) {
     return { code: 400, msg: '该码状态异常，无法兑换' };
   }
 
@@ -231,12 +237,14 @@ async function redeemCode(openid, { code, deviceId }) {
     }
   }
 
-  // ---- 6. 原子更新码状态（条件更新防止并发超发） ----
+  // ---- 6. 原子更新码状态（条件更新防止并发超发，兼容 active/unused 两种状态） ----
+  // 注意：必须用 codeRecord.code（数据库实际值），不能用 normalized（标准化后的值），
+  // 因为双格式兼容查找可能返回了旧格式码（如 ZGB-2375696F）
   const updateResult = await db
     .collection(CODE_COLLECTION)
     .where({
-      code: normalized,
-      status: 'unused', // 条件：仅当仍为unused时才更新
+      code: codeRecord.code,
+      status: _.in(['unused', 'active']), // 兼容运营后台的 active 状态
     })
     .update({
       data: {
@@ -263,8 +271,8 @@ async function redeemCode(openid, { code, deviceId }) {
       action: 'invite_code_redeemed',
       detail: {
         code: normalized,
-        codeType: codeRecord.type || 'seed',
-        batchId: codeRecord.batch_id || null,
+        codeType: codeRecord.type || codeRecord.codeType || 'seed',
+        batchId: codeRecord.batch_id || codeRecord.batchId || null,
         channel: codeRecord.channel || null,
         membershipLevel: 'basic',
         membershipDays: MEMBERSHIP_DAYS,
@@ -434,16 +442,17 @@ async function revokeCode(adminOpenid, { code }) {
     return { code: 400, msg: '内测码格式不正确' };
   }
 
-  const { data } = await db.collection(CODE_COLLECTION).where({ code: normalized }).limit(1).get();
+  // 双格式兼容查找（与 queryCodeStatus/redeemCode 一致）
+  const record = await findCodeByDualFormat(normalized);
 
-  if (data.length === 0) {
+  if (!record) {
     return { code: 404, msg: '内测码不存在' };
   }
 
-  const record = data[0];
-
-  if (record.status !== 'unused') {
-    return { code: 400, msg: `该码状态为「${statusLabel(record.status)}」，仅可撤销未使用的码` };
+  // 兼容运营后台 active 状态
+  const effectiveStatus = normalizeStatus(record.status);
+  if (effectiveStatus !== 'unused') {
+    return { code: 400, msg: `该码状态为「${statusLabel(effectiveStatus)}」，仅可撤销未使用的码` };
   }
 
   await db
@@ -478,7 +487,16 @@ async function revokeCode(adminOpenid, { code }) {
 async function revokeBatch(adminOpenid, { batchId }) {
   if (!batchId) return { code: 400, msg: '请提供批次号' };
 
-  const { data: codes } = await db.collection(CODE_COLLECTION).where({ batch_id: batchId, status: 'unused' }).get();
+  // 兼容运营后台 (batchId/active) 和云函数 (batch_id/unused) 两套字段
+  const { data: codes } = await db
+    .collection(CODE_COLLECTION)
+    .where(_.or([
+      { batch_id: batchId, status: 'unused' },
+      { batch_id: batchId, status: 'active' },
+      { batchId: batchId, status: 'unused' },
+      { batchId: batchId, status: 'active' },
+    ]))
+    .get();
 
   if (codes.length === 0) {
     return { code: 0, msg: '该批次无未使用的码', data: { count: 0 } };
@@ -515,38 +533,52 @@ async function revokeBatch(adminOpenid, { batchId }) {
 
 // ==================== 管理端：码使用统计 ====================
 async function getCodeStats({ batchId, channel }) {
-  const query = {};
-
-  if (batchId) {
-    query.batch_id = batchId;
-  }
-  if (channel) {
-    query.channel = channel;
+  // 构建查询：兼容 batch_id/batchId 两套字段名
+  let query;
+  if (batchId && channel) {
+    query = _.or([
+      { batch_id: batchId, channel },
+      { batchId: batchId, channel },
+    ]);
+  } else if (batchId) {
+    query = _.or([
+      { batch_id: batchId },
+      { batchId: batchId },
+    ]);
+  } else if (channel) {
+    query = { channel };
+  } else {
+    query = {};
   }
 
   const { data: allCodes } = await db
     .collection(CODE_COLLECTION)
-    .where(Object.keys(query).length > 0 ? query : { type: 'seed' })
+    .where(query)
     .get();
 
+  // 统一状态计数：兼容 active→unused, used→redeemed
   const total = allCodes.length;
-  const redeemed = allCodes.filter((c) => c.status === 'redeemed').length;
-  const unused = allCodes.filter((c) => c.status === 'unused').length;
-  const expired = allCodes.filter((c) => c.status === 'expired').length;
-  const revoked = allCodes.filter((c) => c.status === 'revoked').length;
-
-  // 按渠道分布
-  const channelMap = {};
+  let redeemed = 0, unused = 0, expired = 0, revoked = 0;
   for (const c of allCodes) {
-    const ch = c.channel || 'unknown';
-    if (!channelMap[ch]) {
-      channelMap[ch] = { total: 0, redeemed: 0 };
-    }
-    channelMap[ch].total++;
-    if (c.status === 'redeemed') channelMap[ch].redeemed++;
+    const s = normalizeStatus(c.status);
+    if (s === 'redeemed') redeemed++;
+    else if (s === 'unused') unused++;
+    else if (s === 'expired') expired++;
+    else if (s === 'revoked') revoked++;
   }
 
-  const byChannel = Object.entries(channelMap).map(([name, stats]) => ({
+  // 按来源分布
+  const sourceMap = {};
+  for (const c of allCodes) {
+    const src = c.channel || c.generatedBy || 'unknown';
+    if (!sourceMap[src]) {
+      sourceMap[src] = { total: 0, redeemed: 0 };
+    }
+    sourceMap[src].total++;
+    if (normalizeStatus(c.status) === 'redeemed') sourceMap[src].redeemed++;
+  }
+
+  const byChannel = Object.entries(sourceMap).map(([name, stats]) => ({
     channel: name,
     total: stats.total,
     redeemed: stats.redeemed,
@@ -657,20 +689,69 @@ function generateCode() {
   return `${CODE_PREFIX}-${raw.slice(0, 4)}-${raw.slice(4)}`;
 }
 
-/** 规范化码：去空格、转大写、自动补全缺失短横 */
+/**
+ * 规范化码为统一标准格式 ZGB-XXXX-XXXX
+ * 兼容多种输入：
+ *   - ZGB-2375696F   (运营后台单横线格式)
+ *   - ZGB-2375-696F   (云函数标准双横线格式)
+ *   - ZGB2375696F     (无横线)
+ *   - zgb-2375-696f   (小写)
+ */
 function normalizeCode(input) {
   let code = String(input).replace(/\s/g, '').toUpperCase();
-  // 修复缺少第二个短横的格式: ZGB-XXXXXXXX → ZGB-XXXX-XXXX
-  if (/^ZGB-[A-Z0-9]{8}$/.test(code)) {
-    code = code.slice(0, 7) + '-' + code.slice(7);
+  // 去掉所有横线，重新按标准格式插入
+  const stripped = code.replace(/-/g, '');
+  if (/^ZGB[A-Z0-9]{8}$/.test(stripped)) {
+    return `ZGB-${stripped.slice(3, 7)}-${stripped.slice(7)}`;
   }
+  // 无法识别格式，返回原始值让 isValidFormat 拒绝
   return code;
 }
 
-/** 校验码格式 ZGB-XXXX-XXXX */
+/** 校验码格式 ZGB-XXXX-XXXX（标准化后的格式） */
 function isValidFormat(code) {
   const pattern = /^ZGB-[A-Z0-9]{4}-[A-Z0-9]{4}$/;
   return pattern.test(code);
+}
+
+/**
+ * 统一状态映射：兼容运营后台和云函数两套状态体系
+ * 运营后台: active→active, used→used, revoked→revoked, expired→expired
+ * 云函数: unused→unused, redeemed→redeemed, revoked→revoked, expired→expired
+ * 映射: active→unused, used→redeemed
+ */
+function normalizeStatus(status) {
+  const statusMap = {
+    active: 'unused',
+    unused: 'unused',
+    used: 'redeemed',
+    redeemed: 'redeemed',
+    revoked: 'revoked',
+    expired: 'expired',
+  };
+  return statusMap[status] || status;
+}
+
+/**
+ * 双格式兼容查找：先查标准格式 ZGB-XXXX-XXXX，未找到再查旧格式 ZGB-XXXXXXXX
+ * 用于兼容运营后台迁移前生成的旧格式码
+ */
+async function findCodeByDualFormat(normalized) {
+  // 先查标准格式
+  const { data } = await db.collection(CODE_COLLECTION).where({ code: normalized }).limit(1).get();
+  if (data.length > 0) return data[0];
+
+  // 如果已是标准格式，生成对应的旧格式再查一次
+  const compactFormat = normalized.replace(/-/g, '');
+  if (compactFormat !== normalized && /^ZGB[A-Z0-9]{8}$/.test(compactFormat)) {
+    const altFormat = `ZGB-${compactFormat.slice(3)}`; // ZGB-XXXXXXXX
+    if (altFormat !== normalized) {
+      const { data: altData } = await db.collection(CODE_COLLECTION).where({ code: altFormat }).limit(1).get();
+      if (altData.length > 0) return altData[0];
+    }
+  }
+
+  return null;
 }
 
 /** 设备ID哈希（隐私保护） */

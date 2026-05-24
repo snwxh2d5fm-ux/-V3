@@ -246,14 +246,14 @@ Page({
             }
           })
           .catch(function (e) {
-            console.debug('[增强] 跳过:', e.message);
+            // 图片增强跳过，继续后续流程
           })
           .finally(function () {
             that.setData({ scanProcessing: false });
           });
       }
     } catch (e) {
-      console.debug('[AI增强] 跳过:', e.message);
+      // AI增强不可用，跳过继续
     }
   },
 
@@ -424,7 +424,7 @@ Page({
       const data = fs.readFileSync(imagePath, 'base64');
       this.setData({ imageBase64: 'data:image/jpeg;base64,' + data });
     } catch (e) {
-      console.debug('[图片] base64转换失败');
+      // base64 转换失败，使用临时路径
     }
   },
 

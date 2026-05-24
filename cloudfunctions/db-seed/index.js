@@ -448,7 +448,7 @@ async function seedArchivingRules(stats) {
       deletableWhenArchived: false,
     },
     {
-      ruleId: 'AR_ASMPT_APPROVAL',
+      ruleId: 'AR_ASMTP_APPROVAL',
       pathType: 'asmpt',
       stageName: '获批',
       triggerEvent: 'milestone_approval_asmpt',
@@ -512,7 +512,7 @@ async function seedArchivingRules(stats) {
       deletableWhenArchived: false,
     },
     {
-      ruleId: 'AR_ASMPT_RENEWAL',
+      ruleId: 'AR_ASMTP_RENEWAL',
       pathType: 'asmpt',
       stageName: '续签',
       triggerEvent: 'renewal_complete',
@@ -631,14 +631,14 @@ async function seedGuideItems(stats) {
       lastUpdatedAt: '2024-12-01',
     },
     {
-      guideId: 'G_ASMPT_OVERVIEW',
+      guideId: 'G_ASMTP_OVERVIEW',
       nodeId: 'node_asmpt',
       nodeName: '专才计划',
       title: '专才计划概览',
       category: 'overview',
       status: 'active',
       layers: {
-        overview: '输入内地人才计划（ASMPT）旨在吸引具有认可资历的内地专业人才来港工作。',
+      overview: '输入内地人才计划（ASMTP）旨在吸引具有认可资历的内地专业人才来港工作。',
         prerequisites: '已获香港雇主聘用、具备香港缺乏的专业技能/知识/经验、薪酬福利与香港市场水平相当。',
         materials: '身份证、港澳通行证、雇佣合约、学历证明、工作经验证明、雇主公司资料。',
         steps: '1. 获得香港雇主聘用 → 2. 雇主提交申请 → 3. 入境处审批 → 4. 获批后办理签证',

@@ -108,7 +108,7 @@ exports.main = async function (event, context) {
     const results = [
       scoring.scoreQMAS(answers),
       scoring.scoreTTPS(answers),
-      scoring.scoreASMPT(answers),
+      scoring.scoreASMTP(answers),
       scoring.scoreIANG(answers),
       scoring.scoreInvestment(answers),
     ];

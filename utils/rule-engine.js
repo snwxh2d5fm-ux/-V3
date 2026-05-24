@@ -48,16 +48,6 @@ async function loadRules() {
 
   ruleSets.legalCitationRules = getBuiltinLegalRules();
   loaded = true;
-  console.debug(
-    '[规则引擎v4.1] 加载完成: ' +
-      ruleSets.reminders.length +
-      ' 提醒规则, ' +
-      ruleSets.materialChecks.length +
-      ' 检查规则, ' +
-      ruleSets.processValidations.length +
-      ' 验证规则' +
-      (allLoaded ? '' : ' (部分使用内置降级)'),
-  );
   return true;
 }
 

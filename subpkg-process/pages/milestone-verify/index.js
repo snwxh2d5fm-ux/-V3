@@ -93,7 +93,6 @@ Page({
 
         // ★ 本地推进：找第一个 in_progress → completed，下一个 locked → in_progress
         const stageIndex = parseInt(this.options.stageIndex) || 0;
-        console.debug('[里程碑验证] 推进 stageIndex=' + stageIndex);
         const app = getApp();
         const localId = this.data.localProcessId || this.data.processId;
         try {
@@ -103,7 +102,6 @@ Page({
             return l.id === localId || l._id === localId || l.cloudId === localId;
           });
           if (line && line.stages) {
-            console.debug('[里程碑验证] lines=' + ls.length + ' found=true stages=' + line.stages.length);
             // 找第一个 in_progress → completed
             let doneIdx = -1;
             for (let si = 0; si < line.stages.length; si++) {
@@ -128,7 +126,6 @@ Page({
               app.globalData.activeProcess = line;
               const newStage = Math.min(doneIdx + 1, 6);
               wx.setStorageSync('__process_stage__', newStage);
-              console.debug('[里程碑验证] 已推进 doneIdx=' + doneIdx + ' nextStage=' + newStage);
             } else {
               console.warn('[里程碑验证] 无 in_progress 阶段');
             }

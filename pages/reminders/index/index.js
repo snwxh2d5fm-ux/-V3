@@ -444,7 +444,7 @@ Page({
           saveReminders(reminders);
         }
       } catch (e) {
-        console.debug('[提醒器] 云端同步失败，使用本地数据');
+        // 云端同步失败，降级使用本地数据
       }
     }
 

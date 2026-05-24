@@ -18,7 +18,8 @@ interface EnrichedUser {
 }
 
 const PERSONA_FILTERS = ['全部', '在职人士', '企业主', '海外华人', '受养人', '在校学生'];
-const STATUS_MAP: Record<string, string> = { 已抵港: 'green', 已评估: 'blue', 未提交: 'yellow' };
+const PERSONA_ID_MAP: Record<string, number> = { '在校学生': 1, '在职人士': 2, '企业主': 3, '海外华人': 4, '受养人': 5 };
+const STATUS_MAP: Record<string, string> = { 已抵港: 'green', 评估中: 'blue', 已选路径: 'yellow', 未提交: 'muted' };
 const PATH_LABELS: Record<string, string> = {
   qmas: '优才',
   ttps_b: '高才B',
@@ -49,8 +50,8 @@ export function UserListPage() {
     setLoading(true);
     const p: Record<string, unknown> = { page: 1, pageSize: 50 };
     if (personaFilter !== '全部') {
-      const idx = PERSONA_FILTERS.indexOf(personaFilter) - 1;
-      if (idx >= 0) p.filter = { persona: idx + 1 };
+      const pid = PERSONA_ID_MAP[personaFilter];
+      if (pid) p.filter = { persona: pid };
     }
     const r = await listUsers(p);
     if (r.code === 0 && r.data) {
@@ -136,7 +137,7 @@ export function UserListPage() {
                     <td className="px-3 py-2">
                       <span className="rounded bg-[var(--muted)] px-1.5 py-0.5">{u.personaLabel}</span>
                     </td>
-                    <td className="px-3 py-2">{u.pathLabel || u.selectedPath || '—'}</td>
+                    <td className="px-3 py-2">{PATH_LABELS[u.selectedPath] || u.pathLabel || u.selectedPath || '—'}</td>
                     <td className="px-3 py-2">{u.membershipTier === 'free_trial' ? '免费试用' : u.membershipTier}</td>
                     <td className="px-3 py-2">
                       <span

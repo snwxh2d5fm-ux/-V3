@@ -84,7 +84,6 @@ Page({
     const dataVer = wx.getStorageSync('__process_data_version__') || 0;
     if (dataVer !== this.__lastDataVersion) {
       this.__lastDataVersion = dataVer;
-      console.debug('[流程控] 检测到数据变更，强制刷新 version=' + dataVer);
     }
     try {
       this.setData({
@@ -280,7 +279,7 @@ Page({
   },
 
   // ★ 通道A: 完成当前阶段所有步骤 → 自动推进
-  completeAllSteps: function (e) {
+  completeAllSteps: async function (e) {
     const index = parseInt(e.currentTarget && e.currentTarget.dataset && e.currentTarget.dataset.stageIndex) || -1;
     // 立即设置视觉反馈 (按钮变灰"推进中...")
     this.setData({ completingStageIdx: index });
@@ -291,11 +290,6 @@ Page({
       return;
     }
 
-    console.debug('[completeAllSteps] 触发 index=' + index);
-    console.debug(
-      '[completeAllSteps] index=' + index + ' phases.length=' + (this.data.phases ? this.data.phases.length : 0),
-    );
-
     // ── 校验阶段 (锁未设置，允许失败后重试) ──
     const phase = this.data.phases[index];
     if (!phase) {
@@ -303,7 +297,6 @@ Page({
       this.setData({ completingStageIdx: -1 });
       return;
     }
-    console.debug('[completeAllSteps] phase.status=' + phase.status + ' phase.name=' + phase.name);
     if (phase.status !== 'current') {
       wx.showToast({
         title: '当前阶段是"' + (phase.name || '?') + '"(' + phase.status + ')，非进行中',
@@ -316,12 +309,6 @@ Page({
 
     const app = getApp();
     const activeProcess = app.globalData.activeProcess;
-    console.debug(
-      '[completeAllSteps] activeProcess=' +
-        (activeProcess ? 'YES' : 'NO') +
-        ' stages=' +
-        (activeProcess && activeProcess.stages ? activeProcess.stages.length : 0),
-    );
     if (!activeProcess || !activeProcess.stages || activeProcess.stages.length === 0) {
       wx.showToast({ title: '请先在流程控选择身份路径，创建流程', icon: 'none', duration: 3000 });
       this.setData({ completingStageIdx: -1 });
@@ -501,16 +488,8 @@ Page({
         return s.status === 'in_progress';
       });
       if (inProgressStage) actualStageId = inProgressStage.stageId;
-      console.debug(
-        '[uploadMilestone] foundLine=YES stages=' +
-          currentLine.stages.length +
-          ' inProgressStage=' +
-          (inProgressStage ? inProgressStage.stageId : 'NOT_FOUND'),
-      );
     } else {
-      console.debug('[uploadMilestone] currentLine=' + (currentLine ? 'YES_NO_STAGES' : 'NOT_FOUND'));
     }
-    console.debug('[uploadMilestone] localId=' + localProcessId + ' stageId=' + actualStageId + ' stageIndex=' + index);
     wx.navigateTo({
       url:
         '/subpkg-process/pages/milestone-verify/index?processId=' +

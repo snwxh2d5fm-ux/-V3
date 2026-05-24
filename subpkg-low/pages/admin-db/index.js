@@ -69,7 +69,7 @@ Page({
         const res = await wx.cloud.callFunction({ name: 'db-admin', data: { action: 'stats' } });
         if (res.result) this.setData({ cloudStats: res.result.stats || this.data.cloudStats });
       } catch (e) {
-        console.debug('[AdminDB] cloud stats failed');
+        // 云端统计获取失败，使用本地数据
       }
     }
   },

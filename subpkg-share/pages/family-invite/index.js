@@ -344,14 +344,16 @@ Page({
   /** 微信分享（一键分享邀请码到聊天） */
   onShareAppMessage: function () {
     const code = this.data.newInviteCode;
+    const name = (this.data.newRecipientName || '').trim();
+    const title = name ? '邀请' + name + '加入我的家庭空间' : '邀请你加入我的家庭空间';
     if (!code) {
       return {
-        title: '邀请你加入我的家庭空间',
+        title: title,
         path: '/pages/mine/index/index',
       };
     }
     return {
-      title: '邀请你加入我的家庭空间',
+      title: title,
       path: '/subpkg-share/pages/family-invite/index?inviteCode=' + encodeURIComponent(code),
       imageUrl: '',
     };
