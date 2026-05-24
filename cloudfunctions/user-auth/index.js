@@ -66,7 +66,7 @@ async function handleLogin(openid, { code, phoneHash }) {
       userInfo: { nickName: user.nickName || '住港伴用户' },
       userStatus: user.currentPhase || 'unapplied',
       membershipLevel: user.membershipLevel || 'free',
-      data: sanitizeUser(user),
+      data: sanitizeUser({ ...user, isNew: false }),
     };
   }
 
@@ -99,7 +99,7 @@ async function handleLogin(openid, { code, phoneHash }) {
     userStatus: 'unapplied',
     membershipLevel: 'free',
     isNew: true,
-    data: sanitizeUser(userDoc),
+    data: sanitizeUser({ ...userDoc, isNew: true }),
   };
 }
 
@@ -222,7 +222,7 @@ async function handlePhoneLogin(openid, { phoneCode, loginType }) {
           membershipLevel: user.membershipLevel || 'free',
           phoneBound: true,
           accountMerged: true,
-          data: sanitizeUser(user),
+          data: sanitizeUser({ ...user, isNew: false }),
         };
       }
     }
@@ -247,7 +247,8 @@ async function handlePhoneLogin(openid, { phoneCode, loginType }) {
       userStatus: user.currentPhase || 'unapplied',
       membershipLevel: user.membershipLevel || 'free',
       phoneBound: true,
-      data: sanitizeUser({ ...user, phoneHash }),
+      isNew: false,
+      data: sanitizeUser({ ...user, phoneHash, isNew: false }),
     };
   }
 
@@ -281,7 +282,7 @@ async function handlePhoneLogin(openid, { phoneCode, loginType }) {
     membershipLevel: 'free',
     phoneBound: true,
     isNew: true,
-    data: sanitizeUser(userDoc),
+    data: sanitizeUser({ ...userDoc, isNew: true }),
   };
 }
 
