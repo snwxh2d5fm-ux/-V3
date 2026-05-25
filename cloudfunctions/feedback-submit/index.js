@@ -8,6 +8,26 @@ cloud.init({ env: cloud.DYNAMIC_CURRENT_ENV });
 const db = cloud.database();
 const _ = db.command;
 
+// 内容安全审核（复用 content-moderation 云函数）
+async function moderateText(text) {
+  if (!text || typeof text !== 'string') return { pass: true };
+  try {
+    const result = await cloud.callFunction({
+      name: 'content-moderation',
+      data: { action: 'moderateText', content: text },
+    });
+    if (result && result.result && result.result.code === 0) {
+      return { pass: true };
+    }
+    // 审核不通过（敏感词命中）返回拦截原因
+    return { pass: false, reason: (result && result.result && result.result.msg) || '内容不合规' };
+  } catch (e) {
+    // 审核服务异常时，安全侧兜底：拒绝提交（不能降级通过）
+    console.error('[feedback-submit] 内容审核调用失败，拒绝提交:', e.message);
+    return { pass: false, reason: '内容安全服务暂不可用，请稍后重试' };
+  }
+}
+
 // ============ PII 脱敏（云函数端强制，不可绕过） ============
 function sanitizePII(text) {
   if (!text || typeof text !== 'string') return text;
@@ -95,6 +115,12 @@ async function submit(event) {
 
   // PII 脱敏
   const sanitizedContent = sanitizePII(content);
+
+  // 内容安全审核（准入控制，审核不通过拦截提交）
+  const modResult = await moderateText(sanitizedContent);
+  if (!modResult.pass) {
+    return { code: 400, msg: modResult.reason || '内容不合规，请修改后重新提交' };
+  }
 
   // 脱敏昵称
   let nickname = '';
@@ -302,6 +328,13 @@ async function append(event) {
 
     // PII 脱敏
     const sanitizedContent = sanitizePII(content);
+
+    // 内容安全审核
+    const modResult = await moderateText(sanitizedContent);
+    if (!modResult.pass) {
+      return { code: 400, msg: modResult.reason || '内容不合规，请修改后重新提交' };
+    }
+
     const now = Date.now();
 
     await db.collection('feedback_reply').add({
