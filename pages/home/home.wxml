@@ -6,7 +6,7 @@
     <text class="loading-dot">加载中...</text>
   </view>
 
-  <!-- 未登录 - 品牌欢迎页 -->
+  <!-- 审核整改: 首页内容优先 — 用户首先看到功能介绍而非登录要求 -->
   <view class="welcome" wx:elif="{{unauthenticated}}">
     <view class="hero">
       <text class="app-icon">🏠</text>
@@ -14,6 +14,7 @@
       <text class="tagline">香港身份全流程陪伴工具</text>
     </view>
 
+    <!-- 核心功能展示 — 主体内容，无需登录即可浏览 -->
     <view class="features">
       <view class="feature">
         <text class="feat-icon">🔒</text>
@@ -32,13 +33,38 @@
       </view>
     </view>
 
+    <!-- 主体操作: 先浏览体验 -->
+    <view class="guest-area">
+      <button class="guest-btn" bindtap="enterAsGuest">
+        开始体验 · 无需登录
+      </button>
+    </view>
+
+    <!-- 分隔 -->
+    <view class="section-divider">
+      <text class="divider-text">登录解锁全部功能</text>
+    </view>
+
+    <!-- 登录区 — 次要入口，用户浏览后主动选择 -->
+    <!-- 审核整改: 用户必须主动勾选同意，不可默认强制同意 -->
+    <view class="consent-area">
+      <view class="consent-row" bindtap="toggleConsent">
+        <view class="consent-checkbox {{consentChecked ? 'checked' : ''}}">
+          <text wx:if="{{consentChecked}}">✓</text>
+        </view>
+        <text class="consent-text">
+          我已阅读并同意
+          <text class="consent-link" catchtap="openPrivacyPolicy">《隐私政策》</text>
+          和
+          <text class="consent-link" catchtap="openUserAgreement">《用户服务协议》</text>
+        </text>
+      </view>
+    </view>
+
     <view class="login-area">
-      <button class="login-btn" open-type="getPhoneNumber" bindgetphonenumber="handleLogin">
+      <button class="login-btn {{consentChecked ? '' : 'disabled'}}" open-type="getPhoneNumber" bindgetphonenumber="handleLogin" disabled="{{!consentChecked}}">
         手机号快捷登录
       </button>
-      <view class="privacy-check">
-        <text>登录即同意《隐私协议》和《用户协议》</text>
-      </view>
     </view>
 
     <view class="footer-links">

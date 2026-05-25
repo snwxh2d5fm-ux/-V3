@@ -174,6 +174,20 @@
 .msg-text {
   white-space: pre-wrap;
 }
+/* 审核整改: AI生成标识 */
+.msg-ai-tag {
+  margin-bottom: 6rpx;
+}
+.msg-ai-tag-text {
+  display: inline-block;
+  padding: 2rpx 10rpx;
+  background: #F3F4F6;
+  border: 1rpx solid #D1D5DB;
+  border-radius: 4rpx;
+  font-size: 20rpx;
+  color: #6B7280;
+  line-height: 1.6;
+}
 /* Bug #7: rich-text Markdown渲染 */
 .msg-rich-text {
   white-space: pre-wrap;

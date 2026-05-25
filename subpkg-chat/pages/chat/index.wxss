@@ -295,6 +295,21 @@
   line-height: 1.5;
 }
 
+/* 审核整改: AI生成标识标签 */
+.ai-generated-tag {
+  margin-bottom: 6rpx;
+}
+.ai-tag-text {
+  display: inline-block;
+  padding: 2rpx 12rpx;
+  background: #F3F4F6;
+  border: 1rpx solid #D1D5DB;
+  border-radius: 4rpx;
+  font-size: 20rpx;
+  color: #6B7280;
+  line-height: 1.6;
+}
+
 /* 安全横幅 */
 .safety-banners {
   padding: 8rpx 24rpx;
