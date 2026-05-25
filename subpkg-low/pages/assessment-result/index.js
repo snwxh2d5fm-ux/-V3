@@ -104,7 +104,7 @@ Page({
 
     // 追踪：评估完成
     if (enriched.length > 0) {
-      tracker.track('assessment_completed', {
+      tracker.event('assessment_completed', {
         persona: persona,
         personaName: personaName,
         topMatches: enriched.slice(0, 3).map(function (m) {
@@ -142,7 +142,7 @@ Page({
     wx.setStorageSync('__solution_recommendation__', this.data.matches);
 
     // 追踪：评估结果路径选择
-    tracker.track('path_selected', {
+    tracker.event('path_selected', {
       pathType: path,
       pathLabel: match ? match.name : path,
       source: 'assessment',
