@@ -4,8 +4,8 @@
  * 鉴权: API Key (SHA-256) 验证, 与 admin-stats 共用 admin_users 集合
  */
 const cloudbase = require('@cloudbase/node-sdk');
-const auth = require('../_shared/auth');
-const audit = require('../_shared/audit'); // P0-08
+const auth = require('./auth');
+const audit = require('./audit'); // P0-08
 const crypto = require('crypto');
 const app = cloudbase.init({ env: 'cloudbase-d1g17tgt7cc199a60' });
 const db = app.database();

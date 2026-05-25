@@ -1,7 +1,7 @@
 // 住港伴 V4 — admin-users: 用户管理 (按身份/会员/状态/路径等多维统计)
 const cloudbase = require('@cloudbase/node-sdk');
-const auth = require('../_shared/auth');
-const audit = require('../_shared/audit'); // P0-08
+const auth = require('./auth');
+const audit = require('./audit'); // P0-08
 const app = cloudbase.init({ env: 'cloudbase-d1g17tgt7cc199a60' });
 const db = app.database();
 

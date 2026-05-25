@@ -1,8 +1,8 @@
 // 住港伴 V4 — admin-ai-quality: AI质量监控 + 对话审核反馈后台 (V4.2)
 // response_preview 绝对禁止原始返回 — P0-05: getConversationDetail已做sanitize脱敏
 const cloudbase = require('@cloudbase/node-sdk');
-const auth = require('../_shared/auth');
-const audit = require('../_shared/audit'); // P0-08
+const auth = require('./auth');
+const audit = require('./audit'); // P0-08
 const app = cloudbase.init({ env: 'cloudbase-d1g17tgt7cc199a60' });
 const db = app.database();
 const _ = db.command;

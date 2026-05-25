@@ -1,0 +1,402 @@
+======================================================================
+住港伴 攻略内容保鲜监控报告
+生成时间: 2026-05-25 09:02
+模式: 📧 将发送邮件至 gangban@funway.hk
+======================================================================
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+📋 第一部分: 官方政策源变更检测
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+🔴 [CRITICAL] 入境处 — 优秀人才入境计划
+   链接: https://www.immd.gov.hk/hks/services/visas/quality_migrant_admission_scheme.html
+   变更摘要: 内容哈希变更: 0df94163 → ee9a86c9
+  新增 60 行
+  移除 70 行
+   抓取时间: 2026-05-25T09:01:58.725569
+   内容预览 (前200字):
+   >>> è·³è³ä¸»è¦å§å®¹
+æä»¬çæå¡
+åå°
+ä¸»é¡µ
+æä»¬çæå¡
+ç­¾è¯/è¿å¥è®¸å¯
+ä¼ç§äººæå¥å¢è®¡å
+ä¼ç§äººæå¥å¢è®¡å
+å¥å¢ç­¾è¯ï¼è¿å¥è®¸å¯
+å³æ¶ç³è¯·
+å»¶é¿éçæé
+å³æ
+
+   📌 审核行动:
+      1. 访问链接确认变更内容
+      2. 对比攻略书现有内容
+      3. 如需更新 → 修改 guidebook-data.js
+      4. 重新部署云端 guidebook 函数
+
+🔴 [CRITICAL] 入境处 — 高端人才通行证计划
+   链接: https://www.immd.gov.hk/hks/services/visas/TTPS.html
+   变更摘要: 内容哈希变更: 96222afe → 69c65f1e
+  新增 56 行
+  移除 70 行
+   抓取时间: 2026-05-25T09:02:00.800797
+   内容预览 (前200字):
+   >>> è·³è³ä¸»è¦å§å®¹
+æä»¬çæå¡
+åå°
+ä¸»é¡µ
+æä»¬çæå¡
+ç­¾è¯ï¼è¿å¥è®¸å¯
+é«ç«¯äººæéè¡è¯è®¡å
+é«ç«¯äººæéè¡è¯è®¡å
+å¥å¢ç­¾è¯ï¼è¿å¥è®¸å¯
+å³æ¶ç³è¯·
+å»¶é¿éçæé
+
+   📌 审核行动:
+      1. 访问链接确认变更内容
+      2. 对比攻略书现有内容
+      3. 如需更新 → 修改 guidebook-data.js
+      4. 重新部署云端 guidebook 函数
+
+🔴 [CRITICAL] 入境处 — 输入内地人才计划
+   链接: https://www.immd.gov.hk/hks/services/visas/ASMTP.html
+   变更摘要: 内容哈希变更: f121ea6c → 3ac9b66f
+  新增 49 行
+  移除 70 行
+   抓取时间: 2026-05-25T09:02:01.529061
+   内容预览 (前200字):
+   >>> è·³è³ä¸»è¦å§å®¹
+æä»¬çæå¡
+åå°
+ä¸»é¡µ
+æä»¬çæå¡
+ç­¾è¯/è¿å¥è®¸å¯
+è¾å¥åå°äººæè®¡å
+è¾å¥åå°äººæè®¡å
+å¥å¢ç­¾è¯ï¼è¿å¥è®¸å¯
+å³æ¶ç³è¯·
+å»¶é¿éçæé
+å³æ
+
+   📌 审核行动:
+      1. 访问链接确认变更内容
+      2. 对比攻略书现有内容
+      3. 如需更新 → 修改 guidebook-data.js
+      4. 重新部署云端 guidebook 函数
+
+🔴 [CRITICAL] 入境处 — 非本地毕业生留港/回港就业安排
+   链接: https://www.immd.gov.hk/hks/services/visas/IANG.html
+   变更摘要: 内容哈希变更: 3c820bb8 → f1e9ce48
+  新增 53 行
+  移除 70 行
+   抓取时间: 2026-05-25T09:02:02.426825
+   内容预览 (前200字):
+   >>> è·³è³ä¸»è¦å§å®¹
+æä»¬çæå¡
+åå°
+ä¸»é¡µ
+æä»¬çæå¡
+ç­¾è¯/è¿å¥è®¸å¯
+éæ¬å°æ¯ä¸ççæ¸¯ï¼åæ¸¯å°±ä¸å®æ
+éæ¬å°æ¯ä¸ççæ¸¯ï¼åæ¸¯å°±ä¸å®æ
+å¥å¢ç­¾è¯ï¼è¿å¥è®
+
+   📌 审核行动:
+      1. 访问链接确认变更内容
+      2. 对比攻略书现有内容
+      3. 如需更新 → 修改 guidebook-data.js
+      4. 重新部署云端 guidebook 函数
+
+🔴 [MEDIUM] 香港政府一站通 — 入境事务
+   链接: https://www.gov.hk/tc/residents/immigration/
+   变更摘要: 内容哈希变更: 0706f52e → e3b0c442
+   抓取时间: 2026-05-25T09:02:07.734078
+   内容预览 (前200字):
+
+   📌 审核行动:
+      1. 访问链接确认变更内容
+      2. 对比攻略书现有内容
+      3. 如需更新 → 修改 guidebook-data.js
+      4. 重新部署云端 guidebook 函数
+
+🔴 [HIGH] 香港人才清单 (2025.3更新)
+   链接: https://www.talentlist.gov.hk/
+   变更摘要: 内容哈希变更: 28c19679 → e3b0c442
+   抓取时间: 2026-05-25T09:02:12.424786
+   内容预览 (前200字):
+
+   📌 审核行动:
+      1. 访问链接确认变更内容
+      2. 对比攻略书现有内容
+      3. 如需更新 → 修改 guidebook-data.js
+      4. 重新部署云端 guidebook 函数
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+🔍 第二部分: 公众号信息交叉验证
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+搜索关键词: "香港优才 2026 新政策"
+  📄 2026香港优才计划新政权威解读:12项评分准则+通过率数据+续签转永居条件,政策利弊全维度分析
+     来源: 优才成功jo姐
+     日期: 
+     链接: /link?url=dn9a_-gY295K0Rci_xozVXfdMkSQTLW6cwJThYulHEtVjXrGTiVgS--XAn_Qla1mr7LK_A2K4HKi96deDsDDzFqXa8Fplpd9L10LmQO40QVcnJ7ALrjZ0oUI55BfwsYb2vuLQfDklnLMQnt65Gq7D-9by3FzFx2chOrYTDysWieQTaEU4EzEb0cM_-NBiAiW3XvNqATrhSOOGwt4FJQfgnh0MbXIDppZQV6NpKdBRAm6f2M8bTLJ_HjD07Ll7Wm-T9WDMAwKTzR535pjGOOjYg..&type=2&query=%E9%A6%99%E6%B8%AF%E4%BC%98%E6%89%8D 2026 %E6%96%B0%E6%94%BF%E7%AD%96&token=E884A774F8A1301EBEB8EF245065EC06BE316C506A139F96
+     验证: ❓ 自媒体 — 建议仅作参考，以官方为准
+
+  📄 2026香港优才计划新政权威解读:12项评分准则+通过率数据+续签转永居条件,政策利弊全维度分析
+     来源: 优才成功jo姐
+     日期: 
+     链接: /link?url=dn9a_-gY295K0Rci_xozVXfdMkSQTLW6cwJThYulHEtVjXrGTiVgS--XAn_Qla1mr7LK_A2K4HKi96deDsDDzFqXa8Fplpd9L10LmQO40QVcnJ7ALrjZ0oUI55BfwsYb2vuLQfDklnLMQnt65Gq7D-9by3FzFx2chOrYTDysWieQTaEU4EzEb0cM_-NBiAiW3XvNqATrhSOOGwt4FJQfgnh0MbXIDppZQV6NpKdBRAm6f2M8bTLJ_HjD07Ll7Wm-T9WDMAwKTzR535pjGOOjYg..&type=2&query=%E9%A6%99%E6%B8%AF%E4%BC%98%E6%89%8D 2026 %E6%96%B0%E6%94%BF%E7%AD%96&token=E884A774F8A1301EBEB8EF245065EC06BE316C506A139F96
+     验证: ❓ 自媒体 — 建议仅作参考，以官方为准
+
+  📄 香港优才计划 |2026优才续签最新指南!3月政策变动+申请资格+续签要点+7年永居路径详解攻略来啦
+     来源: 银河香港优才
+     日期: 
+     链接: /link?url=dn9a_-gY295K0Rci_xozVXfdMkSQTLW6cwJThYulHEtVjXrGTiVgS--XAn_Qla1mr7LK_A2K4HKi96deDsDDzFqXa8Fplpd98uIjO_yQnLCBfObX90ydJaZj0TyISJ7HB2Zt2f59fLbXIQnMfsO4bmgkuB-b1YMLmr4b0_V-DL0bsYynhwpR1JFFUpl_tlLsOLB-OB8N4i-q4OSvpOzOfTIjYeDCKlubfRE3-BAVVSSQqrcS8LAUcaabcXef0FV6dwYsEz9Ur_-TJmCU1UgHwQ..&type=2&query=%E9%A6%99%E6%B8%AF%E4%BC%98%E6%89%8D 2026 %E6%96%B0%E6%94%BF%E7%AD%96&token=E884A774F8A1301EBEB8EF245065EC06BE316C506A139F96
+     验证: ⚠️  中介机构 — 需交叉验证
+
+  📄 香港优才计划 |2026优才续签最新指南!3月政策变动+申请资格+续签要点+7年永居路径详解攻略来啦
+     来源: 银河香港优才
+     日期: 
+     链接: /link?url=dn9a_-gY295K0Rci_xozVXfdMkSQTLW6cwJThYulHEtVjXrGTiVgS--XAn_Qla1mr7LK_A2K4HKi96deDsDDzFqXa8Fplpd98uIjO_yQnLCBfObX90ydJaZj0TyISJ7HB2Zt2f59fLbXIQnMfsO4bmgkuB-b1YMLmr4b0_V-DL0bsYynhwpR1JFFUpl_tlLsOLB-OB8N4i-q4OSvpOzOfTIjYeDCKlubfRE3-BAVVSSQqrcS8LAUcaabcXef0FV6dwYsEz9Ur_-TJmCU1UgHwQ..&type=2&query=%E9%A6%99%E6%B8%AF%E4%BC%98%E6%89%8D 2026 %E6%96%B0%E6%94%BF%E7%AD%96&token=E884A774F8A1301EBEB8EF245065EC06BE316C506A139F96
+     验证: ⚠️  中介机构 — 需交叉验证
+
+  📄 [香港优才]2026年香港优才计划最新政策变化、申请资格和材料
+     来源: 家族资产守护与传承
+     日期: 
+     链接: /link?url=dn9a_-gY295K0Rci_xozVXfdMkSQTLW6cwJThYulHEtVjXrGTiVgS--XAn_Qla1mr7LK_A2K4HKi96deDsDDzFqXa8Fplpd9k2xFFLXII6CemPl7db98eURW2oI8il9fkY7tQL0hMZ_7eBDCc4XSVA1YYmga7D81QG9A_zwn34Q_pjX0gjuZPFBuM6qxl5zgJk6E2zWPoOhf_QP1L2rCmx21GOYz5qy8u6oWf8hf_E4wtLHytprqUxn9T28OJequi5OkHcB8yuzRtmyIGw2VAg..&type=2&query=%E9%A6%99%E6%B8%AF%E4%BC%98%E6%89%8D 2026 %E6%96%B0%E6%94%BF%E7%AD%96&token=E884A774F8A1301EBEB8EF245065EC06BE316C506A139F96
+     验证: ❓ 自媒体 — 建议仅作参考，以官方为准
+
+
+搜索关键词: "香港高才通 续签 2026"
+  📄 香港高才通续签2026年月新规更新:高才不在港如何续签?续签要求、4大方式、材料、自雇续签一文说透
+     来源: 银河创世纪
+     日期: 
+     链接: /link?url=dn9a_-gY295K0Rci_xozVXfdMkSQTLW6cwJThYulHEtVjXrGTiVgS--XAn_Qla1mr7LK_A2K4HKi96deDsDDzFqXa8Fplpd93JQhzsdhGrElA8uhVLeNjfxZmf-WCeBVDWyk6Ih0HtWDLtJjvH4HWuIzdHXtihxlxXwjl4KCjZD-0nLbRARViScGiZ36cSNIESW02VLrvgf4jMZkA0hGHn11xMhWqHuW2i5VgS2goGavEcVHGp3n-snNdrqneXy8Ui7KVV9nchXRtmyIGw2VAg..&type=2&query=%E9%A6%99%E6%B8%AF%E9%AB%98%E6%89%8D%E9%80%9A %E7%BB%AD%E7%AD%BE 2026&token=E884A932174EDCF2525703C8BF8FD8F952E1A8586A139F96
+     验证: ⚠️  中介机构 — 需交叉验证
+
+  📄 香港高才通续签2026年月新规更新:高才不在港如何续签?续签要求、4大方式、材料、自雇续签一文说透
+     来源: 银河创世纪
+     日期: 
+     链接: /link?url=dn9a_-gY295K0Rci_xozVXfdMkSQTLW6cwJThYulHEtVjXrGTiVgS--XAn_Qla1mr7LK_A2K4HKi96deDsDDzFqXa8Fplpd93JQhzsdhGrElA8uhVLeNjfxZmf-WCeBVDWyk6Ih0HtWDLtJjvH4HWuIzdHXtihxlxXwjl4KCjZD-0nLbRARViScGiZ36cSNIESW02VLrvgf4jMZkA0hGHn11xMhWqHuW2i5VgS2goGavEcVHGp3n-snNdrqneXy8Ui7KVV9nchXRtmyIGw2VAg..&type=2&query=%E9%A6%99%E6%B8%AF%E9%AB%98%E6%89%8D%E9%80%9A %E7%BB%AD%E7%AD%BE 2026&token=E884A932174EDCF2525703C8BF8FD8F952E1A8586A139F96
+     验证: ⚠️  中介机构 — 需交叉验证
+
+  📄 2026香港高才通续签全指南:数据解析、官方路径与成功关键
+     来源: 银河创世纪
+     日期: 
+     链接: /link?url=dn9a_-gY295K0Rci_xozVXfdMkSQTLW6cwJThYulHEtVjXrGTiVgS--XAn_Qla1mr7LK_A2K4HKi96deDsDDzFqXa8Fplpd93JQhzsdhGrElA8uhVLeNjfxZmf-WCeBVDWyk6Ih0HtWDLtJjvH4HWlw_xIiwBN_bwEaV7b40qnwLP1sKuqT6A-pa7kZBzz_tvBoaBIfpy5Ky0UP2aJWriNFF6SUfoxgpZ0kHDqU7fn0Zz2K2cebY4ELCnJ8C96wcj1ZJ3QFahZZj3x9Nw6p-Fg..&type=2&query=%E9%A6%99%E6%B8%AF%E9%AB%98%E6%89%8D%E9%80%9A %E7%BB%AD%E7%AD%BE 2026&token=E884A932174EDCF2525703C8BF8FD8F952E1A8586A139F96
+     验证: ⚠️  中介机构 — 需交叉验证
+
+  📄 2026香港高才通续签全指南:数据解析、官方路径与成功关键
+     来源: 银河创世纪
+     日期: 
+     链接: /link?url=dn9a_-gY295K0Rci_xozVXfdMkSQTLW6cwJThYulHEtVjXrGTiVgS--XAn_Qla1mr7LK_A2K4HKi96deDsDDzFqXa8Fplpd93JQhzsdhGrElA8uhVLeNjfxZmf-WCeBVDWyk6Ih0HtWDLtJjvH4HWlw_xIiwBN_bwEaV7b40qnwLP1sKuqT6A-pa7kZBzz_tvBoaBIfpy5Ky0UP2aJWriNFF6SUfoxgpZ0kHDqU7fn0Zz2K2cebY4ELCnJ8C96wcj1ZJ3QFahZZj3x9Nw6p-Fg..&type=2&query=%E9%A6%99%E6%B8%AF%E9%AB%98%E6%89%8D%E9%80%9A %E7%BB%AD%E7%AD%BE 2026&token=E884A932174EDCF2525703C8BF8FD8F952E1A8586A139F96
+     验证: ⚠️  中介机构 — 需交叉验证
+
+  📄 香港高才通申请、续签2026年新政策解读:3年政策趋势+A类持股/利润要求+续签“贡献”要求+创业自雇方案!
+     来源: 港签创业帮
+     日期: 
+     链接: /link?url=dn9a_-gY295K0Rci_xozVXfdMkSQTLW6cwJThYulHEtVjXrGTiVgS--XAn_Qla1mr7LK_A2K4HKi96deDsDDzFqXa8Fplpd9653yGfRX400rPz4oIgfv0hQPVbvxAeDQi7q68FDElzwOdxcW6vg8Nhh6jLTEDUCwgqC-AgH7pRt8q87v-UgvcjLEBOBHeF4a2LHHZmP3-CsOk6G_YHqyzi77QcleKnij2sVD9cytQ76XqB0ABAQCSile0epR_pPx5cPryBU2fKBj3x9Nw6p-Fg..&type=2&query=%E9%A6%99%E6%B8%AF%E9%AB%98%E6%89%8D%E9%80%9A %E7%BB%AD%E7%AD%BE 2026&token=E884A932174EDCF2525703C8BF8FD8F952E1A8586A139F96
+     验证: ❓ 自媒体 — 建议仅作参考，以官方为准
+
+
+搜索关键词: "香港专才 申请条件 变更"
+  📄 想要申请香港身份?速来解香港专才的申请条件、优缺点与流程!
+     来源: 香港直通车
+     日期: 
+     链接: /link?url=dn9a_-gY295K0Rci_xozVXfdMkSQTLW6cwJThYulHEtVjXrGTiVgS--XAn_Qla1mr7LK_A2K4HKi96deDsDDzFqXa8Fplpd9XEBE1bFcwdPW4oW0JHE5gMTnmpyjlRuaQRPj0b6t8-3rNyCCkWQDUJh_Myrjy4S1CKtlX7a4lxsseHRgW-KyPHaYhC9ECsXL2t8YiQcoVhntzNFvkoffvzZvxbAwhTvUqcywWp6ssQ3oUyCR1kXeBgInUF52u_ZRjrvNNX_BztfYl_Q5RRZQjg..&type=2&query=%E9%A6%99%E6%B8%AF%E4%B8%93%E6%89%8D %E7%94%B3%E8%AF%B7%E6%9D%A1%E4%BB%B6 %E5%8F%98%E6%9B%B4&token=E884AB0B356FE1D3706922E99D8D8D4070BCDB366A139F96
+     验证: ❓ 自媒体 — 建议仅作参考，以官方为准
+
+  📄 想要申请香港身份?速来解香港专才的申请条件、优缺点与流程!
+     来源: 香港直通车
+     日期: 
+     链接: /link?url=dn9a_-gY295K0Rci_xozVXfdMkSQTLW6cwJThYulHEtVjXrGTiVgS--XAn_Qla1mr7LK_A2K4HKi96deDsDDzFqXa8Fplpd9XEBE1bFcwdPW4oW0JHE5gMTnmpyjlRuaQRPj0b6t8-3rNyCCkWQDUJh_Myrjy4S1CKtlX7a4lxsseHRgW-KyPHaYhC9ECsXL2t8YiQcoVhntzNFvkoffvzZvxbAwhTvUqcywWp6ssQ3oUyCR1kXeBgInUF52u_ZRjrvNNX_BztfYl_Q5RRZQjg..&type=2&query=%E9%A6%99%E6%B8%AF%E4%B8%93%E6%89%8D %E7%94%B3%E8%AF%B7%E6%9D%A1%E4%BB%B6 %E5%8F%98%E6%9B%B4&token=E884AB0B356FE1D3706922E99D8D8D4070BCDB366A139F96
+     验证: ❓ 自媒体 — 建议仅作参考，以官方为准
+
+  📄 一文搞懂香港专才:申请条件+办理流程+适合人群全攻略
+     来源: 身份直通车
+     日期: 
+     链接: /link?url=dn9a_-gY295K0Rci_xozVXfdMkSQTLW6cwJThYulHEtVjXrGTiVgS--XAn_Qla1mr7LK_A2K4HKi96deDsDDzFqXa8Fplpd90jrxQ9rHBQMGfU7gdcuoqLALqV2prF5EruAJLFOTI-tRhSVxsIvnTAH6HWf3ki5BmOMyTYjehAY3b-1i-zVjzgYCG5P43BIKkmVySGQy51X_GsJqJ0r3sJZkwKwEJW8kS_k-RSLItddT6lYRocfVmUQJlP9MPY1lJV5s13JefCtQL0Hr9Gyd3Q..&type=2&query=%E9%A6%99%E6%B8%AF%E4%B8%93%E6%89%8D %E7%94%B3%E8%AF%B7%E6%9D%A1%E4%BB%B6 %E5%8F%98%E6%9B%B4&token=E884AB0B356FE1D3706922E99D8D8D4070BCDB366A139F96
+     验证: ❓ 自媒体 — 建议仅作参考，以官方为准
+
+  📄 一文搞懂香港专才:申请条件+办理流程+适合人群全攻略
+     来源: 身份直通车
+     日期: 
+     链接: /link?url=dn9a_-gY295K0Rci_xozVXfdMkSQTLW6cwJThYulHEtVjXrGTiVgS--XAn_Qla1mr7LK_A2K4HKi96deDsDDzFqXa8Fplpd90jrxQ9rHBQMGfU7gdcuoqLALqV2prF5EruAJLFOTI-tRhSVxsIvnTAH6HWf3ki5BmOMyTYjehAY3b-1i-zVjzgYCG5P43BIKkmVySGQy51X_GsJqJ0r3sJZkwKwEJW8kS_k-RSLItddT6lYRocfVmUQJlP9MPY1lJV5s13JefCtQL0Hr9Gyd3Q..&type=2&query=%E9%A6%99%E6%B8%AF%E4%B8%93%E6%89%8D %E7%94%B3%E8%AF%B7%E6%9D%A1%E4%BB%B6 %E5%8F%98%E6%9B%B4&token=E884AB0B356FE1D3706922E99D8D8D4070BCDB366A139F96
+     验证: ❓ 自媒体 — 建议仅作参考，以官方为准
+
+  📄 香港专才放开申请条件,那些人适合申请专才?
+     来源: 香港直通车
+     日期: 
+     链接: /link?url=dn9a_-gY295K0Rci_xozVXfdMkSQTLW6cwJThYulHEtVjXrGTiVgS--XAn_Qla1mr7LK_A2K4HKi96deDsDDzFqXa8Fplpd9XEBE1bFcwdPW4oW0JHE5gMTnmpyjlRuaQRPj0b6t8-3rNyCCkWQDUI0hya5IPxIV2AALfrPxs_zGCTpMzv8axl_hu57yhr7x7Lp-jtm7wD63agQa7u-I-fQyd02rtDMA72Df1UX2YF4zKKjxFeW994XJ-d04kTzEYIeXdfI4L5Zf_71bqkOtiw..&type=2&query=%E9%A6%99%E6%B8%AF%E4%B8%93%E6%89%8D %E7%94%B3%E8%AF%B7%E6%9D%A1%E4%BB%B6 %E5%8F%98%E6%9B%B4&token=E884AB0B356FE1D3706922E99D8D8D4070BCDB366A139F96
+     验证: ❓ 自媒体 — 建议仅作参考，以官方为准
+
+
+搜索关键词: "香港IANG 2026"
+  📄 IANG签证时代:香港本科选专业影响续签,2026留港就业适配专业指南
+     来源: 科睿德国际教育
+     日期: 
+     链接: /link?url=dn9a_-gY295K0Rci_xozVXfdMkSQTLW6cwJThYulHEtVjXrGTiVgS--XAn_Qla1mdvn2rY_ns7-i96deDsDDzFqXa8Fplpd9PQ1UnsVXs3Z8L64RThqN0CE1RM_c996IUdIQUBHz7gHypVLj7423R0dCW9irAwNsIeRdr6Y04U4-Kp1JbFGpUywQvkyQv1d1li_JapS2TL562gKmeghrermJo3z-vWypT-HgIdqMHfeVl06T30Qj7HOYhW1-GcpTFJNIv-ZcZoyq3X8EKMKOIA..&type=2&query=%E9%A6%99%E6%B8%AFIANG 2026&token=E884ACD2AAEF7E4CEFE9BD690218A8B8F07161A36A139F97
+     验证: ❓ 自媒体 — 建议仅作参考，以官方为准
+
+  📄 IANG签证时代:香港本科选专业影响续签,2026留港就业适配专业指南
+     来源: 科睿德国际教育
+     日期: 
+     链接: /link?url=dn9a_-gY295K0Rci_xozVXfdMkSQTLW6cwJThYulHEtVjXrGTiVgS--XAn_Qla1mdvn2rY_ns7-i96deDsDDzFqXa8Fplpd9PQ1UnsVXs3Z8L64RThqN0CE1RM_c996IUdIQUBHz7gHypVLj7423R0dCW9irAwNsIeRdr6Y04U4-Kp1JbFGpUywQvkyQv1d1li_JapS2TL562gKmeghrermJo3z-vWypT-HgIdqMHfeVl06T30Qj7HOYhW1-GcpTFJNIv-ZcZoyq3X8EKMKOIA..&type=2&query=%E9%A6%99%E6%B8%AFIANG 2026&token=E884ACD2AAEF7E4CEFE9BD690218A8B8F07161A36A139F97
+     验证: ❓ 自媒体 — 建议仅作参考，以官方为准
+
+  📄 2026年香港IANG签证续签全攻略:从政策解读到续签成功实操指南!
+     来源: 银河说优才
+     日期: 
+     链接: /link?url=dn9a_-gY295K0Rci_xozVXfdMkSQTLW6cwJThYulHEtVjXrGTiVgS--XAn_Qla1mdvn2rY_ns7-i96deDsDDzFqXa8Fplpd9lE4PXKBkwwULktoZ-gnFXFobc3ja_xcflJ0vbRNE_Yb1Y3944OLAlDtQBjfteG2hA8AWKWkQH2kG4bhyyxvgjJWRipfhUEvQI-rF3bK1ff_Yo4PKt_uQ3hjwSl_qMMBg9HGPj1bsS5SiMxZNgYZVXcQrOevPUZF0j9P-WRBI7XvYl_Q5RRZQjg..&type=2&query=%E9%A6%99%E6%B8%AFIANG 2026&token=E884ACD2AAEF7E4CEFE9BD690218A8B8F07161A36A139F97
+     验证: ⚠️  中介机构 — 需交叉验证
+
+  📄 2026年香港IANG签证续签全攻略:从政策解读到续签成功实操指南!
+     来源: 银河说优才
+     日期: 
+     链接: /link?url=dn9a_-gY295K0Rci_xozVXfdMkSQTLW6cwJThYulHEtVjXrGTiVgS--XAn_Qla1mdvn2rY_ns7-i96deDsDDzFqXa8Fplpd9lE4PXKBkwwULktoZ-gnFXFobc3ja_xcflJ0vbRNE_Yb1Y3944OLAlDtQBjfteG2hA8AWKWkQH2kG4bhyyxvgjJWRipfhUEvQI-rF3bK1ff_Yo4PKt_uQ3hjwSl_qMMBg9HGPj1bsS5SiMxZNgYZVXcQrOevPUZF0j9P-WRBI7XvYl_Q5RRZQjg..&type=2&query=%E9%A6%99%E6%B8%AFIANG 2026&token=E884ACD2AAEF7E4CEFE9BD690218A8B8F07161A36A139F97
+     验证: ⚠️  中介机构 — 需交叉验证
+
+  📄 2026香港IANG5月新政落地:受雇/自雇续签条件收紧,断签补救+强积金要求全解析(附材料清单)
+     来源: 港澳身份通
+     日期: 
+     链接: /link?url=dn9a_-gY295K0Rci_xozVXfdMkSQTLW6cwJThYulHEtVjXrGTiVgS--XAn_Qla1mdvn2rY_ns7-i96deDsDDzFqXa8Fplpd99BUiGLIYZl--1A44Hd93z43zwA1IIII91dSVeNwGPhY_ulm_ZMgiUCXhxb9NiVyRfKShOJOI11VptGQsJ2lpgtMwWwJbHrfXSJJGddwTcWt8Enp3ozpE0h2BKJdLvGPEFJTR6mZ9HgDp554BW0kPlaPqMwAUONQRqM6BySqLTSgtPujwwRB2Pw..&type=2&query=%E9%A6%99%E6%B8%AFIANG 2026&token=E884ACD2AAEF7E4CEFE9BD690218A8B8F07161A36A139F97
+     验证: ❓ 自媒体 — 建议仅作参考，以官方为准
+
+
+搜索关键词: "香港投资移民 CIES 2026"
+  📄 速看!2026年香港投资移民5月申请新政落地,新投资入境3000万架构拆解、3166份申请数据、CIES投资项目核心优势梳理
+     来源: 港签创业帮
+     日期: 
+     链接: /link?url=dn9a_-gY295K0Rci_xozVXfdMkSQTLW6cwJThYulHEtVjXrGTiVgS--XAn_Qla1mdvn2rY_ns7-i96deDsDDzFqXa8Fplpd9653yGfRX400rPz4oIgfv0hQPVbvxAeDQi7q68FDElzwOdxcW6vg8Nuh3oiDXN34XLylpj6bsqBWL3LCebuHb4mowS42hlUc3YBDK4Ejo99_CN7LN33A1YkEpAIHRRuzXfhFtNoxfKR-WOvMFky0lmsRiN1DUhlixKp8oagIcPvPf3q8uRDTfkw..&type=2&query=%E9%A6%99%E6%B8%AF%E6%8A%95%E8%B5%84%E7%A7%BB%E6%B0%91 CIES 2026&token=E884AE9DC993022E8C8ADF156061ECD48DA9122F6A139F97
+     验证: ❓ 自媒体 — 建议仅作参考，以官方为准
+
+  📄 速看!2026年香港投资移民5月申请新政落地,新投资入境3000万架构拆解、3166份申请数据、CIES投资项目核心优势梳理
+     来源: 港签创业帮
+     日期: 
+     链接: /link?url=dn9a_-gY295K0Rci_xozVXfdMkSQTLW6cwJThYulHEtVjXrGTiVgS--XAn_Qla1mdvn2rY_ns7-i96deDsDDzFqXa8Fplpd9653yGfRX400rPz4oIgfv0hQPVbvxAeDQi7q68FDElzwOdxcW6vg8Nuh3oiDXN34XLylpj6bsqBWL3LCebuHb4mowS42hlUc3YBDK4Ejo99_CN7LN33A1YkEpAIHRRuzXfhFtNoxfKR-WOvMFky0lmsRiN1DUhlixKp8oagIcPvPf3q8uRDTfkw..&type=2&query=%E9%A6%99%E6%B8%AF%E6%8A%95%E8%B5%84%E7%A7%BB%E6%B0%91 CIES 2026&token=E884AE9DC993022E8C8ADF156061ECD48DA9122F6A139F97
+     验证: ❓ 自媒体 — 建议仅作参考，以官方为准
+
+  📄 香港投资移民CIES重启两年后:3000万门槛背后,什么人真正受益了?
+     来源: 特区Dollar Protection Project
+     日期: 
+     链接: /link?url=dn9a_-gY295K0Rci_xozVXfdMkSQTLW6cwJThYulHEtVjXrGTiVgS--XAn_Qla1mdvn2rY_ns7-i96deDsDDzFqXa8Fplpd9D5yf8crHn-Buh6hTScqlrH3il5k7CfQ_hgkvrtLfqHH5sijjygeC2c4ArHnhLV6nEDS2xtpiRXUEQzcTpC_uKjihC87tJWFFXbfNPBi1Pge5o8L4IFtms63T3Z_qIR82nJlODJS5Ne3K7yGxs0atxgVJL59QmAEqh7EX0EMc2HcHpHkoPMgL3A..&type=2&query=%E9%A6%99%E6%B8%AF%E6%8A%95%E8%B5%84%E7%A7%BB%E6%B0%91 CIES 2026&token=E884AE9DC993022E8C8ADF156061ECD48DA9122F6A139F97
+     验证: ❓ 自媒体 — 建议仅作参考，以官方为准
+
+  📄 香港投资移民CIES重启两年后:3000万门槛背后,什么人真正受益了?
+     来源: 特区Dollar Protection Project
+     日期: 
+     链接: /link?url=dn9a_-gY295K0Rci_xozVXfdMkSQTLW6cwJThYulHEtVjXrGTiVgS--XAn_Qla1mdvn2rY_ns7-i96deDsDDzFqXa8Fplpd9D5yf8crHn-Buh6hTScqlrH3il5k7CfQ_hgkvrtLfqHH5sijjygeC2c4ArHnhLV6nEDS2xtpiRXUEQzcTpC_uKjihC87tJWFFXbfNPBi1Pge5o8L4IFtms63T3Z_qIR82nJlODJS5Ne3K7yGxs0atxgVJL59QmAEqh7EX0EMc2HcHpHkoPMgL3A..&type=2&query=%E9%A6%99%E6%B8%AF%E6%8A%95%E8%B5%84%E7%A7%BB%E6%B0%91 CIES 2026&token=E884AE9DC993022E8C8ADF156061ECD48DA9122F6A139F97
+     验证: ❓ 自媒体 — 建议仅作参考，以官方为准
+
+  📄 从5000万降到3000万:香港投资移民2026房产投资门槛实质性放宽
+     来源: 银河HK续签说
+     日期: 
+     链接: /link?url=dn9a_-gY295K0Rci_xozVXfdMkSQTLW6cwJThYulHEtVjXrGTiVgS--XAn_Qla1mdvn2rY_ns7-i96deDsDDzFqXa8Fplpd91X0HoDZQav4YlRzwuLUwt1zssu0hkYSl8XwxT178ZzRHzsBPwQGlNaA6b26bm-ILIHjcO_5iVIOjrb0BBff5L7xN8SIK656N3lX07fZnrF_zg4SWy5iEUI9rv1_JiakVy50z6Mc1TWqu1y4ZDN6EysqqYCjiTBaCqSdnZATB1foHpHkoPMgL3A..&type=2&query=%E9%A6%99%E6%B8%AF%E6%8A%95%E8%B5%84%E7%A7%BB%E6%B0%91 CIES 2026&token=E884AE9DC993022E8C8ADF156061ECD48DA9122F6A139F97
+     验证: ⚠️  中介机构 — 需交叉验证
+
+
+搜索关键词: "香港人才清单 更新"
+  📄 【最新消息】香港紧急扩充人才清单!这些行业可加30分!
+     来源: 移民研究所
+     日期: 
+     链接: /link?url=dn9a_-gY295K0Rci_xozVXfdMkSQTLW6cwJThYulHEtVjXrGTiVgS--XAn_Qla1mdvn2rY_ns7-i96deDsDDzFqXa8Fplpd9-Wgav1s2oZs2Y_UuvKdFm_6NfFbl0MnseefPPIEvFjBqWXah54L9Ut-26lu9f774sKGKJaDH2I-swj--HeFBxupKra49cYWg0es-i1wyddUdeLmSEiXS3gQdkZcDVofHc_P8uLkd65E3PaQi171ciUNLh93WQ4dgl_Z_QWETf8gCYioxHkzTmA..&type=2&query=%E9%A6%99%E6%B8%AF%E4%BA%BA%E6%89%8D%E6%B8%85%E5%8D%95 %E6%9B%B4%E6%96%B0&token=E884B056762BBD90333266AADEC652B4347E46ED6A139F97
+     验证: ❓ 自媒体 — 建议仅作参考，以官方为准
+
+  📄 【最新消息】香港紧急扩充人才清单!这些行业可加30分!
+     来源: 移民研究所
+     日期: 
+     链接: /link?url=dn9a_-gY295K0Rci_xozVXfdMkSQTLW6cwJThYulHEtVjXrGTiVgS--XAn_Qla1mdvn2rY_ns7-i96deDsDDzFqXa8Fplpd9-Wgav1s2oZs2Y_UuvKdFm_6NfFbl0MnseefPPIEvFjBqWXah54L9Ut-26lu9f774sKGKJaDH2I-swj--HeFBxupKra49cYWg0es-i1wyddUdeLmSEiXS3gQdkZcDVofHc_P8uLkd65E3PaQi171ciUNLh93WQ4dgl_Z_QWETf8gCYioxHkzTmA..&type=2&query=%E9%A6%99%E6%B8%AF%E4%BA%BA%E6%89%8D%E6%B8%85%E5%8D%95 %E6%9B%B4%E6%96%B0&token=E884B056762BBD90333266AADEC652B4347E46ED6A139F97
+     验证: ❓ 自媒体 — 建议仅作参考，以官方为准
+
+  📄 香港“人才清单”扩大招51类专才 新增医疗及发展建造范畴
+     来源: 香港知多啲
+     日期: 
+     链接: /link?url=dn9a_-gY295K0Rci_xozVXfdMkSQTLW6cwJThYulHEtVjXrGTiVgS--XAn_Qla1mdvn2rY_ns7-i96deDsDDzFqXa8Fplpd9IcpEaYYKUbAZaDPPRbct4UfLIlDfPOEi7pWUkEjSanJ5Zcq2LJXcJc1iZNu7E6J3I0pb_toxd7TVGBpR54MP2XyKYwUzkpeuxxTNzR_ZMqKSFkW2Fsu9J7MLPB0Bk9A-DDWDkHKKVoIRZNewcUb8FOS-oOdV3IIZc-r5uZpcOrxe0WC6Sbi7DA..&type=2&query=%E9%A6%99%E6%B8%AF%E4%BA%BA%E6%89%8D%E6%B8%85%E5%8D%95 %E6%9B%B4%E6%96%B0&token=E884B056762BBD90333266AADEC652B4347E46ED6A139F97
+     验证: ❓ 自媒体 — 建议仅作参考，以官方为准
+
+  📄 香港“人才清单”扩大招51类专才 新增医疗及发展建造范畴
+     来源: 香港知多啲
+     日期: 
+     链接: /link?url=dn9a_-gY295K0Rci_xozVXfdMkSQTLW6cwJThYulHEtVjXrGTiVgS--XAn_Qla1mdvn2rY_ns7-i96deDsDDzFqXa8Fplpd9IcpEaYYKUbAZaDPPRbct4UfLIlDfPOEi7pWUkEjSanJ5Zcq2LJXcJc1iZNu7E6J3I0pb_toxd7TVGBpR54MP2XyKYwUzkpeuxxTNzR_ZMqKSFkW2Fsu9J7MLPB0Bk9A-DDWDkHKKVoIRZNewcUb8FOS-oOdV3IIZc-r5uZpcOrxe0WC6Sbi7DA..&type=2&query=%E9%A6%99%E6%B8%AF%E4%BA%BA%E6%89%8D%E6%B8%85%E5%8D%95 %E6%9B%B4%E6%96%B0&token=E884B056762BBD90333266AADEC652B4347E46ED6A139F97
+     验证: ❓ 自媒体 — 建议仅作参考，以官方为准
+
+  📄 中国香港优才计划扩大了人才清单,刷新了51项!这些行业的,香港需要你!
+     来源: NewStars纽星达教育移民
+     日期: 
+     链接: /link?url=dn9a_-gY295K0Rci_xozVXfdMkSQTLW6cwJThYulHEtVjXrGTiVgS--XAn_Qla1mdvn2rY_ns7-i96deDsDDzFqXa8Fplpd9BLWGKwrcDUZ-WpmC2EFOLRQiwdu8jk7WQ62R0lQsIdxVjKCcgi7fCM3h2ahbS-qPlr0uDr8detutOe4PdQ7kNMqVUhjqxCDEM722oJMIoKop6N8719_-LamivkQHB8-57nM-NFqopDfbsqgilLemh-uc0-nTtuzVtrTxFSSlm15Q_LeJW-Rhtg..&type=2&query=%E9%A6%99%E6%B8%AF%E4%BA%BA%E6%89%8D%E6%B8%85%E5%8D%95 %E6%9B%B4%E6%96%B0&token=E884B056762BBD90333266AADEC652B4347E46ED6A139F97
+     验证: ❓ 自媒体 — 建议仅作参考，以官方为准
+
+
+搜索关键词: "香港入境处 最新公告"
+  📄 香港入境處最新消息,
+     来源: 香港新港人
+     日期: 
+     链接: /link?url=dn9a_-gY295K0Rci_xozVXfdMkSQTLW6cwJThYulHEtVjXrGTiVgS--XAn_Qla1m6Sc7bvPGlvmi96deDsDDzFqXa8Fplpd91nk1nOMpl-BNE7ED6TzRux6jw1UaRWEAoj8-mjDdYcAnFbhhFoEJEyr1WeeRz-WgP-0k8RuQkU_j8SCwyDO9Ia9nHqcIj4yDzjhirLw6oe_mSn1Wvb-O4zzB_sGvViNPBQLrJ0V94_nwIuZnf3E3u4Q8NfYzdbKCosTnsI4Ttoq54z_tGSZTqA..&type=2&query=%E9%A6%99%E6%B8%AF%E5%85%A5%E5%A2%83%E5%A4%84 %E6%9C%80%E6%96%B0%E5%85%AC%E5%91%8A&token=E884B67E590392BF1B1A4985F21C1FC31CA2F54F6A139F99
+     验证: ❓ 自媒体 — 建议仅作参考，以官方为准
+
+  📄 香港入境處最新消息,
+     来源: 香港新港人
+     日期: 
+     链接: /link?url=dn9a_-gY295K0Rci_xozVXfdMkSQTLW6cwJThYulHEtVjXrGTiVgS--XAn_Qla1m6Sc7bvPGlvmi96deDsDDzFqXa8Fplpd91nk1nOMpl-BNE7ED6TzRux6jw1UaRWEAoj8-mjDdYcAnFbhhFoEJEyr1WeeRz-WgP-0k8RuQkU_j8SCwyDO9Ia9nHqcIj4yDzjhirLw6oe_mSn1Wvb-O4zzB_sGvViNPBQLrJ0V94_nwIuZnf3E3u4Q8NfYzdbKCosTnsI4Ttoq54z_tGSZTqA..&type=2&query=%E9%A6%99%E6%B8%AF%E5%85%A5%E5%A2%83%E5%A4%84 %E6%9C%80%E6%96%B0%E5%85%AC%E5%91%8A&token=E884B67E590392BF1B1A4985F21C1FC31CA2F54F6A139F99
+     验证: ❓ 自媒体 — 建议仅作参考，以官方为准
+
+  📄 最新消息!香港入境处宣布3月起香港身份续签政策做出调整,除高才外,优才、专才、IANG续签申请都能提前3个月递交材料!
+     来源: mily港身份
+     日期: 
+     链接: /link?url=dn9a_-gY295K0Rci_xozVXfdMkSQTLW6cwJThYulHEtVjXrGTiVgS--XAn_Qla1m6Sc7bvPGlvmi96deDsDDzFqXa8Fplpd9lcfvtZwcImbLdXX3pIi8rUgjhrDzOkj4BDSKMcZP6em1x9uMlDetlw4su3kJK-pvHmTjivrJEVxZ-9Upm-3cVzvClWG_Xj4vF-2y4TghbbTJlh-hbpe_ySKJKeuf9agsYzHJeAU4PBCEBVMVjSnJTJwHK9_thJFPLmk_8nJjhfu00NVofL2iDw..&type=2&query=%E9%A6%99%E6%B8%AF%E5%85%A5%E5%A2%83%E5%A4%84 %E6%9C%80%E6%96%B0%E5%85%AC%E5%91%8A&token=E884B67E590392BF1B1A4985F21C1FC31CA2F54F6A139F99
+     验证: ❓ 自媒体 — 建议仅作参考，以官方为准
+
+  📄 最新消息!香港入境处宣布3月起香港身份续签政策做出调整,除高才外,优才、专才、IANG续签申请都能提前3个月递交材料!
+     来源: mily港身份
+     日期: 
+     链接: /link?url=dn9a_-gY295K0Rci_xozVXfdMkSQTLW6cwJThYulHEtVjXrGTiVgS--XAn_Qla1m6Sc7bvPGlvmi96deDsDDzFqXa8Fplpd9lcfvtZwcImbLdXX3pIi8rUgjhrDzOkj4BDSKMcZP6em1x9uMlDetlw4su3kJK-pvHmTjivrJEVxZ-9Upm-3cVzvClWG_Xj4vF-2y4TghbbTJlh-hbpe_ySKJKeuf9agsYzHJeAU4PBCEBVMVjSnJTJwHK9_thJFPLmk_8nJjhfu00NVofL2iDw..&type=2&query=%E9%A6%99%E6%B8%AF%E5%85%A5%E5%A2%83%E5%A4%84 %E6%9C%80%E6%96%B0%E5%85%AC%E5%91%8A&token=E884B67E590392BF1B1A4985F21C1FC31CA2F54F6A139F99
+     验证: ❓ 自媒体 — 建议仅作参考，以官方为准
+
+  📄 香港入境处最新公布:2025年人才签证获批数据!
+     来源: 香港直通车
+     日期: 
+     链接: /link?url=dn9a_-gY295K0Rci_xozVXfdMkSQTLW6cwJThYulHEtVjXrGTiVgS--XAn_Qla1m6Sc7bvPGlvmi96deDsDDzFqXa8Fplpd9XEBE1bFcwdPW4oW0JHE5gMTnmpyjlRuaQRPj0b6t8-3rNyCCkWQDUEdNOQcvIflCAzWLmL9cRC2iWxCIPN8Tx_TvHwih2fWwfrP-hLRvQ84Xlx5i0G6tzayRtkkoHKXm8ISoIr_8LgGXf8c_M8WQ6_xcJ-90MUBAUv5IoxacoODI3OTRHYU2og..&type=2&query=%E9%A6%99%E6%B8%AF%E5%85%A5%E5%A2%83%E5%A4%84 %E6%9C%80%E6%96%B0%E5%85%AC%E5%91%8A&token=E884B67E590392BF1B1A4985F21C1FC31CA2F54F6A139F99
+     验证: ❓ 自媒体 — 建议仅作参考，以官方为准
+
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+📅 第三部分: 攻略书内容时效检查
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+✅ 所有攻略文章均在时效阈值内
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+✅ 第四部分: 人工审核流程
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+请按以下流程完成审核：
+
+  Step 1 — 确认变更真实性
+    访问上述每个 🔴 标记的官方链接，确认政策是否确实变更
+    阅读公众号交叉验证结果，判断信息一致性
+
+  Step 2 — 评估影响范围
+    确认变更影响的攻略书文章 (参考第三部分时效列表)
+    判断是否需要新增文章或仅更新现有文章
+
+  Step 3 — 内容更新
+    data/guidebook-data.js: 修改 affected 文章的 sections/faqAnswer
+    更新文章的 updated 日期
+    运行: bash scripts/verify.sh (确保通过)
+
+  Step 4 — 部署上线
+    云函数部署: 更新 guidebook 云函数代码
+    可选: 同步 guidebook_articles 云数据库
+    运行: bash scripts/verify.sh --baseline (更新基线)
+
+  Step 5 — 回复确认
+    回复此邮件，标注已完成的审核项目
+    ✅ 格式: '已审核 [日期] — 确认 [变更项数] 项，已更新 [文章数] 篇'
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+📧 本报告由住港伴 policy-monitor 自动生成
+   下次运行: 建议 2026-06-01 (每7天)
+   脚本位置: scripts/policy-monitor.py
+   配置文件: 本脚本内 OFFICIAL_SOURCES / KEY_WECHAT_ACCOUNTS
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━

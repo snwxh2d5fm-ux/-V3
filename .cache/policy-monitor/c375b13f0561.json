@@ -1,7 +1,7 @@
 {
   "url": "https://www.talentlist.gov.hk/",
-  "title": "",
-  "text": "<!DOCTYPE html><html lang=\"en-US\" dir=\"ltr\">\n  <head>\n    <meta charset=\"utf-8\">\n    <meta http-equiv=\"X-UA-Compatible\" content=\"IE=edge\">\n    <meta name=\"viewport\" content=\"width=device-width, initial-scale=1\">\n    <!--  \n    Document Title\n    =============================================\n    -->\n    <title>Talent List Hong Kong</title>\n  </head>\n<body class=\"home home-Home\n\">\n    <script type=\"text/javascript\" src=\"js/rootlangroute.js\"></script>\n   <!-- // $( document ).ready(function() { -->\n       \n  \n</body>\n</html>",
-  "hash": "28c196798790ad6c0de7d7cfbd64346f61bc6d4b6cf03885d9f4b801ca8ccfe5",
-  "fetched_at": "2026-05-18T09:02:28.494742"
+  "title": "Talent List Hong Kong",
+  "text": "",
+  "hash": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+  "fetched_at": "2026-05-25T09:02:12.424786"
 }

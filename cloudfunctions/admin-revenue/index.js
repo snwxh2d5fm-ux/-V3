@@ -1,7 +1,7 @@
 // 住港伴 V4 — admin-revenue: 财务看板
 const cloudbase = require('@cloudbase/node-sdk');
-const auth = require('../_shared/auth');
-const audit = require('../_shared/audit'); // P0-08
+const auth = require('./auth');
+const audit = require('./audit'); // P0-08
 const app = cloudbase.init({ env: 'cloudbase-d1g17tgt7cc199a60' });
 const db = app.database();
 

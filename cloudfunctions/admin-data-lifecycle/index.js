@@ -4,7 +4,7 @@
  * Timer: 每日凌晨 3:00 (cron: 0 0 3 * * * *)
  */
 const cloudbase = require('@cloudbase/node-sdk');
-const audit = require('../_shared/audit'); // P0-08
+const audit = require('./audit'); // P0-08
 const app = cloudbase.init({ env: cloudbase.SYMBOL_CURRENT_ENV });
 const db = app.database();
 
