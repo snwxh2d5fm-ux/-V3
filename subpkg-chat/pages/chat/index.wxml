@@ -30,9 +30,9 @@
     enhanced
     show-scrollbar="{{false}}"
   >
-    <!-- V7: 永久安全提示 -->
+    <!-- V7: 永久安全提示 + 审核整改: AI生成标识 -->
     <view class="permanent-notice">
-      <text>须知：AI提供流程指引和标准参考，不代替官方审核。材料合规性以入境事务处最终决定为准。</text>
+      <text>须知：本对话内容由人工智能生成，仅供参考。AI提供流程指引和标准参考，不代替官方审核。材料合规性以入境事务处最终决定为准。</text>
     </view>
 
     <!-- V7: 安全横幅 -->
@@ -52,6 +52,10 @@
 
           <!-- 消息气泡 -->
           <view class="bubble {{item.role}}">
+            <!-- 审核整改: AI生成标识 — 每条AI回复显著标注 -->
+            <view wx:if="{{item.role === 'assistant'}}" class="ai-generated-tag">
+              <text class="ai-tag-text">AI生成 · 仅供参考</text>
+            </view>
             <rich-text class="bubble-text" nodes="<div style='font-size:28rpx;line-height:1.8;color:#374151'>{{item.content}}</div>" user-select></rich-text>
 
             <!-- [V4.1-PHASE2] Task 3: 置信度图标 -->

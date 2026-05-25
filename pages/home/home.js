@@ -8,6 +8,8 @@ Page({
     unauthenticated: false,
     locked: false,
     membershipDays: 0,
+    // 审核整改: 隐私协议主动同意
+    consentChecked: false,
   },
 
   onLoad() {
@@ -109,6 +111,12 @@ Page({
 
   // ========== 未登录状态 ==========
   async handleLogin(e) {
+    // 审核整改: 防御性检查 — 未勾选同意协议时拒绝登录
+    if (!this.data.consentChecked) {
+      wx.showToast({ title: '请先阅读并同意隐私政策和服务协议', icon: 'none' });
+      return;
+    }
+
     const { errMsg, code } = e.detail || {};
 
     // 用户拒绝授权
@@ -216,6 +224,27 @@ Page({
   // ========== 锁定状态 ==========
   goPaywall() {
     wx.navigateTo({ url: '/subpkg-chat/pages/membership/index' });
+  },
+
+  // ========== 审核整改: 隐私协议主动同意 ==========
+  toggleConsent() {
+    this.setData({ consentChecked: !this.data.consentChecked });
+  },
+
+  openPrivacyPolicy() {
+    wx.navigateTo({ url: '/subpkg-chat/pages/privacy/index' });
+  },
+
+  openUserAgreement() {
+    wx.navigateTo({ url: '/subpkg-chat/pages/about/index' });
+  },
+
+  // ========== 审核整改: 游客浏览 ==========
+  enterAsGuest() {
+    // 游客可浏览TabBar全部页面，不要求登录
+    const app = getApp();
+    app.globalData.isGuest = true;
+    wx.switchTab({ url: '/pages/guidebooks/index/index' });
   },
 
   // ========== 通用 ==========
