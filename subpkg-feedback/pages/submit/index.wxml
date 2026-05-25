@@ -36,7 +36,7 @@
     />
     <view class="count-bar">
       <text class="count-text {{contentLen > 0 && contentLen < 10 ? 'warn' : ''}}">{{contentLen}}/500</text>
-      <text class="count-hint" wx:if="{{contentLen > 0 && contentLen < 10}}">至少输入2个字</text>
+      <text class="count-hint" wx:if="{{contentLen > 0 && contentLen < 10}}">至少输入10个字</text>
     </view>
   </view>
 

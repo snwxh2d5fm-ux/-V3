@@ -870,7 +870,7 @@ Page({
     wx.setStorageSync('__process_stage__', 0); // P1-01: 重置阶段
 
     // 追踪：流程创建
-    tracker.track('process_created', {
+    tracker.event('process_created', {
       pathType: template.pathType || templateId,
       pathLabel: template.name,
       source: processLine.source || 'manual',

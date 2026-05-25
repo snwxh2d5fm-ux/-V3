@@ -331,7 +331,7 @@ Page({
   },
   async confirmCrop() {
     wx.showLoading({ title: '处理中...' });
-    const imgProc = require('../../../utils/image-process');
+    const imgProc = require('../../utils/image-process');
     const imagePath = this.data.imagePath;
     // Bug #8: 先旋转，再裁剪，最后缩放
     const rotateDeg = this._rotateDeg || 0;
