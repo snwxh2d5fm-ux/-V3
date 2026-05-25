@@ -17,7 +17,17 @@ async function moderateText(text) {
       data: { action: 'moderateText', content: text },
     });
     if (result && result.result && result.result.code === 0) {
-      return { pass: true };
+      const resData = result.result.data || {};
+      // 降级场景：TMS不可用时按 fail-closed 拒绝
+      if (resData.degraded) {
+        console.warn('[feedback-submit] 审核服务降级，拒绝提交');
+        return { pass: false, reason: '内容安全服务暂不可用，请稍后重试' };
+      }
+      // 检查审核结果：仅 Pass 放行，Block/Review 均拦截
+      if (resData.suggestion === 'Pass') {
+        return { pass: true };
+      }
+      return { pass: false, reason: '内容包含违规信息，请修改后重新提交' };
     }
     // 审核不通过（敏感词命中）返回拦截原因
     return { pass: false, reason: (result && result.result && result.result.msg) || '内容不合规' };
