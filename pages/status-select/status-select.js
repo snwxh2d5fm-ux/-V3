@@ -215,6 +215,7 @@ Page({
     // ── 同步进度阶段标记 (__process_stage__) ──
     const stageMap = {
       unapplied: 0,
+      skipped: 0,
       preparing: 1,
       submitted: 2,
       waiting: 3,

@@ -20,6 +20,7 @@ const cloud = require('wx-server-sdk');
 cloud.init({ env: cloud.DYNAMIC_CURRENT_ENV });
 const db = cloud.database();
 const _ = db.command;
+const { reportError } = require('./_cf-error');
 
 // ========== 常量 ==========
 const CODE_COLLECTION = 'invite_codes';
@@ -78,7 +79,14 @@ exports.main = async (event) => {
         return { code: 404, msg: `未知操作: ${action}` };
     }
   } catch (e) {
-    console.error(`[invite-code] ${action} 异常:`, e.message || e);
+    // 统一错误上报: 写入 cf_error_logs + 企微实时告警
+    reportError({
+      db,
+      fnName: 'invite-code',
+      action,
+      error: e,
+      context: { _openid: OPENID, eventSummary: JSON.stringify(event).slice(0, 200) },
+    }).catch(() => {}); // 上报失败不阻塞响应
     return { code: 500, msg: '服务异常，请稍后重试' };
   }
 };
@@ -855,6 +863,7 @@ async function activateMembership(openid, inviteCode) {
         membershipLevel: 'basic',
         membershipExpireAt: expireAt.toISOString(),
         isLocked: false,
+        guidebookAllUnlocked: true,
         updatedAt: db.serverDate(),
       },
     });
