@@ -17,6 +17,7 @@ import { LifecycleFunnelPage } from '@/pages/LifecycleFunnelPage';
 import { PageAnalyticsPage } from '@/pages/PageAnalyticsPage';
 import { ShareAnalyticsPage } from '@/pages/ShareAnalyticsPage';
 import { SettingsPage } from '@/pages/SettingsPage';
+import { CFErrorsPage } from '@/pages/CFErrorsPage';
 
 export default function App() {
   return (
@@ -40,6 +41,7 @@ export default function App() {
               <Route path="/admin/share" element={<ShareAnalyticsPage />} />
               <Route path="/admin/system" element={<SystemPage />} />
               <Route path="/admin/settings" element={<SettingsPage />} />
+              <Route path="/admin/cf-errors" element={<CFErrorsPage />} />
             </Route>
           </Route>
           <Route path="*" element={<Navigate to="/admin" replace />} />

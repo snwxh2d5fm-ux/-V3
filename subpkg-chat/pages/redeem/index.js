@@ -107,6 +107,16 @@ Page({
 
       if (result.alreadyRedeemed) {
         // 幂等返回：同用户已兑换过该码，展示结果并跳转
+        // 同步并持久化会员状态 (同 result.code === 0 的修复)
+        app.globalData.membershipLevel = result.membershipLevel || 'basic';
+        app.saveSession({
+          token: app.globalData.token,
+          userInfo: app.globalData.userInfo || { nickName: '住港伴用户' },
+          userStatus: app.globalData.userStatus || 'unapplied',
+          membershipLevel: result.membershipLevel || 'basic',
+          phoneBound: app.globalData.phoneBound || false,
+          isNew: false,
+        });
         this.setData({
           redeeming: false,
           redeemed: true,
@@ -125,6 +135,15 @@ Page({
         if (result.membershipExpireAt) {
           app.globalData.membershipExpireAt = result.membershipExpireAt;
         }
+        // Fix: 持久化到 localStorage session，防止 app 重启后回退为 free
+        app.saveSession({
+          token: app.globalData.token,
+          userInfo: app.globalData.userInfo || { nickName: '住港伴用户' },
+          userStatus: app.globalData.userStatus || 'unapplied',
+          membershipLevel: app.globalData.membershipLevel,
+          phoneBound: app.globalData.phoneBound || false,
+          isNew: false,
+        });
 
         this.setData({
           redeeming: false,

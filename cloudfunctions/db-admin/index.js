@@ -94,6 +94,22 @@ async function syncData(openid, data) {
   }
 }
 
+// pullAll 字段白名单（安全审计要求：禁止返回敏感字段）
+const REMINDER_WHITELIST = ['_id','title','deadline','deadlineDate','description','status','type','confidence',
+  'pathway','chainId','chainLabel','chainOrder','linkedDocIds','offsetDays','createdAt','updatedAt'];
+const PROCESS_WHITELIST = ['_id','name','templateId','status','stages','completedStages','currentStageId',
+  'createdAt','updatedAt'];
+const DOCUMENT_WHITELIST = ['_id','name','type','category','number','expiryDate','issueDate','status',
+  'createdAt','updatedAt'];
+
+function filterFields(obj, whitelist) {
+  var result = {};
+  whitelist.forEach(function (k) {
+    if (obj[k] !== undefined) result[k] = obj[k];
+  });
+  return result;
+}
+
 async function pullAllData(openid) {
   try {
     const [docsRes, remindersRes, processesRes] = await Promise.all([
@@ -103,11 +119,11 @@ async function pullAllData(openid) {
     ]);
     return {
       code: 200,
-      _version: 'v4.2-fix-0523',
+      _version: 'v4.3-storage-isolation',
       data: {
-        documents: docsRes.data,
-        reminders: remindersRes.data,
-        processes: processesRes.data,
+        documents: docsRes.data.map(function (d) { return filterFields(d, DOCUMENT_WHITELIST); }),
+        reminders: remindersRes.data.map(function (r) { return filterFields(r, REMINDER_WHITELIST); }),
+        processes: processesRes.data.map(function (p) { return filterFields(p, PROCESS_WHITELIST); }),
       },
     };
   } catch (e) {

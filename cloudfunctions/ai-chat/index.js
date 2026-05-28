@@ -32,6 +32,7 @@ const https = require('https');
 const { URL } = require('url');
 const prompts = require('./prompts');
 const domainRouter = require('./domain-router');
+const { reportErrorHttp } = require('../_shared/error-reporter');
 // [V4.1-PHASE1] ZGB-AI-107: 四维画像构建器 + XML格式化
 const { buildProfile } = require('./profile-builder');
 const { buildUserProfileXml } = require('./context-builder');
@@ -562,7 +563,7 @@ async function retrieveContext(query, mode, topK, detectedDomain) {
   };
 
   // Phase 2.4: 缓存写入（domain-aware key）
-  const cacheData = { chunks: top.map((s) => s.chunk), sources, contextText, fusionResults: [], avgScore: 0 };
+  const cacheData = { chunks: top.map((s) => s.chunk), sources, contextText, fusionResults: fusionResults, avgScore: avgFusionScore };
   if (top.length > 0) {
     const domainSuffix = detectedDomain
       ? Array.isArray(detectedDomain)
@@ -659,7 +660,7 @@ function buildDeepSeekRequest(messages, mode, contextText, streamMode, sessionCo
   // Phase 3.3: A/B模型切换 — MODEL_AB_RATIO=5 则5%流量用备选模型
   const abRatio = parseInt(process.env.MODEL_AB_RATIO || '0');
   let modelName = process.env.DEEPSEEK_MODEL || 'deepseek-chat';
-  if (abRatio > 0 && Math.random() * 100 < abRatio) {
+  if (abRatio > 0 && require('crypto').randomInt(100) < abRatio) {
     modelName = process.env.MODEL_AB_ALT || 'deepseek-reasoner';
   }
 
@@ -1014,18 +1015,18 @@ exports.main = async function (event, context) {
     }
   }
 
-  const traceId = 'trace_' + Date.now() + '_' + Math.random().toString(36).substr(2, 6);
+  const traceId = 'trace_' + Date.now() + '_' + require('crypto').randomBytes(4).toString('hex');
   let degraded = false;
   let safetyTriggered = [];
   let ragSources = [];
 
   // [V4.1-PHASE1] 计算本轮次号
-  let turnNumber = 0;
-  getNextTurnNumber(sessionId)
-    .then(function (n) {
-      turnNumber = n;
-    })
-    .catch(function () {});
+  let turnNumber = 1;
+  try {
+    turnNumber = await getNextTurnNumber(sessionId);
+  } catch (e) {
+    console.warn('[ai-chat] getNextTurnNumber failed, fallback to 1:', e.message);
+  }
 
   try {
     // ====== Step 0: 领域意图识别 (REQ-008) ======
@@ -1097,14 +1098,17 @@ exports.main = async function (event, context) {
 
     // 合并服务端记忆与客户端历史（客户端为时间锚点）
     let mergedHistory = memory.mergeHistory(history && history.length > 0 ? history : [], serverMemory);
-    // 限制最多10条消息（5轮）
+
+    // [FIX] 先压缩（超过5条消息时），再截断到10条
+    if (mergedHistory.length > 5) {
+      const compressed = compressHistory(mergedHistory, 5);
+      mergedHistory = compressed.length > 0 ? compressed : mergedHistory;
+    }
     mergedHistory = memory.trimMemory(mergedHistory, 10);
 
     const historyMsgs =
       mergedHistory.length > 0
-        ? mergedHistory.length > 10
-          ? compressHistory(mergedHistory, 5)
-          : processHistory(mergedHistory)
+        ? processHistory(mergedHistory)
         : [];
     const contextMsg = buildContextMessage(sessionContext);
 
@@ -1273,7 +1277,7 @@ exports.main = async function (event, context) {
       200,
       'ok',
       {
-        messageId: 'msg_' + Date.now() + '_' + Math.random().toString(36).substr(2, 9),
+        messageId: 'msg_' + Date.now() + '_' + require('crypto').randomBytes(4).toString('hex'),
         content,
         quickReplies,
         assessmentResult,
@@ -1288,6 +1292,8 @@ exports.main = async function (event, context) {
     );
   } catch (error) {
     console.error('[ai-chat] Fatal error:', error);
+    // 统一错误上报
+    reportErrorHttp({ fnName: 'ai-chat', action: params.action || 'chat', error, app: getApp(), context: { sessionId, openid, traceId } }).catch(() => {});
     logConversation({
       traceId,
       sessionId,
@@ -1428,7 +1434,7 @@ async function handleStreamResponse(
               }
               var shouldSuppress = isInCodeBlock || isInBareQR;
               if (!shouldSuppress) {
-                res.write('data: ' + JSON.stringify({ type: 'token', content: delta }) + '\n\n');
+                res.write('data: ' + JSON.stringify({ type: 'token', content: _escapeHTML(delta) }) + '\n\n');
               }
             }
           } catch (e) {}
@@ -1483,7 +1489,7 @@ async function handleStreamResponse(
       'data: ' +
         JSON.stringify({
           type: 'done',
-          content: cleanContent,
+          content: _escapeHTML(cleanContent),
           quick_replies: streamQuickReplies,
           safety_triggered: allSafety,
           trace_id: traceId,
@@ -1652,8 +1658,23 @@ function extractConfidenceLabel(content) {
   };
 }
 
+// XSS防护：HTML特殊字符转义函数
+function _escapeHTML(str) {
+  if (!str || typeof str !== 'string') return str;
+  return str
+    .replace(/&/g, '&amp;')
+    .replace(/</g, '&lt;')
+    .replace(/>/g, '&gt;')
+    .replace(/"/g, '&quot;')
+    .replace(/'/g, '&#x27;');
+}
+
 function respond(code, message, data, ctx) {
   const body = { code, message, data: data || null };
+  // XSS防护：AI生成内容必须转义后返回
+  if (body.data && typeof body.data.content === 'string') {
+    body.data.content = _escapeHTML(body.data.content);
+  }
   // 如果是在HTTP trigger上下文中，需要用res.json返回
   return body;
 }

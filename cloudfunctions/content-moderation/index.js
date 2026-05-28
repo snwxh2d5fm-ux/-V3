@@ -110,15 +110,17 @@ async function moderateText(event) {
     degradeWindowStart = now;
   }
   if (degradeCount >= degradeThreshold) {
+    // SEC-FIX: 降级模式改为 fail-closed (Review) 而非 fail-open (Pass)
+    // 调用方必须检查 degraded 字段，反馈/发布类场景应拒绝降级内容
     return {
       code: 0,
       data: {
-        suggestion: 'Pass',
+        suggestion: 'Review',
         label: 'Normal',
         score: 0,
         keywords: [],
         degraded: true,
-        degradeReason: 'TMS API 暂时不可用',
+        degradeReason: 'TMS API 暂时不可用，需人工审核',
       },
     };
   }
@@ -136,16 +138,16 @@ async function moderateText(event) {
     // 降级熔断计数
     degradeCount++;
     if (degradeCount === 1) degradeWindowStart = Date.now();
-    // 降级：API 不可用时放行
+    // SEC-FIX: 降级模式改为 fail-closed (Review)
     return {
       code: 0,
       data: {
-        suggestion: 'Pass',
+        suggestion: 'Review',
         label: 'Normal',
         score: 0,
         keywords: [],
         degraded: true,
-        degradeReason: 'TMS API 暂时不可用',
+        degradeReason: 'TMS API 暂时不可用，需人工审核',
       },
     };
   }
@@ -209,8 +211,8 @@ async function moderateImage(event) {
     };
   } catch (apiErr) {
     console.error('[content-moderation] IMS API 失败:', apiErr.message);
-    // 降级：API 不可用时放行
-    return { code: 0, data: { suggestion: 'Pass', label: 'Normal', score: 0, blocked: false, degraded: true } };
+    // SEC-FIX: 降级模式改为 fail-closed (Review)，与 TMS 对齐
+    return { code: 0, data: { suggestion: 'Review', label: 'Normal', score: 0, blocked: false, degraded: true, degradeReason: 'IMS API 暂时不可用，需人工审核' } };
   }
 }
 

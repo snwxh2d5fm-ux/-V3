@@ -7,6 +7,7 @@ const crypto = require('crypto');
 cloud.init({ env: cloud.DYNAMIC_CURRENT_ENV });
 const db = cloud.database();
 const _ = db.command;
+const { reportError } = require('./_cf-error');
 
 // ========== 用户表名 ==========
 const COLLECTION = 'users';
@@ -42,7 +43,7 @@ exports.main = async (event) => {
         return { code: 404, msg: `未知动作: ${action}` };
     }
   } catch (e) {
-    console.error(`[user-auth] ${action} 异常:`, e.message || e);
+    reportError({ db, fnName: 'user-auth', action, error: e, context: { _openid: OPENID } }).catch(() => {});
     return { code: 500, msg: '服务异常，请稍后重试' };
   }
 };
@@ -159,8 +160,13 @@ async function handlePhoneLogin(openid, { phoneCode, loginType }) {
   }
 
   // ---- 稳定哈希手机号（V4.2-fix: 去掉随机盐，支持跨账号反查合并） ----
+  const phoneSalt = process.env.PHONE_SALT;
+  if (!phoneSalt) {
+    console.error('[phoneLogin] FATAL: PHONE_SALT 环境变量未配置');
+    return { code: 500, msg: '服务配置异常' };
+  }
   const phoneHash = crypto
-    .createHmac('sha256', 'zgbinternal-phone-salt')
+    .createHmac('sha256', phoneSalt)
     .update(phoneNumber)
     .digest('hex');
 
@@ -187,29 +193,85 @@ async function handlePhoneLogin(openid, { phoneCode, loginType }) {
         },
       });
 
-      await users.where({ _openid: linkedUser._openid }).update({
-        data: { status: 'merged', mergedTo: openid, updatedAt: db.serverDate() },
-      });
+      const fromOpenid = linkedUser._openid;
+      const toOpenid = openid;
+      const steps = [];
 
-      // 迁移流程/提醒/文档
-      await db.collection('user_processes').where({ _openid: linkedUser._openid }).update({
-        data: { _openid: openid, updatedAt: db.serverDate() },
-      });
-      await db.collection('reminders').where({ _openid: linkedUser._openid }).update({
-        data: { _openid: openid, updatedAt: db.serverDate() },
-      });
-      await db.collection('user_documents').where({ _openid: linkedUser._openid }).update({
-        data: { _openid: openid, updatedAt: db.serverDate() },
-      });
+      try {
+        // Step1: 标记旧账号为 merged
+        await users.where({ _openid: fromOpenid }).update({
+          data: { status: 'merged', mergedTo: toOpenid, updatedAt: db.serverDate() },
+        });
+        steps.push('users');
 
-      await db.collection('audit_logs').add({
-        data: {
-          _openid: openid,
-          action: 'account_merged',
-          detail: { fromOpenid: linkedUser._openid, toOpenid: openid, by: 'phoneHash' },
-          createdAt: db.serverDate(),
-        },
-      });
+        // Step2: 迁移 user_processes
+        await db.collection('user_processes').where({ _openid: fromOpenid }).update({
+          data: { _openid: toOpenid, updatedAt: db.serverDate() },
+        });
+        steps.push('user_processes');
+
+        // Step3: 迁移 reminders
+        await db.collection('reminders').where({ _openid: fromOpenid }).update({
+          data: { _openid: toOpenid, updatedAt: db.serverDate() },
+        });
+        steps.push('reminders');
+
+        // Step4: 迁移 user_documents（写入 _openid_legacy 供回滚定位）
+        await db.collection('user_documents').where({ _openid: fromOpenid }).update({
+          data: { _openid: toOpenid, _openid_legacy: fromOpenid, updatedAt: db.serverDate() },
+        });
+        steps.push('user_documents');
+
+        // 全部成功 — 写审计日志
+        await db.collection('audit_logs').add({
+          data: {
+            _openid: toOpenid,
+            action: 'account_merged',
+            detail: { fromOpenid, toOpenid, by: 'phoneHash', status: 'completed' },
+            createdAt: db.serverDate(),
+          },
+        });
+      } catch (e) {
+        const failedStep = steps.length > 0 ? steps[steps.length - 1] : 'users_update';
+        console.error('[phoneLogin] merge failed at step:', failedStep, e.message || e);
+
+        // 补偿回滚：反序恢复已迁移的数据
+        if (steps.includes('user_documents')) {
+          await db.collection('user_documents')
+            .where({ _openid: toOpenid, _openid_legacy: fromOpenid })
+            .update({ data: { _openid: fromOpenid, _openid_legacy: '' } })
+            .catch(function (re) { console.error('[phoneLogin] rollback user_documents failed:', re.message); });
+        }
+        if (steps.includes('reminders')) {
+          await db.collection('reminders')
+            .where({ _openid: toOpenid })
+            .update({ data: { _openid: fromOpenid } })
+            .catch(function (re) { console.error('[phoneLogin] rollback reminders failed:', re.message); });
+        }
+        if (steps.includes('user_processes')) {
+          await db.collection('user_processes')
+            .where({ _openid: toOpenid })
+            .update({ data: { _openid: fromOpenid } })
+            .catch(function (re) { console.error('[phoneLogin] rollback user_processes failed:', re.message); });
+        }
+        if (steps.includes('users')) {
+          await users.where({ _openid: fromOpenid }).update({
+            data: { status: 'active', mergedTo: '', updatedAt: db.serverDate() },
+          }).catch(function (re) { console.error('[phoneLogin] rollback users failed:', re.message); });
+        }
+
+        // 失败审计日志
+        await db.collection('audit_logs').add({
+          data: {
+            _openid: toOpenid,
+            action: 'account_merged',
+            detail: { fromOpenid, toOpenid, by: 'phoneHash', status: 'failed', failedStep, error: String(e.message || e) },
+            createdAt: db.serverDate(),
+          },
+        }).catch(function (re) { console.error('[phoneLogin] audit_logs write failed:', re.message); });
+
+        return { code: 500, msg: '账号合并失败，请稍后重试。您的数据未丢失。' };
+      }
 
       const { data: merged } = await users.where({ _openid: openid }).get();
       if (merged.length > 0) {
@@ -319,12 +381,15 @@ async function handleValidate(openid, { token }) {
 }
 
 // ==================== 状态/路径/会员 ====================
-async function updateStatus(openid, { userStatus, subStatus }) {
+async function updateStatus(openid, { userStatus, subStatus, guidebookAllUnlocked }) {
   const updateData = {
     currentPhase: userStatus,
     updatedAt: db.serverDate(),
   };
   if (subStatus) updateData.subStatus = subStatus;
+  if (guidebookAllUnlocked !== undefined) {
+    updateData.guidebookAllUnlocked = guidebookAllUnlocked;
+  }
 
   await db.collection(COLLECTION).where({ _openid: openid }).update({ data: updateData });
   return { code: 0 };
@@ -363,7 +428,7 @@ async function getProfile(openid) {
 async function syncProfile(openid, { profile }) {
   if (!profile) return { code: 400, msg: 'profile 为空' };
   const safeProfile = {};
-  const allowed = ['userStatus', 'userSubStatus', 'membershipLevel', 'activeProcessId', 'selectedPath', 'currentPhase'];
+  const allowed = ['userStatus', 'userSubStatus', 'membershipLevel', 'membershipExpireAt', 'activeProcessId', 'selectedPath', 'currentPhase'];
   for (const key of allowed) {
     if (profile[key] !== undefined) safeProfile[key] = profile[key];
   }
@@ -413,11 +478,13 @@ function verifyToken(token) {
       return { openid: parts[0], uid: parts[1], iat: parseInt(parts[2]) };
     }
 
-    // 回退验证：兼容5.22前使用旧兜底密钥签发的token（仅验证，不签发新token）
-    const legacyKey = 'zhgb-internal-key';
-    if (legacyKey !== getTokenSecret()) {
+    // 回退验证：兼容5.22前使用旧密钥签发的token（仅验证，不签发新token）
+    // SEC-NOTE: LEGACY_TOKEN_KEY 应尽快轮换并在所有旧token过期后删除
+    const legacyKey = process.env.LEGACY_TOKEN_KEY || '';
+    if (legacyKey && legacyKey !== getTokenSecret()) {
       const legacyHmac = require('crypto').createHmac('sha256', legacyKey);
       if (sig === legacyHmac.update(payload).digest('hex')) {
+        console.warn('[user-auth] Legacy token validated — LEGACY_TOKEN_KEY should be rotated');
         return { openid: parts[0], uid: parts[1], iat: parseInt(parts[2]) };
       }
     }

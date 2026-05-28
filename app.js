@@ -3,12 +3,62 @@
  * 基于 PRD v4 + V5校验 + 方案库v1.0 + 7阶段流程指示器
  */
 const api = require('./utils/api');
-const { initStorage, initDBSync, syncAllToCloud, runStorageStartupCheck } = require('./utils/storage');
+const { initStorage, initDBSync, syncAllToCloud, runStorageStartupCheck, getAllReminders, getAllProcessLines, getAllDocuments } = require('./utils/storage');
 const { initCrypto } = require('./utils/crypto');
 const { loadRules } = require('./utils/rule-engine');
 const { matchPersonaToPaths } = require('./data/solution-library');
 const { recoverUserData } = require('./utils/recovery');
 const constants = require('./data/constants');
+
+// ========== 云端恢复字段映射 ==========
+function normalizeReminder(r) {
+  return {
+    id: r._id || r.id,
+    title: r.title || '',
+    deadline: r.deadline || r.deadlineDate || '',
+    description: r.description || '',
+    status: r.status === 'pending' ? 'active' : (r.status || 'active'),
+    type: r.type || 'manual',
+    confidence: r.confidence || 'B',
+    pathway: r.pathway || null,
+    chainId: r.chainId || null,
+    chainLabel: r.chainLabel || null,
+    chainOrder: r.chainOrder,
+    linkedDocIds: r.linkedDocIds || [],
+    offsetDays: r.offsetDays,
+    createdAt: r.createdAt || new Date().toISOString(),
+    updatedAt: r.updatedAt || new Date().toISOString(),
+  };
+}
+
+function normalizeProcess(p) {
+  return {
+    id: p._id || p.id,
+    name: p.name || '',
+    templateId: p.templateId || '',
+    status: p.status || 'active',
+    stages: p.stages || [],
+    completedStages: p.completedStages || [],
+    currentStageId: p.currentStageId || '',
+    createdAt: p.createdAt || new Date().toISOString(),
+    updatedAt: p.updatedAt || new Date().toISOString(),
+  };
+}
+
+function normalizeDocument(d) {
+  return {
+    id: d._id || d.id,
+    name: d.name || '',
+    type: d.type || '',
+    category: d.category || '',
+    number: d.number || '',
+    expiryDate: d.expiryDate || null,
+    issueDate: d.issueDate || null,
+    status: d.status || 'active',
+    createdAt: d.createdAt || new Date().toISOString(),
+    updatedAt: d.updatedAt || new Date().toISOString(),
+  };
+}
 
 App({
   globalData: {
@@ -121,6 +171,7 @@ App({
     }
 
     if (this.globalData.isLoggedIn && this.globalData.cloudReady) {
+      this.checkAndRestoreFromCloud();
       this.syncDataToCloud();
     }
   },
@@ -224,6 +275,51 @@ App({
     this.globalData.solutionRecommendation = merged;
     wx.setStorageSync(constants.STORAGE_KEYS.SOLUTION_RECOMMENDATION, merged);
     return merged;
+  },
+
+  // ========== 新设备恢复（云端→本地） ==========
+  async checkAndRestoreFromCloud() {
+    var hasReminders = getAllReminders().length > 0;
+    var hasProcesses = getAllProcessLines().length > 0;
+    var docs = getAllDocuments();
+    var hasDocuments = Object.keys(docs).length > 0;
+
+    // 有任何本地数据 → 跳过，本地优先
+    if (hasReminders || hasProcesses || hasDocuments) return;
+
+    // 确认弹窗
+    var that = this;
+    var confirmed = await new Promise(function (resolve) {
+      wx.showModal({
+        title: '数据恢复',
+        content: '检测到云端有备份数据，是否恢复到当前设备？',
+        confirmText: '恢复',
+        cancelText: '暂不',
+        success: function (res) { resolve(res.confirm); },
+      });
+    });
+    if (!confirmed) return;
+
+    try {
+      var res = await wx.cloud.callFunction({ name: 'db-admin', data: { action: 'pullAll' } });
+      if (res.result && res.result.code === 200 && res.result.data) {
+        var d = res.result.data;
+        if (d.reminders && d.reminders.length) {
+          wx.setStorageSync('__reminders__', d.reminders.map(normalizeReminder));
+        }
+        if (d.processes && d.processes.length) {
+          wx.setStorageSync('__processes__', d.processes.map(normalizeProcess));
+        }
+        if (d.documents && d.documents.length) {
+          var docMap = {};
+          d.documents.forEach(function (doc) { docMap[doc._id] = normalizeDocument(doc); });
+          wx.setStorageSync('__vault_meta__', { documents: docMap, version: 1 });
+        }
+        wx.showToast({ title: '数据已恢复', icon: 'success' });
+      }
+    } catch (e) {
+      console.warn('[restore] 云端恢复失败:', e);
+    }
   },
 
   // ========== 数据同步 ==========

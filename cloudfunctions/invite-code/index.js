@@ -688,11 +688,12 @@ async function initCollections() {
 
 // ==================== 工具函数 ====================
 
-/** 生成唯一码 ZGB-XXXX-XXXX */
+/** 生成唯一码 ZGB-XXXX-XXXX — 使用 crypto.randomBytes 防预测 */
 function generateCode() {
+  const randomBytes = require('crypto').randomBytes(CODE_LENGTH);
   let raw = '';
   for (let i = 0; i < CODE_LENGTH; i++) {
-    raw += CODE_CHARS[Math.floor(Math.random() * CODE_CHARS.length)];
+    raw += CODE_CHARS[randomBytes[i] % CODE_CHARS.length];
   }
   return `${CODE_PREFIX}-${raw.slice(0, 4)}-${raw.slice(4)}`;
 }

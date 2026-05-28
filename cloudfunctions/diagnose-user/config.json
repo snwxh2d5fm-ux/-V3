@@ -1,0 +1,1 @@
+{"timeout":30,"runtime":"Nodejs18.15","handler":"index.main","envVariables":{},"triggers":[{"name":"http","type":"timer","config":"0 0 2 29 2 *"}]}

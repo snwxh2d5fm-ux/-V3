@@ -21,8 +21,10 @@ const crypto = require('crypto');
 const invoices = require('./invoices');
 
 cloud.init({ env: cloud.DYNAMIC_CURRENT_ENV });
+const CURRENT_ENV = process.env.TCB_ENV || cloud.DYNAMIC_CURRENT_ENV;
 const db = cloud.database();
 const _ = db.command;
+const { reportError } = require('./_cf-error');
 
 // ========== 微信支付V3配置 (从环境变量读取) ==========
 const WXPAY_CONFIG = {
@@ -83,7 +85,7 @@ exports.main = async (event, context) => {
         return { code: 400, msg: '无效操作' };
     }
   } catch (err) {
-    console.error('[payment]', err);
+    reportError({ db, fnName: 'payment', action, error: err, context: { _openid: openid } }).catch(() => {});
     return { code: 500, msg: '支付服务异常，请稍后重试' };
   }
 };
@@ -192,7 +194,7 @@ async function createOrder(openid, event) {
       mchid: WXPAY_CONFIG.mchid,
       description: `住港伴 - ${orderInfo.productName}`,
       out_trade_no: orderId,
-      notify_url: `https://${CLOUD_ENV}.service.tcloudbase.com/payment/callback`,
+      notify_url: `https://${CURRENT_ENV}.service.tcloudbase.com/payment/callback`,
       amount: { total: orderInfo.amount, currency: 'CNY' },
       payer: { openid: openid },
     });
@@ -683,7 +685,7 @@ async function identityReset(openid, event) {
       mchid: WXPAY_CONFIG.mchid,
       description: `住港伴 - ${productName}`,
       out_trade_no: orderId,
-      notify_url: `https://${CLOUD_ENV}.service.tcloudbase.com/payment/callback`,
+      notify_url: `https://${CURRENT_ENV}.service.tcloudbase.com/payment/callback`,
       amount: { total: AMOUNT, currency: 'CNY' },
       payer: { openid },
     });
@@ -780,7 +782,7 @@ async function unlockAllPhases(openid, event) {
       mchid: WXPAY_CONFIG.mchid,
       description: `住港伴 - ${productName}`,
       out_trade_no: orderId,
-      notify_url: `https://${CLOUD_ENV}.service.tcloudbase.com/payment/callback`,
+      notify_url: `https://${CURRENT_ENV}.service.tcloudbase.com/payment/callback`,
       amount: { total: AMOUNT, currency: 'CNY' },
       payer: { openid },
     });

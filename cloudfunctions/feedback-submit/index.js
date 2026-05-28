@@ -7,6 +7,7 @@ const cloud = require('wx-server-sdk');
 cloud.init({ env: cloud.DYNAMIC_CURRENT_ENV });
 const db = cloud.database();
 const _ = db.command;
+const { reportError } = require('./_cf-error');
 
 // 内容安全审核（复用 content-moderation 云函数）
 async function moderateText(text) {
@@ -83,6 +84,7 @@ function generateTicketId() {
 // ============ 主入口 ============
 exports.main = async (event) => {
   const action = event.action;
+  const { OPENID } = cloud.getWXContext();
   try {
     switch (action) {
       case 'submit':
@@ -97,7 +99,7 @@ exports.main = async (event) => {
         return { code: 400, msg: '不支持的操作: ' + action + '，支持: submit/list/detail/append' };
     }
   } catch (err) {
-    console.error('[feedback-submit]', err);
+    reportError({ db, fnName: 'feedback-submit', action, error: err, context: { _openid: OPENID } }).catch(() => {});
     return { code: 500, msg: '服务异常: ' + err.message };
   }
 };

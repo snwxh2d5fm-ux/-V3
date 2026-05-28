@@ -14,6 +14,7 @@ import {
   Server,
   GitFork,
   TrendingDown,
+  AlertTriangle,
 } from 'lucide-react';
 
 const navItems = [
@@ -27,6 +28,7 @@ const navItems = [
   { to: '/admin/compliance', icon: Shield, label: '合规安全' },
   { to: '/admin/content', icon: FileText, label: '内容运营' },
   { to: '/admin/feedback', icon: MessageSquare, label: '客服工单' },
+  { to: '/admin/cf-errors', icon: AlertTriangle, label: '错误监控' },
   { to: '/admin/system', icon: Server, label: '系统健康' },
   { to: '/admin/settings', icon: Settings, label: '设置' },
 ];

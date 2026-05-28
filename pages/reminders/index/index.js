@@ -425,29 +425,6 @@ Page({
       saveReminders(reminders);
     }
 
-    // 云端同步
-    if (app.globalData.cloudReady && app.globalData.isLoggedIn) {
-      try {
-        const res = await wx.cloud.callFunction({
-          name: 'reminder-engine',
-          data: { action: 'list' },
-        });
-        if (res.result && res.result.reminders) {
-          const map = new Map();
-          reminders.forEach((r) => map.set(r.id, r));
-          res.result.reminders.forEach((r) => {
-            if (!map.has(r.id) || r.updatedAt > (map.get(r.id).updatedAt || 0)) {
-              map.set(r.id, r);
-            }
-          });
-          reminders = Array.from(map.values());
-          saveReminders(reminders);
-        }
-      } catch (e) {
-        // 云端同步失败，降级使用本地数据
-      }
-    }
-
     // 动态时间线：未完成节点的日期随今天漂移，直到前一个节点完成为止
     const todayDate = new Date();
     todayDate.setHours(0, 0, 0, 0);

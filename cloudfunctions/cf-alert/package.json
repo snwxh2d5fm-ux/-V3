@@ -1,0 +1,9 @@
+{
+  "name": "cf-alert",
+  "version": "1.0.0",
+  "description": "住港伴V4 — 云函数错误监控告警 HTTP 云函数",
+  "main": "index.js",
+  "dependencies": {
+    "@cloudbase/node-sdk": "^2.4.0"
+  }
+}

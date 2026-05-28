@@ -31,7 +31,9 @@
     { "name": "admin-content", "timeout": 30 },
     { "name": "admin-data-lifecycle", "timeout": 30 },
     { "name": "admin-feedback", "timeout": 30 },
-    { "name": "admin-revenue", "timeout": 30 }
+    { "name": "admin-revenue", "timeout": 30 },
+    { "name": "cf-alert", "timeout": 15 },
+    { "name": "feedback-submit", "timeout": 30 }
   ],
   "ai": {
     "defaultAgent": "codebuddy",
