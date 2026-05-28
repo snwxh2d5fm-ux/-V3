@@ -203,6 +203,12 @@ exports.main = async (event) => {
             },
           });
 
+        // P1-05: 清理被移除成员的 family_doc_status 孤儿记录
+        await db
+          .collection('family_doc_status')
+          .where({ spaceId: space.spaceId, userId: targetUserId })
+          .remove();
+
         // 写入审计日志
         await db.collection('audit_logs').add({
           data: {
@@ -249,6 +255,12 @@ exports.main = async (event) => {
               updatedAt: db.serverDate(),
             },
           });
+
+        // P1-05: 清理退出成员的 family_doc_status 孤儿记录
+        await db
+          .collection('family_doc_status')
+          .where({ spaceId: space.spaceId, userId: openid })
+          .remove();
 
         // 写入审计日志
         await db.collection('audit_logs').add({
@@ -319,6 +331,16 @@ exports.main = async (event) => {
           });
         }
 
+        // P1-03: 写入审计日志
+        await db.collection('audit_logs').add({
+          data: {
+            _openid: openid,
+            action: 'family_doc_status_updated',
+            detail: { spaceId: spaceId, slotKey: slotKey, filled: !!filled, role: role },
+            createdAt: db.serverDate(),
+          },
+        });
+
         return { code: 0, data: { success: true } };
       }
 
@@ -333,7 +355,6 @@ exports.main = async (event) => {
             _.or([
               { ownerUserId: openid, 'members.userId': targetUserId },
               { ownerUserId: targetUserId, 'members.userId': openid },
-              { ownerUserId: openid, ownerUserId: targetUserId },
             ]),
           )
           .get();

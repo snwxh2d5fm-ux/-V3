@@ -209,6 +209,9 @@
     <!-- ===== 邀请码展示 ===== -->
     <view class="invite-code-card card" wx:if="{{newInviteCode}}">
       <text class="invite-code-title">✅ 邀请已生成</text>
+      <view class="invitee-info" wx:if="{{newRecipientName}}">
+        <text>{{selectedRole === 'spouse' ? '配偶' : '子女'}}：{{newRecipientName}}</text>
+      </view>
       <view class="invite-code-box">
         <text class="invite-code" selectable="true">{{newInviteCode}}</text>
       </view>

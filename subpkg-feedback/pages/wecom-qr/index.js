@@ -10,9 +10,13 @@ Page({
     // 无需额外加载，button 原生唤起
   },
 
-  /** 客服按钮回调（可选，用于记录触点来源） */
+  /** 客服按钮回调：成功则记录触点，失败则降级到 API 方式 */
   onContactCallback(e) {
-    // 触点来源埋点可在此处扩展
+    var errMsg = (e.detail || {}).errMsg || '';
+    if (errMsg.indexOf('fail') !== -1) {
+      console.warn('[客服] contact按钮失败, 降级到 API:', errMsg);
+      this.openCS();
+    }
   },
 
   /** 备用：如果按钮不生效，尝试 API 方式 */

@@ -99,7 +99,7 @@
       <text class="link-arrow">›</text>
     </view>
     <view class="link-row" bindtap="goToWeCom">
-      <text class="link-text">💬 添加客服微信，1对1沟通</text>
+      <text class="link-text">💬 联系在线客服</text>
       <text class="link-arrow">›</text>
     </view>
   </view>

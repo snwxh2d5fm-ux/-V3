@@ -212,7 +212,55 @@ Page({
     app.globalData.userStatus = status;
     app.globalData.userSubStatus = subStatus;
 
-    const pathMap = {
+    // ── 同步进度阶段标记 (__process_stage__) ──
+    const stageMap = {
+      unapplied: 0,
+      preparing: 1,
+      submitted: 2,
+      waiting: 3,
+      approved: 4,
+      settled: 5,
+      permanent: 6,
+    };
+    var targetStage = stageMap[status];
+    if (targetStage !== undefined) {
+      wx.setStorageSync('__process_stage__', targetStage);
+
+      // P0-01 Fix: 更新页面上的进度条 (stageProgress + stageSteps)
+      var that = this;
+      var updatedSteps = that.data.stageSteps.map(function (step, idx) {
+        if (idx < targetStage) return { id: step.id, label: step.label, status: 'completed' };
+        if (idx === targetStage) return { id: step.id, label: step.label, status: 'active' };
+        return { id: step.id, label: step.label, status: 'pending' };
+      });
+      that.setData({
+        stageProgress: targetStage,
+        stageSteps: updatedSteps,
+      });
+      console.log('[status-select] 进度条更新:', status, '→ stage', targetStage);
+    }
+
+    // P0-02 Fix: 同步到 CloudBase
+    var isFullyUnlocked = (status === 'approved' || status === 'permanent');
+    try {
+      wx.cloud.callFunction({
+        name: 'user-auth',
+        data: {
+          action: 'updateStatus',
+          userStatus: status,
+          subStatus: subStatus || null,
+          guidebookAllUnlocked: isFullyUnlocked,
+        },
+      }).then(function (res) {
+        console.log('[status-select] CloudBase sync OK, guidebookAllUnlocked:', isFullyUnlocked);
+      }).catch(function (err) {
+        console.warn('[status-select] CloudBase sync failed (non-blocking):', err);
+      });
+    } catch (e) {
+      console.warn('[status-select] CloudBase sync error:', e);
+    }
+
+    var pathMap = {
       submitted_qmas: 'qmas',
       submitted_ttps: 'ttps_a',
       submitted_asmpt: 'asmpt',
@@ -220,8 +268,10 @@ Page({
       submitted_cies: 'cies',
       approved_employed: 'qmas',
       approved_business: 'ttps_a',
+      approved_studying: 'student_iang',
+      approved_mainland: 'qmas',
     };
-    const path = pathMap[subStatus] || null;
+    var path = pathMap[subStatus] || null;
     if (path) {
       app.globalData.selectedPath = path;
       wx.setStorageSync('__active_process_id__', path);

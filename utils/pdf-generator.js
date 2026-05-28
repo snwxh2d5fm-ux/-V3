@@ -98,7 +98,7 @@ function generateSlotPDF(slotKey, slotName, uploadedDocs, _retryCount) {
       wx.cloud.uploadFile({
         cloudPath: cloudPath,
         filePath: p,
-        config: { env: 'cloudbase-d1g17tgt7cc199a60' },
+        // env 由 wx.cloud.init() 全局配置，不在此处硬编码
         success: function (r) {
           resolve(r.fileID);
         },

@@ -310,8 +310,29 @@
     <text class="crop-hint">💡 旋转至正向 → 双指缩放 → 拖动对齐框线 → 确认</text>
   </block>
 
-  <!-- ===== Step 3: 手动填写信息 ===== -->
+  <!-- ===== Step 3: OCR识别结果确认 ===== -->
   <block wx:if="{{step === 3}}">
+
+    <!-- OCR处理中 -->
+    <view class="ocr-loading" wx:if="{{ocrProcessing}}">
+      <view class="ocr-loading__spinner"></view>
+      <text class="ocr-loading__title">AI正在识别证件信息…</text>
+      <text class="ocr-loading__hint">请稍候，正在分析照片中的文字</text>
+    </view>
+
+    <!-- OCR识别结果 -->
+    <view class="card" wx:if="{{!ocrProcessing && ocrFieldList.length > 0}}" style="margin:20rpx 24rpx">
+      <view class="card-title">📋 已识别信息</view>
+      <view class="card-row" wx:for="{{ocrFieldList}}" wx:key="key" wx:if="{{item.value}}">
+        <text class="card-row-label">{{item.label}}</text>
+        <text class="card-row-value">{{item.value}}</text>
+      </view>
+    </view>
+
+    <!-- 无识别结果 -->
+    <view class="ocr-empty-hint" wx:if="{{!ocrProcessing && ocrFieldList.length === 0}}">
+      <text>📷 AI未能识别到字段，请手动填写下方信息</text>
+    </view>
 
     <!-- 操作按钮 -->
     <view style="display:flex;gap:16rpx;padding:0 24rpx;margin-top:20rpx">

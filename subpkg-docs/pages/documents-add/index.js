@@ -307,11 +307,48 @@ Page({
         return;
       }
     }
-    // 卡槽入口已确定分类→直接保存；否则进分类选择
+    // 卡槽入口已确定分类→直接保存；否则询问是否使用OCR
     if (this.data.skipCategory && this.data.docCategory) {
       this.confirmSave();
     } else {
-      this.setData({ step: 4, docType: 'unknown', docTypeLabel: '手动录入' });
+      this.askAndRunOCR();
+    }
+  },
+
+  // OCR预审授权流程: 弹窗征得用户同意 → 上传云存储 → OCR识别 → 展示结果
+  askAndRunOCR() {
+    var that = this;
+    wx.showModal({
+      title: 'AI识别证件信息',
+      content: '识别需将照片临时上传至服务器处理（完成后立即删除），是否继续？\n\n也可选择"跳过"手动填写。',
+      confirmText: '开始识别',
+      cancelText: '跳过',
+      success: function (res) {
+        if (res.confirm) {
+          that._startOCRFlow();
+        } else {
+          that.setData({ step: 4, docType: 'unknown', docTypeLabel: '手动录入', ocrProcessing: false });
+        }
+      },
+    });
+  },
+
+  // OCR流程: 压缩 → 上传云存储 → 调用ocr-service → 展示结果
+  async _startOCRFlow() {
+    this.setData({ step: 3, ocrProcessing: true });
+    wx.showLoading({ title: '上传中...' });
+    try {
+      var imagePath = this.data.imagePath;
+      // 压缩图片减少上传量
+      var compressed = await this.wxCompressImage(imagePath);
+      var fileID = await this.uploadToCloud(compressed);
+      wx.showLoading({ title: 'AI识别中...' });
+      await this.runOCR(fileID);
+    } catch (e) {
+      wx.hideLoading();
+      console.error('[OCR] 上传/识别失败:', e);
+      wx.showToast({ title: '识别失败，请手动填写', icon: 'none' });
+      this.setData({ step: 4, ocrProcessing: false });
     }
   },
 
@@ -341,7 +378,9 @@ Page({
       const finalPath = await imgProc.resizeImage(p, 2048, 2048);
       wx.hideLoading();
       this._rotateDeg = 0;
-      this.setData({ imagePath: finalPath, imageRotated: 0, step: 3, docType: 'unknown', docTypeLabel: '手动录入' });
+      this.setData({ imagePath: finalPath, imageRotated: 0 });
+      // OCR授权: 询问用户是否使用AI识别
+      this.askAndRunOCR();
     } catch (e) {
       wx.hideLoading();
       wx.showToast({ title: '裁切处理失败，请重试', icon: 'none' });
