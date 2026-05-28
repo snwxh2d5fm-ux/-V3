@@ -159,8 +159,6 @@ export function ConversationReviewPanel() {
   };
 
   const canReview = adminUser?.role !== 'cs';
-  const canSubmitCorrection =
-    canReview && detail?.review && ['needs_improvement', 'wrong'].includes(detail.review.overall);
   const canCorrect = canReview && ['needs_improvement', 'wrong'].includes(overall);
 
   return (

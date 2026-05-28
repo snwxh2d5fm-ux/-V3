@@ -87,12 +87,6 @@ export function CFErrorsPage() {
     return () => clearInterval(interval);
   }, [fetchData]);
 
-  const filteredErrors = errors.filter((e) => {
-    if (filterFn && e.fnName !== filterFn) return false;
-    if (filterSeverity && e.severity !== filterSeverity) return false;
-    return true;
-  });
-
   const fnNames = [...new Set(errors.map((e) => e.fnName))].sort();
 
   return (

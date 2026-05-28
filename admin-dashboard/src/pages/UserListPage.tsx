@@ -39,13 +39,7 @@ export function UserListPage() {
   const [personaFilter, setPersonaFilter] = useState('全部');
   const [stats, setStats] = useState<Record<string, Record<string, number>>>({});
 
-  useEffect(() => {
-    loadStats();
-  }, []);
-  useEffect(() => {
-    loadUsers();
-  }, [personaFilter]);
-
+  // eslint-disable-next-line react-hooks/immutability -- hoisted above useEffect for declaration order
   const loadUsers = async () => {
     setLoading(true);
     const p: Record<string, unknown> = { page: 1, pageSize: 50 };
@@ -66,6 +60,13 @@ export function UserListPage() {
     const r = await callAdminFunction('/admin-users', { action: 'getUserStats' });
     if (r.code === 0) setStats((r.data as Record<string, Record<string, number>>) || {});
   };
+
+  useEffect(() => {
+    loadStats();
+  }, []);
+  useEffect(() => {
+    loadUsers();
+  }, [personaFilter]);
 
   return (
     <div className="space-y-6">
