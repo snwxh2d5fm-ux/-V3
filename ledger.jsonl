@@ -2,6 +2,7 @@
 {"ts":"2026-05-18T23:00:00+08:00","from":"claude","action":"deploy_request","detail":"全量安全审查修复: 6个P0+5个P1+3个虚壳+2个假数据修复, 20个文件, 12个云函数待部署","state":"pending_hermes_9gate"}
 {"ts":"2026-05-18T21:20:00+08:00","from":"hermes","action":"9gate_pass","detail":"Gate1-9完成. verify.sh22/38,Jest31/39,DevToolsPASS,双审4P0确认. Gate7已推送4cfd6b8. 3报告已回写.","state":"passed_with_p0"}
 {"ts":"2026-05-29T20:35:00+08:00","from":"hermes","action":"10gate_pass","detail":"虚拟支付模块. 9文件变更, 44/44测试, Gate0-9全部通过. 提交258fd5c. 消息推送架构(去米大师化), PAY_CHANNEL三挡. 待配: VIRTUAL_OFFER_ID/VIRTUAL_APP_KEY/VIRTUAL_ENV/PAY_CHANNEL. T-008前置运维卡点未完成.","state":"passed"}
+{"ts":"2026-05-29T21:00:00+08:00","from":"hermes","action":"10gate_pass","detail":"PAY_CHANNEL默认值virtual→legacy(微修复). 1行变更, 零新代码路径. Gate1-5豁免. Gate6部署+冒烟(getPlans code:0). 提交e6b2d42. 裸部署不阻断V3支付.","state":"passed"}
 {"ts":"2026-05-18T21:33:00+08:00","from":"hermes","action":"9gate_report","detail":"Gate3编译通过. 4项P0未修复(token全零/签名跳过/db未初始化/barColor). 7文件未提交.","state":"p0_still_broken"}
 {"ts":"2026-05-18T21:39:00+08:00","from":"hermes","action":"9gate_pass","detail":"Gate1-9完成. Phase2全5阶段(2.1-2.5)通过. 上轮4P0全部确认修复. DevTools编译0错误. 1文件(login.js)待commit.","state":"passed"}
 {"ts":"2026-05-28T12:00:00+08:00","from":"claude","action":"deploy_request","detail":"云函数错误监控告警体系 + ZGB Bug双修复. 22文件(10新增+6修改云函数+4前端+4测试). 6云函数待部署. cf-alert新HTTP云函数. subpkg-chat/redeem session持久化修复. status-select __process_stage__修复. 测试228/228全绿.","state":"pending_hermes_10gate"}
