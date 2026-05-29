@@ -40,9 +40,17 @@
 - `VIRTUAL_ENV` — 0(正式)/1(沙箱)
 - `PAY_CHANNEL` — virtual(默认)/v3(回退)/dual(双通道)
 
-## T-008 前置运维卡点
+## T-008 沙箱→生产切换清单（6步）
 
-- [ ] 米大师平台配置虚拟支付道具
-- [ ] CloudBase消息推送配置(xpay_goods_deliver_notify → payment云函数)
-- [ ] CloudBase环境变量配置
-- [ ] 真机测试(iOS+Android)
+1. CloudBase 控制台 → payment 云函数 → 环境变量:
+   - `VIRTUAL_OFFER_ID` = 微信虚拟支付应用ID
+   - `VIRTUAL_APP_KEY` = 微信虚拟支付应用密钥
+   - `VIRTUAL_ENV` = 0(生产) / 1(沙箱)
+   - `PAY_CHANNEL` = virtual
+2. CloudBase 控制台 → 消息推送 → 绑定 `xpay_goods_deliver_notify` → payment 云函数
+3. 重新部署 payment 云函数（环境变量变更后）
+4. 真机测试: createVirtualOrder → wx.requestVirtualPayment → 消息推送回调验证
+5. 支付面板自动显示 productId/goodsPrice（signData 动态传参，无需米大师后台配置道具）
+6. 监控: cf_error_logs + 企微告警确认运行正常
+
+**无需操作**: 米大师道具配置、回调URL配置 — wx.requestVirtualPayment 模式下均不需要
