@@ -26,7 +26,7 @@ const _ = db.command;
 const { reportError } = require('./_cf-error');
 
 // ========== 虚拟支付模块（延迟加载） ==========
-const PAY_CHANNEL = process.env.PAY_CHANNEL || 'virtual';
+const PAY_CHANNEL = process.env.PAY_CHANNEL || 'legacy';
 
 let virtualPaySign;
 let virtualPayOrder;
@@ -52,7 +52,7 @@ function loadVirtualPayModules() {
  */
 function useVirtualPay(event) {
   if (PAY_CHANNEL === 'virtual') return true;
-  if (PAY_CHANNEL === 'v3') return false;
+  if (PAY_CHANNEL === 'legacy') return false;
   if (PAY_CHANNEL === 'dual') {
     // dual 模式：前端在 event 中传入 canUseVirtual 标识
     return event.canUseVirtual === true;
