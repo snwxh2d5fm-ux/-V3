@@ -1,19 +1,18 @@
 /**
- * payment — 住港伴V3 微信支付V3直连服务
+ * payment — 住港伴V4 支付服务（V3 JSAPI + 虚拟支付双通道）
  *
- * 微信支付流程 (V3):
- *   前端 → createOrder → 微信支付V3 JSAPI下单 → 返回 prepay_id
- *   前端 → wx.requestPayment({ prepay_id, ... }) → 用户确认支付
- *   微信 → paymentCallback (V3 加密回调) → 更新订单 + 激活会员
+ * 通道控制:
+ *   PAY_CHANNEL=virtual  → 所有支付走 wx.requestVirtualPayment
+ *   PAY_CHANNEL=v3       → 回退旧 V3 JSAPI（紧急回滚）
+ *   PAY_CHANNEL=dual     → 双通道 — 根据 wx.canIUse 自动选择
  *
- * 环境变量 (CloudBase 控制台 → 云函数 → 环境变量):
- *   WXPAY_MCHID          = (商户号，从 pay.weixin.qq.com 获取)
- *   WXPAY_APPID          = (小程序AppID)
- *   WXPAY_API_V3_KEY     = (在 pay.weixin.qq.com → API安全 → APIv3密钥)
- *   WXPAY_SERIAL_NO      = (商户证书序列号)
- *   WXPAY_PRIVATE_KEY    = (apiclient_key.pem 内容, base64 或直接文本)
+ * 虚拟支付环境变量 (CloudBase 控制台 → 云函数 → 环境变量):
+ *   VIRTUAL_OFFER_ID     = 1450545101（微信虚拟支付应用 ID）
+ *   VIRTUAL_APP_KEY      = (微信虚拟支付应用密钥)
+ *   VIRTUAL_ENV          = 0(正式) / 1(沙箱)
  *
- * PRD v4 对齐: MB-01~MB-05, PM-01~PM-03
+ * V3 环境变量（保留，供回退通道使用）:
+ *   WXPAY_MCHID / WXPAY_APPID / WXPAY_API_V3_KEY / WXPAY_SERIAL_NO / WXPAY_PRIVATE_KEY
  */
 const cloud = require('wx-server-sdk');
 const axios = require('axios');
@@ -25,6 +24,41 @@ const CURRENT_ENV = process.env.TCB_ENV || cloud.DYNAMIC_CURRENT_ENV;
 const db = cloud.database();
 const _ = db.command;
 const { reportError } = require('./_cf-error');
+
+// ========== 虚拟支付模块（延迟加载） ==========
+const PAY_CHANNEL = process.env.PAY_CHANNEL || 'virtual';
+
+let virtualPaySign;
+let virtualPayOrder;
+let virtualPayConfirm;
+let virtualPayCallback;
+
+function loadVirtualPayModules() {
+  if (!virtualPaySign) {
+    try {
+      virtualPaySign = require('./_virtual-pay/sign');
+      virtualPayOrder = require('./_virtual-pay/order');
+      virtualPayConfirm = require('./_virtual-pay/confirm');
+      virtualPayCallback = require('./_virtual-pay/callback');
+    } catch (e) {
+      console.warn('[payment] 虚拟支付模块加载失败:', e.message);
+    }
+  }
+  return { sign: virtualPaySign, order: virtualPayOrder, confirm: virtualPayConfirm, callback: virtualPayCallback };
+}
+
+/**
+ * 判断当前请求是否走虚拟支付通道
+ */
+function useVirtualPay(event) {
+  if (PAY_CHANNEL === 'virtual') return true;
+  if (PAY_CHANNEL === 'v3') return false;
+  if (PAY_CHANNEL === 'dual') {
+    // dual 模式：前端在 event 中传入 canUseVirtual 标识
+    return event.canUseVirtual === true;
+  }
+  return false; // 未知值默认降级 V3
+}
 
 // ========== 微信支付V3配置 (从环境变量读取) ==========
 const WXPAY_CONFIG = {
@@ -46,13 +80,29 @@ exports.main = async (event, context) => {
   const wxContext = cloud.getWXContext();
   const openid = wxContext.OPENID;
 
-  // 微信支付回调是 HTTP 触发，event 结构不同
+  // 虚拟支付回调: 由 CloudBase 消息推送 → xpay_goods_deliver_notify 事件触发
+  // （无需 HTTP 路由，CloudBase 直接调用 callback.js 的 exports.main）
+  if (event.MsgType === 'event' && event.Event === 'xpay_goods_deliver_notify') {
+    const vpMods = loadVirtualPayModules();
+    if (vpMods.callback) {
+      const result = await vpMods.callback.main(event);
+      return result; // { ErrCode: 0, ErrMsg: 'success' }
+    }
+    return { ErrCode: -1, ErrMsg: 'callback module unavailable' };
+  }
+
+  // 微信支付 V3 回调 (HTTP 触发，保留)
   if (event.httpMethod === 'POST' && event.path === '/payment/callback') {
     return await handleV3Callback(event);
   }
 
   try {
     switch (action) {
+      // ---- 虚拟支付 ----
+      case 'createVirtualOrder':
+        return await handleCreateVirtualOrder(openid, event);
+
+      // ---- V3 原有（保留） ----
       case 'getPlans':
         return await getPlans(event);
       case 'getUserOrders':
@@ -60,18 +110,23 @@ exports.main = async (event, context) => {
       case 'getOrderStatus':
         return await getOrderStatus(openid, event);
       case 'createOrder':
+        if (useVirtualPay(event)) {
+          return await handleCreateVirtualOrder(openid, event);
+        }
         return await createOrder(openid, event);
       case 'confirmPayment':
-        return await confirmPayment(openid, event);
+        // 根据订单的 payChannel 判断走哪条路径
+        return await handleConfirmPayment(openid, event);
       case 'checkSubscription':
         return await checkSubscription(openid);
       case 'getSubscriptions':
         return await getSubscriptions(openid);
       case 'cancelSubscription':
         return await cancelSubscription(openid, event);
-      case 'identityReset':
-        return await identityReset(openid, event);
       case 'unlockAllPhases':
+        if (useVirtualPay(event)) {
+          return await handleCreateVirtualOrder(openid, { ...event, productId: 'guidebook_unlock' });
+        }
         return await unlockAllPhases(openid, event);
       case 'createInvoice':
         return await invoices.createInvoice(openid, event, db);
@@ -89,6 +144,39 @@ exports.main = async (event, context) => {
     return { code: 500, msg: '支付服务异常，请稍后重试' };
   }
 };
+
+// ========== 虚拟支付路由 ==========
+
+async function handleCreateVirtualOrder(openid, event) {
+  const vpMods = loadVirtualPayModules();
+  if (!vpMods.order) {
+    return { code: 503, msg: '虚拟支付服务暂不可用' };
+  }
+  return await vpMods.order.createVirtualOrder(openid, event);
+}
+
+async function handleConfirmPayment(openid, event) {
+  const { orderId } = event;
+  if (!orderId) return { code: 400, msg: '缺少 orderId' };
+
+  // 查订单判断 payChannel
+  try {
+    const orderResult = await db.collection('orders').doc(orderId).get();
+    if (orderResult.data && orderResult.data.payChannel === 'virtual_payment') {
+      const vpMods = loadVirtualPayModules();
+      if (!vpMods.confirm) {
+        return { code: 503, msg: '虚拟支付确认服务暂不可用' };
+      }
+      return await vpMods.confirm.confirmPayment(openid, event);
+    }
+  } catch (e) {
+    // 查不到订单，走 V3 逻辑（兼容旧订单无 payChannel 字段）
+    console.debug('[payment] 订单无 payChannel 字段，走 V3 确认流程');
+  }
+
+  // 默认走 V3 确认
+  return await confirmPayment(openid, event);
+}
 
 // ==================== 会员方案查询 ====================
 async function getPlans(event) {
@@ -109,6 +197,7 @@ async function getPlans(event) {
       limits: p.limits || {},
       highlighted: p.highlighted || false,
       badge: p.badge || null,
+      virtualProductId: p.virtualProductId || null,
     })),
   };
 }
@@ -322,13 +411,6 @@ async function confirmPayment(openid, event) {
           .where({ _openid: openid })
           .update({ data: { guidebookAllUnlocked: true, updatedAt: db.serverDate() } });
       }
-      if (order.category === 'identity_reset') {
-        await cloud.callFunction({
-          name: 'process-manager',
-          data: { action: 'resetIdentityPhase', transactionId: resp.data.transaction_id || '' },
-        });
-      }
-
       await db.collection('audit_logs').add({
         data: {
           _openid: openid,
@@ -564,16 +646,6 @@ async function handleV3Callback(event) {
         console.error('[payment] 激活会员失败(订单已完成):', outTradeNo, memberErr.message);
       }
     }
-    if (order.category === 'identity_reset') {
-      try {
-        await cloud.callFunction({
-          name: 'process-manager',
-          data: { action: 'resetIdentityPhase', transactionId: transactionId },
-        });
-      } catch (resetErr) {
-        console.error('[payment] 身份重置失败(订单已完成):', outTradeNo, resetErr.message);
-      }
-    }
     if (order.category === 'guidebook_unlock') {
       try {
         await db
@@ -623,110 +695,7 @@ function aesGcmDecrypt(ciphertextB64, aad, nonceB64, key) {
   return decrypted.toString('utf8');
 }
 
-// ==================== ¥599 身份重置 ====================
-
-async function identityReset(openid, event) {
-  if (!WXPAY_CONFIG.mchid || !WXPAY_CONFIG.privateKey) {
-    return { code: 500, msg: '支付服务未配置' };
-  }
-
-  const AMOUNT = 59900; // ¥599.00 (分)
-  const productName = '身份状态重置';
-  const category = 'identity_reset';
-
-  // 前置检查1: 7天内是否已有重置
-  const recentReset = await db
-    .collection('orders')
-    .where({
-      _openid: openid,
-      category: 'identity_reset',
-      status: 'completed',
-      createdAt: _.gte(new Date(Date.now() - 7 * 86400000)),
-    })
-    .get();
-  if (recentReset.data.length > 0) {
-    return { code: 429, msg: '7天内已进行过身份重置，请稍后再试' };
-  }
-
-  // 前置检查2: 是否存在未支付的 identity_reset 订单（防止重复创建）
-  const pendingReset = await db
-    .collection('orders')
-    .where({
-      _openid: openid,
-      category: 'identity_reset',
-      status: 'pending',
-    })
-    .get();
-  if (pendingReset.data.length > 0) {
-    return {
-      code: 409,
-      msg: '你有一笔未完成的身份重置订单，请先完成支付或等待过期后再试',
-      data: { existingOrderId: pendingReset.data[0]._id },
-    };
-  }
-
-  const { _id: orderId } = await db.collection('orders').add({
-    data: {
-      _openid: openid,
-      productId: 'identity_reset',
-      productName,
-      amount: AMOUNT,
-      amountYuan: '599.00',
-      category,
-      status: 'pending',
-      createdAt: db.serverDate(),
-    },
-  });
-
-  try {
-    const urlPath = '/v3/pay/transactions/jsapi';
-    const reqBody = JSON.stringify({
-      appid: WXPAY_CONFIG.appid,
-      mchid: WXPAY_CONFIG.mchid,
-      description: `住港伴 - ${productName}`,
-      out_trade_no: orderId,
-      notify_url: `https://${CURRENT_ENV}.service.tcloudbase.com/payment/callback`,
-      amount: { total: AMOUNT, currency: 'CNY' },
-      payer: { openid },
-    });
-
-    const auth = buildAuthorization('POST', urlPath, reqBody);
-    const resp = await axios.post(`${WXPAY_CONFIG.baseUrl}${urlPath}`, reqBody, {
-      headers: { 'Content-Type': 'application/json', Authorization: auth },
-    });
-
-    if (!resp.data || !resp.data.prepay_id) {
-      return { code: 500, msg: '微信支付下单失败', detail: resp.data };
-    }
-
-    const prepayId = resp.data.prepay_id;
-    const nonceStr = crypto.randomBytes(16).toString('hex');
-    const timeStamp = String(Math.floor(Date.now() / 1000));
-    const pkg = 'prepay_id=' + prepayId;
-    const signStr = [WXPAY_CONFIG.appid, timeStamp, nonceStr, pkg].join('\n') + '\n';
-    const paySign = crypto.createSign('RSA-SHA256').update(signStr).sign(WXPAY_CONFIG.privateKey, 'base64');
-
-    return {
-      code: 0,
-      data: {
-        orderId,
-        category,
-        payment: {
-          timeStamp,
-          nonceStr,
-          package: pkg,
-          signType: 'RSA',
-          paySign,
-        },
-      },
-    };
-  } catch (e) {
-    console.error('[payment] identityReset error:', e);
-    return { code: 500, msg: '支付创建失败', error: e.message };
-  }
-}
-
-// ==================== ¥9.90 关卡提前解锁 ====================
+// ==================== ¥9.90 关卡提前解锁（V3 通道保留） ====================
 
 async function unlockAllPhases(openid, event) {
   if (!WXPAY_CONFIG.mchid || !WXPAY_CONFIG.privateKey) {
